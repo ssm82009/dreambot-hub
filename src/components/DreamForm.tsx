@@ -6,12 +6,16 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Loader2 } from 'lucide-react';
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
+
+type DreamSymbol = Database['public']['Tables']['dream_symbols']['Row'];
+type Dream = Database['public']['Tables']['dreams']['Row'];
 
 const DreamForm = () => {
   const [dreamText, setDreamText] = useState('');
   const [interpretation, setInterpretation] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [dreamSymbols, setDreamSymbols] = useState<any[]>([]);
+  const [dreamSymbols, setDreamSymbols] = useState<DreamSymbol[]>([]);
 
   // فحص الاتصال بقاعدة البيانات عند تحميل المكون
   useEffect(() => {
