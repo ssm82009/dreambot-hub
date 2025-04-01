@@ -85,6 +85,9 @@ serve(async (req) => {
       });
     }
 
+    // تعزيز تعليمات النظام لضمان استخدام اللغة العربية
+    const enhancedInstructions = `${interpretationSettings.system_instructions}\n\nمهم جداً: يجب أن يكون تفسيرك باللغة العربية فقط. لا تستخدم أي لغة أخرى في إجابتك.`;
+
     // إنشاء طلب التفسير للذكاء الاصطناعي
     let aiResponse;
     if (aiSettings?.provider === 'together') {
@@ -101,11 +104,11 @@ serve(async (req) => {
           messages: [
             {
               role: 'system',
-              content: interpretationSettings.system_instructions
+              content: enhancedInstructions
             },
             {
               role: 'user',
-              content: `${symbolsContext ? symbolsContext + '\n\n' : ''}الحلم: ${dreamText}\n\nقم بتفسير هذا الحلم بدقة ووضوح.`
+              content: `${symbolsContext ? symbolsContext + '\n\n' : ''}الحلم: ${dreamText}\n\nقم بتفسير هذا الحلم بدقة ووضوح باللغة العربية.`
             }
           ],
           max_tokens: interpretationSettings.max_output_words * 3, // تقريبي: الكلمة الواحدة تعادل حوالي 3 tokens
@@ -137,11 +140,11 @@ serve(async (req) => {
           messages: [
             {
               role: 'system',
-              content: interpretationSettings.system_instructions
+              content: enhancedInstructions
             },
             {
               role: 'user',
-              content: `${symbolsContext ? symbolsContext + '\n\n' : ''}الحلم: ${dreamText}\n\nقم بتفسير هذا الحلم بدقة ووضوح.`
+              content: `${symbolsContext ? symbolsContext + '\n\n' : ''}الحلم: ${dreamText}\n\nقم بتفسير هذا الحلم بدقة ووضوح باللغة العربية.`
             }
           ],
           max_tokens: interpretationSettings.max_output_words * 4,
