@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -9,16 +10,53 @@ import type { Database } from "@/integrations/supabase/types";
 
 type DreamSymbol = Database['public']['Tables']['dream_symbols']['Row'];
 type Dream = Database['public']['Tables']['dreams']['Row'];
+type AISettings = Database['public']['Tables']['ai_settings']['Row'];
+type InterpretationSettings = Database['public']['Tables']['interpretation_settings']['Row'];
 
 const DreamForm = () => {
   const [dreamText, setDreamText] = useState('');
   const [interpretation, setInterpretation] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [dreamSymbols, setDreamSymbols] = useState<DreamSymbol[]>([]);
+  const [aiSettings, setAiSettings] = useState<AISettings | null>(null);
+  const [interpretationSettings, setInterpretationSettings] = useState<InterpretationSettings | null>(null);
 
   useEffect(() => {
     fetchDreamSymbols();
+    fetchSettings();
   }, []);
+
+  const fetchSettings = async () => {
+    try {
+      // جلب إعدادات الذكاء الاصطناعي
+      const { data: aiData, error: aiError } = await supabase
+        .from('ai_settings')
+        .select('*')
+        .limit(1)
+        .single();
+      
+      if (aiError) {
+        console.error("خطأ في جلب إعدادات الذكاء الاصطناعي:", aiError);
+      } else {
+        setAiSettings(aiData);
+      }
+
+      // جلب إعدادات التفسير
+      const { data: interpretationData, error: interpretationError } = await supabase
+        .from('interpretation_settings')
+        .select('*')
+        .limit(1)
+        .single();
+      
+      if (interpretationError) {
+        console.error("خطأ في جلب إعدادات التفسير:", interpretationError);
+      } else {
+        setInterpretationSettings(interpretationData);
+      }
+    } catch (error) {
+      console.error("خطأ في الاتصال بقاعدة البيانات:", error);
+    }
+  };
 
   const fetchDreamSymbols = async () => {
     try {
@@ -42,6 +80,7 @@ const DreamForm = () => {
     try {
       let generatedInterpretation = '';
       
+      // استخدام رموز الأحلام للتفسير إذا كانت موجودة
       if (dreamSymbols.length > 0) {
         for (const symbol of dreamSymbols) {
           if (dream.includes(symbol.symbol)) {
@@ -50,6 +89,7 @@ const DreamForm = () => {
         }
       }
       
+      // إذا لم يتم العثور على تفسير باستخدام الرموز، استخدم تفسيرات عشوائية
       if (!generatedInterpretation) {
         const responses = [
           "يشير هذا الحلم إلى تغييرات إيجابية في حياتك القادمة. الماء في المنام يدل على الحياة والخصوبة، وقد تمر بفترة من التجديد الروحي.",
@@ -61,6 +101,7 @@ const DreamForm = () => {
         generatedInterpretation = responses[Math.floor(Math.random() * responses.length)];
       }
       
+      // حفظ الحلم والتفسير في قاعدة البيانات
       const { error } = await supabase
         .from('dreams')
         .insert({
@@ -98,6 +139,14 @@ const DreamForm = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (dreamText.trim()) {
+      // التحقق من عدد الكلمات إذا كانت إعدادات التفسير متاحة
+      if (interpretationSettings) {
+        const wordCount = dreamText.trim().split(/\s+/).length;
+        if (wordCount > interpretationSettings.max_input_words) {
+          toast.error(`الرجاء تقليل عدد الكلمات. الحد الأقصى المسموح به هو ${interpretationSettings.max_input_words} كلمة.`);
+          return;
+        }
+      }
       interpretDream(dreamText);
     }
   };
@@ -110,6 +159,11 @@ const DreamForm = () => {
             <CardTitle className="text-2xl">فسّر حلمك الآن</CardTitle>
             <CardDescription>
               اكتب تفاصيل حلمك بدقة للحصول على تفسير أكثر دقة
+              {interpretationSettings && (
+                <span className="block mt-1 text-xs">
+                  (الحد الأقصى: {interpretationSettings.max_input_words} كلمة)
+                </span>
+              )}
             </CardDescription>
           </CardHeader>
           <CardContent>

@@ -9,6 +9,63 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      ai_settings: {
+        Row: {
+          api_key: string
+          created_at: string | null
+          id: string
+          model: string
+          provider: string
+          updated_at: string | null
+        }
+        Insert: {
+          api_key: string
+          created_at?: string | null
+          id?: string
+          model?: string
+          provider?: string
+          updated_at?: string | null
+        }
+        Update: {
+          api_key?: string
+          created_at?: string | null
+          id?: string
+          model?: string
+          provider?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      custom_pages: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          slug: string
+          status: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          slug: string
+          status?: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          slug?: string
+          status?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       dream_symbols: {
         Row: {
           category: string | null
@@ -54,6 +111,207 @@ export type Database = {
           interpretation?: string
           tags?: string[] | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      interpretation_settings: {
+        Row: {
+          created_at: string | null
+          id: string
+          max_input_words: number
+          max_output_words: number
+          min_output_words: number
+          system_instructions: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          max_input_words?: number
+          max_output_words?: number
+          min_output_words?: number
+          system_instructions?: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          max_input_words?: number
+          max_output_words?: number
+          min_output_words?: number
+          system_instructions?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      payment_settings: {
+        Row: {
+          created_at: string | null
+          id: string
+          paylink_api_key: string | null
+          paylink_enabled: boolean
+          paylink_secret_key: string | null
+          paypal_client_id: string | null
+          paypal_enabled: boolean
+          paypal_sandbox: boolean
+          paypal_secret: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          paylink_api_key?: string | null
+          paylink_enabled?: boolean
+          paylink_secret_key?: string | null
+          paypal_client_id?: string | null
+          paypal_enabled?: boolean
+          paypal_sandbox?: boolean
+          paypal_secret?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          paylink_api_key?: string | null
+          paylink_enabled?: boolean
+          paylink_secret_key?: string | null
+          paypal_client_id?: string | null
+          paypal_enabled?: boolean
+          paypal_sandbox?: boolean
+          paypal_secret?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      pricing_settings: {
+        Row: {
+          created_at: string | null
+          free_plan_features: string
+          free_plan_interpretations: number
+          free_plan_price: number
+          id: string
+          premium_plan_features: string
+          premium_plan_interpretations: number
+          premium_plan_price: number
+          pro_plan_features: string
+          pro_plan_interpretations: number
+          pro_plan_price: number
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          free_plan_features?: string
+          free_plan_interpretations?: number
+          free_plan_price?: number
+          id?: string
+          premium_plan_features?: string
+          premium_plan_interpretations?: number
+          premium_plan_price?: number
+          pro_plan_features?: string
+          pro_plan_interpretations?: number
+          pro_plan_price?: number
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          free_plan_features?: string
+          free_plan_interpretations?: number
+          free_plan_price?: number
+          id?: string
+          premium_plan_features?: string
+          premium_plan_interpretations?: number
+          premium_plan_price?: number
+          pro_plan_features?: string
+          pro_plan_interpretations?: number
+          pro_plan_price?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      theme_settings: {
+        Row: {
+          background_color: string
+          button_color: string
+          created_at: string | null
+          facebook_link: string | null
+          footer_color: string
+          footer_text: string
+          header_color: string
+          id: string
+          instagram_link: string | null
+          logo_font_size: number
+          logo_text: string
+          primary_color: string
+          text_color: string
+          twitter_link: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          background_color?: string
+          button_color?: string
+          created_at?: string | null
+          facebook_link?: string | null
+          footer_color?: string
+          footer_text?: string
+          header_color?: string
+          id?: string
+          instagram_link?: string | null
+          logo_font_size?: number
+          logo_text?: string
+          primary_color?: string
+          text_color?: string
+          twitter_link?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          background_color?: string
+          button_color?: string
+          created_at?: string | null
+          facebook_link?: string | null
+          footer_color?: string
+          footer_text?: string
+          header_color?: string
+          id?: string
+          instagram_link?: string | null
+          logo_font_size?: number
+          logo_text?: string
+          primary_color?: string
+          text_color?: string
+          twitter_link?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      users: {
+        Row: {
+          created_at: string | null
+          email: string
+          full_name: string | null
+          id: string
+          role: string
+          subscription_expires_at: string | null
+          subscription_type: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          full_name?: string | null
+          id: string
+          role?: string
+          subscription_expires_at?: string | null
+          subscription_type?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          full_name?: string | null
+          id?: string
+          role?: string
+          subscription_expires_at?: string | null
+          subscription_type?: string | null
+          updated_at?: string | null
         }
         Relationships: []
       }
