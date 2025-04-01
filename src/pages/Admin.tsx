@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
@@ -24,8 +23,40 @@ import {
 } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useForm } from 'react-hook-form';
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from '@/components/ui/select';
+import { 
+  Form, 
+  FormControl, 
+  FormDescription, 
+  FormField, 
+  FormItem, 
+  FormLabel, 
+  FormMessage 
+} from '@/components/ui/form';
 
-// Define form types for each section
+type AiModel = {
+  id: string;
+  name: string;
+  description: string;
+  availability: 'free' | 'paid';
+};
+
+const togetherModels: AiModel[] = [
+  { id: 'meta-llama/Llama-3-70b-chat-hf', name: 'Llama 3 70B Chat', description: 'أقوى نموذج مفتوح المصدر للمحادثة', availability: 'paid' },
+  { id: 'meta-llama/Llama-3-8b-chat-hf', name: 'Llama 3 8B Chat', description: 'نموذج متوسط الحجم مثالي للتطبيقات العامة', availability: 'free' },
+  { id: 'mistralai/Mixtral-8x7B-Instruct-v0.1', name: 'Mixtral 8x7B', description: 'نموذج مزيج قوي بتكلفة منخفضة', availability: 'free' },
+  { id: 'codellama/CodeLlama-70b-Instruct-hf', name: 'CodeLlama 70B', description: 'متخصص في فهم وتوليد التعليمات المعقدة', availability: 'paid' },
+  { id: 'meta-llama/Meta-Llama-3-8B-Instruct', name: 'Meta Llama 3 8B', description: 'نموذج تعليمات متوازن', availability: 'free' },
+  { id: 'upstage/SOLAR-10.7B-Instruct-v1.0', name: 'SOLAR 10.7B', description: 'نموذج محسن للغة العربية', availability: 'free' },
+  { id: 'togethercomputer/StripedHyena-Nous-7B', name: 'StripedHyena 7B', description: 'نموذج خفيف وسريع', availability: 'free' },
+];
+
 type AiSettingsFormValues = {
   provider: string;
   apiKey: string;
@@ -145,12 +176,11 @@ const Admin = () => {
     themeSettings: false,
   });
 
-  // Initialize form methods for each section
   const aiSettingsForm = useForm<AiSettingsFormValues>({
     defaultValues: {
-      provider: "openai",
+      provider: "together",
       apiKey: "",
-      model: "gpt-4o",
+      model: "meta-llama/Llama-3-8b-chat-hf",
     }
   });
   
@@ -226,7 +256,6 @@ const Admin = () => {
   };
 
   useEffect(() => {
-    // Check if admin is logged in
     const adminStatus = localStorage.getItem('isAdminLoggedIn') === 'true';
     const email = localStorage.getItem('userEmail') || '';
     
@@ -234,7 +263,6 @@ const Admin = () => {
     setAdminEmail(email);
     setIsLoading(false);
 
-    // Redirect non-admin users
     if (!adminStatus && !isLoading) {
       toast.error("يجب تسجيل الدخول كمشرف للوصول إلى لوحة التحكم");
       navigate('/login');
@@ -248,7 +276,6 @@ const Admin = () => {
     navigate('/login');
   };
 
-  // Form submission handlers
   const handleAiSettingsSubmit = (data: AiSettingsFormValues) => {
     console.log("AI Settings saved:", data);
     localStorage.setItem('aiSettings', JSON.stringify(data));
@@ -339,7 +366,6 @@ const Admin = () => {
           <div className="rtl">
             <h2 className="text-2xl font-bold mb-6">إعدادات النظام</h2>
             
-            {/* 1. AI Provider Settings */}
             <AdminSection 
               title="إعدادات مزود خدمة الذكاء الاصطناعي" 
               description="تكوين مزود خدمة الذكاء الاصطناعي ومفاتيح API"
@@ -347,81 +373,164 @@ const Admin = () => {
               isOpen={activeSections.aiSettings}
               onToggle={() => toggleSection('aiSettings')}
             >
-              <form onSubmit={aiSettingsForm.handleSubmit(handleAiSettingsSubmit)} className="space-y-4">
-                <div className="space-y-2">
-                  <Label>مزود الخدمة</Label>
-                  <div className="flex flex-wrap items-center gap-4">
-                    <div className="flex items-center space-x-2 rtl:space-x-reverse">
-                      <Checkbox 
-                        id="openai" 
-                        checked={aiSettingsForm.watch("provider") === "openai"}
-                        onCheckedChange={() => aiSettingsForm.setValue("provider", "openai")}
+              <Form {...aiSettingsForm}>
+                <form onSubmit={aiSettingsForm.handleSubmit(handleAiSettingsSubmit)} className="space-y-6">
+                  <div className="space-y-4">
+                    <FormField
+                      control={aiSettingsForm.control}
+                      name="provider"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>مزود الخدمة</FormLabel>
+                          <div className="flex flex-wrap items-center gap-4">
+                            <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                              <Checkbox 
+                                id="together" 
+                                checked={field.value === "together"}
+                                onCheckedChange={() => field.onChange("together")}
+                              />
+                              <label htmlFor="together" className="text-sm">Together.ai</label>
+                            </div>
+                            <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                              <Checkbox 
+                                id="openai" 
+                                checked={field.value === "openai"}
+                                onCheckedChange={() => field.onChange("openai")}
+                              />
+                              <label htmlFor="openai" className="text-sm">OpenAI</label>
+                            </div>
+                            <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                              <Checkbox 
+                                id="anthropic" 
+                                checked={field.value === "anthropic"}
+                                onCheckedChange={() => field.onChange("anthropic")}
+                              />
+                              <label htmlFor="anthropic" className="text-sm">Anthropic</label>
+                            </div>
+                            <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                              <Checkbox 
+                                id="gemini" 
+                                checked={field.value === "gemini"}
+                                onCheckedChange={() => field.onChange("gemini")}
+                              />
+                              <label htmlFor="gemini" className="text-sm">Gemini</label>
+                            </div>
+                          </div>
+                          <FormDescription>
+                            Together.ai يوفر وصولاً إلى مجموعة واسعة من نماذج مختلفة عبر مفتاح API واحد
+                          </FormDescription>
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={aiSettingsForm.control}
+                      name="apiKey"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>مفتاح API</FormLabel>
+                          <FormControl>
+                            <Input 
+                              placeholder={field.value === "together" ? "tok_..." : field.value === "openai" ? "sk-..." : ""}
+                              dir="ltr" 
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormDescription>
+                            يمكنك الحصول على مفتاح Together.ai من لوحة التحكم الخاصة بك على{" "}
+                            <a href="https://api.together.xyz/settings/api-keys" className="text-primary underline" target="_blank" rel="noopener noreferrer">
+                              together.xyz
+                            </a>
+                          </FormDescription>
+                        </FormItem>
+                      )}
+                    />
+                    
+                    {aiSettingsForm.watch("provider") === "together" && (
+                      <FormField
+                        control={aiSettingsForm.control}
+                        name="model"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>النموذج</FormLabel>
+                            <Select
+                              onValueChange={field.onChange}
+                              defaultValue={field.value}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="اختر النموذج" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent dir="rtl">
+                                {togetherModels.map((model) => (
+                                  <SelectItem 
+                                    key={model.id} 
+                                    value={model.id}
+                                  >
+                                    <div className="flex justify-between items-center w-full">
+                                      <span>{model.name}</span>
+                                      <span className={`text-xs ${model.availability === 'free' ? 'text-green-500' : 'text-amber-500'}`}>
+                                        {model.availability === 'free' ? 'مجاني' : 'مدفوع'}
+                                      </span>
+                                    </div>
+                                    <div className="text-xs text-muted-foreground mt-1">{model.description}</div>
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormDescription>
+                              اختر النموذج الذي تريد استخدامه لتفسير الأحلام
+                            </FormDescription>
+                          </FormItem>
+                        )}
                       />
-                      <label htmlFor="openai" className="text-sm">OpenAI</label>
-                    </div>
-                    <div className="flex items-center space-x-2 rtl:space-x-reverse">
-                      <Checkbox 
-                        id="anthropic" 
-                        checked={aiSettingsForm.watch("provider") === "anthropic"}
-                        onCheckedChange={() => aiSettingsForm.setValue("provider", "anthropic")}
+                    )}
+
+                    {aiSettingsForm.watch("provider") === "openai" && (
+                      <FormField
+                        control={aiSettingsForm.control}
+                        name="model"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>نموذج OpenAI</FormLabel>
+                            <div className="flex flex-wrap items-center gap-4">
+                              <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                                <Checkbox 
+                                  id="gpt-4o" 
+                                  checked={field.value === "gpt-4o"}
+                                  onCheckedChange={() => field.onChange("gpt-4o")}
+                                />
+                                <label htmlFor="gpt-4o" className="text-sm">GPT-4o</label>
+                              </div>
+                              <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                                <Checkbox 
+                                  id="gpt-4" 
+                                  checked={field.value === "gpt-4"}
+                                  onCheckedChange={() => field.onChange("gpt-4")}
+                                />
+                                <label htmlFor="gpt-4" className="text-sm">GPT-4</label>
+                              </div>
+                              <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                                <Checkbox 
+                                  id="gpt-3.5" 
+                                  checked={field.value === "gpt-3.5"}
+                                  onCheckedChange={() => field.onChange("gpt-3.5")}
+                                />
+                                <label htmlFor="gpt-3.5" className="text-sm">GPT-3.5</label>
+                              </div>
+                            </div>
+                          </FormItem>
+                        )}
                       />
-                      <label htmlFor="anthropic" className="text-sm">Anthropic</label>
-                    </div>
-                    <div className="flex items-center space-x-2 rtl:space-x-reverse">
-                      <Checkbox 
-                        id="gemini" 
-                        checked={aiSettingsForm.watch("provider") === "gemini"}
-                        onCheckedChange={() => aiSettingsForm.setValue("provider", "gemini")}
-                      />
-                      <label htmlFor="gemini" className="text-sm">Gemini</label>
-                    </div>
+                    )}
                   </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label>مفتاح OpenAI API</Label>
-                  <Input 
-                    placeholder="sk-..." 
-                    dir="ltr" 
-                    {...aiSettingsForm.register("apiKey")} 
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label>نموذج OpenAI</Label>
-                  <div className="flex flex-wrap items-center gap-4">
-                    <div className="flex items-center space-x-2 rtl:space-x-reverse">
-                      <Checkbox 
-                        id="gpt-4o" 
-                        checked={aiSettingsForm.watch("model") === "gpt-4o"}
-                        onCheckedChange={() => aiSettingsForm.setValue("model", "gpt-4o")}
-                      />
-                      <label htmlFor="gpt-4o" className="text-sm">GPT-4o</label>
-                    </div>
-                    <div className="flex items-center space-x-2 rtl:space-x-reverse">
-                      <Checkbox 
-                        id="gpt-4" 
-                        checked={aiSettingsForm.watch("model") === "gpt-4"}
-                        onCheckedChange={() => aiSettingsForm.setValue("model", "gpt-4")}
-                      />
-                      <label htmlFor="gpt-4" className="text-sm">GPT-4</label>
-                    </div>
-                    <div className="flex items-center space-x-2 rtl:space-x-reverse">
-                      <Checkbox 
-                        id="gpt-3.5" 
-                        checked={aiSettingsForm.watch("model") === "gpt-3.5"}
-                        onCheckedChange={() => aiSettingsForm.setValue("model", "gpt-3.5")}
-                      />
-                      <label htmlFor="gpt-3.5" className="text-sm">GPT-3.5</label>
-                    </div>
-                  </div>
-                </div>
-                
-                <Button type="submit">حفظ الإعدادات</Button>
-              </form>
+                  
+                  <Button type="submit">حفظ الإعدادات</Button>
+                </form>
+              </Form>
             </AdminSection>
             
-            {/* 2. Interpretation Settings */}
             <AdminSection 
               title="إعدادات التفسير" 
               description="إعدادات عدد الكلمات المسموح بها للمدخلات والمخرجات"
@@ -479,7 +588,6 @@ const Admin = () => {
               </form>
             </AdminSection>
             
-            {/* 3. Pricing Plans Settings */}
             <AdminSection 
               title="إعدادات الخطط والأسعار" 
               description="تكوين خطط الاشتراك والأسعار"
@@ -580,7 +688,6 @@ const Admin = () => {
               </form>
             </AdminSection>
             
-            {/* 4. Payment Gateways Settings */}
             <AdminSection 
               title="إعدادات بوابات الدفع" 
               description="تكوين بوابات الدفع PayLink.sa و PayPal"
@@ -683,7 +790,6 @@ const Admin = () => {
               </form>
             </AdminSection>
             
-            {/* 5. User Management */}
             <AdminSection 
               title="إدارة الأعضاء والصلاحيات" 
               description="إدارة المستخدمين وتعيين الصلاحيات"
@@ -787,7 +893,6 @@ const Admin = () => {
               </div>
             </AdminSection>
             
-            {/* 6. Page Management */}
             <AdminSection 
               title="إدارة الصفحات" 
               description="إدارة محتوى صفحات الموقع"
@@ -867,7 +972,6 @@ const Admin = () => {
               </div>
             </AdminSection>
             
-            {/* 7. Theme Settings */}
             <AdminSection 
               title="إعدادات المظهر" 
               description="تخصيص ألوان الموقع واللوجو والهيدر والفوتر"
@@ -1069,4 +1173,3 @@ const Admin = () => {
 };
 
 export default Admin;
-

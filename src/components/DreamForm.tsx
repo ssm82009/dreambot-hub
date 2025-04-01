@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -17,12 +16,10 @@ const DreamForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [dreamSymbols, setDreamSymbols] = useState<DreamSymbol[]>([]);
 
-  // فحص الاتصال بقاعدة البيانات عند تحميل المكون
   useEffect(() => {
     fetchDreamSymbols();
   }, []);
 
-  // جلب رموز الأحلام من قاعدة البيانات
   const fetchDreamSymbols = async () => {
     try {
       const { data, error } = await supabase
@@ -39,16 +36,13 @@ const DreamForm = () => {
     }
   };
 
-  // تفسير الحلم باستخدام رموز الأحلام المخزنة أو استخدام تفسير عشوائي
   const interpretDream = async (dream: string) => {
     setIsLoading(true);
     
     try {
-      // تحقق من وجود رموز معروفة في نص الحلم
       let generatedInterpretation = '';
       
       if (dreamSymbols.length > 0) {
-        // البحث في النص عن رموز معروفة
         for (const symbol of dreamSymbols) {
           if (dream.includes(symbol.symbol)) {
             generatedInterpretation += symbol.interpretation + ' ';
@@ -56,7 +50,6 @@ const DreamForm = () => {
         }
       }
       
-      // إذا لم نجد رموزاً مطابقة، نستخدم تفسيراً عشوائياً
       if (!generatedInterpretation) {
         const responses = [
           "يشير هذا الحلم إلى تغييرات إيجابية في حياتك القادمة. الماء في المنام يدل على الحياة والخصوبة، وقد تمر بفترة من التجديد الروحي.",
@@ -68,13 +61,12 @@ const DreamForm = () => {
         generatedInterpretation = responses[Math.floor(Math.random() * responses.length)];
       }
       
-      // حفظ الحلم والتفسير في قاعدة البيانات
       const { error } = await supabase
         .from('dreams')
         .insert({
           dream_text: dream,
           interpretation: generatedInterpretation,
-          user_id: null, // سيتم استبدال هذا بمعرف المستخدم بعد تنفيذ المصادقة
+          user_id: null,
           tags: extractKeywords(dream)
         });
       
@@ -93,9 +85,7 @@ const DreamForm = () => {
     }
   };
 
-  // استخراج كلمات مفتاحية من نص الحلم
   const extractKeywords = (text: string): string[] => {
-    // قائمة بالكلمات المفتاحية المحتملة في الأحلام
     const commonKeywords = [
       'ماء', 'طيران', 'سقوط', 'موت', 'مطاردة', 'سفر',
       'بيت', 'أسنان', 'فقدان', 'قطة', 'كلب', 'ثعبان',
