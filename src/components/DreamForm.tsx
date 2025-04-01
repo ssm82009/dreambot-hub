@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -6,19 +5,14 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Loader2 } from 'lucide-react';
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import type { Database } from "@/integrations/supabase/types";
-
-type DreamSymbol = Database['public']['Tables']['dream_symbols']['Row'];
-type Dream = Database['public']['Tables']['dreams']['Row'];
-type AISettings = Database['public']['Tables']['ai_settings']['Row'];
-type InterpretationSettings = Database['public']['Tables']['interpretation_settings']['Row'];
+import { DreamSymbol, InterpretationSettings } from '@/types/database';
 
 const DreamForm = () => {
   const [dreamText, setDreamText] = useState('');
   const [interpretation, setInterpretation] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [dreamSymbols, setDreamSymbols] = useState<DreamSymbol[]>([]);
-  const [aiSettings, setAiSettings] = useState<AISettings | null>(null);
+  const [aiSettings, setAiSettings] = useState<any | null>(null);
   const [interpretationSettings, setInterpretationSettings] = useState<InterpretationSettings | null>(null);
 
   useEffect(() => {
@@ -94,7 +88,7 @@ const DreamForm = () => {
         const responses = [
           "يشير هذا الحلم إلى تغييرات إيجابية في حياتك القادمة. الماء في المنام يدل على الحياة والخصوبة، وقد تمر بفترة من التجديد الروحي.",
           "هذا الحلم يعكس مخاوفك الداخلية وقلقك تجاه المستقبل. حاول أن تتعامل مع هذه المخاوف بشكل واعٍ في حياتك اليومية.",
-          "الطيور في المنام تدل على الأخبار والرسائل. قد تتلقى قريباً خبراً ساراً أو فرصة جديدة في حياتك.",
+          "الطي��ر في المنام تدل على الأخبار والرسائل. قد تتلقى قريباً خبراً ساراً أو فرصة جديدة في حياتك.",
           "السفر في المنام يرمز إلى التغيير في مسار حياتك. قد تكون على وشك اتخاذ قرار مهم أو الانتقال إلى مرحلة جديدة.",
           "الأشخاص الذين ظهروا في حلمك يمثلون جوانب من شخصيتك أو علاقاتك الحالية. فكر في صفاتهم وكيف تتعلق بحياتك."
         ];
