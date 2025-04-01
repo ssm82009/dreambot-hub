@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -27,7 +28,7 @@ const DreamForm = () => {
         .from('ai_settings')
         .select('*')
         .limit(1)
-        .single();
+        .maybeSingle();
       
       if (aiError) {
         console.error("خطأ في جلب إعدادات الذكاء الاصطناعي:", aiError);
@@ -40,7 +41,7 @@ const DreamForm = () => {
         .from('interpretation_settings')
         .select('*')
         .limit(1)
-        .single();
+        .maybeSingle();
       
       if (interpretationError) {
         console.error("خطأ في جلب إعدادات التفسير:", interpretationError);
@@ -72,28 +73,19 @@ const DreamForm = () => {
     setIsLoading(true);
     
     try {
-      let generatedInterpretation = '';
-      
-      // استخدام رموز الأحلام للتفسير إذا كانت موجودة
-      if (dreamSymbols.length > 0) {
-        for (const symbol of dreamSymbols) {
-          if (dream.includes(symbol.symbol)) {
-            generatedInterpretation += symbol.interpretation + ' ';
-          }
-        }
+      // استخدام وظيفة الحافة لتفسير الحلم
+      const { data: aiResponse, error: aiError } = await supabase.functions.invoke('interpret-dream', {
+        body: { dreamText: dream }
+      });
+
+      if (aiError) {
+        console.error("خطأ في استدعاء وظيفة تفسير الحلم:", aiError);
+        toast.error("حدث خطأ أثناء تفسير الحلم، يرجى المحاولة مرة أخرى");
+        setIsLoading(false);
+        return;
       }
-      
-      // إذا لم يتم العثور على تفسير باستخدام الرموز، استخدم تفسيرات عشوائية
-      if (!generatedInterpretation) {
-        const responses = [
-          "يشير هذا الحلم إلى تغييرات إيجابية في حياتك القادمة. الماء في المنام يدل على الحياة والخصوبة، وقد تمر بفترة من التجديد الروحي.",
-          "هذا الحلم يعكس مخاوفك الداخلية وقلقك تجاه المستقبل. حاول أن تتعامل مع هذه المخاوف بشكل واعٍ في حياتك اليومية.",
-          "الطي��ر في المنام تدل على الأخبار والرسائل. قد تتلقى قريباً خبراً ساراً أو فرصة جديدة في حياتك.",
-          "السفر في المنام يرمز إلى التغيير في مسار حياتك. قد تكون على وشك اتخاذ قرار مهم أو الانتقال إلى مرحلة جديدة.",
-          "الأشخاص الذين ظهروا في حلمك يمثلون جوانب من شخصيتك أو علاقاتك الحالية. فكر في صفاتهم وكيف تتعلق بحياتك."
-        ];
-        generatedInterpretation = responses[Math.floor(Math.random() * responses.length)];
-      }
+
+      const generatedInterpretation = aiResponse?.interpretation || "لم نتمكن من الحصول على تفسير في هذا الوقت.";
       
       // حفظ الحلم والتفسير في قاعدة البيانات
       const { error } = await supabase
@@ -193,7 +185,7 @@ const DreamForm = () => {
           {interpretation && (
             <CardFooter className="flex flex-col items-start border-t border-border/50 pt-6">
               <h3 className="text-lg font-semibold mb-2">تفسير الحلم:</h3>
-              <p className="text-foreground/80 leading-relaxed">{interpretation}</p>
+              <p className="text-foreground/80 leading-relaxed whitespace-pre-line">{interpretation}</p>
             </CardFooter>
           )}
         </Card>
