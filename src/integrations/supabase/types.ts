@@ -9,7 +9,54 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      dream_symbols: {
+        Row: {
+          category: string | null
+          id: string
+          interpretation: string
+          symbol: string
+        }
+        Insert: {
+          category?: string | null
+          id?: string
+          interpretation: string
+          symbol: string
+        }
+        Update: {
+          category?: string | null
+          id?: string
+          interpretation?: string
+          symbol?: string
+        }
+        Relationships: []
+      }
+      dreams: {
+        Row: {
+          created_at: string
+          dream_text: string
+          id: string
+          interpretation: string
+          tags: string[] | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          dream_text: string
+          id?: string
+          interpretation: string
+          tags?: string[] | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          dream_text?: string
+          id?: string
+          interpretation?: string
+          tags?: string[] | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

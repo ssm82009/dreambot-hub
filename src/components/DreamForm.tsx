@@ -1,34 +1,104 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 const DreamForm = () => {
   const [dreamText, setDreamText] = useState('');
   const [interpretation, setInterpretation] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [dreamSymbols, setDreamSymbols] = useState<any[]>([]);
 
-  // Mock interpretation function - in a real app, this would call an AI service
+  // فحص الاتصال بقاعدة البيانات عند تحميل المكون
+  useEffect(() => {
+    fetchDreamSymbols();
+  }, []);
+
+  // جلب رموز الأحلام من قاعدة البيانات
+  const fetchDreamSymbols = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('dream_symbols')
+        .select('*');
+      
+      if (error) {
+        console.error("خطأ في جلب رموز الأحلام:", error);
+      } else {
+        setDreamSymbols(data || []);
+      }
+    } catch (error) {
+      console.error("خطأ في الاتصال بقاعدة البيانات:", error);
+    }
+  };
+
+  // تفسير الحلم باستخدام رموز الأحلام المخزنة أو استخدام تفسير عشوائي
   const interpretDream = async (dream: string) => {
     setIsLoading(true);
     
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    // Sample responses based on keywords
-    const responses = [
-      "يشير هذا الحلم إلى تغييرات إيجابية في حياتك القادمة. الماء في المنام يدل على الحياة والخصوبة، وقد تمر بفترة من التجديد الروحي.",
-      "هذا الحلم يعكس مخاوفك الداخلية وقلقك تجاه المستقبل. حاول أن تتعامل مع هذه المخاوف بشكل واعٍ في حياتك اليومية.",
-      "الطيور في المنام تدل على الأخبار والرسائل. قد تتلقى قريباً خبراً ساراً أو فرصة جديدة في حياتك.",
-      "السفر في المنام يرمز إلى التغيير في مسار حياتك. قد تكون على وشك اتخاذ قرار مهم أو الانتقال إلى مرحلة جديدة.",
-      "الأشخاص الذين ظهروا في حلمك يمثلون جوانب من شخصيتك أو علاقاتك الحالية. فكر في صفاتهم وكيف تتعلق بحياتك."
+    try {
+      // تحقق من وجود رموز معروفة في نص الحلم
+      let generatedInterpretation = '';
+      
+      if (dreamSymbols.length > 0) {
+        // البحث في النص عن رموز معروفة
+        for (const symbol of dreamSymbols) {
+          if (dream.includes(symbol.symbol)) {
+            generatedInterpretation += symbol.interpretation + ' ';
+          }
+        }
+      }
+      
+      // إذا لم نجد رموزاً مطابقة، نستخدم تفسيراً عشوائياً
+      if (!generatedInterpretation) {
+        const responses = [
+          "يشير هذا الحلم إلى تغييرات إيجابية في حياتك القادمة. الماء في المنام يدل على الحياة والخصوبة، وقد تمر بفترة من التجديد الروحي.",
+          "هذا الحلم يعكس مخاوفك الداخلية وقلقك تجاه المستقبل. حاول أن تتعامل مع هذه المخاوف بشكل واعٍ في حياتك اليومية.",
+          "الطيور في المنام تدل على الأخبار والرسائل. قد تتلقى قريباً خبراً ساراً أو فرصة جديدة في حياتك.",
+          "السفر في المنام يرمز إلى التغيير في مسار حياتك. قد تكون على وشك اتخاذ قرار مهم أو الانتقال إلى مرحلة جديدة.",
+          "الأشخاص الذين ظهروا في حلمك يمثلون جوانب من شخصيتك أو علاقاتك الحالية. فكر في صفاتهم وكيف تتعلق بحياتك."
+        ];
+        generatedInterpretation = responses[Math.floor(Math.random() * responses.length)];
+      }
+      
+      // حفظ الحلم والتفسير في قاعدة البيانات
+      const { error } = await supabase
+        .from('dreams')
+        .insert({
+          dream_text: dream,
+          interpretation: generatedInterpretation,
+          user_id: null, // سيتم استبدال هذا بمعرف المستخدم بعد تنفيذ المصادقة
+          tags: extractKeywords(dream)
+        });
+      
+      if (error) {
+        console.error("خطأ في حفظ الحلم:", error);
+        toast.error("حدث خطأ عند حفظ الحلم، يرجى المحاولة مرة أخرى");
+      } else {
+        setInterpretation(generatedInterpretation);
+        toast.success("تم حفظ الحلم بنجاح");
+      }
+    } catch (error) {
+      console.error("خطأ في تفسير الحلم:", error);
+      toast.error("حدث خطأ أثناء تفسير الحلم");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // استخراج كلمات مفتاحية من نص الحلم
+  const extractKeywords = (text: string): string[] => {
+    // قائمة بالكلمات المفتاحية المحتملة في الأحلام
+    const commonKeywords = [
+      'ماء', 'طيران', 'سقوط', 'موت', 'مطاردة', 'سفر',
+      'بيت', 'أسنان', 'فقدان', 'قطة', 'كلب', 'ثعبان',
+      'طفل', 'امتحان', 'تأخر', 'نجاح', 'فشل', 'زواج'
     ];
     
-    const randomResponse = responses[Math.floor(Math.random() * responses.length)];
-    setInterpretation(randomResponse);
-    setIsLoading(false);
+    return commonKeywords.filter(keyword => text.includes(keyword));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
