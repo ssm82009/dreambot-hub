@@ -1,14 +1,21 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { Moon, Sun, Menu, X } from "lucide-react";
+import { Moon, Sun, Menu, X, LayoutDashboard } from "lucide-react";
 import { useIsMobile } from '@/hooks/use-mobile';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
   const [isDarkMode, setIsDarkMode] = React.useState(false);
+  const [isAdmin, setIsAdmin] = React.useState(false);
   const isMobile = useIsMobile();
+
+  useEffect(() => {
+    // Check if admin is logged in
+    const adminStatus = localStorage.getItem('isAdminLoggedIn') === 'true';
+    setIsAdmin(adminStatus);
+  }, []);
 
   const toggleDarkMode = () => {
     const newMode = !isDarkMode;
@@ -46,6 +53,14 @@ const Navbar = () => {
               <Link to="/pricing" className="text-foreground/90 hover:text-primary px-3 py-2 font-medium">
                 الأسعار
               </Link>
+              
+              {/* Admin Dashboard Link - Only visible to admins */}
+              {isAdmin && (
+                <Link to="/admin" className="text-foreground/90 hover:text-primary px-3 py-2 font-medium flex items-center">
+                  <LayoutDashboard className="ml-2 h-4 w-4" />
+                  لوحة التحكم
+                </Link>
+              )}
 
               <Button variant="ghost" size="icon" onClick={toggleDarkMode} className="ml-2">
                 {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
@@ -89,6 +104,15 @@ const Navbar = () => {
             <Link to="/pricing" className="text-foreground/90 hover:text-primary px-3 py-2 font-medium" onClick={() => setIsMenuOpen(false)}>
               الأسعار
             </Link>
+            
+            {/* Admin Dashboard Link in Mobile Menu - Only visible to admins */}
+            {isAdmin && (
+              <Link to="/admin" className="text-foreground/90 hover:text-primary px-3 py-2 font-medium flex items-center" onClick={() => setIsMenuOpen(false)}>
+                <LayoutDashboard className="ml-2 h-4 w-4" />
+                لوحة التحكم
+              </Link>
+            )}
+            
             <div className="flex flex-col pt-4 space-y-3">
               <Link to="/login" onClick={() => setIsMenuOpen(false)}>
                 <Button variant="outline" className="w-full">تسجيل الدخول</Button>
