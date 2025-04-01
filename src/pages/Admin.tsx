@@ -3,12 +3,12 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
 import { 
@@ -23,6 +23,8 @@ import {
   Layers
 } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { useForm } from 'react-hook-form';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 
 const AdminSection = ({ 
   title, 
@@ -66,6 +68,69 @@ const AdminSection = ({
   );
 };
 
+// Define form types for each section
+type AiSettingsFormValues = {
+  provider: string;
+  apiKey: string;
+  model: string;
+};
+
+type InterpretationSettingsFormValues = {
+  maxInputWords: number;
+  minOutputWords: number;
+  maxOutputWords: number;
+  systemInstructions: string;
+};
+
+type PricingSettingsFormValues = {
+  freePlan: {
+    price: number;
+    interpretationsPerMonth: number;
+    features: string;
+  };
+  premiumPlan: {
+    price: number;
+    interpretationsPerMonth: number;
+    features: string;
+  };
+  proPlan: {
+    price: number;
+    interpretationsPerMonth: number;
+    features: string;
+  };
+};
+
+type PaymentSettingsFormValues = {
+  paylink: {
+    enabled: boolean;
+    apiKey: string;
+    secretKey: string;
+  };
+  paypal: {
+    enabled: boolean;
+    clientId: string;
+    secret: string;
+    sandbox: boolean;
+  };
+};
+
+type ThemeSettingsFormValues = {
+  primaryColor: string;
+  buttonColor: string;
+  textColor: string;
+  backgroundColor: string;
+  logoText: string;
+  logoFontSize: number;
+  headerColor: string;
+  footerColor: string;
+  footerText: string;
+  socialLinks: {
+    twitter: string;
+    facebook: string;
+    instagram: string;
+  };
+};
+
 const Admin = () => {
   const navigate = useNavigate();
   const [isAdmin, setIsAdmin] = useState(false);
@@ -80,6 +145,20 @@ const Admin = () => {
     pageManagement: false,
     themeSettings: false,
   });
+
+  // Initialize form methods for each section
+  const aiSettingsForm = useForm<AiSettingsFormValues>();
+  const interpretationSettingsForm = useForm<InterpretationSettingsFormValues>({
+    defaultValues: {
+      maxInputWords: 500,
+      minOutputWords: 300,
+      maxOutputWords: 1000,
+      systemInstructions: "أنت مفسر أحلام خبير. يجب أن تقدم تفسيرات دقيقة وشاملة استناداً إلى المراجع الإسلامية والعلمية."
+    }
+  });
+  const pricingSettingsForm = useForm<PricingSettingsFormValues>();
+  const paymentSettingsForm = useForm<PaymentSettingsFormValues>();
+  const themeSettingsForm = useForm<ThemeSettingsFormValues>();
 
   const toggleSection = (section: string) => {
     setActiveSections(prev => ({
@@ -179,50 +258,52 @@ const Admin = () => {
               isOpen={activeSections.aiSettings}
               onToggle={() => toggleSection('aiSettings')}
             >
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <FormLabel>مزود الخدمة</FormLabel>
-                  <div className="flex items-center space-x-4 rtl:space-x-reverse">
-                    <div className="flex items-center space-x-2 rtl:space-x-reverse">
-                      <Checkbox id="openai" />
-                      <label htmlFor="openai" className="text-sm">OpenAI</label>
-                    </div>
-                    <div className="flex items-center space-x-2 rtl:space-x-reverse">
-                      <Checkbox id="anthropic" />
-                      <label htmlFor="anthropic" className="text-sm">Anthropic</label>
-                    </div>
-                    <div className="flex items-center space-x-2 rtl:space-x-reverse">
-                      <Checkbox id="gemini" />
-                      <label htmlFor="gemini" className="text-sm">Gemini</label>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <FormLabel>مفتاح OpenAI API</FormLabel>
-                  <Input placeholder="sk-..." dir="ltr" />
-                </div>
-                
-                <div className="space-y-2">
-                  <FormLabel>نموذج OpenAI</FormLabel>
-                  <div className="flex items-center space-x-4 rtl:space-x-reverse">
-                    <div className="flex items-center space-x-2 rtl:space-x-reverse">
-                      <Checkbox id="gpt-4o" checked />
-                      <label htmlFor="gpt-4o" className="text-sm">GPT-4o</label>
-                    </div>
-                    <div className="flex items-center space-x-2 rtl:space-x-reverse">
-                      <Checkbox id="gpt-4" />
-                      <label htmlFor="gpt-4" className="text-sm">GPT-4</label>
-                    </div>
-                    <div className="flex items-center space-x-2 rtl:space-x-reverse">
-                      <Checkbox id="gpt-3.5" />
-                      <label htmlFor="gpt-3.5" className="text-sm">GPT-3.5</label>
+              <Form {...aiSettingsForm}>
+                <form onSubmit={aiSettingsForm.handleSubmit(console.log)} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>مزود الخدمة</Label>
+                    <div className="flex items-center space-x-4 rtl:space-x-reverse">
+                      <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                        <Checkbox id="openai" />
+                        <label htmlFor="openai" className="text-sm">OpenAI</label>
+                      </div>
+                      <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                        <Checkbox id="anthropic" />
+                        <label htmlFor="anthropic" className="text-sm">Anthropic</label>
+                      </div>
+                      <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                        <Checkbox id="gemini" />
+                        <label htmlFor="gemini" className="text-sm">Gemini</label>
+                      </div>
                     </div>
                   </div>
-                </div>
-                
-                <Button>حفظ الإعدادات</Button>
-              </div>
+                  
+                  <div className="space-y-2">
+                    <Label>مفتاح OpenAI API</Label>
+                    <Input placeholder="sk-..." dir="ltr" />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label>نموذج OpenAI</Label>
+                    <div className="flex items-center space-x-4 rtl:space-x-reverse">
+                      <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                        <Checkbox id="gpt-4o" defaultChecked />
+                        <label htmlFor="gpt-4o" className="text-sm">GPT-4o</label>
+                      </div>
+                      <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                        <Checkbox id="gpt-4" />
+                        <label htmlFor="gpt-4" className="text-sm">GPT-4</label>
+                      </div>
+                      <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                        <Checkbox id="gpt-3.5" />
+                        <label htmlFor="gpt-3.5" className="text-sm">GPT-3.5</label>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <Button type="submit">حفظ الإعدادات</Button>
+                </form>
+              </Form>
             </AdminSection>
             
             {/* 2. Interpretation Settings */}
@@ -233,45 +314,60 @@ const Admin = () => {
               isOpen={activeSections.interpretationSettings}
               onToggle={() => toggleSection('interpretationSettings')}
             >
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <FormLabel>الحد الأقصى لعدد كلمات المدخلات</FormLabel>
-                  <Input type="number" defaultValue="500" />
-                  <FormDescription>
-                    الحد الأقصى لعدد الكلمات المسموح بها في وصف الحلم
-                  </FormDescription>
-                </div>
-                
-                <div className="space-y-2">
-                  <FormLabel>الحد الأدنى لعدد كلمات المخرجات</FormLabel>
-                  <Input type="number" defaultValue="300" />
-                  <FormDescription>
-                    الحد الأدنى لعدد الكلمات في تفسير الحلم
-                  </FormDescription>
-                </div>
-                
-                <div className="space-y-2">
-                  <FormLabel>الحد الأقصى لعدد كلمات المخرجات</FormLabel>
-                  <Input type="number" defaultValue="1000" />
-                  <FormDescription>
-                    الحد الأقصى لعدد الكلمات في تفسير الحلم
-                  </FormDescription>
-                </div>
-                
-                <div className="space-y-2">
-                  <FormLabel>توجيهات النظام</FormLabel>
-                  <Textarea 
-                    placeholder="أدخل توجيهات النظام هنا..." 
-                    defaultValue="أنت مفسر أحلام خبير. يجب أن تقدم تفسيرات دقيقة وشاملة استناداً إلى المراجع الإسلامية والعلمية."
-                    rows={4}
-                  />
-                  <FormDescription>
-                    توجيهات النظام التي ستُرسل إلى نموذج الذكاء الاصطناعي
-                  </FormDescription>
-                </div>
-                
-                <Button>حفظ الإعدادات</Button>
-              </div>
+              <Form {...interpretationSettingsForm}>
+                <form onSubmit={interpretationSettingsForm.handleSubmit(console.log)} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>الحد الأقصى لعدد كلمات المدخلات</Label>
+                    <Input 
+                      type="number" 
+                      defaultValue="500" 
+                      {...interpretationSettingsForm.register("maxInputWords")} 
+                    />
+                    <p className="text-sm text-muted-foreground">
+                      الحد الأقصى لعدد الكلمات المسموح بها في وصف الحلم
+                    </p>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label>الحد الأدنى لعدد كلمات المخرجات</Label>
+                    <Input 
+                      type="number" 
+                      defaultValue="300" 
+                      {...interpretationSettingsForm.register("minOutputWords")} 
+                    />
+                    <p className="text-sm text-muted-foreground">
+                      الحد الأدنى لعدد الكلمات في تفسير الحلم
+                    </p>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label>الحد الأقصى لعدد كلمات المخرجات</Label>
+                    <Input 
+                      type="number" 
+                      defaultValue="1000" 
+                      {...interpretationSettingsForm.register("maxOutputWords")} 
+                    />
+                    <p className="text-sm text-muted-foreground">
+                      الحد الأقصى لعدد الكلمات في تفسير الحلم
+                    </p>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label>توجيهات النظام</Label>
+                    <Textarea 
+                      placeholder="أدخل توجيهات النظام هنا..." 
+                      defaultValue="أنت مفسر أحلام خبير. يجب أن تقدم تفسيرات دقيقة وشاملة استناداً إلى المراجع الإسلامية والعلمية."
+                      rows={4}
+                      {...interpretationSettingsForm.register("systemInstructions")}
+                    />
+                    <p className="text-sm text-muted-foreground">
+                      توجيهات النظام التي ستُرسل إلى نموذج الذكاء الاصطناعي
+                    </p>
+                  </div>
+                  
+                  <Button type="submit">حفظ الإعدادات</Button>
+                </form>
+              </Form>
             </AdminSection>
             
             {/* 3. Pricing Plans Settings */}
@@ -282,77 +378,79 @@ const Admin = () => {
               isOpen={activeSections.pricingSettings}
               onToggle={() => toggleSection('pricingSettings')}
             >
-              <div className="space-y-6">
-                <div className="p-4 border rounded-md">
-                  <h3 className="text-lg font-semibold mb-3">الخطة المجانية</h3>
-                  <div className="space-y-3">
-                    <div className="space-y-2">
-                      <FormLabel>السعر (ريال)</FormLabel>
-                      <Input type="number" defaultValue="0" readOnly />
-                    </div>
-                    <div className="space-y-2">
-                      <FormLabel>عدد التفسيرات الشهرية</FormLabel>
-                      <Input type="number" defaultValue="3" />
-                    </div>
-                    <div className="space-y-2">
-                      <FormLabel>المميزات</FormLabel>
-                      <Textarea 
-                        placeholder="أدخل المميزات هنا..."
-                        defaultValue="تفسير أساسي للأحلام&#10;دعم عبر البريد الإلكتروني"
-                        rows={3}
-                      />
-                      <FormDescription>أدخل كل ميزة في سطر منفصل</FormDescription>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="p-4 border rounded-md">
-                  <h3 className="text-lg font-semibold mb-3">الخطة المميزة</h3>
-                  <div className="space-y-3">
-                    <div className="space-y-2">
-                      <FormLabel>السعر (ريال)</FormLabel>
-                      <Input type="number" defaultValue="49" />
-                    </div>
-                    <div className="space-y-2">
-                      <FormLabel>عدد التفسيرات الشهرية</FormLabel>
-                      <Input type="number" defaultValue="-1" />
-                      <FormDescription>استخدم -1 لعدد غير محدود</FormDescription>
-                    </div>
-                    <div className="space-y-2">
-                      <FormLabel>المميزات</FormLabel>
-                      <Textarea 
-                        placeholder="أدخل المميزات هنا..."
-                        defaultValue="تفسيرات أحلام غير محدودة&#10;تفسيرات مفصلة ومعمقة&#10;أرشيف لتفسيرات أحلامك السابقة&#10;نصائح وتوجيهات شخصية&#10;دعم فني على مدار الساعة"
-                        rows={5}
-                      />
+              <Form {...pricingSettingsForm}>
+                <form onSubmit={pricingSettingsForm.handleSubmit(console.log)} className="space-y-6">
+                  <div className="p-4 border rounded-md">
+                    <h3 className="text-lg font-semibold mb-3">الخطة المجانية</h3>
+                    <div className="space-y-3">
+                      <div className="space-y-2">
+                        <Label>السعر (ريال)</Label>
+                        <Input type="number" defaultValue="0" readOnly />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>عدد التفسيرات الشهرية</Label>
+                        <Input type="number" defaultValue="3" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>المميزات</Label>
+                        <Textarea 
+                          placeholder="أدخل المميزات هنا..."
+                          defaultValue="تفسير أساسي للأحلام&#10;دعم عبر البريد الإلكتروني"
+                          rows={3}
+                        />
+                        <p className="text-sm text-muted-foreground">أدخل كل ميزة في سطر منفصل</p>
+                      </div>
                     </div>
                   </div>
-                </div>
-                
-                <div className="p-4 border rounded-md">
-                  <h3 className="text-lg font-semibold mb-3">الخطة الاحترافية</h3>
-                  <div className="space-y-3">
-                    <div className="space-y-2">
-                      <FormLabel>السعر (ريال)</FormLabel>
-                      <Input type="number" defaultValue="99" />
-                    </div>
-                    <div className="space-y-2">
-                      <FormLabel>عدد التفسيرات الشهرية</FormLabel>
-                      <Input type="number" defaultValue="-1" />
-                    </div>
-                    <div className="space-y-2">
-                      <FormLabel>المميزات</FormLabel>
-                      <Textarea 
-                        placeholder="أدخل المميزات هنا..."
-                        defaultValue="كل مميزات الخطة المميزة&#10;استشارات شخصية مع خبراء تفسير الأحلام&#10;تقارير تحليلية شهرية&#10;إمكانية إضافة 5 حسابات فرعية&#10;واجهة برمجة التطبيقات API"
-                        rows={5}
-                      />
+                  
+                  <div className="p-4 border rounded-md">
+                    <h3 className="text-lg font-semibold mb-3">الخطة المميزة</h3>
+                    <div className="space-y-3">
+                      <div className="space-y-2">
+                        <Label>السعر (ريال)</Label>
+                        <Input type="number" defaultValue="49" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>عدد التفسيرات الشهرية</Label>
+                        <Input type="number" defaultValue="-1" />
+                        <p className="text-sm text-muted-foreground">استخدم -1 لعدد غير محدود</p>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>المميزات</Label>
+                        <Textarea 
+                          placeholder="أدخل المميزات هنا..."
+                          defaultValue="تفسيرات أحلام غير محدودة&#10;تفسيرات مفصلة ومعمقة&#10;أرشيف لتفسيرات أحلامك السابقة&#10;نصائح وتوجيهات شخصية&#10;دعم فني على مدار الساعة"
+                          rows={5}
+                        />
+                      </div>
                     </div>
                   </div>
-                </div>
-                
-                <Button>حفظ الإعدادات</Button>
-              </div>
+                  
+                  <div className="p-4 border rounded-md">
+                    <h3 className="text-lg font-semibold mb-3">الخطة الاحترافية</h3>
+                    <div className="space-y-3">
+                      <div className="space-y-2">
+                        <Label>السعر (ريال)</Label>
+                        <Input type="number" defaultValue="99" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>عدد التفسيرات الشهرية</Label>
+                        <Input type="number" defaultValue="-1" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>المميزات</Label>
+                        <Textarea 
+                          placeholder="أدخل المميزات هنا..."
+                          defaultValue="كل مميزات الخطة المميزة&#10;استشارات شخصية مع خبراء تفسير الأحلام&#10;تقارير تحليلية شهرية&#10;إمكانية إضافة 5 حسابات فرعية&#10;واجهة برمجة التطبيقات API"
+                          rows={5}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <Button type="submit">حفظ الإعدادات</Button>
+                </form>
+              </Form>
             </AdminSection>
             
             {/* 4. Payment Gateways Settings */}
@@ -363,58 +461,60 @@ const Admin = () => {
               isOpen={activeSections.paymentSettings}
               onToggle={() => toggleSection('paymentSettings')}
             >
-              <div className="space-y-6">
-                <div className="p-4 border rounded-md">
-                  <h3 className="text-lg font-semibold mb-3">PayLink.sa</h3>
-                  <div className="space-y-3">
-                    <div className="space-y-2">
-                      <FormLabel>تفعيل PayLink.sa</FormLabel>
-                      <div className="flex items-center space-x-2 rtl:space-x-reverse">
-                        <Checkbox id="enable-paylink" checked />
-                        <label htmlFor="enable-paylink" className="text-sm">تفعيل</label>
+              <Form {...paymentSettingsForm}>
+                <form onSubmit={paymentSettingsForm.handleSubmit(console.log)} className="space-y-6">
+                  <div className="p-4 border rounded-md">
+                    <h3 className="text-lg font-semibold mb-3">PayLink.sa</h3>
+                    <div className="space-y-3">
+                      <div className="space-y-2">
+                        <Label>تفعيل PayLink.sa</Label>
+                        <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                          <Checkbox id="enable-paylink" defaultChecked />
+                          <label htmlFor="enable-paylink" className="text-sm">تفعيل</label>
+                        </div>
                       </div>
-                    </div>
-                    <div className="space-y-2">
-                      <FormLabel>مفتاح API</FormLabel>
-                      <Input placeholder="أدخل مفتاح API لـ PayLink.sa" dir="ltr" />
-                    </div>
-                    <div className="space-y-2">
-                      <FormLabel>المفتاح السري</FormLabel>
-                      <Input placeholder="أدخل المفتاح السري لـ PayLink.sa" dir="ltr" type="password" />
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="p-4 border rounded-md">
-                  <h3 className="text-lg font-semibold mb-3">PayPal</h3>
-                  <div className="space-y-3">
-                    <div className="space-y-2">
-                      <FormLabel>تفعيل PayPal</FormLabel>
-                      <div className="flex items-center space-x-2 rtl:space-x-reverse">
-                        <Checkbox id="enable-paypal" />
-                        <label htmlFor="enable-paypal" className="text-sm">تفعيل</label>
+                      <div className="space-y-2">
+                        <Label>مفتاح API</Label>
+                        <Input placeholder="أدخل مفتاح API لـ PayLink.sa" dir="ltr" />
                       </div>
-                    </div>
-                    <div className="space-y-2">
-                      <FormLabel>معرف العميل</FormLabel>
-                      <Input placeholder="أدخل معرف العميل لـ PayPal" dir="ltr" />
-                    </div>
-                    <div className="space-y-2">
-                      <FormLabel>السر</FormLabel>
-                      <Input placeholder="أدخل السر لـ PayPal" dir="ltr" type="password" />
-                    </div>
-                    <div className="space-y-2">
-                      <FormLabel>وضع الاختبار</FormLabel>
-                      <div className="flex items-center space-x-2 rtl:space-x-reverse">
-                        <Checkbox id="paypal-sandbox" checked />
-                        <label htmlFor="paypal-sandbox" className="text-sm">تفعيل وضع الاختبار</label>
+                      <div className="space-y-2">
+                        <Label>المفتاح السري</Label>
+                        <Input placeholder="أدخل المفتاح السري لـ PayLink.sa" dir="ltr" type="password" />
                       </div>
                     </div>
                   </div>
-                </div>
-                
-                <Button>حفظ الإعدادات</Button>
-              </div>
+                  
+                  <div className="p-4 border rounded-md">
+                    <h3 className="text-lg font-semibold mb-3">PayPal</h3>
+                    <div className="space-y-3">
+                      <div className="space-y-2">
+                        <Label>تفعيل PayPal</Label>
+                        <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                          <Checkbox id="enable-paypal" />
+                          <label htmlFor="enable-paypal" className="text-sm">تفعيل</label>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>معرف العميل</Label>
+                        <Input placeholder="أدخل معرف العميل لـ PayPal" dir="ltr" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>السر</Label>
+                        <Input placeholder="أدخل السر لـ PayPal" dir="ltr" type="password" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>وضع الاختبار</Label>
+                        <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                          <Checkbox id="paypal-sandbox" defaultChecked />
+                          <label htmlFor="paypal-sandbox" className="text-sm">تفعيل وضع الاختبار</label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <Button type="submit">حفظ الإعدادات</Button>
+                </form>
+              </Form>
             </AdminSection>
             
             {/* 5. User Management */}
@@ -472,7 +572,7 @@ const Admin = () => {
                     <div className="p-3 border rounded-md">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-2 rtl:space-x-reverse">
-                          <FormLabel className="font-semibold">مشرف</FormLabel>
+                          <span className="font-semibold">مشرف</span>
                         </div>
                         <Button variant="outline" size="sm">تعديل</Button>
                       </div>
@@ -484,7 +584,7 @@ const Admin = () => {
                     <div className="p-3 border rounded-md">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-2 rtl:space-x-reverse">
-                          <FormLabel className="font-semibold">مفسر</FormLabel>
+                          <span className="font-semibold">مفسر</span>
                         </div>
                         <Button variant="outline" size="sm">تعديل</Button>
                       </div>
@@ -496,7 +596,7 @@ const Admin = () => {
                     <div className="p-3 border rounded-md">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-2 rtl:space-x-reverse">
-                          <FormLabel className="font-semibold">عضو مميز</FormLabel>
+                          <span className="font-semibold">عضو مميز</span>
                         </div>
                         <Button variant="outline" size="sm">تعديل</Button>
                       </div>
@@ -508,7 +608,7 @@ const Admin = () => {
                     <div className="p-3 border rounded-md">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-2 rtl:space-x-reverse">
-                          <FormLabel className="font-semibold">عضو مجاني</FormLabel>
+                          <span className="font-semibold">عضو مجاني</span>
                         </div>
                         <Button variant="outline" size="sm">تعديل</Button>
                       </div>
@@ -609,115 +709,117 @@ const Admin = () => {
               isOpen={activeSections.themeSettings}
               onToggle={() => toggleSection('themeSettings')}
             >
-              <div className="space-y-6">
-                <div className="p-4 border rounded-md">
-                  <h3 className="text-lg font-semibold mb-3">الألوان الرئيسية</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <FormLabel>اللون الرئيسي</FormLabel>
-                      <div className="flex items-center">
-                        <Input type="color" defaultValue="#9b87f5" className="w-12 h-10 p-1" />
-                        <Input defaultValue="#9b87f5" className="flex-1 mr-2" dir="ltr" />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <FormLabel>لون الأزرار</FormLabel>
-                      <div className="flex items-center">
-                        <Input type="color" defaultValue="#9b87f5" className="w-12 h-10 p-1" />
-                        <Input defaultValue="#9b87f5" className="flex-1 mr-2" dir="ltr" />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <FormLabel>لون النص</FormLabel>
-                      <div className="flex items-center">
-                        <Input type="color" defaultValue="#1A1F2C" className="w-12 h-10 p-1" />
-                        <Input defaultValue="#1A1F2C" className="flex-1 mr-2" dir="ltr" />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <FormLabel>لون الخلفية</FormLabel>
-                      <div className="flex items-center">
-                        <Input type="color" defaultValue="#F9F9F9" className="w-12 h-10 p-1" />
-                        <Input defaultValue="#F9F9F9" className="flex-1 mr-2" dir="ltr" />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="p-4 border rounded-md">
-                  <h3 className="text-lg font-semibold mb-3">الشعار</h3>
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <FormLabel>صورة الشعار</FormLabel>
-                      <div className="flex items-center justify-center p-6 border-2 border-dashed rounded-md">
-                        <div className="text-center">
-                          <div className="mt-4 flex text-sm leading-6 text-muted-foreground">
-                            <label htmlFor="logo-upload" className="relative cursor-pointer bg-background rounded-md font-semibold text-primary focus-within:outline-none focus-within:ring-2 focus-within:ring-primary">
-                              <span>تحميل ملف</span>
-                              <input id="logo-upload" name="logo-upload" type="file" className="sr-only" />
-                            </label>
-                            <p className="pr-1">أو اسحب وأفلت</p>
-                          </div>
-                          <p className="text-xs leading-5 text-muted-foreground">PNG, JPG, SVG حتى 2MB</p>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <FormLabel>نص الشعار</FormLabel>
-                      <Input placeholder="تفسير الأحلام" defaultValue="تفسير الأحلام" />
-                    </div>
-                    <div className="space-y-2">
-                      <FormLabel>حجم خط الشعار</FormLabel>
-                      <Input type="number" defaultValue="24" />
-                      <FormDescription>الحجم بوحدة البكسل</FormDescription>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="p-4 border rounded-md">
-                  <h3 className="text-lg font-semibold mb-3">الهيدر والفوتر</h3>
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <FormLabel>لون خلفية الهيدر</FormLabel>
-                      <div className="flex items-center">
-                        <Input type="color" defaultValue="#FFFFFF" className="w-12 h-10 p-1" />
-                        <Input defaultValue="#FFFFFF" className="flex-1 mr-2" dir="ltr" />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <FormLabel>لون خلفية الفوتر</FormLabel>
-                      <div className="flex items-center">
-                        <Input type="color" defaultValue="#1A1F2C" className="w-12 h-10 p-1" />
-                        <Input defaultValue="#1A1F2C" className="flex-1 mr-2" dir="ltr" />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <FormLabel>نص الفوتر</FormLabel>
-                      <Input placeholder="جميع الحقوق محفوظة ©" defaultValue="جميع الحقوق محفوظة © 2024 تفسير الأحلام" />
-                    </div>
-                    <div className="space-y-2">
-                      <FormLabel>روابط التواصل الاجتماعي</FormLabel>
+              <Form {...themeSettingsForm}>
+                <form onSubmit={themeSettingsForm.handleSubmit(console.log)} className="space-y-6">
+                  <div className="p-4 border rounded-md">
+                    <h3 className="text-lg font-semibold mb-3">الألوان الرئيسية</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
+                        <Label>اللون الرئيسي</Label>
                         <div className="flex items-center">
-                          <FormLabel className="min-w-24">تويتر</FormLabel>
-                          <Input placeholder="https://twitter.com/..." dir="ltr" />
+                          <Input type="color" defaultValue="#9b87f5" className="w-12 h-10 p-1" />
+                          <Input defaultValue="#9b87f5" className="flex-1 mr-2" dir="ltr" />
                         </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>لون الأزرار</Label>
                         <div className="flex items-center">
-                          <FormLabel className="min-w-24">فيسبوك</FormLabel>
-                          <Input placeholder="https://facebook.com/..." dir="ltr" />
+                          <Input type="color" defaultValue="#9b87f5" className="w-12 h-10 p-1" />
+                          <Input defaultValue="#9b87f5" className="flex-1 mr-2" dir="ltr" />
                         </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>لون النص</Label>
                         <div className="flex items-center">
-                          <FormLabel className="min-w-24">انستغرام</FormLabel>
-                          <Input placeholder="https://instagram.com/..." dir="ltr" />
+                          <Input type="color" defaultValue="#1A1F2C" className="w-12 h-10 p-1" />
+                          <Input defaultValue="#1A1F2C" className="flex-1 mr-2" dir="ltr" />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>لون الخلفية</Label>
+                        <div className="flex items-center">
+                          <Input type="color" defaultValue="#F9F9F9" className="w-12 h-10 p-1" />
+                          <Input defaultValue="#F9F9F9" className="flex-1 mr-2" dir="ltr" />
                         </div>
                       </div>
                     </div>
                   </div>
-                </div>
-                
-                <Button>حفظ الإعدادات</Button>
-              </div>
+                  
+                  <div className="p-4 border rounded-md">
+                    <h3 className="text-lg font-semibold mb-3">الشعار</h3>
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label>صورة الشعار</Label>
+                        <div className="flex items-center justify-center p-6 border-2 border-dashed rounded-md">
+                          <div className="text-center">
+                            <div className="mt-4 flex text-sm leading-6 text-muted-foreground">
+                              <label htmlFor="logo-upload" className="relative cursor-pointer bg-background rounded-md font-semibold text-primary focus-within:outline-none focus-within:ring-2 focus-within:ring-primary">
+                                <span>تحميل ملف</span>
+                                <input id="logo-upload" name="logo-upload" type="file" className="sr-only" />
+                              </label>
+                              <p className="pr-1">أو اسحب وأفلت</p>
+                            </div>
+                            <p className="text-xs leading-5 text-muted-foreground">PNG, JPG, SVG حتى 2MB</p>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label>نص الشعار</Label>
+                        <Input placeholder="تفسير الأحلام" defaultValue="تفسير الأحلام" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>حجم خط الشعار</Label>
+                        <Input type="number" defaultValue="24" />
+                        <p className="text-sm text-muted-foreground">الحجم بوحدة البكسل</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="p-4 border rounded-md">
+                    <h3 className="text-lg font-semibold mb-3">الهيدر والفوتر</h3>
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label>لون خلفية الهيدر</Label>
+                        <div className="flex items-center">
+                          <Input type="color" defaultValue="#FFFFFF" className="w-12 h-10 p-1" />
+                          <Input defaultValue="#FFFFFF" className="flex-1 mr-2" dir="ltr" />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>لون خلفية الفوتر</Label>
+                        <div className="flex items-center">
+                          <Input type="color" defaultValue="#1A1F2C" className="w-12 h-10 p-1" />
+                          <Input defaultValue="#1A1F2C" className="flex-1 mr-2" dir="ltr" />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>نص الفوتر</Label>
+                        <Input placeholder="جميع الحقوق محفوظة ©" defaultValue="جميع الحقوق محفوظة © 2024 تفسير الأحلام" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>روابط التواصل الاجتماعي</Label>
+                        <div className="space-y-2">
+                          <div className="flex items-center">
+                            <Label className="min-w-24">تويتر</Label>
+                            <Input placeholder="https://twitter.com/..." dir="ltr" />
+                          </div>
+                          <div className="flex items-center">
+                            <Label className="min-w-24">فيسبوك</Label>
+                            <Input placeholder="https://facebook.com/..." dir="ltr" />
+                          </div>
+                          <div className="flex items-center">
+                            <Label className="min-w-24">انستغرام</Label>
+                            <Input placeholder="https://instagram.com/..." dir="ltr" />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <Button type="submit">حفظ الإعدادات</Button>
+                </form>
+              </Form>
             </AdminSection>
           </div>
         </div>
