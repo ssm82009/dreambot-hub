@@ -47,7 +47,7 @@ const Navbar = () => {
   return (
     <nav className="bg-background/80 backdrop-blur-md fixed w-full top-0 z-50 shadow-sm">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16 items-center">
+        <div className="flex flex-row-reverse justify-between h-16 items-center">
           <div className="flex items-center">
             <Link to="/" className="flex-shrink-0 flex items-center">
               <span className="text-2xl font-bold text-primary">تفسير<span className="text-accent">الأحلام</span></span>
@@ -56,7 +56,7 @@ const Navbar = () => {
 
           {/* Desktop Menu */}
           {!isMobile && (
-            <div className="hidden md:flex items-center space-x-6 rtl:space-x-reverse">
+            <div className="hidden md:flex items-center space-x-6 flex-row-reverse rtl:space-x-reverse">
               <Link to="/" className="text-foreground/90 hover:text-primary px-3 py-2 font-medium">
                 الرئيسية
               </Link>
@@ -70,16 +70,16 @@ const Navbar = () => {
               {/* Admin Dashboard Link - Only visible to admins */}
               {isAdmin && (
                 <Link to="/admin" className="text-foreground/90 hover:text-primary px-3 py-2 font-medium flex items-center">
-                  <LayoutDashboard className="ml-2 h-4 w-4" />
+                  <LayoutDashboard className="mr-2 h-4 w-4" />
                   لوحة التحكم
                 </Link>
               )}
 
-              <Button variant="ghost" size="icon" onClick={toggleDarkMode} className="ml-2">
+              <Button variant="ghost" size="icon" onClick={toggleDarkMode} className="mr-2">
                 {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
               </Button>
 
-              <div className="flex items-center space-x-3 rtl:space-x-reverse">
+              <div className="flex items-center space-x-3 flex-row-reverse rtl:space-x-reverse">
                 {isLoggedIn ? (
                   <Button variant="ghost" onClick={handleLogout}>تسجيل الخروج</Button>
                 ) : (
@@ -99,7 +99,7 @@ const Navbar = () => {
           {/* Mobile Menu Button */}
           {isMobile && (
             <div className="flex items-center">
-              <Button variant="ghost" size="icon" onClick={toggleDarkMode} className="mr-2">
+              <Button variant="ghost" size="icon" onClick={toggleDarkMode} className="ml-2">
                 {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
               </Button>
               <Button variant="ghost" size="icon" onClick={toggleMenu}>
@@ -113,7 +113,7 @@ const Navbar = () => {
       {/* Mobile Menu */}
       {isMobile && isMenuOpen && (
         <div className="md:hidden bg-background/95 backdrop-blur-md shadow-lg p-4">
-          <div className="flex flex-col space-y-3 rtl">
+          <div className="flex flex-col space-y-3 text-right">
             <Link to="/" className="text-foreground/90 hover:text-primary px-3 py-2 font-medium" onClick={() => setIsMenuOpen(false)}>
               الرئيسية
             </Link>
@@ -126,7 +126,7 @@ const Navbar = () => {
             
             {/* Admin Dashboard Link in Mobile Menu - Only visible to admins */}
             {isAdmin && (
-              <Link to="/admin" className="text-foreground/90 hover:text-primary px-3 py-2 font-medium flex items-center" onClick={() => setIsMenuOpen(false)}>
+              <Link to="/admin" className="text-foreground/90 hover:text-primary px-3 py-2 font-medium flex items-center justify-end" onClick={() => setIsMenuOpen(false)}>
                 <LayoutDashboard className="ml-2 h-4 w-4" />
                 لوحة التحكم
               </Link>
