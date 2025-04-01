@@ -9,11 +9,16 @@ const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
   const [isDarkMode, setIsDarkMode] = React.useState(false);
   const [isAdmin, setIsAdmin] = React.useState(false);
+  const [isLoggedIn, setIsLoggedIn] = React.useState(false);
   const isMobile = useIsMobile();
 
   useEffect(() => {
-    // Check if admin is logged in
+    // Check if user is logged in
+    const loginStatus = localStorage.getItem('isLoggedIn') === 'true' || 
+                        localStorage.getItem('isAdminLoggedIn') === 'true';
     const adminStatus = localStorage.getItem('isAdminLoggedIn') === 'true';
+    
+    setIsLoggedIn(loginStatus);
     setIsAdmin(adminStatus);
   }, []);
 
@@ -29,6 +34,14 @@ const Navbar = () => {
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('isAdminLoggedIn');
+    localStorage.removeItem('userEmail');
+    // Refresh the page to update state
+    window.location.reload();
   };
 
   return (
@@ -67,12 +80,18 @@ const Navbar = () => {
               </Button>
 
               <div className="flex items-center space-x-3 rtl:space-x-reverse">
-                <Link to="/login">
-                  <Button variant="ghost">تسجيل الدخول</Button>
-                </Link>
-                <Link to="/register">
-                  <Button>إنشاء حساب</Button>
-                </Link>
+                {isLoggedIn ? (
+                  <Button variant="ghost" onClick={handleLogout}>تسجيل الخروج</Button>
+                ) : (
+                  <>
+                    <Link to="/login">
+                      <Button variant="ghost">تسجيل الدخول</Button>
+                    </Link>
+                    <Link to="/register">
+                      <Button>إنشاء حساب</Button>
+                    </Link>
+                  </>
+                )}
               </div>
             </div>
           )}
@@ -114,12 +133,23 @@ const Navbar = () => {
             )}
             
             <div className="flex flex-col pt-4 space-y-3">
-              <Link to="/login" onClick={() => setIsMenuOpen(false)}>
-                <Button variant="outline" className="w-full">تسجيل الدخول</Button>
-              </Link>
-              <Link to="/register" onClick={() => setIsMenuOpen(false)}>
-                <Button className="w-full">إنشاء حساب</Button>
-              </Link>
+              {isLoggedIn ? (
+                <Button variant="outline" className="w-full" onClick={() => {
+                  handleLogout();
+                  setIsMenuOpen(false);
+                }}>
+                  تسجيل الخروج
+                </Button>
+              ) : (
+                <>
+                  <Link to="/login" onClick={() => setIsMenuOpen(false)}>
+                    <Button variant="outline" className="w-full">تسجيل الدخول</Button>
+                  </Link>
+                  <Link to="/register" onClick={() => setIsMenuOpen(false)}>
+                    <Button className="w-full">إنشاء حساب</Button>
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>
