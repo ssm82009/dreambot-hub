@@ -1,18 +1,47 @@
 
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { toast } from "sonner";
 
 const Login = () => {
+  const navigate = useNavigate();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Admin credentials
+  const ADMIN_EMAIL = '56eeer@gmail.com';
+  const ADMIN_PASSWORD = 'S_1405salz';
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real app, this would authenticate the user
-    console.log('Login attempt');
+    setIsLoading(true);
+    
+    // Check for admin login
+    if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
+      // Simulate API request delay
+      setTimeout(() => {
+        toast.success("تم تسجيل الدخول بنجاح كمشرف");
+        // Store admin login state
+        localStorage.setItem('isAdminLoggedIn', 'true');
+        localStorage.setItem('userEmail', email);
+        // Redirect to admin panel (will be created later)
+        navigate('/');
+        setIsLoading(false);
+      }, 1000);
+    } else {
+      // Handle regular user login (this would connect to a real auth system in production)
+      setTimeout(() => {
+        toast.error("فشل تسجيل الدخول، الرجاء التحقق من البيانات المدخلة");
+        setIsLoading(false);
+      }, 1000);
+    }
   };
 
   return (
@@ -30,7 +59,14 @@ const Login = () => {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email">البريد الإلكتروني</Label>
-                <Input id="email" type="email" placeholder="أدخل بريدك الإلكتروني" required />
+                <Input 
+                  id="email" 
+                  type="email" 
+                  placeholder="أدخل بريدك الإلكتروني" 
+                  required 
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
               </div>
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
@@ -39,10 +75,17 @@ const Login = () => {
                     نسيت كلمة المرور؟
                   </Link>
                 </div>
-                <Input id="password" type="password" placeholder="أدخل كلمة المرور" required />
+                <Input 
+                  id="password" 
+                  type="password" 
+                  placeholder="أدخل كلمة المرور" 
+                  required 
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
               </div>
-              <Button type="submit" className="w-full">
-                تسجيل الدخول
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? 'جاري تسجيل الدخول...' : 'تسجيل الدخول'}
               </Button>
             </form>
             
