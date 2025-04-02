@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useAdminCheck } from '@/hooks/useAdminCheck';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -20,6 +21,9 @@ const Register = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
+  
+  // Check if the email is a designated admin email
+  const isAdminEmail = useAdminCheck(email);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,15 +68,20 @@ const Register = () => {
             id: data.user.id,
             email: email,
             full_name: `${firstName} ${lastName}`,
-            role: 'user'
+            role: isAdminEmail ? 'admin' : 'user' // Set role as admin if it's an admin email
           });
           
         if (insertError) {
           console.error('خطأ في إضافة بيانات المستخدم:', insertError);
         }
+        
+        // Log admin creation
+        if (isAdminEmail) {
+          console.log('تم إنشاء حساب مشرف جديد:', email);
+        }
       }
       
-      toast.success("تم إنشاء الحساب بنجاح");
+      toast.success(isAdminEmail ? "تم إنشاء حساب المشرف بنجاح" : "تم إنشاء الحساب بنجاح");
       navigate('/login');
     } catch (error: any) {
       console.error('خطأ في التسجيل:', error.message);

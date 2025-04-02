@@ -44,6 +44,7 @@ const Login = () => {
         console.log('User data after login:', userData);
         
         if (userData && userData.role === 'admin') {
+          console.log('تم تسجيل دخول مشرف:', email);
           localStorage.setItem('isAdminLoggedIn', 'true');
         } else {
           localStorage.setItem('isAdminLoggedIn', 'false');
