@@ -1,13 +1,37 @@
 
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Check } from 'lucide-react';
+import { toast } from "sonner";
 
 const Pricing = () => {
+  const navigate = useNavigate();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  
+  useEffect(() => {
+    // التحقق من حالة تسجيل الدخول عند تحميل الصفحة
+    const loginStatus = localStorage.getItem('isLoggedIn') === 'true' || 
+                        localStorage.getItem('isAdminLoggedIn') === 'true';
+    setIsLoggedIn(loginStatus);
+  }, []);
+
+  const handleSubscription = (plan: string) => {
+    if (!isLoggedIn) {
+      // إذا لم يكن المستخدم مسجل الدخول، توجيهه إلى صفحة التسجيل
+      navigate('/register');
+    } else {
+      // إذا كان المستخدم مسجل الدخول، توجيهه مباشرة إلى صفحة الدفع (يمكن تنفيذها لاحقاً)
+      // مؤقتاً سنعرض رسالة توست
+      toast.info(`سيتم توجيهك إلى صفحة الدفع للاشتراك في الباقة ${plan}`);
+      // يمكن تنفيذ الانتقال إلى صفحة الدفع لاحقًا عندما تكون جاهزة
+      // navigate('/payment', { state: { plan } });
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -46,9 +70,13 @@ const Pricing = () => {
                 </div>
               </CardContent>
               <CardFooter>
-                <Link to="/register" className="w-full">
-                  <Button variant="outline" className="w-full">ابدأ مجاناً</Button>
-                </Link>
+                <Button 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={() => handleSubscription('المجاني')}
+                >
+                  ابدأ مجاناً
+                </Button>
               </CardFooter>
             </Card>
             
@@ -89,9 +117,12 @@ const Pricing = () => {
                 </div>
               </CardContent>
               <CardFooter>
-                <Link to="/register" className="w-full">
-                  <Button className="w-full">اشترك الآن</Button>
-                </Link>
+                <Button 
+                  className="w-full"
+                  onClick={() => handleSubscription('المميز')}
+                >
+                  اشترك الآن
+                </Button>
               </CardFooter>
             </Card>
             
@@ -129,9 +160,13 @@ const Pricing = () => {
                 </div>
               </CardContent>
               <CardFooter>
-                <Link to="/register" className="w-full">
-                  <Button variant="outline" className="w-full">اشترك الآن</Button>
-                </Link>
+                <Button 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={() => handleSubscription('الاحترافي')}
+                >
+                  اشترك الآن
+                </Button>
               </CardFooter>
             </Card>
           </div>
