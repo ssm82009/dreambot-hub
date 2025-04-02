@@ -7,7 +7,9 @@ import { User } from '@/types/database';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { Badge } from '@/components/ui/badge';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Calendar, CreditCard } from 'lucide-react';
+import { format } from 'date-fns';
+import { ar } from 'date-fns/locale';
 
 type UserManagementProps = {
   users: User[];
@@ -75,8 +77,39 @@ const UserManagement: React.FC<UserManagementProps> = ({ users: initialUsers }) 
     }
   };
 
-  // طباعة معلومات المستخدمين للتأكد من وجود مشرفين
-  console.log('Users data in UserManagement component:', users);
+  // تنسيق تاريخ انتهاء الاشتراك
+  const formatExpiryDate = (dateString: string | null) => {
+    if (!dateString) return '-';
+    try {
+      return format(new Date(dateString), 'dd MMMM yyyy', { locale: ar });
+    } catch (error) {
+      return '-';
+    }
+  };
+
+  // الحصول على حالة الاشتراك
+  const getSubscriptionStatus = (user: User) => {
+    if (!user.subscription_type || user.subscription_type === 'free') {
+      return { name: 'مجاني', color: 'outline' as const };
+    }
+    
+    // التحقق من انتهاء صلاحية الاشتراك
+    if (user.subscription_expires_at) {
+      const expiryDate = new Date(user.subscription_expires_at);
+      const now = new Date();
+      
+      if (expiryDate > now) {
+        return { 
+          name: user.subscription_type === 'premium' ? 'مميز' : 'احترافي',
+          color: user.subscription_type === 'premium' ? 'secondary' as const : 'default' as const
+        };
+      } else {
+        return { name: 'منتهي', color: 'destructive' as const };
+      }
+    }
+    
+    return { name: 'مجاني', color: 'outline' as const };
+  };
 
   return (
     <div className="space-y-4">
@@ -104,59 +137,75 @@ const UserManagement: React.FC<UserManagementProps> = ({ users: initialUsers }) 
                 <TableHead className="w-[50px]">الرقم</TableHead>
                 <TableHead>البريد الإلكتروني</TableHead>
                 <TableHead>الاسم</TableHead>
-                <TableHead>نوع العضوية</TableHead>
+                <TableHead>الصلاحية</TableHead>
+                <TableHead>الاشتراك</TableHead>
+                <TableHead>تاريخ الانتهاء</TableHead>
                 <TableHead>الإجراءات</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredUsers && filteredUsers.length > 0 ? (
-                filteredUsers.map((user, index) => (
-                  <TableRow key={user.id}>
-                    <TableCell>{index + 1}</TableCell>
-                    <TableCell>{user.email}</TableCell>
-                    <TableCell>{user.full_name || '-'}</TableCell>
-                    <TableCell>
-                      <Badge variant={user.role === 'admin' ? 'default' : user.role === 'interpreter' ? 'secondary' : 'outline'}>
-                        {user.role === 'admin' ? 'مشرف' : 
-                         user.role === 'interpreter' ? 'مفسر' : 'عضو'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-wrap gap-2">
-                        {user.role !== 'admin' && (
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => handleRoleChange(user.id, 'admin')}
-                          >
-                            تعيين كمشرف
-                          </Button>
-                        )}
-                        {user.role !== 'user' && (
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => handleRoleChange(user.id, 'user')}
-                          >
-                            تعيين كمستخدم
-                          </Button>
-                        )}
-                        {user.role !== 'interpreter' && (
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => handleRoleChange(user.id, 'interpreter')}
-                          >
-                            تعيين كمفسر
-                          </Button>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
+                filteredUsers.map((user, index) => {
+                  const subscriptionStatus = getSubscriptionStatus(user);
+                  return (
+                    <TableRow key={user.id}>
+                      <TableCell>{index + 1}</TableCell>
+                      <TableCell>{user.email}</TableCell>
+                      <TableCell>{user.full_name || '-'}</TableCell>
+                      <TableCell>
+                        <Badge variant={user.role === 'admin' ? 'default' : user.role === 'interpreter' ? 'secondary' : 'outline'}>
+                          {user.role === 'admin' ? 'مشرف' : 
+                           user.role === 'interpreter' ? 'مفسر' : 'عضو'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={subscriptionStatus.color}>
+                          {subscriptionStatus.name}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          <Calendar className="h-4 w-4 text-muted-foreground" />
+                          <span>{formatExpiryDate(user.subscription_expires_at)}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap gap-2">
+                          {user.role !== 'admin' && (
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => handleRoleChange(user.id, 'admin')}
+                            >
+                              تعيين كمشرف
+                            </Button>
+                          )}
+                          {user.role !== 'user' && (
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => handleRoleChange(user.id, 'user')}
+                            >
+                              تعيين كمستخدم
+                            </Button>
+                          )}
+                          {user.role !== 'interpreter' && (
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => handleRoleChange(user.id, 'interpreter')}
+                            >
+                              تعيين كمفسر
+                            </Button>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
               ) : (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-4 text-muted-foreground">
+                  <TableCell colSpan={7} className="text-center py-4 text-muted-foreground">
                     لا يوجد مستخدمين حتى الآن
                   </TableCell>
                 </TableRow>
