@@ -1,7 +1,6 @@
-
 import React from 'react';
 import { Loader2 } from 'lucide-react';
-import { useAdmin } from '@/contexts/AdminContext';
+import { useAdmin } from '@/contexts/admin';
 import DashboardStats from '@/components/admin/DashboardStats';
 import AdminSections from '@/components/admin/AdminSections';
 

@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAdmin } from '@/contexts/AdminContext';
+import { useAdmin } from '@/contexts/admin';
 import { useAdminAuth } from './admin/useAdminAuth';
 import { useFetchDashboardStats } from './admin/useFetchDashboardStats';
 import { useFetchSettings } from './admin/useFetchSettings';

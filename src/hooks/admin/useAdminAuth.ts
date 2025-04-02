@@ -1,8 +1,7 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { useAdmin } from '@/contexts/AdminContext';
+import { useAdmin } from '@/contexts/admin';
 
 export const useAdminAuth = () => {
   const navigate = useNavigate();

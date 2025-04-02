@@ -3,7 +3,7 @@ import React, { useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Loader2 } from 'lucide-react';
-import { AdminProvider, useAdmin } from '@/contexts/AdminContext';
+import { AdminProvider, useAdmin } from '@/contexts/admin';
 import { useAdminData } from '@/hooks/useAdminData';
 import AdminHeader from '@/components/admin/AdminHeader';
 import AdminContent from '@/components/admin/AdminContent';

@@ -1,5 +1,5 @@
 
-import { useAdmin } from '@/contexts/AdminContext';
+import { useAdmin } from '@/contexts/admin';
 import { supabase } from '@/integrations/supabase/client';
 
 export const useFetchSettings = () => {

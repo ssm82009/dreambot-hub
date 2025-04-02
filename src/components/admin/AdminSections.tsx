@@ -1,4 +1,3 @@
-
 import React from 'react';
 import AdminSection from '@/components/admin/AdminSection';
 import { 
@@ -10,7 +9,7 @@ import {
   Palette, 
   DollarSign
 } from 'lucide-react';
-import { useAdmin } from '@/contexts/AdminContext';
+import { useAdmin } from '@/contexts/admin';
 import AiSettingsForm from '@/components/admin/AiSettingsForm';
 import InterpretationSettingsForm from '@/components/admin/InterpretationSettingsForm';
 import PricingSettingsForm from '@/components/admin/PricingSettingsForm';
