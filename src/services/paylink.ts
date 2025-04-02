@@ -71,8 +71,16 @@ export const createPaylinkInvoice = async (
       }
     };
     
-    // Make API request to PayLink.sa
-    const response = await fetch("https://restapi.paylink.sa/api/invoices", {
+    // Make API request to PayLink.sa - Make sure we use the correct API endpoint
+    const paylinkApiUrl = "https://restapi.paylink.sa/api/invoices"; // Production API endpoint
+    
+    console.log("Sending request to PayLink API with data:", {
+      url: paylinkApiUrl,
+      apiKey: apiKey ? "Provided" : "Missing",
+      invoiceData
+    });
+    
+    const response = await fetch(paylinkApiUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
