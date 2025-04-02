@@ -9,7 +9,8 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import About from "./pages/About";
 import Pricing from "./pages/Pricing";
-import Admin from "./pages/Admin"; // Import Admin page
+import Payment from "./pages/Payment";
+import Admin from "./pages/Admin"; 
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,7 +27,8 @@ const App = () => (
           <Route path="/register" element={<Register />} />
           <Route path="/about" element={<About />} />
           <Route path="/pricing" element={<Pricing />} />
-          <Route path="/admin" element={<Admin />} /> {/* Add Admin route */}
+          <Route path="/payment" element={<Payment />} />
+          <Route path="/admin" element={<Admin />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

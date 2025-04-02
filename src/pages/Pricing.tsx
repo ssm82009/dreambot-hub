@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
@@ -24,11 +23,8 @@ const Pricing = () => {
       // إذا لم يكن المستخدم مسجل الدخول، توجيهه إلى صفحة التسجيل
       navigate('/register');
     } else {
-      // إذا كان المستخدم مسجل الدخول، توجيهه مباشرة إلى صفحة الدفع (يمكن تنفيذها لاحقاً)
-      // مؤقتاً سنعرض رسالة توست
-      toast.info(`سيتم توجيهك إلى صفحة الدفع للاشتراك في الباقة ${plan}`);
-      // يمكن تنفيذ الانتقال إلى صفحة الدفع لاحقًا عندما تكون جاهزة
-      // navigate('/payment', { state: { plan } });
+      // إذا كان المستخدم مسجل الدخول، توجيهه مباشرة إلى صفحة الدفع
+      navigate('/payment', { state: { plan } });
     }
   };
 
