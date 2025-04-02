@@ -58,8 +58,14 @@ const Payment = () => {
           return;
         }
 
-        if (data && data.paylink_enabled && data.paylink_api_key) {
-          setPaylinkApiKey(data.paylink_api_key);
+        if (data && data.paylink_enabled) {
+          // استخدام مفتاح API من الإعدادات
+          if (data.paylink_api_key) {
+            setPaylinkApiKey(data.paylink_api_key);
+            console.log("تم تحميل مفتاح API PayLink بنجاح");
+          } else {
+            console.warn("مفتاح API لـ PayLink غير متوفر");
+          }
         } else {
           console.warn("لم يتم تكوين إعدادات PayLink بشكل صحيح");
         }
@@ -97,8 +103,8 @@ const Payment = () => {
       }
 
       // لأغراض الاختبار، استخدم مفتاح الوضع التجريبي الذي يبدأ بـ 'test_'
-      const isTestMode = paylinkApiKey.startsWith('test_');
-      console.log("Using PayLink in", isTestMode ? "test" : "live", "mode");
+      const isTestMode = paylinkApiKey.toLowerCase().startsWith('test_');
+      console.log("Using PayLink in", isTestMode ? "test" : "production", "mode");
 
       // حفظ الخطة في التخزين المؤقت لاستخدامها عند عودة المستخدم من صفحة الدفع
       localStorage.setItem('pendingSubscriptionPlan', plan);

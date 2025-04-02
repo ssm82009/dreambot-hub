@@ -1,7 +1,12 @@
+
 import { toast } from "sonner";
 
-// تكوين PayLink - تصحيح عنوان API بناءً على وثائق المطور الرسمية
-const PAYLINK_API_URL = 'https://restapi.paylink.sa/api/v2';
+// تكوين PayLink - دعم بيئتي الاختبار والإنتاج
+const PAYLINK_API_BASE = {
+  test: 'https://restpilot.paylink.sa/api/v2',
+  production: 'https://restapi.paylink.sa/api/v2'
+};
+
 const PAYLINK_REDIRECT_URL = window.location.origin + '/payment/success';
 const PAYLINK_REDIRECT_URL_CANCEL = window.location.origin + '/payment/cancel';
 
@@ -34,6 +39,13 @@ export const createPaylinkInvoice = async (
   customerPhone: string
 ): Promise<PaylinkInvoice | null> => {
   try {
+    // تحديد البيئة المناسبة بناءً على مفتاح API
+    const isTestMode = apiKey.toLowerCase().startsWith('test_');
+    const apiBase = isTestMode ? PAYLINK_API_BASE.test : PAYLINK_API_BASE.production;
+    
+    console.log(`Using PayLink in ${isTestMode ? 'test' : 'production'} mode`);
+    console.log(`API Base URL: ${apiBase}`);
+
     // تسجيل بيانات الطلب للتشخيص
     console.log("Creating PayLink invoice with data:", {
       planName,
@@ -64,10 +76,10 @@ export const createPaylinkInvoice = async (
     };
 
     console.log("Request data:", JSON.stringify(requestData));
-    console.log("Sending request to:", `${PAYLINK_API_URL}/invoice`);
+    console.log("Sending request to:", `${apiBase}/invoice`);
 
     // إرسال طلب لإنشاء فاتورة جديدة
-    const response = await fetch(`${PAYLINK_API_URL}/invoice`, {
+    const response = await fetch(`${apiBase}/invoice`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -110,7 +122,11 @@ export const createPaylinkInvoice = async (
 // الاستعلام عن حالة الفاتورة
 export const getPaylinkInvoiceStatus = async (apiKey: string, invoiceId: string): Promise<string | null> => {
   try {
-    const response = await fetch(`${PAYLINK_API_URL}/invoice/${invoiceId}`, {
+    // تحديد البيئة المناسبة بناءً على مفتاح API
+    const isTestMode = apiKey.toLowerCase().startsWith('test_');
+    const apiBase = isTestMode ? PAYLINK_API_BASE.test : PAYLINK_API_BASE.production;
+    
+    const response = await fetch(`${apiBase}/invoice/${invoiceId}`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${apiKey}`,
