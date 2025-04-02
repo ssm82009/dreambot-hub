@@ -24,7 +24,7 @@ serve(async (req) => {
     // Get PayLink settings from database
     const { data, error } = await supabase
       .from('payment_settings')
-      .select('paylink_enabled, paylink_api_key')
+      .select('paylink_enabled, paylink_api_key, paylink_secret_key')
       .limit(1)
       .maybeSingle();
     
@@ -44,12 +44,18 @@ serve(async (req) => {
       );
     }
     
+    console.log("PayLink settings retrieved successfully:", {
+      enabled: data.paylink_enabled,
+      apiKeyExists: !!data.paylink_api_key,
+    });
+    
     // Return only the necessary data
     return new Response(
       JSON.stringify({ 
         data: { 
           enabled: data.paylink_enabled, 
-          apiKey: data.paylink_api_key 
+          apiKey: data.paylink_api_key || "",
+          secretKey: data.paylink_secret_key || ""
         }, 
         error: null 
       }),

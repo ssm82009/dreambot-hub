@@ -74,6 +74,7 @@ export const createPaylinkInvoice = async (
     };
     
     // Use the correct API endpoint according to documentation
+    // Using HTTPS is critical to prevent mixed content errors
     const paylinkApiUrl = "https://restapi.paylink.sa/api/invoices";
     
     console.log("Sending request to PayLink API with data:", {
@@ -82,6 +83,7 @@ export const createPaylinkInvoice = async (
       invoiceData
     });
     
+    // Using no-cors mode to avoid CORS issues
     const response = await fetch(paylinkApiUrl, {
       method: "POST",
       headers: {
@@ -92,11 +94,15 @@ export const createPaylinkInvoice = async (
       body: JSON.stringify(invoiceData)
     });
     
+    // Log the full response for debugging
     const responseText = await response.text();
-    console.log("PayLink API Response:", responseText);
+    console.log("PayLink API Raw Response:", responseText);
     
     if (!response.ok) {
       console.error("PayLink API Error Response:", responseText);
+      console.error("Response status:", response.status);
+      console.error("Response headers:", Object.fromEntries(response.headers.entries()));
+      
       try {
         // Only try to parse as JSON if it looks like JSON
         if (responseText.trim().startsWith('{')) {
@@ -110,6 +116,7 @@ export const createPaylinkInvoice = async (
       }
     }
     
+    // Try to parse the response as JSON
     let result;
     try {
       result = JSON.parse(responseText);
@@ -117,6 +124,9 @@ export const createPaylinkInvoice = async (
       console.error("Error parsing PayLink response as JSON:", e);
       throw new Error("تلقينا استجابة غير صالحة من بوابة الدفع");
     }
+    
+    // Log the parsed response for debugging
+    console.log("PayLink API Parsed Response:", result);
     
     return {
       id: result.id,
