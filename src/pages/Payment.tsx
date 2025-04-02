@@ -20,30 +20,19 @@ const Payment = () => {
 
   useEffect(() => {
     // التحقق من أن المستخدم وصل للصفحة عن طريق صفحة الأسعار
-    if (!location.state || !location.state.plan) {
+    if (!location.state || !location.state.plan || !location.state.price) {
       navigate('/pricing');
       return;
     }
 
-    // تعيين الخطة والمبلغ بناءً على الباقة المختارة
+    // تعيين الخطة والمبلغ بناءً على البيانات المرسلة من صفحة الأسعار
     const selectedPlan = location.state.plan;
-    setPlan(selectedPlan);
+    const selectedPrice = location.state.price;
     
-    let priceAmount = 0;
-    switch (selectedPlan) {
-      case 'المجاني':
-        priceAmount = 0;
-        break;
-      case 'المميز':
-        priceAmount = 49;
-        break;
-      case 'الاحترافي':
-        priceAmount = 99;
-        break;
-      default:
-        priceAmount = 0;
-    }
-    setAmount(priceAmount);
+    setPlan(selectedPlan);
+    setAmount(selectedPrice);
+    
+    console.log(`تم اختيار الباقة: ${selectedPlan} بسعر: ${selectedPrice} ريال`);
     
     // استرجاع مفتاح API لـ PayLink من إعدادات النظام
     const fetchPaymentSettings = async () => {

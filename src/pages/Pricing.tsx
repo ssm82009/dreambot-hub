@@ -19,7 +19,7 @@ const Pricing = () => {
     setIsLoggedIn(loginStatus);
   }, []);
 
-  const handleSubscription = (plan: string) => {
+  const handleSubscription = (plan: string, price: number) => {
     if (!isLoggedIn) {
       // إذا لم يكن المستخدم مسجل الدخول، توجيهه إلى صفحة التسجيل
       toast.info("يجب تسجيل الدخول أولاً للاشتراك");
@@ -27,7 +27,7 @@ const Pricing = () => {
     } else {
       // إذا كان المستخدم مسجل الدخول، توجيهه مباشرة إلى صفحة الدفع
       toast.info(`سيتم توجيهك إلى صفحة الدفع للاشتراك في باقة ${plan}`);
-      navigate('/payment', { state: { plan } });
+      navigate('/payment', { state: { plan, price } });
     }
   };
 

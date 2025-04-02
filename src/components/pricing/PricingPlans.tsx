@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 interface PricingPlansProps {
-  onSubscribe: (planId: string) => void;
+  onSubscribe: (planId: string, price: number) => void;
 }
 
 const PricingPlans = ({ onSubscribe }: PricingPlansProps) => {
@@ -84,6 +84,16 @@ const PricingPlans = ({ onSubscribe }: PricingPlansProps) => {
     fetchPricingSettings();
   }, []);
 
+  const handleSubscribe = (planId: string) => {
+    // البحث عن الخطة المحددة للحصول على السعر
+    const selectedPlan = pricingPlans.find(plan => plan.id === planId);
+    if (selectedPlan) {
+      onSubscribe(planId, selectedPlan.price);
+    } else {
+      toast.error("حدث خطأ أثناء اختيار الخطة");
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center py-12">
@@ -98,7 +108,7 @@ const PricingPlans = ({ onSubscribe }: PricingPlansProps) => {
         <PricingPlanCard 
           key={plan.id} 
           plan={plan} 
-          onSubscribe={onSubscribe} 
+          onSubscribe={() => handleSubscribe(plan.id)} 
         />
       ))}
     </div>
