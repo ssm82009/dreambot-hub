@@ -30,11 +30,16 @@ export const createPaylinkInvoice = async (
   planName: string
 ): Promise<PaylinkInvoiceResponse> => {
   try {
-    // Get the API key from the payment settings
-    const settingsResponse = await fetch('/api/paylink-settings');
+    // Get the API key from the payment settings using the Edge Function
+    const settingsResponse = await fetch(`${window.location.origin}/functions/v1/paylink-settings`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json"
+      },
+    });
     
     if (!settingsResponse.ok) {
-      console.error("Error fetching PayLink settings:", settingsResponse.statusText);
+      console.error("Error fetching PayLink settings:", await settingsResponse.text());
       throw new Error("تعذر الاتصال ببوابة الدفع. يرجى المحاولة مرة أخرى لاحقًا.");
     }
     
@@ -81,8 +86,13 @@ export const createPaylinkInvoice = async (
       const errorText = await response.text();
       console.error("PayLink API Error Response:", errorText);
       try {
-        const errorJson = JSON.parse(errorText);
-        throw new Error(errorJson.message || "حدث خطأ أثناء إنشاء الفاتورة");
+        // Only try to parse as JSON if it looks like JSON
+        if (errorText.trim().startsWith('{')) {
+          const errorJson = JSON.parse(errorText);
+          throw new Error(errorJson.message || "حدث خطأ أثناء إنشاء الفاتورة");
+        } else {
+          throw new Error("حدث خطأ أثناء الاتصال بخدمة الدفع، يرجى المحاولة مرة أخرى لاحقًا");
+        }
       } catch (e) {
         throw new Error("حدث خطأ أثناء إنشاء الفاتورة، يرجى المحاولة مرة أخرى لاحقًا");
       }
