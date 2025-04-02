@@ -39,10 +39,18 @@ const Login = () => {
       
       if (userError) {
         console.error('خطأ في جلب بيانات المستخدم:', userError);
-      } else if (userData && userData.role === 'admin') {
-        localStorage.setItem('isAdminLoggedIn', 'true');
+        toast.error("حدث خطأ في جلب بيانات المستخدم");
+      } else {
+        console.log('User data after login:', userData);
+        
+        if (userData && userData.role === 'admin') {
+          localStorage.setItem('isAdminLoggedIn', 'true');
+        } else {
+          localStorage.setItem('isAdminLoggedIn', 'false');
+        }
       }
       
+      localStorage.setItem('isLoggedIn', 'true');
       localStorage.setItem('userEmail', email);
       
       toast.success("تم تسجيل الدخول بنجاح");

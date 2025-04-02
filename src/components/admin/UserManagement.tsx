@@ -6,6 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { User } from '@/types/database';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { Badge } from '@/components/ui/badge';
 
 type UserManagementProps = {
   users: User[];
@@ -43,6 +44,9 @@ const UserManagement: React.FC<UserManagementProps> = ({ users: initialUsers }) 
     }
   };
 
+  // طباعة معلومات المستخدمين للتأكد من وجود مشرفين
+  console.log('Users data in admin panel:', users);
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row justify-between gap-4 mb-4">
@@ -72,7 +76,12 @@ const UserManagement: React.FC<UserManagementProps> = ({ users: initialUsers }) 
                   <TableCell>{index + 1}</TableCell>
                   <TableCell>{user.email}</TableCell>
                   <TableCell>{user.full_name || '-'}</TableCell>
-                  <TableCell>{user.role}</TableCell>
+                  <TableCell>
+                    <Badge variant={user.role === 'admin' ? 'default' : user.role === 'interpreter' ? 'secondary' : 'outline'}>
+                      {user.role === 'admin' ? 'مشرف' : 
+                       user.role === 'interpreter' ? 'مفسر' : 'عضو'}
+                    </Badge>
+                  </TableCell>
                   <TableCell>
                     <div className="flex flex-wrap gap-2">
                       {user.role !== 'admin' && (
