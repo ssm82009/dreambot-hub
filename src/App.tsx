@@ -10,6 +10,8 @@ import Register from "./pages/Register";
 import About from "./pages/About";
 import Pricing from "./pages/Pricing";
 import Payment from "./pages/Payment";
+import PaymentCallback from "./pages/PaymentCallback";
+import PaymentSuccess from "./pages/PaymentSuccess";
 import Admin from "./pages/Admin"; 
 import NotFound from "./pages/NotFound";
 
@@ -28,6 +30,8 @@ const App = () => (
           <Route path="/about" element={<About />} />
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/payment" element={<Payment />} />
+          <Route path="/payment/callback" element={<PaymentCallback />} />
+          <Route path="/payment/success" element={<PaymentSuccess />} />
           <Route path="/admin" element={<Admin />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

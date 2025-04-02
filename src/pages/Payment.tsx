@@ -5,55 +5,177 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, CreditCard } from 'lucide-react';
+import { ArrowLeft, Loader2 } from 'lucide-react';
 import { toast } from "sonner";
+import { createPaylinkInvoice } from '@/services/paylink';
+import { supabase } from '@/integrations/supabase/client';
 
 const Payment = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [plan, setPlan] = useState<string>('');
   const [amount, setAmount] = useState<number>(0);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [userData, setUserData] = useState<{ name: string, email: string } | null>(null);
 
   useEffect(() => {
-    // التحقق من أن المستخدم وصل للصفحة عن طريق صفحة الأسعار
+    // Get user data if logged in
+    const getUserData = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user) {
+        // Get user profile from database
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('full_name, email')
+          .eq('id', user.id)
+          .single();
+          
+        if (profile) {
+          setUserData({
+            name: profile.full_name || user.email?.split('@')[0] || 'مستخدم',
+            email: profile.email || user.email || ''
+          });
+        } else {
+          setUserData({
+            name: user.email?.split('@')[0] || 'مستخدم',
+            email: user.email || ''
+          });
+        }
+      }
+    };
+    
+    getUserData();
+  }, []);
+
+  useEffect(() => {
+    // Check that user arrived from pricing page
     if (!location.state || !location.state.plan) {
       navigate('/pricing');
       return;
     }
 
-    // تعيين الخطة والمبلغ بناءً على الباقة المختارة
+    // Set plan and amount based on the selected plan
     const selectedPlan = location.state.plan;
     setPlan(selectedPlan);
     
-    let priceAmount = 0;
-    switch (selectedPlan) {
-      case 'المجاني':
-        priceAmount = 0;
-        break;
-      case 'المميز':
-        priceAmount = 49;
-        break;
-      case 'الاحترافي':
-        priceAmount = 99;
-        break;
-      default:
-        priceAmount = 0;
-    }
-    setAmount(priceAmount);
+    // Fetch current pricing from database
+    const fetchPricing = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('pricing_settings')
+          .select('*')
+          .limit(1)
+          .single();
+          
+        if (error) {
+          console.error("Error fetching pricing:", error);
+          let priceAmount = 0;
+          switch (selectedPlan) {
+            case 'المجاني':
+              priceAmount = 0;
+              break;
+            case 'المميز':
+              priceAmount = 49;
+              break;
+            case 'الاحترافي':
+              priceAmount = 99;
+              break;
+            default:
+              priceAmount = 0;
+          }
+          setAmount(priceAmount);
+          return;
+        }
+        
+        // Set amount based on fetched pricing
+        let priceAmount = 0;
+        switch (selectedPlan) {
+          case 'المجاني':
+            priceAmount = data.free_plan_price || 0;
+            break;
+          case 'المميز':
+            priceAmount = data.premium_plan_price || 49;
+            break;
+          case 'الاحترافي':
+            priceAmount = data.pro_plan_price || 99;
+            break;
+          default:
+            priceAmount = 0;
+        }
+        setAmount(priceAmount);
+      } catch (error) {
+        console.error("Error in pricing fetch:", error);
+        // Fallback to default pricing
+        let priceAmount = 0;
+        switch (selectedPlan) {
+          case 'المجاني':
+            priceAmount = 0;
+            break;
+          case 'المميز':
+            priceAmount = 49;
+            break;
+          case 'الاحترافي':
+            priceAmount = 99;
+            break;
+          default:
+            priceAmount = 0;
+        }
+        setAmount(priceAmount);
+      }
+    };
+    
+    fetchPricing();
   }, [location, navigate]);
 
-  const handlePayment = () => {
-    // هنا ستكون الإجراءات الخاصة بعملية الدفع الفعلية (مثل التكامل مع بوابة دفع)
-    // حاليًا سنستخدم توست لمحاكاة عملية الدفع
-    toast.success(`تم الاشتراك في الباقة ${plan} بنجاح!`);
+  const handlePayment = async () => {
+    // For free plan, just update subscription status
+    if (amount === 0) {
+      toast.success(`تم الاشتراك في الباقة ${plan} بنجاح!`);
+      localStorage.setItem('subscriptionType', plan);
+      setTimeout(() => {
+        navigate('/');
+      }, 2000);
+      return;
+    }
     
-    // تحديث حالة الاشتراك في localStorage (هذا مؤقت، في التطبيق الحقيقي سيكون في قاعدة البيانات)
-    localStorage.setItem('subscriptionType', plan);
-    
-    // التوجيه إلى الصفحة الرئيسية بعد الدفع
-    setTimeout(() => {
-      navigate('/');
-    }, 2000);
+    // For paid plans, process payment through PayLink.sa
+    try {
+      setIsLoading(true);
+      
+      // Check if user is logged in
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast.error('يجب تسجيل الدخول لإتمام عملية الدفع');
+        navigate('/login');
+        return;
+      }
+      
+      // Create invoice
+      const invoice = await createPaylinkInvoice(
+        amount,
+        userData?.name || user.email?.split('@')[0] || 'مستخدم',
+        userData?.email || user.email || '',
+        plan
+      );
+      
+      if (!invoice.success || !invoice.url) {
+        toast.error(invoice.message || 'فشل إنشاء الفاتورة. يرجى المحاولة مرة أخرى.');
+        setIsLoading(false);
+        return;
+      }
+      
+      // Store pending subscription plan in localStorage
+      localStorage.setItem('pendingSubscriptionPlan', plan);
+      
+      // Redirect to PayLink payment page
+      window.location.href = invoice.url;
+    } catch (error) {
+      console.error('Error processing payment:', error);
+      toast.error('حدث خطأ أثناء معالجة الدفع');
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -84,52 +206,15 @@ const Payment = () => {
               </div>
               <div className="flex justify-between py-2 border-b">
                 <span className="font-medium">طريقة الدفع:</span>
-                <span>بطاقة ائتمان</span>
+                <span>PayLink.sa</span>
               </div>
               
-              {/* نموذج بيانات الدفع */}
               {amount > 0 && (
-                <div className="mt-8 space-y-4">
-                  <div className="bg-muted p-4 rounded-md">
-                    <div className="flex items-center gap-2 mb-4">
-                      <CreditCard className="h-5 w-5" />
-                      <h3 className="font-medium">معلومات بطاقة الدفع</h3>
-                    </div>
-                    <p className="text-sm text-muted-foreground mb-4">هذا نموذج توضيحي فقط. في التطبيق الفعلي سيتم التكامل مع بوابة دفع آمنة.</p>
-                    <div className="grid gap-4">
-                      <div className="grid gap-2">
-                        <label htmlFor="card-number" className="text-sm">رقم البطاقة</label>
-                        <input 
-                          id="card-number"
-                          type="text" 
-                          placeholder="0000 0000 0000 0000" 
-                          className="border rounded-md p-2 w-full bg-background"
-                          maxLength={19}
-                        />
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="grid gap-2">
-                          <label htmlFor="expiry" className="text-sm">تاريخ الانتهاء</label>
-                          <input 
-                            id="expiry"
-                            type="text" 
-                            placeholder="MM/YY" 
-                            className="border rounded-md p-2 w-full bg-background"
-                            maxLength={5}
-                          />
-                        </div>
-                        <div className="grid gap-2">
-                          <label htmlFor="cvc" className="text-sm">رمز الأمان CVC</label>
-                          <input 
-                            id="cvc"
-                            type="text" 
-                            placeholder="123" 
-                            className="border rounded-md p-2 w-full bg-background"
-                            maxLength={3}
-                          />
-                        </div>
-                      </div>
-                    </div>
+                <div className="mt-8">
+                  <div className="bg-blue-50 p-4 rounded-md border border-blue-200">
+                    <p className="text-sm text-blue-700">
+                      سيتم تحويلك إلى بوابة الدفع PayLink.sa لإتمام عملية الدفع بشكل آمن.
+                    </p>
                   </div>
                 </div>
               )}
@@ -139,6 +224,7 @@ const Payment = () => {
                 variant="outline" 
                 onClick={() => navigate('/pricing')}
                 className="w-full sm:w-auto flex items-center gap-2"
+                disabled={isLoading}
               >
                 <ArrowLeft className="h-4 w-4" />
                 العودة
@@ -146,9 +232,16 @@ const Payment = () => {
               <Button 
                 onClick={handlePayment}
                 className="w-full sm:w-auto"
-                disabled={amount === 0}
+                disabled={isLoading}
               >
-                {amount === 0 ? "اشترك مجانًا" : "إتمام الدفع"}
+                {isLoading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    جاري المعالجة...
+                  </>
+                ) : (
+                  amount === 0 ? "اشترك مجانًا" : "إتمام الدفع"
+                )}
               </Button>
             </CardFooter>
           </Card>

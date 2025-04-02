@@ -1,0 +1,45 @@
+
+import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
+
+// Create a Supabase client with the Auth context of the function
+const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
+const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") || "";
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+serve(async (req) => {
+  try {
+    // Get PayLink settings from database
+    const { data, error } = await supabase
+      .from('payment_settings')
+      .select('paylink_enabled, paylink_api_key')
+      .limit(1)
+      .single();
+    
+    if (error) {
+      console.error("Error fetching PayLink settings:", error);
+      return new Response(
+        JSON.stringify({ error: "Could not fetch PayLink settings", data: null }),
+        { headers: { "Content-Type": "application/json" }, status: 500 }
+      );
+    }
+    
+    // Return only the necessary data
+    return new Response(
+      JSON.stringify({ 
+        data: { 
+          enabled: data.paylink_enabled, 
+          apiKey: data.paylink_api_key 
+        }, 
+        error: null 
+      }),
+      { headers: { "Content-Type": "application/json" } }
+    );
+  } catch (error) {
+    console.error("Unexpected error:", error);
+    return new Response(
+      JSON.stringify({ error: "An unexpected error occurred", data: null }),
+      { headers: { "Content-Type": "application/json" }, status: 500 }
+    );
+  }
+});
