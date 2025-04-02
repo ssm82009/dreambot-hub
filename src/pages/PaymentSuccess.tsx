@@ -40,11 +40,11 @@ const PaymentSuccess = () => {
             return;
           }
 
-          if (transactionNo && paymentSettings?.paylink_api_key && paymentSettings?.paylink_api_secret) {
+          if (transactionNo && paymentSettings?.paylink_api_key && paymentSettings?.paylink_secret_key) {
             // التحقق من حالة الدفع باستخدام API
             const status = await getPaylinkInvoiceStatus(
               paymentSettings.paylink_api_key,
-              paymentSettings.paylink_api_secret,
+              paymentSettings.paylink_secret_key,
               transactionNo
             );
             
@@ -110,4 +110,3 @@ const PaymentSuccess = () => {
 };
 
 export default PaymentSuccess;
-

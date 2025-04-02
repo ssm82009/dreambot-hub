@@ -61,9 +61,9 @@ const Payment = () => {
 
         if (data && data.paylink_enabled) {
           // استخدام مفتاح API وسر API من الإعدادات
-          if (data.paylink_api_key && data.paylink_api_secret) {
+          if (data.paylink_api_key && data.paylink_secret_key) {
             setPaylinkApiKey(data.paylink_api_key);
-            setPaylinkSecretKey(data.paylink_api_secret);
+            setPaylinkSecretKey(data.paylink_secret_key);
             console.log("تم تحميل بيانات اعتماد PayLink بنجاح");
           } else {
             console.warn("بيانات اعتماد PayLink غير متوفرة");
@@ -180,4 +180,3 @@ const Payment = () => {
 };
 
 export default Payment;
-
