@@ -47,6 +47,7 @@ serve(async (req) => {
     console.log("PayLink settings retrieved successfully:", {
       enabled: data.paylink_enabled,
       apiKeyExists: !!data.paylink_api_key,
+      secretKeyExists: !!data.paylink_secret_key
     });
     
     // Return only the necessary data

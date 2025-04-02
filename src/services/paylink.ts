@@ -57,33 +57,33 @@ export const createPaylinkInvoice = async (
     // Create invoice data according to PayLink documentation
     const invoiceData = {
       amount: amount,
-      callback_url: window.location.origin + "/payment/callback",
-      cancel_url: window.location.origin + "/pricing",
-      source_id: "dream_interpretation_app",
+      callback_url: `${window.location.origin}/payment/callback`,
+      cancel_url: `${window.location.origin}/pricing`,
+      source: "dream_interpretation_app",
       order_id: `order_${Date.now()}`,
       products: [{
         name: `اشتراك ${planName}`,
         price: amount,
         quantity: 1
       }],
-      success_url: window.location.origin + "/payment/success",
+      success_url: `${window.location.origin}/payment/success`,
       client: {
         name: customerName,
         email: customerEmail,
-      }
+      },
+      currency: "SAR"
     };
     
     // Use the correct API endpoint according to documentation
-    // Using HTTPS is critical to prevent mixed content errors
     const paylinkApiUrl = "https://restapi.paylink.sa/api/invoices";
     
     console.log("Sending request to PayLink API with data:", {
       url: paylinkApiUrl,
       apiKey: apiKey ? "Provided" : "Missing",
-      invoiceData
+      invoiceData: JSON.stringify(invoiceData)
     });
     
-    // Using no-cors mode to avoid CORS issues
+    // Make the API request according to PayLink documentation
     const response = await fetch(paylinkApiUrl, {
       method: "POST",
       headers: {
@@ -94,32 +94,42 @@ export const createPaylinkInvoice = async (
       body: JSON.stringify(invoiceData)
     });
     
-    // Log the full response for debugging
+    // Log the response status and headers for debugging
+    console.log("PayLink API Response Status:", response.status);
+    console.log("PayLink API Response Headers:", Object.fromEntries(response.headers.entries()));
+    
+    // Get the response text
     const responseText = await response.text();
     console.log("PayLink API Raw Response:", responseText);
     
+    // Handle error responses
     if (!response.ok) {
       console.error("PayLink API Error Response:", responseText);
-      console.error("Response status:", response.status);
-      console.error("Response headers:", Object.fromEntries(response.headers.entries()));
       
       try {
-        // Only try to parse as JSON if it looks like JSON
+        // Try to parse error as JSON if possible
         if (responseText.trim().startsWith('{')) {
           const errorJson = JSON.parse(responseText);
           throw new Error(errorJson.message || "حدث خطأ أثناء إنشاء الفاتورة");
         } else {
-          throw new Error("حدث خطأ أثناء الاتصال بخدمة الدفع، يرجى المحاولة مرة أخرى لاحقًا");
+          // HTML response or other non-JSON response
+          throw new Error("حدث خطأ في الاتصال مع بوابة الدفع. يرجى التحقق من بيانات API المدخلة.");
         }
       } catch (e) {
         throw new Error("حدث خطأ أثناء إنشاء الفاتورة، يرجى المحاولة مرة أخرى لاحقًا");
       }
     }
     
-    // Try to parse the response as JSON
+    // Try to parse the successful response as JSON
     let result;
     try {
-      result = JSON.parse(responseText);
+      // Make sure we're parsing JSON, not HTML
+      if (responseText.trim().startsWith('{')) {
+        result = JSON.parse(responseText);
+      } else {
+        console.error("Non-JSON response received:", responseText);
+        throw new Error("تلقينا استجابة غير صالحة من بوابة الدفع");
+      }
     } catch (e) {
       console.error("Error parsing PayLink response as JSON:", e);
       throw new Error("تلقينا استجابة غير صالحة من بوابة الدفع");
@@ -128,15 +138,22 @@ export const createPaylinkInvoice = async (
     // Log the parsed response for debugging
     console.log("PayLink API Parsed Response:", result);
     
+    // Ensure the response has the required fields
+    if (!result.id || !result.url) {
+      console.error("PayLink response missing required fields:", result);
+      throw new Error("استجابة بوابة الدفع لا تحتوي على البيانات المطلوبة");
+    }
+    
+    // Return the successful response
     return {
       id: result.id,
       status: result.status,
       payment_status: result.payment_status,
       url: result.url,
       amount: result.amount,
-      currency: result.currency,
-      invoice_id: result.invoice_id,
-      reference_id: result.reference_id,
+      currency: result.currency || "SAR",
+      invoice_id: result.invoice_id || result.id,
+      reference_id: result.reference_id || `order_${Date.now()}`,
       success: true
     };
   } catch (error) {
