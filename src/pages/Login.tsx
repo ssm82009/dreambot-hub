@@ -21,13 +21,16 @@ const Login = () => {
     setIsLoading(true);
     
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      // Initial login attempt
+      let result = await supabase.auth.signInWithPassword({
         email,
         password
       });
       
       // Handle "Email not confirmed" error specially
-      if (error && error.message === 'Email not confirmed') {
+      if (result.error && result.error.message === 'Email not confirmed') {
+        console.log('Email not confirmed, trying to update user...');
+        
         // Try to get magic link or auto-confirm the email
         const { error: updateError } = await supabase.auth.updateUser({
           email: email
@@ -41,26 +44,26 @@ const Login = () => {
         }
         
         // Try signing in again after update
-        const { data: retryData, error: retryError } = await supabase.auth.signInWithPassword({
+        result = await supabase.auth.signInWithPassword({
           email,
           password
         });
         
-        if (retryError) {
-          throw retryError;
+        // If we still have an error after retry, throw it
+        if (result.error) {
+          throw result.error;
         }
-        
-        // Continue with successful login
-        data = retryData;
-      } else if (error) {
-        throw error;
+      } else if (result.error) {
+        // If we have an error from the initial attempt that's not about confirmation, throw it
+        throw result.error;
       }
       
+      // At this point, result.data contains our successful login data
       // التحقق من دور المستخدم في جدول المستخدمين
       const { data: userData, error: userError } = await supabase
         .from('users')
         .select('role')
-        .eq('id', data.user.id)
+        .eq('id', result.data.user.id)
         .single();
       
       if (userError) {
