@@ -1,7 +1,6 @@
-
 import { toast } from "sonner";
 
-// تكوين PayLink - تصحيح عنوان API بناءً على وثائق المطور
+// تكوين PayLink - تصحيح عنوان API بناءً على وثائق المطور الرسمية
 const PAYLINK_API_URL = 'https://restapi.paylink.sa/api/v2';
 const PAYLINK_REDIRECT_URL = window.location.origin + '/payment/success';
 const PAYLINK_REDIRECT_URL_CANCEL = window.location.origin + '/payment/cancel';
@@ -65,6 +64,7 @@ export const createPaylinkInvoice = async (
     };
 
     console.log("Request data:", JSON.stringify(requestData));
+    console.log("Sending request to:", `${PAYLINK_API_URL}/invoice`);
 
     // إرسال طلب لإنشاء فاتورة جديدة
     const response = await fetch(`${PAYLINK_API_URL}/invoice`, {
