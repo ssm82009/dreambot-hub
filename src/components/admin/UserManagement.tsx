@@ -6,10 +6,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { User } from '@/types/database';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { Badge } from '@/components/ui/badge';
-import { Loader2, Calendar, CreditCard } from 'lucide-react';
-import { format } from 'date-fns';
-import { ar } from 'date-fns/locale';
+import { Loader2 } from 'lucide-react';
+import RoleBadge from './user/RoleBadge';
+import SubscriptionBadge from './user/SubscriptionBadge';
+import ExpiryDate from './user/ExpiryDate';
+import UserActions from './user/UserActions';
+import RoleExplanation from './user/RoleExplanation';
 
 type UserManagementProps = {
   users: User[];
@@ -77,40 +79,6 @@ const UserManagement: React.FC<UserManagementProps> = ({ users: initialUsers }) 
     }
   };
 
-  // تنسيق تاريخ انتهاء الاشتراك
-  const formatExpiryDate = (dateString: string | null) => {
-    if (!dateString) return '-';
-    try {
-      return format(new Date(dateString), 'dd MMMM yyyy', { locale: ar });
-    } catch (error) {
-      return '-';
-    }
-  };
-
-  // الحصول على حالة الاشتراك
-  const getSubscriptionStatus = (user: User) => {
-    if (!user.subscription_type || user.subscription_type === 'free') {
-      return { name: 'مجاني', color: 'outline' as const };
-    }
-    
-    // التحقق من انتهاء صلاحية الاشتراك
-    if (user.subscription_expires_at) {
-      const expiryDate = new Date(user.subscription_expires_at);
-      const now = new Date();
-      
-      if (expiryDate > now) {
-        return { 
-          name: user.subscription_type === 'premium' ? 'مميز' : 'احترافي',
-          color: user.subscription_type === 'premium' ? 'secondary' as const : 'default' as const
-        };
-      } else {
-        return { name: 'منتهي', color: 'destructive' as const };
-      }
-    }
-    
-    return { name: 'مجاني', color: 'outline' as const };
-  };
-
   return (
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row justify-between gap-4 mb-4">
@@ -145,64 +113,29 @@ const UserManagement: React.FC<UserManagementProps> = ({ users: initialUsers }) 
             </TableHeader>
             <TableBody>
               {filteredUsers && filteredUsers.length > 0 ? (
-                filteredUsers.map((user, index) => {
-                  const subscriptionStatus = getSubscriptionStatus(user);
-                  return (
-                    <TableRow key={user.id}>
-                      <TableCell>{index + 1}</TableCell>
-                      <TableCell>{user.email}</TableCell>
-                      <TableCell>{user.full_name || '-'}</TableCell>
-                      <TableCell>
-                        <Badge variant={user.role === 'admin' ? 'default' : user.role === 'interpreter' ? 'secondary' : 'outline'}>
-                          {user.role === 'admin' ? 'مشرف' : 
-                           user.role === 'interpreter' ? 'مفسر' : 'عضو'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={subscriptionStatus.color}>
-                          {subscriptionStatus.name}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1">
-                          <Calendar className="h-4 w-4 text-muted-foreground" />
-                          <span>{formatExpiryDate(user.subscription_expires_at)}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex flex-wrap gap-2">
-                          {user.role !== 'admin' && (
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => handleRoleChange(user.id, 'admin')}
-                            >
-                              تعيين كمشرف
-                            </Button>
-                          )}
-                          {user.role !== 'user' && (
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => handleRoleChange(user.id, 'user')}
-                            >
-                              تعيين كمستخدم
-                            </Button>
-                          )}
-                          {user.role !== 'interpreter' && (
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => handleRoleChange(user.id, 'interpreter')}
-                            >
-                              تعيين كمفسر
-                            </Button>
-                          )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
+                filteredUsers.map((user, index) => (
+                  <TableRow key={user.id}>
+                    <TableCell>{index + 1}</TableCell>
+                    <TableCell>{user.email}</TableCell>
+                    <TableCell>{user.full_name || '-'}</TableCell>
+                    <TableCell>
+                      <RoleBadge role={user.role} />
+                    </TableCell>
+                    <TableCell>
+                      <SubscriptionBadge user={user} />
+                    </TableCell>
+                    <TableCell>
+                      <ExpiryDate expiryDate={user.subscription_expires_at} />
+                    </TableCell>
+                    <TableCell>
+                      <UserActions 
+                        userId={user.id} 
+                        currentRole={user.role} 
+                        onRoleChange={handleRoleChange} 
+                      />
+                    </TableCell>
+                  </TableRow>
+                ))
               ) : (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center py-4 text-muted-foreground">
@@ -215,43 +148,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users: initialUsers }) 
         </div>
       )}
       
-      <div className="p-4 border rounded-md mt-6">
-        <h3 className="text-lg font-semibold mb-4">أنواع الصلاحيات</h3>
-        <div className="space-y-4">
-          <div className="p-3 border rounded-md">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-              <div className="flex items-center space-x-2 rtl:space-x-reverse">
-                <span className="font-semibold">مشرف</span>
-              </div>
-            </div>
-            <p className="text-sm text-muted-foreground mt-2">
-              يملك جميع الصلاحيات بما في ذلك الوصول إلى لوحة التحكم وإدارة المستخدمين والإعدادات
-            </p>
-          </div>
-          
-          <div className="p-3 border rounded-md">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-              <div className="flex items-center space-x-2 rtl:space-x-reverse">
-                <span className="font-semibold">مفسر</span>
-              </div>
-            </div>
-            <p className="text-sm text-muted-foreground mt-2">
-              يمكنه الوصول إلى طلبات تفسير الأحلام وتقديم تفسيرات لها
-            </p>
-          </div>
-          
-          <div className="p-3 border rounded-md">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-              <div className="flex items-center space-x-2 rtl:space-x-reverse">
-                <span className="font-semibold">عضو</span>
-              </div>
-            </div>
-            <p className="text-sm text-muted-foreground mt-2">
-              يمكنه طلب تفسير الأحلام حسب نوع العضوية
-            </p>
-          </div>
-        </div>
-      </div>
+      <RoleExplanation />
     </div>
   );
 };

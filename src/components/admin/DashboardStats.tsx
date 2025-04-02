@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { useAdmin } from '@/contexts/AdminContext';
-import { Users, Calendar, Clock, CreditCard } from 'lucide-react';
+import { Users, Calendar, Clock, CreditCard, PenSquare } from 'lucide-react';
 
 const DashboardStats: React.FC = () => {
   const { dreams, userCount, subscriptions } = useAdmin();
