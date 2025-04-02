@@ -125,7 +125,7 @@ const Payment = () => {
         const { data: userData } = await supabase.auth.getUser();
         const userId = userData.user?.id;
 
-        // هنا سنستخدم المصفوفة المكونة من صف واحد
+        // إنشاء سجل فاتورة جديد في جدول payment_invoices
         await supabase.from('payment_invoices').insert([{
           invoice_id: invoice.id,
           user_id: userId,

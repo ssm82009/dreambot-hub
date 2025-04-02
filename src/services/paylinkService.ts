@@ -1,8 +1,8 @@
 
 import { toast } from "sonner";
 
-// تكوين PayLink
-const PAYLINK_API_URL = 'https://restapi.paylink.sa/api/v2';
+// تكوين PayLink - تحديث عنوان API ليكون صحيحاً بناءً على وثائق المطور
+const PAYLINK_API_URL = 'https://api.paylink.sa/v2';
 const PAYLINK_REDIRECT_URL = window.location.origin + '/payment/success';
 const PAYLINK_REDIRECT_URL_CANCEL = window.location.origin + '/payment/cancel';
 
@@ -44,6 +44,29 @@ export const createPaylinkInvoice = async (
       customerPhone
     });
 
+    // إعداد الطلب مع بيانات العميل والمنتج
+    const requestData = {
+      amount: amount,
+      callback_url: PAYLINK_REDIRECT_URL,
+      cancel_url: PAYLINK_REDIRECT_URL_CANCEL,
+      client_info: {
+        name: customerName,
+        email: customerEmail,
+        mobile: customerPhone
+      },
+      products: [
+        {
+          title: `اشتراك في باقة ${planName}`,
+          price: amount,
+          qty: 1
+        }
+      ],
+      currency_code: "SAR"
+    };
+
+    console.log("Request data:", JSON.stringify(requestData));
+
+    // إرسال طلب لإنشاء فاتورة جديدة
     const response = await fetch(`${PAYLINK_API_URL}/invoice`, {
       method: 'POST',
       headers: {
@@ -51,29 +74,19 @@ export const createPaylinkInvoice = async (
         'Authorization': `Bearer ${apiKey}`,
         'Accept': 'application/json'
       },
-      body: JSON.stringify({
-        amount: amount,
-        callback_url: PAYLINK_REDIRECT_URL,
-        cancel_url: PAYLINK_REDIRECT_URL_CANCEL,
-        client_info: {
-          name: customerName,
-          email: customerEmail,
-          mobile: customerPhone
-        },
-        products: [
-          {
-            title: `اشتراك في باقة ${planName}`,
-            price: amount,
-            qty: 1
-          }
-        ],
-        currency_code: "SAR"
-      })
+      body: JSON.stringify(requestData)
     });
 
     // التحقق من استجابة الخادم
     if (!response.ok) {
-      const errorText = await response.text();
+      let errorText;
+      try {
+        const errorData = await response.json();
+        errorText = JSON.stringify(errorData);
+      } catch (jsonError) {
+        errorText = await response.text();
+      }
+      
       console.error("PayLink API error:", errorText);
       throw new Error(`فشل في إنشاء فاتورة PayLink: ${response.status} ${response.statusText}`);
     }
