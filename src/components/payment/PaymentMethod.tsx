@@ -25,11 +25,11 @@ const PaymentMethod = ({ selectedMethod, onMethodChange }: PaymentMethodProps) =
         <div className="flex items-center space-x-2 space-x-reverse">
           <RadioGroupItem value="paylink" id="paylink" />
           <Label htmlFor="paylink" className="flex items-center gap-2">
-            <img src="/paylink-logo.png" alt="PayLink" className="h-6 w-auto" onError={(e) => {
-              e.currentTarget.onerror = null;
-              e.currentTarget.src = 'https://paylink.sa/wp-content/uploads/2021/03/Group-383-1.png';
-            }} />
-            <span>بطاقة مدى / فيزا / ماستركارد (PayLink)</span>
+            {/* استخدام رمز معبر عن PayLink بدلاً من صورة خارجية */}
+            <div className="flex items-center justify-center bg-blue-50 text-blue-700 font-bold rounded px-2 py-1 text-xs">
+              PayLink
+            </div>
+            <span>بطاقة مدى / فيزا / ماستركارد</span>
           </Label>
         </div>
       </RadioGroup>

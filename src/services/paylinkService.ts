@@ -1,8 +1,8 @@
 
 import { toast } from "sonner";
 
-// تكوين PayLink - تحديث عنوان API ليكون صحيحاً بناءً على وثائق المطور
-const PAYLINK_API_URL = 'https://api.paylink.sa/v2';
+// تكوين PayLink - تصحيح عنوان API بناءً على وثائق المطور
+const PAYLINK_API_URL = 'https://restapi.paylink.sa/api/v2';
 const PAYLINK_REDIRECT_URL = window.location.origin + '/payment/success';
 const PAYLINK_REDIRECT_URL_CANCEL = window.location.origin + '/payment/cancel';
 
