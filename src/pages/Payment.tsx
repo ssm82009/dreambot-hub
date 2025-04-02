@@ -58,8 +58,8 @@ const Payment = () => {
           return;
         }
 
-        if (data && data.paylink && data.paylink.enabled && data.paylink.apiKey) {
-          setPaylinkApiKey(data.paylink.apiKey);
+        if (data && data.paylink_enabled && data.paylink_api_key) {
+          setPaylinkApiKey(data.paylink_api_key);
         } else {
           console.warn("لم يتم تكوين إعدادات PayLink بشكل صحيح");
         }
@@ -122,14 +122,18 @@ const Payment = () => {
 
       // حفظ معلومات الفاتورة في قاعدة البيانات (اختياري)
       try {
-        await supabase.from('payment_invoices').insert({
+        const { data: userData } = await supabase.auth.getUser();
+        const userId = userData.user?.id;
+
+        // هنا سنستخدم المصفوفة المكونة من صف واحد
+        await supabase.from('payment_invoices').insert([{
           invoice_id: invoice.id,
-          user_id: supabase.auth.getUser().then(user => user.data.user?.id),
+          user_id: userId,
           plan_name: plan,
           amount: amount,
           status: invoice.status,
           payment_method: 'paylink'
-        });
+        }]);
       } catch (dbError) {
         // نسجل الخطأ ولكن نستمر في العملية
         console.error("فشل في حفظ بيانات الفاتورة:", dbError);

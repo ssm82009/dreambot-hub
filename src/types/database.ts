@@ -47,6 +47,17 @@ export type PaymentSettings = {
   updated_at?: string;
 };
 
+export type PaymentInvoice = {
+  id: string;
+  invoice_id: string;
+  user_id: string | null;
+  plan_name: string;
+  amount: number;
+  status: string;
+  payment_method: string;
+  created_at?: string;
+};
+
 export type ThemeSettings = {
   id: string;
   primary_color: string;
