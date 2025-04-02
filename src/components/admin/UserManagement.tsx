@@ -1,20 +1,57 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { User } from '@/types/database';
+import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 type UserManagementProps = {
   users: User[];
 };
 
-const UserManagement: React.FC<UserManagementProps> = ({ users }) => {
+const UserManagement: React.FC<UserManagementProps> = ({ users: initialUsers }) => {
+  const [users, setUsers] = useState<User[]>(initialUsers);
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const filteredUsers = searchTerm
+    ? users.filter(user => 
+        user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (user.full_name && user.full_name.toLowerCase().includes(searchTerm.toLowerCase())))
+    : users;
+
+  const handleRoleChange = async (userId: string, newRole: string) => {
+    try {
+      const { error } = await supabase
+        .from('users')
+        .update({ role: newRole })
+        .eq('id', userId);
+
+      if (error) {
+        throw error;
+      }
+
+      setUsers(users.map(user => 
+        user.id === userId ? { ...user, role: newRole } : user
+      ));
+
+      toast.success(`تم تحديث دور المستخدم بنجاح إلى "${newRole}"`);
+    } catch (error) {
+      console.error('خطأ في تحديث دور المستخدم:', error);
+      toast.error('حدث خطأ في تحديث دور المستخدم');
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row justify-between gap-4 mb-4">
-        <Input placeholder="بحث عن مستخدم..." className="w-full sm:max-w-md" />
-        <Button>إضافة مستخدم جديد</Button>
+        <Input 
+          placeholder="بحث عن مستخدم..." 
+          className="w-full sm:max-w-md" 
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
       </div>
       
       <div className="border rounded-md overflow-x-auto">
@@ -25,30 +62,53 @@ const UserManagement: React.FC<UserManagementProps> = ({ users }) => {
               <TableHead>البريد الإلكتروني</TableHead>
               <TableHead>الاسم</TableHead>
               <TableHead>نوع العضوية</TableHead>
-              <TableHead>الحالة</TableHead>
               <TableHead>الإجراءات</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {users && users.length > 0 ? (
-              users.map((user, index) => (
+            {filteredUsers && filteredUsers.length > 0 ? (
+              filteredUsers.map((user, index) => (
                 <TableRow key={user.id}>
                   <TableCell>{index + 1}</TableCell>
                   <TableCell>{user.email}</TableCell>
                   <TableCell>{user.full_name || '-'}</TableCell>
                   <TableCell>{user.role}</TableCell>
-                  <TableCell>نشط</TableCell>
                   <TableCell>
                     <div className="flex flex-wrap gap-2">
-                      <Button variant="outline" size="sm">تعديل</Button>
-                      <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">حذف</Button>
+                      {user.role !== 'admin' && (
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleRoleChange(user.id, 'admin')}
+                        >
+                          تعيين كمشرف
+                        </Button>
+                      )}
+                      {user.role !== 'user' && (
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleRoleChange(user.id, 'user')}
+                        >
+                          تعيين كمستخدم
+                        </Button>
+                      )}
+                      {user.role !== 'interpreter' && (
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleRoleChange(user.id, 'interpreter')}
+                        >
+                          تعيين كمفسر
+                        </Button>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-4 text-muted-foreground">
+                <TableCell colSpan={5} className="text-center py-4 text-muted-foreground">
                   لا يوجد مستخدمين حتى الآن
                 </TableCell>
               </TableRow>
@@ -65,7 +125,6 @@ const UserManagement: React.FC<UserManagementProps> = ({ users }) => {
               <div className="flex items-center space-x-2 rtl:space-x-reverse">
                 <span className="font-semibold">مشرف</span>
               </div>
-              <Button variant="outline" size="sm">تعديل</Button>
             </div>
             <p className="text-sm text-muted-foreground mt-2">
               يملك جميع الصلاحيات بما في ذلك الوصول إلى لوحة التحكم وإدارة المستخدمين والإعدادات
@@ -77,7 +136,6 @@ const UserManagement: React.FC<UserManagementProps> = ({ users }) => {
               <div className="flex items-center space-x-2 rtl:space-x-reverse">
                 <span className="font-semibold">مفسر</span>
               </div>
-              <Button variant="outline" size="sm">تعديل</Button>
             </div>
             <p className="text-sm text-muted-foreground mt-2">
               يمكنه الوصول إلى طلبات تفسير الأحلام وتقديم تفسيرات لها
@@ -87,24 +145,11 @@ const UserManagement: React.FC<UserManagementProps> = ({ users }) => {
           <div className="p-3 border rounded-md">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
               <div className="flex items-center space-x-2 rtl:space-x-reverse">
-                <span className="font-semibold">عضو مميز</span>
+                <span className="font-semibold">عضو</span>
               </div>
-              <Button variant="outline" size="sm">تعديل</Button>
             </div>
             <p className="text-sm text-muted-foreground mt-2">
-              عضوية مدفوعة تتيح طلب عدد غير محدود من التفسيرات والوصول إلى المزايا المتقدمة
-            </p>
-          </div>
-          
-          <div className="p-3 border rounded-md">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-              <div className="flex items-center space-x-2 rtl:space-x-reverse">
-                <span className="font-semibold">عضو مجاني</span>
-              </div>
-              <Button variant="outline" size="sm">تعديل</Button>
-            </div>
-            <p className="text-sm text-muted-foreground mt-2">
-              عضوية مجانية تتيح طلب عدد محدود من التفسيرات
+              يمكنه طلب تفسير الأحلام حسب نوع العضوية
             </p>
           </div>
         </div>

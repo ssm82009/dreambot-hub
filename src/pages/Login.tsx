@@ -30,19 +30,20 @@ const Login = () => {
         throw error;
       }
       
-      // تخزين معلومات المستخدم
-      localStorage.setItem('userEmail', email);
-      
-      // التحقق من دور المستخدم (للمشرف)
+      // التحقق من دور المستخدم في جدول المستخدمين
       const { data: userData, error: userError } = await supabase
         .from('users')
         .select('role')
-        .eq('email', email)
+        .eq('id', data.user.id)
         .single();
       
-      if (userData && userData.role === 'admin') {
+      if (userError) {
+        console.error('خطأ في جلب بيانات المستخدم:', userError);
+      } else if (userData && userData.role === 'admin') {
         localStorage.setItem('isAdminLoggedIn', 'true');
       }
+      
+      localStorage.setItem('userEmail', email);
       
       toast.success("تم تسجيل الدخول بنجاح");
       navigate('/');
