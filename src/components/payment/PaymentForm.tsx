@@ -1,52 +1,84 @@
 
-import React from 'react';
-import { CreditCard } from 'lucide-react';
+import React, { useState } from 'react';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import PaymentMethod from './PaymentMethod';
 
-const PaymentForm = () => {
+interface PaymentFormProps {
+  onCustomerInfoChange: (info: {
+    name: string;
+    email: string;
+    phone: string;
+    paymentMethod: string;
+  }) => void;
+}
+
+const PaymentForm = ({ onCustomerInfoChange }: PaymentFormProps) => {
+  const [customerInfo, setCustomerInfo] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    paymentMethod: 'paylink'
+  });
+
+  const handleInputChange = (field: string, value: string) => {
+    const updatedInfo = { ...customerInfo, [field]: value };
+    setCustomerInfo(updatedInfo);
+    onCustomerInfoChange(updatedInfo);
+  };
+
   return (
-    <div className="mt-8 space-y-4">
+    <div className="mt-8 space-y-6">
       <div className="bg-muted p-4 rounded-md">
-        <div className="flex items-center gap-2 mb-4">
-          <CreditCard className="h-5 w-5" />
-          <h3 className="font-medium">معلومات بطاقة الدفع</h3>
-        </div>
-        <p className="text-sm text-muted-foreground mb-4">هذا نموذج توضيحي فقط. في التطبيق الفعلي سيتم التكامل مع بوابة دفع آمنة.</p>
+        <h3 className="font-medium mb-4">معلومات العميل</h3>
         <div className="grid gap-4">
           <div className="grid gap-2">
-            <label htmlFor="card-number" className="text-sm">رقم البطاقة</label>
+            <Label htmlFor="customer-name">الاسم الكامل</Label>
             <Input 
-              id="card-number"
+              id="customer-name"
               type="text" 
-              placeholder="0000 0000 0000 0000" 
+              placeholder="أدخل اسمك الكامل" 
               className="border rounded-md p-2 w-full bg-background"
-              maxLength={19}
+              value={customerInfo.name}
+              onChange={(e) => handleInputChange('name', e.target.value)}
+              required
             />
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="grid gap-2">
-              <label htmlFor="expiry" className="text-sm">تاريخ الانتهاء</label>
-              <Input 
-                id="expiry"
-                type="text" 
-                placeholder="MM/YY" 
-                className="border rounded-md p-2 w-full bg-background"
-                maxLength={5}
-              />
-            </div>
-            <div className="grid gap-2">
-              <label htmlFor="cvc" className="text-sm">رمز الأمان CVC</label>
-              <Input 
-                id="cvc"
-                type="text" 
-                placeholder="123" 
-                className="border rounded-md p-2 w-full bg-background"
-                maxLength={3}
-              />
-            </div>
+          
+          <div className="grid gap-2">
+            <Label htmlFor="customer-email">البريد الإلكتروني</Label>
+            <Input 
+              id="customer-email"
+              type="email" 
+              placeholder="example@domain.com" 
+              className="border rounded-md p-2 w-full bg-background"
+              dir="ltr"
+              value={customerInfo.email}
+              onChange={(e) => handleInputChange('email', e.target.value)}
+              required
+            />
+          </div>
+          
+          <div className="grid gap-2">
+            <Label htmlFor="customer-phone">رقم الجوال</Label>
+            <Input 
+              id="customer-phone"
+              type="tel" 
+              placeholder="05xxxxxxxx" 
+              className="border rounded-md p-2 w-full bg-background"
+              dir="ltr"
+              value={customerInfo.phone}
+              onChange={(e) => handleInputChange('phone', e.target.value)}
+              required
+            />
           </div>
         </div>
       </div>
+      
+      <PaymentMethod 
+        selectedMethod={customerInfo.paymentMethod}
+        onMethodChange={(method) => handleInputChange('paymentMethod', method)}
+      />
     </div>
   );
 };

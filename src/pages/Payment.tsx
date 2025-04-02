@@ -6,12 +6,16 @@ import Footer from '@/components/Footer';
 import PaymentHeader from '@/components/payment/PaymentHeader';
 import PaymentCard from '@/components/payment/PaymentCard';
 import { toast } from "sonner";
+import { createPaylinkInvoice } from '@/services/paylinkService';
+import { supabase } from "@/integrations/supabase/client";
 
 const Payment = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [plan, setPlan] = useState<string>('');
   const [amount, setAmount] = useState<number>(0);
+  const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  const [paylinkApiKey, setPaylinkApiKey] = useState<string>('');
 
   useEffect(() => {
     // التحقق من أن المستخدم وصل للصفحة عن طريق صفحة الأسعار
@@ -39,20 +43,105 @@ const Payment = () => {
         priceAmount = 0;
     }
     setAmount(priceAmount);
+    
+    // استرجاع مفتاح API لـ PayLink من إعدادات النظام
+    const fetchPaymentSettings = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('payment_settings')
+          .select('*')
+          .limit(1)
+          .single();
+
+        if (error) {
+          console.error("خطأ في جلب إعدادات الدفع:", error);
+          return;
+        }
+
+        if (data && data.paylink && data.paylink.enabled && data.paylink.apiKey) {
+          setPaylinkApiKey(data.paylink.apiKey);
+        } else {
+          console.warn("لم يتم تكوين إعدادات PayLink بشكل صحيح");
+        }
+      } catch (error) {
+        console.error("خطأ غير متوقع:", error);
+      }
+    };
+
+    fetchPaymentSettings();
   }, [location, navigate]);
 
-  const handlePayment = () => {
-    // هنا ستكون الإجراءات الخاصة بعملية الدفع الفعلية (مثل التكامل مع بوابة دفع)
-    // حاليًا سنستخدم توست لمحاكاة عملية الدفع
-    toast.success(`تم الاشتراك في الباقة ${plan} بنجاح!`);
-    
-    // تحديث حالة الاشتراك في localStorage (هذا مؤقت، في التطبيق الحقيقي سيكون في قاعدة البيانات)
-    localStorage.setItem('subscriptionType', plan);
-    
-    // التوجيه إلى الصفحة الرئيسية بعد الدفع
-    setTimeout(() => {
-      navigate('/');
-    }, 2000);
+  const handlePayment = async (customerInfo: {
+    name: string;
+    email: string;
+    phone: string;
+    paymentMethod: string;
+  }) => {
+    // إذا كانت الباقة مجانية، نقوم بتحديث الاشتراك مباشرة
+    if (amount === 0) {
+      toast.success(`تم الاشتراك في الباقة ${plan} بنجاح!`);
+      localStorage.setItem('subscriptionType', plan);
+      setTimeout(() => {
+        navigate('/');
+      }, 2000);
+      return;
+    }
+
+    // للباقات المدفوعة، نستخدم PayLink
+    setIsProcessing(true);
+
+    try {
+      // التحقق من توفر مفتاح API
+      if (!paylinkApiKey) {
+        throw new Error("لم يتم تكوين مفتاح API لـ PayLink");
+      }
+
+      // لأغراض الاختبار، استخدم مفتاح الوضع التجريبي الذي يبدأ بـ 'test_'
+      const isTestMode = paylinkApiKey.startsWith('test_');
+      console.log("Using PayLink in", isTestMode ? "test" : "live", "mode");
+
+      // حفظ الخطة في التخزين المؤقت لاستخدامها عند عودة المستخدم من صفحة الدفع
+      localStorage.setItem('pendingSubscriptionPlan', plan);
+
+      // تنظيف وتنسيق رقم الهاتف (إزالة أي أحرف غير رقمية)
+      const formattedPhone = customerInfo.phone.replace(/\D/g, '');
+
+      // إنشاء فاتورة في PayLink
+      const invoice = await createPaylinkInvoice(
+        paylinkApiKey,
+        amount,
+        plan,
+        customerInfo.name,
+        customerInfo.email,
+        formattedPhone
+      );
+
+      if (!invoice || !invoice.payment_url) {
+        throw new Error("فشل في إنشاء فاتورة الدفع");
+      }
+
+      // حفظ معلومات الفاتورة في قاعدة البيانات (اختياري)
+      try {
+        await supabase.from('payment_invoices').insert({
+          invoice_id: invoice.id,
+          user_id: supabase.auth.getUser().then(user => user.data.user?.id),
+          plan_name: plan,
+          amount: amount,
+          status: invoice.status,
+          payment_method: 'paylink'
+        });
+      } catch (dbError) {
+        // نسجل الخطأ ولكن نستمر في العملية
+        console.error("فشل في حفظ بيانات الفاتورة:", dbError);
+      }
+
+      // توجيه المستخدم إلى صفحة الدفع الخاصة بـ PayLink
+      window.location.href = invoice.payment_url;
+    } catch (error) {
+      console.error("Error in payment process:", error);
+      toast.error(error instanceof Error ? error.message : "حدث خطأ أثناء إنشاء فاتورة الدفع");
+      setIsProcessing(false);
+    }
   };
 
   return (
@@ -65,6 +154,7 @@ const Payment = () => {
             plan={plan} 
             amount={amount} 
             onPayment={handlePayment} 
+            isProcessing={isProcessing}
           />
         </div>
       </main>
