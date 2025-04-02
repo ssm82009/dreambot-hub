@@ -16,6 +16,7 @@ const Payment = () => {
   const [amount, setAmount] = useState<number>(0);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [paylinkApiKey, setPaylinkApiKey] = useState<string>('');
+  const [paylinkSecretKey, setPaylinkSecretKey] = useState<string>('');
 
   useEffect(() => {
     // التحقق من أن المستخدم وصل للصفحة عن طريق صفحة الأسعار
@@ -59,12 +60,13 @@ const Payment = () => {
         }
 
         if (data && data.paylink_enabled) {
-          // استخدام مفتاح API من الإعدادات
-          if (data.paylink_api_key) {
+          // استخدام مفتاح API وسر API من الإعدادات
+          if (data.paylink_api_key && data.paylink_api_secret) {
             setPaylinkApiKey(data.paylink_api_key);
-            console.log("تم تحميل مفتاح API PayLink بنجاح");
+            setPaylinkSecretKey(data.paylink_api_secret);
+            console.log("تم تحميل بيانات اعتماد PayLink بنجاح");
           } else {
-            console.warn("مفتاح API لـ PayLink غير متوفر");
+            console.warn("بيانات اعتماد PayLink غير متوفرة");
           }
         } else {
           console.warn("لم يتم تكوين إعدادات PayLink بشكل صحيح");
@@ -97,9 +99,9 @@ const Payment = () => {
     setIsProcessing(true);
 
     try {
-      // التحقق من توفر مفتاح API
-      if (!paylinkApiKey) {
-        throw new Error("لم يتم تكوين مفتاح API لـ PayLink");
+      // التحقق من توفر بيانات اعتماد API
+      if (!paylinkApiKey || !paylinkSecretKey) {
+        throw new Error("لم يتم تكوين بيانات اعتماد PayLink");
       }
 
       // لأغراض الاختبار، استخدم مفتاح الوضع التجريبي الذي يبدأ بـ 'test_'
@@ -115,6 +117,7 @@ const Payment = () => {
       // إنشاء فاتورة في PayLink
       const invoice = await createPaylinkInvoice(
         paylinkApiKey,
+        paylinkSecretKey,
         amount,
         plan,
         customerInfo.name,
@@ -122,9 +125,12 @@ const Payment = () => {
         formattedPhone
       );
 
-      if (!invoice || !invoice.payment_url) {
+      if (!invoice || (!invoice.payment_url && !invoice.url)) {
         throw new Error("فشل في إنشاء فاتورة الدفع");
       }
+
+      // الحصول على رابط الدفع (دعم كلا التنسيقين)
+      const paymentUrl = invoice.payment_url || invoice.url;
 
       // حفظ معلومات الفاتورة في قاعدة البيانات (اختياري)
       try {
@@ -133,11 +139,11 @@ const Payment = () => {
 
         // إنشاء سجل فاتورة جديد في جدول payment_invoices
         await supabase.from('payment_invoices').insert([{
-          invoice_id: invoice.id,
+          invoice_id: invoice.transactionNo || invoice.orderNumber,
           user_id: userId,
           plan_name: plan,
           amount: amount,
-          status: invoice.status,
+          status: 'Pending',
           payment_method: 'paylink'
         }]);
       } catch (dbError) {
@@ -146,7 +152,7 @@ const Payment = () => {
       }
 
       // توجيه المستخدم إلى صفحة الدفع الخاصة بـ PayLink
-      window.location.href = invoice.payment_url;
+      window.location.href = paymentUrl;
     } catch (error) {
       console.error("Error in payment process:", error);
       toast.error(error instanceof Error ? error.message : "حدث خطأ أثناء إنشاء فاتورة الدفع");
@@ -174,3 +180,4 @@ const Payment = () => {
 };
 
 export default Payment;
+

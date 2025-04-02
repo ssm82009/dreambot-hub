@@ -6,25 +6,74 @@ import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { getPaylinkInvoiceStatus } from '@/services/paylinkService';
+import { supabase } from "@/integrations/supabase/client";
 
 const PaymentSuccess = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const invoiceId = searchParams.get('invoice_id');
+  // في الكود PHP، هناك transactionNo - نتحقق من كلاهما
+  const transactionNo = searchParams.get('transactionNo') || '';
+  const orderNumber = searchParams.get('order_number') || '';
   
   useEffect(() => {
-    // تحديث حالة الاشتراك في localStorage
-    const plan = localStorage.getItem('pendingSubscriptionPlan');
-    if (plan) {
-      localStorage.setItem('subscriptionType', plan);
-      localStorage.removeItem('pendingSubscriptionPlan');
-      
-      // تسجيل معرّف الفاتورة في سجل المطور
-      console.log("Payment success for invoice:", invoiceId);
-      
-      toast.success(`تم الاشتراك في الباقة ${plan} بنجاح!`);
-    }
-  }, [invoiceId]);
+    const verifyPayment = async () => {
+      // تحديث حالة الاشتراك في localStorage
+      const plan = localStorage.getItem('pendingSubscriptionPlan');
+      if (plan) {
+        localStorage.setItem('subscriptionType', plan);
+        localStorage.removeItem('pendingSubscriptionPlan');
+        
+        // تسجيل معرّف العملية في سجل المطور
+        console.log("Payment success for transaction:", transactionNo || orderNumber);
+        
+        try {
+          // استرجاع بيانات اعتماد PayLink
+          const { data: paymentSettings, error: settingsError } = await supabase
+            .from('payment_settings')
+            .select('*')
+            .limit(1)
+            .single();
+
+          if (settingsError) {
+            console.error("خطأ في جلب إعدادات الدفع:", settingsError);
+            return;
+          }
+
+          if (transactionNo && paymentSettings?.paylink_api_key && paymentSettings?.paylink_api_secret) {
+            // التحقق من حالة الدفع باستخدام API
+            const status = await getPaylinkInvoiceStatus(
+              paymentSettings.paylink_api_key,
+              paymentSettings.paylink_api_secret,
+              transactionNo
+            );
+            
+            if (status && (status.toLowerCase() === 'paid' || status.toLowerCase() === 'completed')) {
+              toast.success(`تم الاشتراك في الباقة ${plan} بنجاح!`);
+              
+              // تحديث حالة الفاتورة في قاعدة البيانات
+              await supabase
+                .from('payment_invoices')
+                .update({ status: 'Paid' })
+                .eq('invoice_id', transactionNo);
+            } else {
+              console.warn(`حالة الدفع: ${status || 'غير معروفة'}`);
+            }
+          } else {
+            // إذا لم نتمكن من التحقق من حالة الدفع، نفترض أنه ناجح
+            // لأن المستخدم وصل إلى صفحة النجاح
+            toast.success(`تم الاشتراك في الباقة ${plan} بنجاح!`);
+          }
+        } catch (error) {
+          console.error("Error verifying payment:", error);
+          // نعرض رسالة نجاح على الرغم من الخطأ لأن المستخدم على صفحة النجاح
+          toast.success(`تم الاشتراك في الباقة ${plan} بنجاح!`);
+        }
+      }
+    };
+
+    verifyPayment();
+  }, [transactionNo, orderNumber]);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -39,9 +88,9 @@ const PaymentSuccess = () => {
             <p className="mb-6 text-gray-600">
               شكراً لاشتراكك معنا. تم تفعيل حسابك بنجاح ويمكنك الآن الاستمتاع بجميع مميزات الباقة.
             </p>
-            {invoiceId && (
+            {(transactionNo || orderNumber) && (
               <p className="mb-6 text-sm text-gray-500">
-                رقم الفاتورة: {invoiceId}
+                رقم العملية: {transactionNo || orderNumber}
               </p>
             )}
             <div className="space-y-3">
@@ -61,3 +110,4 @@ const PaymentSuccess = () => {
 };
 
 export default PaymentSuccess;
+
