@@ -1,53 +1,97 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import PricingPlanCard, { PricingPlan } from './PricingPlanCard';
-
-const pricingPlans: PricingPlan[] = [
-  {
-    id: 'المجاني',
-    name: 'المجاني',
-    price: 0,
-    description: 'للاستخدام الأساسي',
-    features: [
-      { text: '3 تفسيرات أحلام شهرياً' },
-      { text: 'تفسير أساسي للأحلام' },
-      { text: 'دعم عبر البريد الإلكتروني' }
-    ]
-  },
-  {
-    id: 'المميز',
-    name: 'المميز',
-    price: 49,
-    description: 'للمستخدمين النشطين',
-    features: [
-      { text: 'تفسيرات أحلام غير محدودة' },
-      { text: 'تفسيرات مفصلة ومعمقة' },
-      { text: 'أرشيف لتفسيرات أحلامك السابقة' },
-      { text: 'نصائح وتوجيهات شخصية' },
-      { text: 'دعم فني على مدار الساعة' }
-    ],
-    isPopular: true
-  },
-  {
-    id: 'الاحترافي',
-    name: 'الاحترافي',
-    price: 99,
-    description: 'للمؤسسات والمحترفين',
-    features: [
-      { text: 'كل مميزات الخطة المميزة' },
-      { text: 'استشارات شخصية مع خبراء تفسير الأحلام' },
-      { text: 'تقارير تحليلية شهرية' },
-      { text: 'إمكانية إضافة 5 حسابات فرعية' },
-      { text: 'واجهة برمجة التطبيقات API' }
-    ]
-  }
-];
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface PricingPlansProps {
   onSubscribe: (planId: string) => void;
 }
 
 const PricingPlans = ({ onSubscribe }: PricingPlansProps) => {
+  const [pricingPlans, setPricingPlans] = useState<PricingPlan[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    const fetchPricingSettings = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('pricing_settings')
+          .select('*')
+          .limit(1)
+          .single();
+
+        if (error) {
+          console.error("خطأ في جلب إعدادات الأسعار:", error);
+          toast.error("حدث خطأ أثناء تحميل خطط الأسعار");
+          setLoading(false);
+          return;
+        }
+
+        if (data) {
+          // Parse features strings into arrays of features
+          const freePlanFeatures = data.free_plan_features
+            .split('\n')
+            .filter(Boolean)
+            .map((text: string) => ({ text }));
+
+          const premiumPlanFeatures = data.premium_plan_features
+            .split('\n')
+            .filter(Boolean)
+            .map((text: string) => ({ text }));
+
+          const proPlanFeatures = data.pro_plan_features
+            .split('\n')
+            .filter(Boolean)
+            .map((text: string) => ({ text }));
+
+          // Create plan objects
+          const plans: PricingPlan[] = [
+            {
+              id: 'المجاني',
+              name: 'المجاني',
+              price: Number(data.free_plan_price),
+              description: 'للاستخدام الأساسي',
+              features: freePlanFeatures
+            },
+            {
+              id: 'المميز',
+              name: 'المميز',
+              price: Number(data.premium_plan_price),
+              description: 'للمستخدمين النشطين',
+              features: premiumPlanFeatures,
+              isPopular: true
+            },
+            {
+              id: 'الاحترافي',
+              name: 'الاحترافي',
+              price: Number(data.pro_plan_price),
+              description: 'للمؤسسات والمحترفين',
+              features: proPlanFeatures
+            }
+          ];
+
+          setPricingPlans(plans);
+        }
+      } catch (error) {
+        console.error("خطأ غير متوقع:", error);
+        toast.error("حدث خطأ أثناء تحميل خطط الأسعار");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPricingSettings();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center py-12">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
       {pricingPlans.map((plan) => (

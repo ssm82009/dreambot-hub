@@ -1,12 +1,13 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { supabase } from "@/integrations/supabase/client";
 
 interface FAQItem {
   question: string;
   answer: string;
 }
 
-const faqItems: FAQItem[] = [
+const defaultFaqItems: FAQItem[] = [
   {
     question: 'هل يمكنني إلغاء اشتراكي في أي وقت؟',
     answer: 'نعم، يمكنك إلغاء اشتراكك في أي وقت. ستستمر خدمتك حتى نهاية فترة الفوترة الحالية.'
@@ -26,6 +27,46 @@ const faqItems: FAQItem[] = [
 ];
 
 const PricingFAQ = () => {
+  const [faqItems, setFaqItems] = useState<FAQItem[]>(defaultFaqItems);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    const fetchFAQs = async () => {
+      try {
+        // Check if there's a custom_pages table entry for FAQs
+        const { data, error } = await supabase
+          .from('custom_pages')
+          .select('*')
+          .eq('slug', 'faq')
+          .maybeSingle();
+
+        if (error) {
+          console.error("خطأ في جلب الأسئلة الشائعة:", error);
+          setLoading(false);
+          return;
+        }
+
+        // If we have a custom FAQ page, try to parse its content as JSON
+        if (data && data.content) {
+          try {
+            const customFaqs = JSON.parse(data.content);
+            if (Array.isArray(customFaqs) && customFaqs.length > 0) {
+              setFaqItems(customFaqs);
+            }
+          } catch (parseError) {
+            console.error("خطأ في تحليل محتوى الأسئلة الشائعة:", parseError);
+          }
+        }
+      } catch (error) {
+        console.error("خطأ غير متوقع:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchFAQs();
+  }, []);
+
   return (
     <div className="mt-16 text-center">
       <h2 className="text-2xl font-bold mb-6">الأسئلة الشائعة</h2>
