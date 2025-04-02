@@ -26,7 +26,33 @@ const Login = () => {
         password
       });
       
-      if (error) {
+      // Handle "Email not confirmed" error specially
+      if (error && error.message === 'Email not confirmed') {
+        // Try to get magic link or auto-confirm the email
+        const { error: updateError } = await supabase.auth.updateUser({
+          email: email
+        });
+        
+        if (updateError) {
+          console.error('خطأ في تحديث المستخدم:', updateError.message);
+          toast.error("لم يتم تأكيد البريد الإلكتروني، يرجى مراجعة بريدك الإلكتروني للتفعيل");
+          setIsLoading(false);
+          return;
+        }
+        
+        // Try signing in again after update
+        const { data: retryData, error: retryError } = await supabase.auth.signInWithPassword({
+          email,
+          password
+        });
+        
+        if (retryError) {
+          throw retryError;
+        }
+        
+        // Continue with successful login
+        data = retryData;
+      } else if (error) {
         throw error;
       }
       
