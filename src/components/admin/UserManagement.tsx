@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -7,6 +7,7 @@ import { User } from '@/types/database';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { Badge } from '@/components/ui/badge';
+import { Loader2 } from 'lucide-react';
 
 type UserManagementProps = {
   users: User[];
@@ -15,6 +16,36 @@ type UserManagementProps = {
 const UserManagement: React.FC<UserManagementProps> = ({ users: initialUsers }) => {
   const [users, setUsers] = useState<User[]>(initialUsers);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Refresh user data when the component mounts
+  useEffect(() => {
+    const fetchUsers = async () => {
+      setIsLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('users')
+          .select('*');
+
+        if (error) {
+          console.error('Error fetching users:', error);
+          toast.error('حدث خطأ في جلب بيانات المستخدمين');
+        } else {
+          console.log('Fetched users in UserManagement:', data);
+          setUsers(data || []);
+        }
+      } catch (error) {
+        console.error('Error in fetchUsers:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    // If we don't have any users initially, fetch them
+    if (initialUsers.length === 0) {
+      fetchUsers();
+    }
+  }, [initialUsers]);
 
   const filteredUsers = searchTerm
     ? users.filter(user => 
@@ -45,7 +76,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users: initialUsers }) 
   };
 
   // طباعة معلومات المستخدمين للتأكد من وجود مشرفين
-  console.log('Users data in admin panel:', users);
+  console.log('Users data in UserManagement component:', users);
 
   return (
     <div className="space-y-4">
@@ -58,73 +89,82 @@ const UserManagement: React.FC<UserManagementProps> = ({ users: initialUsers }) 
         />
       </div>
       
-      <div className="border rounded-md overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[50px]">الرقم</TableHead>
-              <TableHead>البريد الإلكتروني</TableHead>
-              <TableHead>الاسم</TableHead>
-              <TableHead>نوع العضوية</TableHead>
-              <TableHead>الإجراءات</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredUsers && filteredUsers.length > 0 ? (
-              filteredUsers.map((user, index) => (
-                <TableRow key={user.id}>
-                  <TableCell>{index + 1}</TableCell>
-                  <TableCell>{user.email}</TableCell>
-                  <TableCell>{user.full_name || '-'}</TableCell>
-                  <TableCell>
-                    <Badge variant={user.role === 'admin' ? 'default' : user.role === 'interpreter' ? 'secondary' : 'outline'}>
-                      {user.role === 'admin' ? 'مشرف' : 
-                       user.role === 'interpreter' ? 'مفسر' : 'عضو'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-wrap gap-2">
-                      {user.role !== 'admin' && (
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => handleRoleChange(user.id, 'admin')}
-                        >
-                          تعيين كمشرف
-                        </Button>
-                      )}
-                      {user.role !== 'user' && (
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => handleRoleChange(user.id, 'user')}
-                        >
-                          تعيين كمستخدم
-                        </Button>
-                      )}
-                      {user.role !== 'interpreter' && (
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => handleRoleChange(user.id, 'interpreter')}
-                        >
-                          تعيين كمفسر
-                        </Button>
-                      )}
-                    </div>
+      {isLoading ? (
+        <div className="flex justify-center py-8">
+          <div className="flex flex-col items-center">
+            <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+            <p className="text-muted-foreground">جاري تحميل بيانات المستخدمين...</p>
+          </div>
+        </div>
+      ) : (
+        <div className="border rounded-md overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[50px]">الرقم</TableHead>
+                <TableHead>البريد الإلكتروني</TableHead>
+                <TableHead>الاسم</TableHead>
+                <TableHead>نوع العضوية</TableHead>
+                <TableHead>الإجراءات</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredUsers && filteredUsers.length > 0 ? (
+                filteredUsers.map((user, index) => (
+                  <TableRow key={user.id}>
+                    <TableCell>{index + 1}</TableCell>
+                    <TableCell>{user.email}</TableCell>
+                    <TableCell>{user.full_name || '-'}</TableCell>
+                    <TableCell>
+                      <Badge variant={user.role === 'admin' ? 'default' : user.role === 'interpreter' ? 'secondary' : 'outline'}>
+                        {user.role === 'admin' ? 'مشرف' : 
+                         user.role === 'interpreter' ? 'مفسر' : 'عضو'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap gap-2">
+                        {user.role !== 'admin' && (
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleRoleChange(user.id, 'admin')}
+                          >
+                            تعيين كمشرف
+                          </Button>
+                        )}
+                        {user.role !== 'user' && (
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleRoleChange(user.id, 'user')}
+                          >
+                            تعيين كمستخدم
+                          </Button>
+                        )}
+                        {user.role !== 'interpreter' && (
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleRoleChange(user.id, 'interpreter')}
+                          >
+                            تعيين كمفسر
+                          </Button>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-4 text-muted-foreground">
+                    لا يوجد مستخدمين حتى الآن
                   </TableCell>
                 </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={5} className="text-center py-4 text-muted-foreground">
-                  لا يوجد مستخدمين حتى الآن
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      )}
       
       <div className="p-4 border rounded-md mt-6">
         <h3 className="text-lg font-semibold mb-4">أنواع الصلاحيات</h3>

@@ -9,16 +9,20 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 const Login = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [emailNotConfirmed, setEmailNotConfirmed] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setEmailNotConfirmed(false);
     
     try {
       // Initial login attempt
@@ -30,6 +34,9 @@ const Login = () => {
       // Handle "Email not confirmed" error specially
       if (result.error && result.error.message === 'Email not confirmed') {
         console.log('Email not confirmed, trying to update user...');
+        
+        // Set the emailNotConfirmed state to true to show the alert
+        setEmailNotConfirmed(true);
         
         // Try to get magic link or auto-confirm the email
         const { error: updateError } = await supabase.auth.updateUser({
@@ -87,10 +94,16 @@ const Login = () => {
       navigate('/');
     } catch (error: any) {
       console.error('خطأ في تسجيل الدخول:', error.message);
-      toast.error(error.message === 'Invalid login credentials' 
-        ? "بيانات الدخول غير صحيحة" 
-        : "حدث خطأ في تسجيل الدخول، يرجى المحاولة مرة أخرى"
-      );
+      
+      if (error.message === 'Email not confirmed') {
+        setEmailNotConfirmed(true);
+        toast.error("لم يتم تأكيد البريد الإلكتروني، يرجى مراجعة بريدك الإلكتروني للتفعيل");
+      } else {
+        toast.error(error.message === 'Invalid login credentials' 
+          ? "بيانات الدخول غير صحيحة" 
+          : "حدث خطأ في تسجيل الدخول، يرجى المحاولة مرة أخرى"
+        );
+      }
     } finally {
       setIsLoading(false);
     }
@@ -108,6 +121,15 @@ const Login = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
+            {emailNotConfirmed && (
+              <Alert variant="destructive" className="mb-4">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  لم يتم تأكيد البريد الإلكتروني بعد. يرجى التحقق من بريدك الإلكتروني والضغط على رابط التفعيل.
+                </AlertDescription>
+              </Alert>
+            )}
+            
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email">البريد الإلكتروني</Label>
