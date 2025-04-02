@@ -1,11 +1,14 @@
 
 import { toast } from "sonner";
 
-// تكوين PayLink - دعم بيئتي الاختبار والإنتاج
+// تكوين PayLink - دعم بيئتي الاختبار والإنتاج بناءً على التوثيق الصحيح
 const PAYLINK_API_BASE = {
-  test: 'https://restpilot.paylink.sa/api/v2',
-  production: 'https://restapi.paylink.sa/api/v2'
+  test: 'https://restpilot.paylink.sa',
+  production: 'https://restapi.paylink.sa'
 };
+
+// مسار API الموحد
+const API_PATH = '/api/v2';
 
 const PAYLINK_REDIRECT_URL = window.location.origin + '/payment/success';
 const PAYLINK_REDIRECT_URL_CANCEL = window.location.origin + '/payment/cancel';
@@ -45,6 +48,7 @@ export const createPaylinkInvoice = async (
     
     console.log(`Using PayLink in ${isTestMode ? 'test' : 'production'} mode`);
     console.log(`API Base URL: ${apiBase}`);
+    console.log(`Full API URL: ${apiBase}${API_PATH}/invoice`);
 
     // تسجيل بيانات الطلب للتشخيص
     console.log("Creating PayLink invoice with data:", {
@@ -76,10 +80,10 @@ export const createPaylinkInvoice = async (
     };
 
     console.log("Request data:", JSON.stringify(requestData));
-    console.log("Sending request to:", `${apiBase}/invoice`);
+    console.log("Sending request to:", `${apiBase}${API_PATH}/invoice`);
 
     // إرسال طلب لإنشاء فاتورة جديدة
-    const response = await fetch(`${apiBase}/invoice`, {
+    const response = await fetch(`${apiBase}${API_PATH}/invoice`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -126,7 +130,7 @@ export const getPaylinkInvoiceStatus = async (apiKey: string, invoiceId: string)
     const isTestMode = apiKey.toLowerCase().startsWith('test_');
     const apiBase = isTestMode ? PAYLINK_API_BASE.test : PAYLINK_API_BASE.production;
     
-    const response = await fetch(`${apiBase}/invoice/${invoiceId}`, {
+    const response = await fetch(`${apiBase}${API_PATH}/invoice/${invoiceId}`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${apiKey}`,
