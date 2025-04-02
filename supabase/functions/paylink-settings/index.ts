@@ -26,13 +26,21 @@ serve(async (req) => {
       .from('payment_settings')
       .select('paylink_enabled, paylink_api_key')
       .limit(1)
-      .single();
+      .maybeSingle();
     
     if (error) {
       console.error("Error fetching PayLink settings:", error);
       return new Response(
         JSON.stringify({ error: "Could not fetch PayLink settings", data: null }),
         { headers: corsHeaders, status: 500 }
+      );
+    }
+    
+    if (!data) {
+      console.error("No PayLink settings found");
+      return new Response(
+        JSON.stringify({ error: "No PayLink settings found", data: { enabled: false, apiKey: "" } }),
+        { headers: corsHeaders, status: 404 }
       );
     }
     

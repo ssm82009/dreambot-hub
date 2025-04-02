@@ -34,12 +34,14 @@ export const createPaylinkInvoice = async (
     const settingsResponse = await fetch(`${window.location.origin}/functions/v1/paylink-settings`, {
       method: "GET",
       headers: {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        "Accept": "application/json"
       },
     });
     
     if (!settingsResponse.ok) {
-      console.error("Error fetching PayLink settings:", await settingsResponse.text());
+      const errorText = await settingsResponse.text();
+      console.error("Error fetching PayLink settings:", errorText);
       throw new Error("تعذر الاتصال ببوابة الدفع. يرجى المحاولة مرة أخرى لاحقًا.");
     }
     
@@ -52,7 +54,7 @@ export const createPaylinkInvoice = async (
     
     const apiKey = settingsData.data.apiKey;
     
-    // Create invoice data
+    // Create invoice data according to PayLink documentation
     const invoiceData = {
       amount: amount,
       callback_url: window.location.origin + "/payment/callback",
@@ -65,14 +67,14 @@ export const createPaylinkInvoice = async (
         quantity: 1
       }],
       success_url: window.location.origin + "/payment/success",
-      client_info: {
+      client: {
         name: customerName,
         email: customerEmail,
       }
     };
     
-    // Make API request to PayLink.sa - Make sure we use the correct API endpoint
-    const paylinkApiUrl = "https://restapi.paylink.sa/api/invoices"; // Production API endpoint
+    // Use the correct API endpoint according to documentation
+    const paylinkApiUrl = "https://restapi.paylink.sa/api/invoices";
     
     console.log("Sending request to PayLink API with data:", {
       url: paylinkApiUrl,
@@ -90,13 +92,15 @@ export const createPaylinkInvoice = async (
       body: JSON.stringify(invoiceData)
     });
     
+    const responseText = await response.text();
+    console.log("PayLink API Response:", responseText);
+    
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error("PayLink API Error Response:", errorText);
+      console.error("PayLink API Error Response:", responseText);
       try {
         // Only try to parse as JSON if it looks like JSON
-        if (errorText.trim().startsWith('{')) {
-          const errorJson = JSON.parse(errorText);
+        if (responseText.trim().startsWith('{')) {
+          const errorJson = JSON.parse(responseText);
           throw new Error(errorJson.message || "حدث خطأ أثناء إنشاء الفاتورة");
         } else {
           throw new Error("حدث خطأ أثناء الاتصال بخدمة الدفع، يرجى المحاولة مرة أخرى لاحقًا");
@@ -106,7 +110,13 @@ export const createPaylinkInvoice = async (
       }
     }
     
-    const result = await response.json();
+    let result;
+    try {
+      result = JSON.parse(responseText);
+    } catch (e) {
+      console.error("Error parsing PayLink response as JSON:", e);
+      throw new Error("تلقينا استجابة غير صالحة من بوابة الدفع");
+    }
     
     return {
       id: result.id,
