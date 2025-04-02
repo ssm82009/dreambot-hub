@@ -144,6 +144,39 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_invoices: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          invoice_id: string
+          payment_method: string
+          plan_name: string
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          invoice_id: string
+          payment_method: string
+          plan_name: string
+          status: string
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          invoice_id?: string
+          payment_method?: string
+          plan_name?: string
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       payment_settings: {
         Row: {
           created_at: string | null
