@@ -48,21 +48,17 @@ const PaymentCallback = () => {
             return;
           }
           
-          // Update user subscription in database
-          const { error: subscriptionError } = await supabase
-            .from('user_subscriptions')
-            .upsert({
-              user_id: user.id,
-              plan_type: plan,
-              payment_id: paymentId,
-              payment_status: status,
-              starts_at: new Date().toISOString(),
-              expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days from now
-              is_active: true
-            });
+          // Update user's subscription in users table
+          const { error: userUpdateError } = await supabase
+            .from('users')
+            .update({
+              subscription_type: plan,
+              subscription_expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() // 30 days from now
+            })
+            .eq('id', user.id);
             
-          if (subscriptionError) {
-            console.error('Error updating subscription:', subscriptionError);
+          if (userUpdateError) {
+            console.error('Error updating user subscription:', userUpdateError);
             toast.error('حدث خطأ أثناء تحديث بيانات الاشتراك');
             setProcessing(false);
             setTimeout(() => navigate('/pricing'), 3000);

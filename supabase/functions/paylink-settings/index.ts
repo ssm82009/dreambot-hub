@@ -9,6 +9,18 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 serve(async (req) => {
   try {
+    // Set CORS headers for browser requests
+    const corsHeaders = {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+      "Content-Type": "application/json"
+    };
+
+    // Handle CORS preflight requests
+    if (req.method === "OPTIONS") {
+      return new Response(null, { headers: corsHeaders, status: 204 });
+    }
+    
     // Get PayLink settings from database
     const { data, error } = await supabase
       .from('payment_settings')
@@ -20,7 +32,7 @@ serve(async (req) => {
       console.error("Error fetching PayLink settings:", error);
       return new Response(
         JSON.stringify({ error: "Could not fetch PayLink settings", data: null }),
-        { headers: { "Content-Type": "application/json" }, status: 500 }
+        { headers: corsHeaders, status: 500 }
       );
     }
     
@@ -33,13 +45,16 @@ serve(async (req) => {
         }, 
         error: null 
       }),
-      { headers: { "Content-Type": "application/json" } }
+      { headers: corsHeaders }
     );
   } catch (error) {
     console.error("Unexpected error:", error);
     return new Response(
       JSON.stringify({ error: "An unexpected error occurred", data: null }),
-      { headers: { "Content-Type": "application/json" }, status: 500 }
+      { 
+        headers: { "Content-Type": "application/json" }, 
+        status: 500 
+      }
     );
   }
 });

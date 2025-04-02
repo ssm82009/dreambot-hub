@@ -24,17 +24,17 @@ const Payment = () => {
       const { data: { user } } = await supabase.auth.getUser();
       
       if (user) {
-        // Get user profile from database
-        const { data: profile } = await supabase
-          .from('profiles')
+        // Get user data from the users table
+        const { data: userProfile } = await supabase
+          .from('users')
           .select('full_name, email')
           .eq('id', user.id)
           .single();
           
-        if (profile) {
+        if (userProfile) {
           setUserData({
-            name: profile.full_name || user.email?.split('@')[0] || 'مستخدم',
-            email: profile.email || user.email || ''
+            name: userProfile.full_name || user.email?.split('@')[0] || 'مستخدم',
+            email: userProfile.email || user.email || ''
           });
         } else {
           setUserData({

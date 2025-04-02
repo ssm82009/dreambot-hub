@@ -31,15 +31,21 @@ export const createPaylinkInvoice = async (
 ): Promise<PaylinkInvoiceResponse> => {
   try {
     // Get the API key from the payment settings
-    // In a production environment, this should be retrieved from the server
-    const { data, error } = await fetch('/api/paylink-settings').then(res => res.json());
+    const settingsResponse = await fetch('/api/paylink-settings');
     
-    if (error || !data?.apiKey) {
-      console.error("Error fetching PayLink API Key:", error);
+    if (!settingsResponse.ok) {
+      console.error("Error fetching PayLink settings:", settingsResponse.statusText);
       throw new Error("تعذر الاتصال ببوابة الدفع. يرجى المحاولة مرة أخرى لاحقًا.");
     }
     
-    const apiKey = data.apiKey;
+    const settingsData = await settingsResponse.json();
+    
+    if (!settingsData.data?.apiKey) {
+      console.error("PayLink API Key not found:", settingsData);
+      throw new Error("تعذر الاتصال ببوابة الدفع. يرجى المحاولة مرة أخرى لاحقًا.");
+    }
+    
+    const apiKey = settingsData.data.apiKey;
     
     // Create invoice data
     const invoiceData = {
@@ -71,12 +77,18 @@ export const createPaylinkInvoice = async (
       body: JSON.stringify(invoiceData)
     });
     
-    const result = await response.json();
-    
     if (!response.ok) {
-      console.error("PayLink API Error:", result);
-      throw new Error(result.message || "حدث خطأ أثناء إنشاء الفاتورة");
+      const errorText = await response.text();
+      console.error("PayLink API Error Response:", errorText);
+      try {
+        const errorJson = JSON.parse(errorText);
+        throw new Error(errorJson.message || "حدث خطأ أثناء إنشاء الفاتورة");
+      } catch (e) {
+        throw new Error("حدث خطأ أثناء إنشاء الفاتورة، يرجى المحاولة مرة أخرى لاحقًا");
+      }
     }
+    
+    const result = await response.json();
     
     return {
       id: result.id,
