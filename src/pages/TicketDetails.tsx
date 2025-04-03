@@ -69,10 +69,18 @@ const TicketDetails = () => {
 
         if (ticketError) throw ticketError;
         
-        // جلب الردود
+        // جلب الردود مع معلومات المستخدمين
         const { data: repliesData, error: repliesError } = await supabase
           .from('ticket_replies')
-          .select('*')
+          .select(`
+            *,
+            user:user_id (
+              id,
+              email,
+              full_name,
+              role
+            )
+          `)
           .eq('ticket_id', id)
           .order('created_at', { ascending: true });
 
@@ -115,7 +123,15 @@ const TicketDetails = () => {
           content: newReply.trim(),
           user_id: userId
         })
-        .select()
+        .select(`
+          *,
+          user:user_id (
+            id,
+            email,
+            full_name,
+            role
+          )
+        `)
         .single();
 
       if (error) throw error;

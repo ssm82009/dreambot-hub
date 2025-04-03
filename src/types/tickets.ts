@@ -17,7 +17,12 @@ export type TicketReply = {
   user_id: string;
   content: string;
   created_at: string;
-  user?: User;
+  user?: {
+    id: string;
+    email: string;
+    full_name?: string;
+    role: string;
+  };
 };
 
 export type TicketWithReplies = Ticket & {
