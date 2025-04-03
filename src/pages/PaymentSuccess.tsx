@@ -101,6 +101,20 @@ const PaymentSuccess = () => {
           } else {
             console.log("Updated subscription successfully for user:", userId, "to plan:", plan);
             toast.success(`تم الاشتراك في الباقة ${plan === 'premium' ? 'المميزة' : 'الاحترافية'} بنجاح!`);
+            
+            // تحديث جميع الدفعات المرتبطة بهذا المستخدم والخطة إلى حالة "مدفوع"
+            const { error: updateAllInvoicesError } = await supabase
+              .from('payment_invoices')
+              .update({ status: 'Paid' })
+              .eq('user_id', userId)
+              .eq('plan_name', plan)
+              .eq('status', 'Pending');
+              
+            if (updateAllInvoicesError) {
+              console.error("Error updating related invoices:", updateAllInvoicesError);
+            } else {
+              console.log("Updated all pending invoices for user:", userId, "and plan:", plan);
+            }
           }
         } catch (error) {
           console.error("Error verifying payment:", error);

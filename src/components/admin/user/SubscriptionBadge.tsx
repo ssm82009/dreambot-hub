@@ -34,9 +34,17 @@ export const getSubscriptionStatus = (user: User): SubscriptionStatus => {
     
     // إذا كان تاريخ الانتهاء في المستقبل، فالاشتراك نشط
     if (expiryDate > now) {
+      // تحويل قيم الاشتراك المميز من مختلف اللغات والتنسيقات
+      let subscriptionType = user.subscription_type.toLowerCase();
+      if (subscriptionType === 'المميز' || subscriptionType === 'مميز') {
+        subscriptionType = 'premium';
+      } else if (subscriptionType === 'احترافي' || subscriptionType === 'الاحترافي') {
+        subscriptionType = 'pro';
+      }
+      
       return { 
-        name: user.subscription_type === 'premium' ? 'مميز' : 'احترافي',
-        color: user.subscription_type === 'premium' ? 'secondary' : 'default',
+        name: subscriptionType === 'premium' ? 'مميز' : 'احترافي',
+        color: subscriptionType === 'premium' ? 'secondary' : 'default',
         isActive: true
       };
     } else {
@@ -50,9 +58,17 @@ export const getSubscriptionStatus = (user: User): SubscriptionStatus => {
   }
   
   // إذا كان هناك نوع اشتراك ولكن لا يوجد تاريخ انتهاء، نعتبره نشطاً
+  // تحويل قيم الاشتراك المميز من مختلف اللغات والتنسيقات
+  let subscriptionType = user.subscription_type.toLowerCase();
+  if (subscriptionType === 'المميز' || subscriptionType === 'مميز') {
+    subscriptionType = 'premium';
+  } else if (subscriptionType === 'احترافي' || subscriptionType === 'الاحترافي') {
+    subscriptionType = 'pro';
+  }
+  
   return { 
-    name: user.subscription_type === 'premium' ? 'مميز' : 'احترافي',
-    color: user.subscription_type === 'premium' ? 'secondary' : 'default',
+    name: subscriptionType === 'premium' ? 'مميز' : 'احترافي',
+    color: subscriptionType === 'premium' ? 'secondary' : 'default',
     isActive: true
   };
 };

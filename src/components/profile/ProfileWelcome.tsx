@@ -42,6 +42,15 @@ const ProfileWelcome: React.FC<ProfileWelcomeProps> = ({ userData }) => {
     }
   };
 
+  // تسجيل البيانات لأغراض التصحيح
+  console.log("ProfileWelcome - User subscription data:", {
+    type: userData.subscription_type,
+    expires: userData.subscription_expires_at,
+    isActive: subscriptionStatus.isActive,
+    statusName: subscriptionStatus.name,
+    userData: userData
+  });
+
   return (
     <Card className="bg-muted/50">
       <CardContent className="pt-6">

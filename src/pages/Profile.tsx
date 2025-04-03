@@ -20,6 +20,63 @@ const Profile = () => {
   const [userData, setUserData] = useState<any>(null);
   const [payments, setPayments] = useState<any[]>([]);
   
+  // تحديث البيانات عند كل تبديل علامة تبويب
+  const refreshUserData = async (userId: string) => {
+    try {
+      console.log("Refreshing user data for ID:", userId);
+      
+      // تحديث بيانات المستخدم
+      const { data: refreshedUserData, error: userError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', userId)
+        .single();
+      
+      if (userError) {
+        console.error('Error refreshing user data:', userError);
+        return;
+      }
+      
+      if (refreshedUserData) {
+        console.log("Refreshed user data:", refreshedUserData);
+        
+        // تحديث عدد الأحلام
+        const { count: dreamsCount, error: dreamsError } = await supabase
+          .from('dreams')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', userId);
+        
+        if (dreamsError) {
+          console.error('Error refreshing dreams count:', dreamsError);
+        }
+        
+        // تحديث المدفوعات
+        const { data: paymentData, error: paymentError } = await supabase
+          .from('payment_invoices')
+          .select('*')
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false });
+        
+        if (paymentError) {
+          console.error('Error refreshing payment data:', paymentError);
+        } else {
+          console.log("Refreshed payments:", paymentData);
+          setPayments(paymentData || []);
+        }
+        
+        // تحديث بيانات المستخدم
+        const session = await supabase.auth.getSession();
+        setUserData({
+          ...refreshedUserData,
+          dreams_count: dreamsCount || 0,
+          email: session.data.session?.user.email
+        });
+      }
+    } catch (error) {
+      console.error('Error in refreshing data:', error);
+    }
+  };
+  
   useEffect(() => {
     const checkAuth = async () => {
       setIsLoading(true);
@@ -100,6 +157,13 @@ const Profile = () => {
     checkAuth();
   }, [navigate]);
   
+  // تحديث البيانات عند تغيير علامة التبويب
+  const handleTabChange = (value: string) => {
+    if (userData?.id) {
+      refreshUserData(userData.id);
+    }
+  };
+  
   if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col">
@@ -132,7 +196,7 @@ const Profile = () => {
             </CardContent>
           </Card>
           
-          <Tabs defaultValue="subscription" className="w-full">
+          <Tabs defaultValue="subscription" className="w-full" onValueChange={handleTabChange}>
             <TabsList className="grid grid-cols-4 mb-8">
               <TabsTrigger value="subscription">الاشتراك</TabsTrigger>
               <TabsTrigger value="payments">المدفوعات</TabsTrigger>

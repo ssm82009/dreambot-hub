@@ -56,36 +56,52 @@ const ProfileSubscription: React.FC<ProfileSubscriptionProps> = ({ userData }) =
     
     fetchPricingSettings();
     fetchDreamsCount();
+    
+    // تسجيل بيانات المستخدم للتصحيح
+    console.log("ProfileSubscription - User data:", userData);
   }, [userData?.id]);
   
   const subscriptionStatus = getSubscriptionStatus(userData);
   
+  // تسجيل حالة الاشتراك للتصحيح
+  console.log("ProfileSubscription - Subscription status:", subscriptionStatus);
+  
   // Get subscription name in Arabic
   const getSubscriptionName = () => {
-    switch (userData?.subscription_type?.toLowerCase()) {
+    // تحويل قيم الاشتراك المميز من مختلف اللغات والتنسيقات
+    if (!userData?.subscription_type) return 'الباقة المجانية';
+    
+    const subscriptionType = userData.subscription_type.toLowerCase();
+    
+    switch (subscriptionType) {
       case 'premium':
+      case 'المميز':
+      case 'مميز':
         return 'الباقة المميزة';
       case 'pro':
+      case 'الاحترافي':
+      case 'احترافي':
         return 'الباقة الاحترافية';
       default:
         return 'الباقة المجانية';
     }
   };
   
-  console.log("ProfileSubscription - User data:", userData);
-  console.log("ProfileSubscription - Subscription status:", subscriptionStatus);
-  
   // Calculate remaining interpretations based on the subscription type
   const getTotalInterpretations = () => {
     if (!pricingSettings) return 0;
     
-    switch (userData?.subscription_type) {
-      case 'premium':
-        return pricingSettings.premium_plan_interpretations;
-      case 'pro':
-        return pricingSettings.pro_plan_interpretations;
-      default:
-        return pricingSettings.free_plan_interpretations;
+    // تحويل قيم الاشتراك المميز من مختلف اللغات والتنسيقات
+    if (!userData?.subscription_type) return pricingSettings.free_plan_interpretations;
+    
+    const subscriptionType = userData.subscription_type.toLowerCase();
+    
+    if (subscriptionType === 'premium' || subscriptionType === 'المميز' || subscriptionType === 'مميز') {
+      return pricingSettings.premium_plan_interpretations;
+    } else if (subscriptionType === 'pro' || subscriptionType === 'الاحترافي' || subscriptionType === 'احترافي') {
+      return pricingSettings.pro_plan_interpretations;
+    } else {
+      return pricingSettings.free_plan_interpretations;
     }
   };
   
@@ -106,13 +122,17 @@ const ProfileSubscription: React.FC<ProfileSubscriptionProps> = ({ userData }) =
   const getCurrentPlanFeatures = () => {
     if (!pricingSettings) return [];
     
-    switch (userData?.subscription_type) {
-      case 'premium':
-        return formatPlanFeatures(pricingSettings.premium_plan_features);
-      case 'pro':
-        return formatPlanFeatures(pricingSettings.pro_plan_features);
-      default:
-        return formatPlanFeatures(pricingSettings.free_plan_features);
+    // تحويل قيم الاشتراك المميز من مختلف اللغات والتنسيقات
+    if (!userData?.subscription_type) return formatPlanFeatures(pricingSettings.free_plan_features);
+    
+    const subscriptionType = userData.subscription_type.toLowerCase();
+    
+    if (subscriptionType === 'premium' || subscriptionType === 'المميز' || subscriptionType === 'مميز') {
+      return formatPlanFeatures(pricingSettings.premium_plan_features);
+    } else if (subscriptionType === 'pro' || subscriptionType === 'الاحترافي' || subscriptionType === 'احترافي') {
+      return formatPlanFeatures(pricingSettings.pro_plan_features);
+    } else {
+      return formatPlanFeatures(pricingSettings.free_plan_features);
     }
   };
   
