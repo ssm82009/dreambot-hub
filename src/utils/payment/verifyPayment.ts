@@ -1,7 +1,9 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { getPaylinkInvoiceStatus } from '@/services/paylinkService';
+import { findInvoiceByIdentifiers, findPendingInvoiceByUserPlan, createPayPalInvoiceRecord, updateAllPendingInvoices } from './invoiceManager';
+import { updateUserSubscription } from './subscriptionUpdater';
+import { verifyPaylinkPayment } from './paylinkVerifier';
 
 /**
  * Verifies a payment and updates the user's subscription status
@@ -68,101 +70,21 @@ export const verifyPayment = async (
     let foundInvoice = false;
     
     if (identifiers.length > 0) {
-      console.log("Looking for invoice with identifiers:", identifiers);
-      
-      // بناء استعلام البحث عن الفاتورة باستخدام OR لكل معرّف
-      const { data: invoices, error: findError } = await supabase
-        .from('payment_invoices')
-        .select('*')
-        .in('invoice_id', identifiers);
-      
-      if (findError) {
-        console.error("Error finding invoice:", findError);
-      } else if (invoices && invoices.length > 0) {
-        console.log("Found matching invoices:", invoices);
-        foundInvoice = true;
-        invoiceId = invoices[0].id;
-        
-        // تحديث حالة الفاتورة في قاعدة البيانات إلى "مدفوع"
-        const { error: updateInvoiceError } = await supabase
-          .from('payment_invoices')
-          .update({ status: 'مدفوع' })
-          .eq('id', invoices[0].id);
-          
-        if (updateInvoiceError) {
-          console.error("Error updating invoice status:", updateInvoiceError);
-        } else {
-          console.log("Updated invoice status to مدفوع for invoice:", invoices[0].invoice_id);
-        }
-      } else {
-        console.log("No matching invoice found for identifiers:", identifiers);
-      }
+      // بحث عن الفاتورة باستخدام المعرفات
+      const result = await findInvoiceByIdentifiers(identifiers);
+      invoiceId = result.invoiceId;
+      foundInvoice = result.foundInvoice;
       
       // إذا لم نجد فاتورة، نبحث باستخدام معرف المستخدم ونوع الخطة
       if (!foundInvoice) {
-        console.log("Looking for pending invoices for user:", userId, "and plan:", plan);
-        
-        const { data: userInvoices, error: userInvoicesError } = await supabase
-          .from('payment_invoices')
-          .select('*')
-          .eq('user_id', userId)
-          .eq('plan_name', plan)
-          .in('status', ['Pending', 'قيد الانتظار', 'pending']);
-          
-        if (userInvoicesError) {
-          console.error("Error finding user invoices:", userInvoicesError);
-        } else if (userInvoices && userInvoices.length > 0) {
-          console.log("Found pending invoices for user:", userInvoices);
-          foundInvoice = true;
-          invoiceId = userInvoices[0].id;
-          
-          // تحديث حالة الفاتورة في قاعدة البيانات إلى "مدفوع"
-          const { error: updateInvoiceError } = await supabase
-            .from('payment_invoices')
-            .update({ status: 'مدفوع' })
-            .eq('id', userInvoices[0].id);
-            
-          if (updateInvoiceError) {
-            console.error("Error updating user invoice status:", updateInvoiceError);
-          } else {
-            console.log("Updated user invoice status to مدفوع for invoice:", userInvoices[0].invoice_id);
-          }
-        }
+        const userPlanResult = await findPendingInvoiceByUserPlan(userId, plan);
+        invoiceId = userPlanResult.invoiceId;
+        foundInvoice = userPlanResult.foundInvoice;
       }
       
       // إذا كانت العملية من PayPal وليس لدينا فاتورة متطابقة
       if (!foundInvoice && txnId && plan) {
-        // تحديد المبلغ بناءً على نوع الخطة
-        let amount = 0;
-        if (plan === 'premium') {
-          // استخدام السعر من إعدادات التسعير، أو استخدام قيمة افتراضية
-          amount = pricingSettings?.premium_plan_price || 49;
-        } else if (plan === 'pro') {
-          amount = pricingSettings?.pro_plan_price || 99;
-        }
-        
-        console.log("Creating new PayPal invoice record for txnId:", txnId);
-        
-        // إنشاء سجل جديد بناءً على معلومات PayPal
-        const { data: newInvoice, error: newInvoiceError } = await supabase
-          .from('payment_invoices')
-          .insert({
-            invoice_id: txnId,
-            user_id: userId,
-            plan_name: plan,
-            status: 'مدفوع', // Set directly to paid since we're on success page
-            payment_method: 'paypal',
-            amount: amount
-          })
-          .select()
-          .single();
-          
-        if (newInvoiceError) {
-          console.error("Error creating new invoice:", newInvoiceError);
-        } else if (newInvoice) {
-          invoiceId = newInvoice.id;
-          console.log("Created new payment record from PayPal data with ID:", invoiceId);
-        }
+        invoiceId = await createPayPalInvoiceRecord(txnId, userId, plan, pricingSettings);
       }
     }
 
@@ -171,50 +93,19 @@ export const verifyPayment = async (
     const payLinkTransactionNumber = transactionIdentifier?.startsWith('PLI') ? transactionIdentifier : '';
     
     if (payLinkTransactionNumber && paymentSettings?.paylink_api_key && paymentSettings?.paylink_secret_key) {
-      // التحقق من حالة الدفع باستخدام API (للتوثيق فقط)
-      const status = await getPaylinkInvoiceStatus(
+      await verifyPaylinkPayment(
+        payLinkTransactionNumber,
         paymentSettings.paylink_api_key,
-        paymentSettings.paylink_secret_key,
-        payLinkTransactionNumber
+        paymentSettings.paylink_secret_key
       );
-      
-      if (status) {
-        console.log(`حالة الدفع من PayLink API: ${status}`);
-      }
     }
     
-    // Set expiry date (30 days from now) بغض النظر عن نتيجة التحقق من API
-    const expiryDate = new Date();
-    expiryDate.setDate(expiryDate.getDate() + 30);
+    // Update the user's subscription
+    const subscriptionUpdated = await updateUserSubscription(userId, plan);
     
-    // Update the user's subscription in the database
-    const { error: updateError } = await supabase
-      .from('users')
-      .update({ 
-        subscription_type: plan,
-        subscription_expires_at: expiryDate.toISOString()
-      })
-      .eq('id', userId);
-      
-    if (updateError) {
-      console.error("Error updating user subscription:", updateError);
-      toast.error("حدث خطأ أثناء تحديث الاشتراك");
-    } else {
-      console.log("Updated subscription successfully for user:", userId, "to plan:", plan);
-      
+    if (subscriptionUpdated) {
       // تحديث جميع الدفعات المرتبطة بهذا المستخدم والخطة إلى حالة "مدفوع"
-      const { error: updateAllInvoicesError } = await supabase
-        .from('payment_invoices')
-        .update({ status: 'مدفوع' })
-        .eq('user_id', userId)
-        .eq('plan_name', plan)
-        .in('status', ['Pending', 'قيد الانتظار', 'pending']);
-        
-      if (updateAllInvoicesError) {
-        console.error("Error updating related invoices:", updateAllInvoicesError);
-      } else {
-        console.log("Updated all pending invoices for user:", userId, "and plan:", plan);
-      }
+      await updateAllPendingInvoices(userId, plan);
     }
   } catch (error) {
     console.error("Error verifying payment:", error);
