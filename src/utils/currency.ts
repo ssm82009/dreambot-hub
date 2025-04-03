@@ -17,6 +17,19 @@ export const sarToUsd = (sarAmount: number): number => {
 };
 
 /**
+ * Format currency with appropriate symbol
+ * @param amount The amount to format
+ * @param currency The currency code (defaults to 'SAR')
+ * @returns Formatted price string with currency symbol
+ */
+export const formatCurrency = (amount: number, currency: 'SAR' | 'USD' = 'SAR'): string => {
+  if (currency === 'USD') {
+    return `$${amount.toFixed(2)}`;
+  }
+  return `${amount.toFixed(2)} ريال`;
+};
+
+/**
  * Get formatted price with currency symbol
  * @param amount The amount to format
  * @param currency The currency code ('SAR' or 'USD')
