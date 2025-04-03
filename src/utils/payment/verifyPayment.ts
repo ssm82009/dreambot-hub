@@ -19,6 +19,13 @@ export const verifyPayment = async (
   if (!plan) return;
 
   try {
+    console.log("Verifying payment with identifiers:", { 
+      transactionIdentifier, 
+      customId, 
+      txnId, 
+      plan 
+    });
+
     // استرجاع بيانات اعتماد PayLink
     const { data: paymentSettings, error: settingsError } = await supabase
       .from('payment_settings')
@@ -53,16 +60,32 @@ export const verifyPayment = async (
     console.log("Setting subscription for user:", userId);
 
     // تحديث حالة الفاتورة في قاعدة البيانات للفاتورة المحددة
-    if (transactionIdentifier) {
-      // نبحث عن الفاتورة بأي من المعرفات المحتملة
-      const { data: invoices, error: findError } = await supabase
+    const identifiers = [transactionIdentifier, customId, txnId].filter(id => id);
+    
+    if (identifiers.length > 0) {
+      console.log("Looking for invoice with identifiers:", identifiers);
+      
+      // بناء استعلام البحث عن الفاتورة
+      let query = supabase
         .from('payment_invoices')
-        .select('*')
-        .or(`invoice_id.eq.${transactionIdentifier},invoice_id.eq.${customId}`);
+        .select('*');
+      
+      // إضافة شروط البحث لكل معرف
+      if (identifiers.length === 1) {
+        query = query.eq('invoice_id', identifiers[0]);
+      } else {
+        // بناء استعلام OR للبحث عن أي من المعرفات
+        const orConditions = identifiers.map(id => `invoice_id.eq.${id}`).join(',');
+        query = query.or(orConditions);
+      }
+      
+      const { data: invoices, error: findError } = await query;
         
       if (findError) {
         console.error("Error finding invoice:", findError);
       } else if (invoices && invoices.length > 0) {
+        console.log("Found matching invoices:", invoices);
+        
         // تحديث حالة الفاتورة في قاعدة البيانات إلى "مدفوع"
         const { error: updateInvoiceError } = await supabase
           .from('payment_invoices')
@@ -75,7 +98,7 @@ export const verifyPayment = async (
           console.log("Updated invoice status to Paid for invoice:", invoices[0].invoice_id);
         }
       } else {
-        console.log("No matching invoice found for identifier:", transactionIdentifier);
+        console.log("No matching invoice found for identifiers:", identifiers);
         
         // إذا كانت العملية من PayPal وليس لدينا فاتورة متطابقة
         if (txnId && plan) {
@@ -87,6 +110,8 @@ export const verifyPayment = async (
           } else if (plan === 'pro') {
             amount = pricingSettings?.pro_plan_price || 99;
           }
+          
+          console.log("Creating new PayPal invoice record for txnId:", txnId);
           
           // إنشاء سجل جديد بناءً على معلومات PayPal
           await supabase.from('payment_invoices').insert({
@@ -104,7 +129,7 @@ export const verifyPayment = async (
 
     // التحقق من واجهة برمجة التطبيقات PayLink إذا كان ذلك ممكناً
     // Extract PayLink transaction number if present in the transactionIdentifier
-    const payLinkTransactionNumber = transactionIdentifier.startsWith('PLI') ? transactionIdentifier : '';
+    const payLinkTransactionNumber = transactionIdentifier?.startsWith('PLI') ? transactionIdentifier : '';
     
     if (payLinkTransactionNumber && paymentSettings?.paylink_api_key && paymentSettings?.paylink_secret_key) {
       // التحقق من حالة الدفع باستخدام API (للتوثيق فقط)

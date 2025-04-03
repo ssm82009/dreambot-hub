@@ -87,8 +87,11 @@ export const handlePaypalPayment = async (
   console.log(`تحويل ${amount} ريال سعودي إلى ${usdAmount} دولار أمريكي`);
 
   try {
-    // إنشاء سجل فاتورة في قاعدة البيانات
+    // إنشاء معرف فريد للفاتورة
     const invoiceId = `PP-${Date.now()}`;
+    console.log("Creating PayPal invoice record with ID:", invoiceId);
+    
+    // إنشاء سجل فاتورة في قاعدة البيانات قبل توجيه المستخدم إلى PayPal
     const { data, error } = await supabase.from('payment_invoices').insert([{
       invoice_id: invoiceId,
       user_id: userId,
@@ -103,17 +106,18 @@ export const handlePaypalPayment = async (
       throw new Error("فشل في إنشاء سجل الفاتورة");
     }
 
+    console.log("Invoice record created successfully:", data);
+
     // تحديد البيئة (الإنتاج أو الاختبار)
     const paypalDomain = paypalSandbox 
       ? 'https://www.sandbox.paypal.com' 
       : 'https://www.paypal.com';
       
-    // للتبسيط، نستخدم روابط الدفع البسيطة من PayPal مع المعرف المخصص
-    // هذا يسمح بعمليات الدفع بدون الحاجة إلى التكامل المعقد مع REST API
+    // إعداد عنوان URL للعودة بعد نجاح الدفع - يتضمن معرف الفاتورة
     const returnUrl = `${window.location.origin}/payment/success?custom=${invoiceId}`;
     const cancelUrl = `${window.location.origin}/payment/cancel`;
     
-    // بناء رابط PayPal للدفع الفوري
+    // بناء رابط PayPal للدفع الفوري باستخدام Hermes flow
     const paypalUrl = new URL(`${paypalDomain}/webapps/hermes`);
     
     // استخدام المعلمات الضرورية للدفع الفوري
@@ -143,6 +147,7 @@ export const handlePaypalPayment = async (
     window.location.href = finalPaypalUrl;
   } catch (error) {
     console.error("خطأ في عملية الدفع عبر PayPal:", error);
+    toast.error("فشل في بدء عملية الدفع عبر PayPal");
     throw new Error("فشل في بدء عملية الدفع عبر PayPal");
   }
 };
