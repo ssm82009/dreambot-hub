@@ -1,3 +1,4 @@
+
 import React from 'react';
 import {
   DropdownMenu,
@@ -6,9 +7,10 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
 import { User, LogOut, LayoutDashboard, TicketCheck } from 'lucide-react';
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useUserDisplayName } from '@/hooks/useUserDisplayName';
 
 const UserMenu: React.FC<{
