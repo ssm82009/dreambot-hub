@@ -46,6 +46,12 @@ const PaymentSuccessContent = ({
     fetchSubscriptionInfo();
   }, []);
   
+  // Always show payment data as "مدفوع" (paid) on the success page
+  const displayPaymentData = paymentData ? {
+    ...paymentData,
+    status: 'مدفوع' // Always show as paid on success page
+  } : null;
+  
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-md">
       <div className="bg-white p-8 rounded-lg shadow-lg border-2 border-green-500 text-center">
@@ -65,31 +71,31 @@ const PaymentSuccessContent = ({
               {subscriptionName && ` "${subscriptionName}"`}.
             </p>
             
-            {paymentData && (
+            {displayPaymentData && (
               <div className="mb-6 border rounded-md p-4 bg-gray-50">
                 <div className="text-sm text-right">
                   <div className="flex justify-between my-1">
                     <span className="font-medium">رقم العملية:</span>
-                    <span>{paymentData.invoice_id}</span>
+                    <span>{displayPaymentData.invoice_id}</span>
                   </div>
                   <div className="flex justify-between my-1">
                     <span className="font-medium">الباقة:</span>
-                    <span>{paymentData.plan_name === 'premium' ? 'المميزة' : 
-                           paymentData.plan_name === 'pro' ? 'الاحترافية' : paymentData.plan_name}</span>
+                    <span>{displayPaymentData.plan_name === 'premium' ? 'المميزة' : 
+                           displayPaymentData.plan_name === 'pro' ? 'الاحترافية' : displayPaymentData.plan_name}</span>
                   </div>
                   <div className="flex justify-between my-1">
                     <span className="font-medium">المبلغ:</span>
-                    <span>{paymentData.amount} ريال</span>
+                    <span>{displayPaymentData.amount} ريال</span>
                   </div>
                   <div className="flex justify-between my-1">
                     <span className="font-medium">الحالة:</span>
-                    <PaymentStatusBadge status={paymentData.status || 'مدفوع'} />
+                    <PaymentStatusBadge status={'مدفوع'} />
                   </div>
                 </div>
               </div>
             )}
             
-            {transactionIdentifier && !paymentData && (
+            {transactionIdentifier && !displayPaymentData && (
               <p className="mb-6 text-sm text-gray-500">
                 رقم العملية: {transactionIdentifier}
               </p>

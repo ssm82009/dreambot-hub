@@ -65,28 +65,22 @@ export const verifyPayment = async (
     const identifiers = [transactionIdentifier, customId, txnId, invoiceIdParam].filter(id => id);
     
     let invoiceId = "";
+    let foundInvoice = false;
     
     if (identifiers.length > 0) {
       console.log("Looking for invoice with identifiers:", identifiers);
       
       // بناء استعلام البحث عن الفاتورة باستخدام OR لكل معرّف
-      let invoicesQuery = supabase.from('payment_invoices').select('*');
+      const { data: invoices, error: findError } = await supabase
+        .from('payment_invoices')
+        .select('*')
+        .in('invoice_id', identifiers);
       
-      // إضافة شروط البحث عن المعرفات
-      if (identifiers.length === 1) {
-        invoicesQuery = invoicesQuery.eq('invoice_id', identifiers[0]);
-      } else {
-        // Use in operator instead of complex OR conditions
-        invoicesQuery = invoicesQuery.in('invoice_id', identifiers);
-      }
-      
-      // تنفيذ الاستعلام
-      const { data: invoices, error: findError } = await invoicesQuery;
-        
       if (findError) {
         console.error("Error finding invoice:", findError);
       } else if (invoices && invoices.length > 0) {
         console.log("Found matching invoices:", invoices);
+        foundInvoice = true;
         invoiceId = invoices[0].id;
         
         // تحديث حالة الفاتورة في قاعدة البيانات إلى "مدفوع"
@@ -98,44 +92,76 @@ export const verifyPayment = async (
         if (updateInvoiceError) {
           console.error("Error updating invoice status:", updateInvoiceError);
         } else {
-          console.log("Updated invoice status to Paid for invoice:", invoices[0].invoice_id);
+          console.log("Updated invoice status to مدفوع for invoice:", invoices[0].invoice_id);
         }
       } else {
         console.log("No matching invoice found for identifiers:", identifiers);
+      }
+      
+      // إذا لم نجد فاتورة، نبحث باستخدام معرف المستخدم ونوع الخطة
+      if (!foundInvoice) {
+        console.log("Looking for pending invoices for user:", userId, "and plan:", plan);
         
-        // إذا كانت العملية من PayPal وليس لدينا فاتورة متطابقة
-        if (txnId && plan) {
-          // تحديد المبلغ بناءً على نوع الخطة
-          let amount = 0;
-          if (plan === 'premium') {
-            // استخدام السعر من إعدادات التسعير، أو استخدام قيمة افتراضية
-            amount = pricingSettings?.premium_plan_price || 49;
-          } else if (plan === 'pro') {
-            amount = pricingSettings?.pro_plan_price || 99;
-          }
+        const { data: userInvoices, error: userInvoicesError } = await supabase
+          .from('payment_invoices')
+          .select('*')
+          .eq('user_id', userId)
+          .eq('plan_name', plan)
+          .in('status', ['Pending', 'قيد الانتظار', 'pending']);
           
-          console.log("Creating new PayPal invoice record for txnId:", txnId);
+        if (userInvoicesError) {
+          console.error("Error finding user invoices:", userInvoicesError);
+        } else if (userInvoices && userInvoices.length > 0) {
+          console.log("Found pending invoices for user:", userInvoices);
+          foundInvoice = true;
+          invoiceId = userInvoices[0].id;
           
-          // إنشاء سجل جديد بناءً على معلومات PayPal
-          const { data: newInvoice, error: newInvoiceError } = await supabase
+          // تحديث حالة الفاتورة في قاعدة البيانات إلى "مدفوع"
+          const { error: updateInvoiceError } = await supabase
             .from('payment_invoices')
-            .insert({
-              invoice_id: txnId,
-              user_id: userId,
-              plan_name: plan,
-              status: 'مدفوع', // Set directly to paid since we're on success page
-              payment_method: 'paypal',
-              amount: amount
-            })
-            .select()
-            .single();
+            .update({ status: 'مدفوع' })
+            .eq('id', userInvoices[0].id);
             
-          if (newInvoiceError) {
-            console.error("Error creating new invoice:", newInvoiceError);
-          } else if (newInvoice) {
-            invoiceId = newInvoice.id;
-            console.log("Created new payment record from PayPal data with ID:", invoiceId);
+          if (updateInvoiceError) {
+            console.error("Error updating user invoice status:", updateInvoiceError);
+          } else {
+            console.log("Updated user invoice status to مدفوع for invoice:", userInvoices[0].invoice_id);
           }
+        }
+      }
+      
+      // إذا كانت العملية من PayPal وليس لدينا فاتورة متطابقة
+      if (!foundInvoice && txnId && plan) {
+        // تحديد المبلغ بناءً على نوع الخطة
+        let amount = 0;
+        if (plan === 'premium') {
+          // استخدام السعر من إعدادات التسعير، أو استخدام قيمة افتراضية
+          amount = pricingSettings?.premium_plan_price || 49;
+        } else if (plan === 'pro') {
+          amount = pricingSettings?.pro_plan_price || 99;
+        }
+        
+        console.log("Creating new PayPal invoice record for txnId:", txnId);
+        
+        // إنشاء سجل جديد بناءً على معلومات PayPal
+        const { data: newInvoice, error: newInvoiceError } = await supabase
+          .from('payment_invoices')
+          .insert({
+            invoice_id: txnId,
+            user_id: userId,
+            plan_name: plan,
+            status: 'مدفوع', // Set directly to paid since we're on success page
+            payment_method: 'paypal',
+            amount: amount
+          })
+          .select()
+          .single();
+          
+        if (newInvoiceError) {
+          console.error("Error creating new invoice:", newInvoiceError);
+        } else if (newInvoice) {
+          invoiceId = newInvoice.id;
+          console.log("Created new payment record from PayPal data with ID:", invoiceId);
         }
       }
     }
@@ -182,7 +208,7 @@ export const verifyPayment = async (
         .update({ status: 'مدفوع' })
         .eq('user_id', userId)
         .eq('plan_name', plan)
-        .in('status', ['Pending', 'قيد الانتظار']);
+        .in('status', ['Pending', 'قيد الانتظار', 'pending']);
         
       if (updateAllInvoicesError) {
         console.error("Error updating related invoices:", updateAllInvoicesError);

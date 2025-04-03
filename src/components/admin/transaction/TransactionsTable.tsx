@@ -35,6 +35,21 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({
     }
   };
 
+  // Normalize status to handle different status formats
+  const normalizeStatus = (status: string) => {
+    const normalizedStatus = status?.toLowerCase();
+    if (normalizedStatus === 'paid' || normalizedStatus === 'مدفوع') {
+      return 'مدفوع';
+    } else if (normalizedStatus === 'pending' || normalizedStatus === 'قيد الانتظار') {
+      return 'قيد الانتظار';
+    } else if (normalizedStatus === 'failed' || normalizedStatus === 'فشل') {
+      return 'فشل';
+    } else if (normalizedStatus === 'refunded' || normalizedStatus === 'مسترجع') {
+      return 'مسترجع';
+    }
+    return status;
+  };
+
   return (
     <div className="overflow-x-auto">
       <Table>
@@ -54,6 +69,8 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({
         <TableBody>
           {transactions.map((transaction) => {
             const user = users[transaction.user_id] || {};
+            const normalizedStatus = normalizeStatus(transaction.status);
+            
             return (
               <TableRow key={transaction.id}>
                 <TableCell className="font-medium">
@@ -70,7 +87,7 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({
                   {transaction.expires_at && format(new Date(transaction.expires_at), 'yyyy/MM/dd')}
                 </TableCell>
                 <TableCell>
-                  <PaymentStatusBadge status={transaction.status} />
+                  <PaymentStatusBadge status={normalizedStatus} />
                 </TableCell>
                 <TableCell>
                   <Button 

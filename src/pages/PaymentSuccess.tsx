@@ -11,11 +11,13 @@ const PaymentSuccess = () => {
   const { transactionIdentifier, isVerifying } = usePaymentVerification();
   const [isVerified, setIsVerified] = useState(false);
   const [paymentData, setPaymentData] = useState<any>(null);
+  const [isChecking, setIsChecking] = useState(true);
 
   // Verify that the subscription has been updated after payment verification
   useEffect(() => {
     const checkSubscription = async () => {
-      if (transactionIdentifier && !isVerifying) {
+      if (!isVerifying) {
+        setIsChecking(true);
         try {
           // Check if the current user has a valid subscription
           const { data: { session } } = await supabase.auth.getSession();
@@ -44,18 +46,64 @@ const PaymentSuccess = () => {
               }
             }
             
-            // Fetch the payment record to display
-            const { data: paymentRecord, error: paymentError } = await supabase
-              .from('payment_invoices')
-              .select('*')
-              .eq('invoice_id', transactionIdentifier)
-              .single();
+            // Fetch the payment record to display - first try with transaction identifier
+            let paymentRecord = null;
+            let paymentError = null;
+            
+            if (transactionIdentifier) {
+              const { data: invoiceData, error: invoiceError } = await supabase
+                .from('payment_invoices')
+                .select('*')
+                .eq('invoice_id', transactionIdentifier)
+                .single();
+                
+              if (!invoiceError && invoiceData) {
+                paymentRecord = invoiceData;
+                paymentError = null;
+              } else {
+                console.log("No invoice found with transaction ID, looking for user's recent invoices");
+                
+                // If not found by transaction ID, try getting the most recent invoice for this user
+                const { data: userInvoices, error: userInvoicesError } = await supabase
+                  .from('payment_invoices')
+                  .select('*')
+                  .eq('user_id', session.user.id)
+                  .order('created_at', { ascending: false })
+                  .limit(1);
+                
+                if (!userInvoicesError && userInvoices && userInvoices.length > 0) {
+                  paymentRecord = userInvoices[0];
+                  paymentError = null;
+                } else {
+                  paymentError = userInvoicesError || new Error("No payment records found");
+                }
+              }
+            } else {
+              // If no transaction identifier, just get the user's most recent invoice
+              const { data: userInvoices, error: userInvoicesError } = await supabase
+                .from('payment_invoices')
+                .select('*')
+                .eq('user_id', session.user.id)
+                .order('created_at', { ascending: false })
+                .limit(1);
               
-            if (!paymentError && paymentRecord) {
+              if (!userInvoicesError && userInvoices && userInvoices.length > 0) {
+                paymentRecord = userInvoices[0];
+                paymentError = null;
+              } else {
+                paymentError = userInvoicesError || new Error("No payment records found");
+              }
+            }
+            
+            if (paymentRecord) {
               setPaymentData(paymentRecord);
               
               // If payment is still pending despite being on success page, update it
-              if (paymentRecord.status === 'Pending' || paymentRecord.status === 'قيد الانتظار') {
+              if (paymentRecord.status === 'Pending' || 
+                  paymentRecord.status === 'قيد الانتظار' || 
+                  paymentRecord.status === 'pending') {
+                console.log("Found pending payment record. Updating to paid:", paymentRecord);
+                
                 const { error: updateError } = await supabase
                   .from('payment_invoices')
                   .update({ status: 'مدفوع' })
@@ -64,12 +112,18 @@ const PaymentSuccess = () => {
                 if (!updateError) {
                   console.log("Updated payment status to 'مدفوع'");
                   setPaymentData({...paymentRecord, status: 'مدفوع'});
+                } else {
+                  console.error("Error updating payment status:", updateError);
                 }
               }
+            } else if (paymentError) {
+              console.error("Error fetching payment data:", paymentError);
             }
           }
         } catch (error) {
           console.error("Error in subscription verification:", error);
+        } finally {
+          setIsChecking(false);
         }
       }
     };
@@ -84,7 +138,7 @@ const PaymentSuccess = () => {
         <PaymentSuccessContent 
           transactionIdentifier={transactionIdentifier}
           isVerified={isVerified}
-          isVerifying={isVerifying}
+          isVerifying={isVerifying || isChecking}
           paymentData={paymentData}
         />
       </main>
