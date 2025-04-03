@@ -197,11 +197,11 @@ const Profile = () => {
           </Card>
           
           <Tabs defaultValue="subscription" className="w-full" onValueChange={handleTabChange}>
-            <TabsList className="grid grid-cols-4 mb-8">
-              <TabsTrigger value="subscription">الاشتراك</TabsTrigger>
-              <TabsTrigger value="payments">المدفوعات</TabsTrigger>
-              <TabsTrigger value="dreams">الأحلام</TabsTrigger>
+            <TabsList className="grid grid-cols-4 mb-8 flex-row-reverse">
               <TabsTrigger value="settings">الإعدادات</TabsTrigger>
+              <TabsTrigger value="dreams">الأحلام</TabsTrigger>
+              <TabsTrigger value="payments">المدفوعات</TabsTrigger>
+              <TabsTrigger value="subscription">الاشتراك</TabsTrigger>
             </TabsList>
             
             <TabsContent value="subscription">
