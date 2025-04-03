@@ -11,6 +11,7 @@ export function usePaymentProcess() {
   const [paylinkSecretKey, setPaylinkSecretKey] = useState<string>('');
   const [paypalClientId, setPaypalClientId] = useState<string>('');
   const [paypalSandbox, setPaypalSandbox] = useState<boolean>(false);
+  const [paypalSecret, setPaypalSecret] = useState<string>('');
 
   useEffect(() => {
     // استرجاع إعدادات الدفع من النظام
@@ -44,6 +45,7 @@ export function usePaymentProcess() {
             if (data.paypal_client_id) {
               setPaypalClientId(data.paypal_client_id);
               setPaypalSandbox(data.paypal_sandbox);
+              setPaypalSecret(data.paypal_secret || '');
               console.log("تم تحميل بيانات اعتماد PayPal بنجاح");
             } else {
               console.warn("بيانات اعتماد PayPal غير متوفرة");
@@ -64,6 +66,7 @@ export function usePaymentProcess() {
     paylinkApiKey,
     paylinkSecretKey,
     paypalClientId,
-    paypalSandbox
+    paypalSandbox,
+    paypalSecret
   };
 }

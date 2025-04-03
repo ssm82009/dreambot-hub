@@ -60,7 +60,9 @@ export const verifyPayment = async (
     console.log("Setting subscription for user:", userId);
 
     // تحديث حالة الفاتورة في قاعدة البيانات للفاتورة المحددة
-    const identifiers = [transactionIdentifier, customId, txnId].filter(id => id);
+    // PayPal يمكن أن يرسل invoice_id في العنوان
+    const invoiceIdParam = new URLSearchParams(window.location.search).get('invoice_id');
+    const identifiers = [transactionIdentifier, customId, txnId, invoiceIdParam].filter(id => id);
     
     if (identifiers.length > 0) {
       console.log("Looking for invoice with identifiers:", identifiers);

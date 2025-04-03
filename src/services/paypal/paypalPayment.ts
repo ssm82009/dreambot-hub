@@ -2,26 +2,29 @@
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { sarToUsd } from '@/utils/currency';
+import { CustomerInfo } from '@/types/payment';
 
 /**
- * معالجة الدفع عبر PayPal
+ * معالجة الدفع عبر PayPal باستخدام Checkout API v2
  * @param customerInfo معلومات العميل
  * @param userId معرف المستخدم
  * @param amount المبلغ بالريال السعودي
  * @param plan نوع الباقة
  * @param paypalClientId معرف العميل لـ PayPal
  * @param paypalSandbox تفعيل وضع الاختبار
+ * @param paypalSecret المفتاح السري لـ PayPal
  */
 export const handlePaypalPayment = async (
-  customerInfo: any, 
+  customerInfo: CustomerInfo, 
   userId: string | undefined, 
   amount: number,
   plan: string,
   paypalClientId: string,
-  paypalSandbox: boolean
+  paypalSandbox: boolean,
+  paypalSecret: string
 ) => {
   // التحقق من توفر بيانات اعتماد PayPal
-  if (!paypalClientId) {
+  if (!paypalClientId || !paypalSecret) {
     throw new Error("لم يتم تكوين بيانات اعتماد PayPal");
   }
 
@@ -51,43 +54,80 @@ export const handlePaypalPayment = async (
 
     console.log("Invoice record created successfully:", data);
 
-    // تحديد البيئة (الإنتاج أو الاختبار)
-    const paypalDomain = paypalSandbox 
-      ? 'https://www.sandbox.paypal.com' 
-      : 'https://www.paypal.com';
-      
-    // إعداد عنوان URL للعودة بعد نجاح الدفع - يتضمن معرف الفاتورة
-    const returnUrl = `${window.location.origin}/payment/success?custom=${invoiceId}`;
-    const cancelUrl = `${window.location.origin}/payment/cancel`;
-    
-    // بناء رابط PayPal للدفع الفوري باستخدام Hermes flow
-    const paypalUrl = new URL(`${paypalDomain}/webapps/hermes`);
-    
-    // استخدام المعلمات الضرورية للدفع الفوري
-    const params = new URLSearchParams({
-      'flow': 'purchase',
-      'intent': 'capture',
-      'currency_code': 'USD', // تأكيد استخدام عملة الدولار
-      'amount': usdAmount.toString(), // إرسال المبلغ المحول
-      'locale': 'ar_SA',
-      'client_id': paypalClientId,
-      'return_url': returnUrl,
-      'cancel_url': cancelUrl,
-      'custom_id': invoiceId,
-      'disable-funding': 'credit,card',
-      'buyer-country': 'SA'
+    // تحديد بيئة PayPal (الإنتاج أو الاختبار)
+    const paypalApiUrl = paypalSandbox 
+      ? 'https://api-m.sandbox.paypal.com' 
+      : 'https://api-m.paypal.com';
+
+    // الحصول على Access Token من PayPal
+    console.log("Getting PayPal access token...");
+    const authResponse = await fetch(`${paypalApiUrl}/v1/oauth2/token`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Basic ${btoa(`${paypalClientId}:${paypalSecret}`)}`,
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: 'grant_type=client_credentials'
     });
-    
-    // إضافة معلومات المنتج والطلب
-    params.append('invoice_id', invoiceId);
-    
-    // بناء الرابط النهائي مع جميع المعلمات
-    const finalPaypalUrl = `${paypalUrl.toString()}?${params.toString()}`;
-    
-    console.log("توجيه المستخدم إلى رابط PayPal:", finalPaypalUrl);
-    
-    // توجيه المستخدم إلى صفحة الدفع الخاصة بـ PayPal
-    window.location.href = finalPaypalUrl;
+
+    if (!authResponse.ok) {
+      const errorData = await authResponse.text();
+      console.error("PayPal auth error:", errorData);
+      throw new Error("فشل في الحصول على توكن PayPal");
+    }
+
+    const authData = await authResponse.json();
+    const accessToken = authData.access_token;
+    console.log("Received PayPal access token");
+
+    // إنشاء طلب الدفع في PayPal
+    console.log("Creating PayPal order...");
+    const orderResponse = await fetch(`${paypalApiUrl}/v2/checkout/orders`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`
+      },
+      body: JSON.stringify({
+        intent: 'CAPTURE',
+        purchase_units: [{
+          amount: {
+            currency_code: 'USD',
+            value: usdAmount.toString()
+          },
+          description: `اشتراك ${plan === 'premium' ? 'مميز' : 'احترافي'}`,
+          custom_id: invoiceId
+        }],
+        application_context: {
+          return_url: `${window.location.origin}/payment/success?invoice_id=${invoiceId}`,
+          cancel_url: `${window.location.origin}/payment/cancel`,
+          brand_name: 'تفسير الأحلام',
+          locale: 'ar-SA',
+          landing_page: 'LOGIN',
+          user_action: 'PAY_NOW',
+          shipping_preference: 'NO_SHIPPING'
+        }
+      })
+    });
+
+    if (!orderResponse.ok) {
+      const errorData = await orderResponse.json();
+      console.error("PayPal order creation error:", errorData);
+      throw new Error("فشل في إنشاء طلب PayPal");
+    }
+
+    const orderData = await orderResponse.json();
+    console.log("PayPal order created:", orderData);
+
+    // الحصول على رابط الدفع وإعادة توجيه المستخدم
+    const approvalUrl = orderData.links.find((link: any) => link.rel === 'approve')?.href;
+    if (!approvalUrl) {
+      console.error("No approval URL found in PayPal response:", orderData);
+      throw new Error("لم يتم العثور على رابط موافقة PayPal");
+    }
+
+    console.log("Redirecting user to PayPal approval URL:", approvalUrl);
+    window.location.href = approvalUrl;
   } catch (error) {
     console.error("خطأ في عملية الدفع عبر PayPal:", error);
     toast.error("فشل في بدء عملية الدفع عبر PayPal");

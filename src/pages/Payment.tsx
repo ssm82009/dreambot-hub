@@ -17,7 +17,8 @@ const Payment = () => {
     paylinkApiKey, 
     paylinkSecretKey,
     paypalClientId,
-    paypalSandbox
+    paypalSandbox,
+    paypalSecret
   } = usePaymentProcess();
   
   const { handlePayment } = usePaymentSubmit(
@@ -27,6 +28,7 @@ const Payment = () => {
     paylinkSecretKey,
     paypalClientId,
     paypalSandbox,
+    paypalSecret,
     setIsProcessing
   );
 

@@ -12,6 +12,7 @@ export function usePaymentSubmit(
   paylinkSecretKey: string,
   paypalClientId: string,
   paypalSandbox: boolean,
+  paypalSecret: string,
   setIsProcessing: (isProcessing: boolean) => void
 ) {
   const navigate = useNavigate();
@@ -62,7 +63,8 @@ export function usePaymentSubmit(
           amount, 
           plan, 
           paypalClientId,
-          paypalSandbox
+          paypalSandbox,
+          paypalSecret
         );
       } else {
         throw new Error("طريقة دفع غير مدعومة");
