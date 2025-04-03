@@ -1,11 +1,12 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { User } from '@/types/database';
 import SubscriptionBadge from '@/components/admin/user/SubscriptionBadge';
 import { formatDate } from '@/lib/utils';
 import { getSubscriptionStatus } from '@/components/admin/user/SubscriptionBadge';
 import { getSubscriptionName } from '@/utils/subscription';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ProfileWelcomeProps {
   userData: User & {
@@ -15,6 +16,50 @@ interface ProfileWelcomeProps {
 }
 
 const ProfileWelcome: React.FC<ProfileWelcomeProps> = ({ userData }) => {
+  const [subscriptionName, setSubscriptionName] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(true);
+  
+  useEffect(() => {
+    const fetchSubscriptionName = async () => {
+      if (userData?.subscription_type) {
+        try {
+          // Fetch pricing settings
+          const { data: settings } = await supabase
+            .from('pricing_settings')
+            .select('*')
+            .limit(1)
+            .single();
+            
+          const name = await getSubscriptionName(userData.subscription_type, settings);
+          setSubscriptionName(name);
+        } catch (error) {
+          console.error('Error getting subscription name:', error);
+          const name = await getSubscriptionName(userData.subscription_type);
+          setSubscriptionName(name);
+        } finally {
+          setLoading(false);
+        }
+      } else {
+        // Default to free plan
+        try {
+          const { data: settings } = await supabase
+            .from('pricing_settings')
+            .select('free_plan_name')
+            .limit(1)
+            .single();
+            
+          setSubscriptionName(settings?.free_plan_name || 'الباقة المجانية');
+        } catch (error) {
+          setSubscriptionName('الباقة المجانية');
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+    
+    fetchSubscriptionName();
+  }, [userData?.subscription_type]);
+  
   // Add a safety check for null userData
   if (!userData) {
     return (
@@ -37,6 +82,7 @@ const ProfileWelcome: React.FC<ProfileWelcomeProps> = ({ userData }) => {
     expires: userData.subscription_expires_at,
     isActive: subscriptionStatus.isActive,
     statusName: subscriptionStatus.name,
+    subscriptionName: subscriptionName,
     userData: userData
   });
 
@@ -83,13 +129,19 @@ const ProfileWelcome: React.FC<ProfileWelcomeProps> = ({ userData }) => {
               {subscriptionStatus.isActive && userData.subscription_type && userData.subscription_type !== 'free' ? (
                 <div className="mt-4 p-3 bg-primary/10 rounded-md">
                   <p className="font-medium text-primary">
-                    أنت مشترك في {getSubscriptionName(userData.subscription_type)}
+                    {loading ? 
+                      'جاري تحميل معلومات الاشتراك...' : 
+                      `أنت مشترك في ${subscriptionName}`
+                    }
                   </p>
                 </div>
               ) : (
                 <div className="mt-4 p-3 bg-muted rounded-md">
                   <p className="font-medium">
-                    أنت مشترك في الباقة المجانية
+                    {loading ? 
+                      'جاري تحميل معلومات الاشتراك...' : 
+                      `أنت مشترك في ${subscriptionName}`
+                    }
                   </p>
                 </div>
               )}

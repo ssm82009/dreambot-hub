@@ -1,15 +1,51 @@
-
 import { User } from '@/types/database';
 import { getSubscriptionStatus } from '@/components/admin/user/SubscriptionBadge';
+import { supabase } from '@/integrations/supabase/client';
 
 /**
  * Get subscription name in Arabic based on subscription type
+ * If pricing settings are provided, use the custom names from there
  */
-export const getSubscriptionName = (subscriptionType: string | null): string => {
+export const getSubscriptionName = async (subscriptionType: string | null, pricingSettings?: any): Promise<string> => {
   if (!subscriptionType) return 'الباقة المجانية';
   
   const type = subscriptionType.toLowerCase();
   
+  // If pricing settings are provided, use them
+  if (pricingSettings) {
+    if (type === 'premium' || type === 'المميز' || type === 'مميز') {
+      return pricingSettings.premium_plan_name || 'الباقة المميزة';
+    } else if (type === 'pro' || type === 'الاحترافي' || type === 'احترافي') {
+      return pricingSettings.pro_plan_name || 'الباقة الاحترافية';
+    } else {
+      return pricingSettings.free_plan_name || 'الباقة المجانية';
+    }
+  }
+
+  // Fallback to fetch pricing settings from the database
+  try {
+    const { data: settings, error } = await supabase
+      .from('pricing_settings')
+      .select('*')
+      .limit(1)
+      .single();
+    
+    if (error) throw error;
+    
+    if (settings) {
+      if (type === 'premium' || type === 'المميز' || type === 'مميز') {
+        return settings.premium_plan_name || 'الباقة المميزة';
+      } else if (type === 'pro' || type === 'الاحترافي' || type === 'احترافي') {
+        return settings.pro_plan_name || 'الباقة الاحترافية';
+      } else {
+        return settings.free_plan_name || 'الباقة المجانية';
+      }
+    }
+  } catch (error) {
+    console.error('Error fetching pricing settings:', error);
+  }
+  
+  // Default fallback names if everything else fails
   switch (type) {
     case 'premium':
     case 'المميز':

@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { User } from '@/types/database';
 import { getSubscriptionStatus } from '@/components/admin/user/SubscriptionBadge';
 import { getSubscriptionName } from '@/utils/subscription';
@@ -9,10 +9,28 @@ interface SubscriptionDetailsProps {
   userData: User & {
     dreams_count: number;
   };
+  pricingSettings?: any;
 }
 
-const SubscriptionDetails: React.FC<SubscriptionDetailsProps> = ({ userData }) => {
+const SubscriptionDetails: React.FC<SubscriptionDetailsProps> = ({ userData, pricingSettings }) => {
+  const [subscriptionName, setSubscriptionName] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(true);
   const subscriptionStatus = getSubscriptionStatus(userData);
+  
+  useEffect(() => {
+    const loadSubscriptionName = async () => {
+      try {
+        const name = await getSubscriptionName(userData?.subscription_type, pricingSettings);
+        setSubscriptionName(name);
+      } catch (error) {
+        console.error('Error loading subscription name:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadSubscriptionName();
+  }, [userData?.subscription_type, pricingSettings]);
   
   return (
     <div className="space-y-4">
@@ -22,7 +40,7 @@ const SubscriptionDetails: React.FC<SubscriptionDetailsProps> = ({ userData }) =
         <div className="flex justify-between">
           <span className="text-muted-foreground">نوع الاشتراك:</span>
           <span className="font-medium">
-            {getSubscriptionName(userData?.subscription_type)}
+            {loading ? 'جاري التحميل...' : subscriptionName}
           </span>
         </div>
         
