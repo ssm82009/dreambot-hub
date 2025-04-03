@@ -1,4 +1,3 @@
-
 import { useAdmin } from '@/contexts/admin';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -115,7 +114,7 @@ export const useFetchSettings = () => {
         .select(`
           id, primary_color, button_color, text_color, background_color, 
           logo_text, logo_font_size, header_color, footer_color, footer_text, 
-          twitter_link, facebook_link, instagram_link, created_at, updated_at,
+          twitter_link, facebook_link, instagram_link, slug, created_at, updated_at,
           meta_title, meta_description, keywords, enable_sitemap, enable_robots_txt,
           enable_canonical_urls, enable_open_graph, enable_twitter_cards,
           google_analytics_id, custom_head_tags
@@ -141,7 +140,8 @@ export const useFetchSettings = () => {
             twitter: themeData.twitter_link || "",
             facebook: themeData.facebook_link || "",
             instagram: themeData.instagram_link || ""
-          }
+          },
+          slug: themeData.slug || "تفسير الأحلام عبر الذكاء الاصطناعي"
         });
         
         // Update SEO settings from the same theme_settings table

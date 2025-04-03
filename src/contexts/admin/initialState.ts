@@ -1,4 +1,3 @@
-
 export const initialAiSettings = {
   provider: 'together',
   model: 'meta-llama/Llama-3-8b-chat-hf',
@@ -61,7 +60,8 @@ export const initialThemeSettings = {
     twitter: '',
     facebook: '',
     instagram: ''
-  }
+  },
+  slug: 'تفسير الأحلام عبر الذكاء الاصطناعي'
 };
 
 export const initialSeoSettings = {

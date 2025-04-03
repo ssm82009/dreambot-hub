@@ -1,4 +1,3 @@
-
 import { ReactNode } from 'react';
 import { User, CustomPage, NavLink } from '@/types/database';
 
@@ -47,7 +46,7 @@ export type PaymentSettingsFormValues = {
     clientId: string;
     secret: string;
     sandbox: boolean;
-  };
+  }
 };
 
 export type ThemeSettingsFormValues = {
@@ -65,6 +64,7 @@ export type ThemeSettingsFormValues = {
     facebook: string;
     instagram: string;
   };
+  slug: string;
 };
 
 export type SeoSettingsFormValues = {

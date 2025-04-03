@@ -324,6 +324,7 @@ export type Database = {
           meta_description: string | null
           meta_title: string | null
           primary_color: string
+          slug: string | null
           text_color: string
           twitter_link: string | null
           updated_at: string | null
@@ -351,6 +352,7 @@ export type Database = {
           meta_description?: string | null
           meta_title?: string | null
           primary_color?: string
+          slug?: string | null
           text_color?: string
           twitter_link?: string | null
           updated_at?: string | null
@@ -378,6 +380,7 @@ export type Database = {
           meta_description?: string | null
           meta_title?: string | null
           primary_color?: string
+          slug?: string | null
           text_color?: string
           twitter_link?: string | null
           updated_at?: string | null

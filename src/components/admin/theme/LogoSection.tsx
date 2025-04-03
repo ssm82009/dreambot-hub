@@ -6,12 +6,14 @@ import { Label } from '@/components/ui/label';
 type LogoSectionProps = {
   logoText: string;
   logoFontSize: number;
+  slug?: string;
   register: any;
 };
 
 const LogoSection: React.FC<LogoSectionProps> = ({ 
   logoText, 
-  logoFontSize, 
+  logoFontSize,
+  slug,
   register 
 }) => {
   return (
@@ -48,6 +50,14 @@ const LogoSection: React.FC<LogoSectionProps> = ({
             {...register("logoFontSize", { valueAsNumber: true })}
           />
           <p className="text-sm text-muted-foreground">الحجم بوحدة البكسل</p>
+        </div>
+        <div className="space-y-2">
+          <Label>النص التوضيحي تحت الشعار</Label>
+          <Input 
+            placeholder="تفسير الأحلام عبر الذكاء الاصطناعي" 
+            {...register("slug")}
+          />
+          <p className="text-sm text-muted-foreground">نص وصفي يظهر أسفل الشعار الرئيسي</p>
         </div>
       </div>
     </div>
