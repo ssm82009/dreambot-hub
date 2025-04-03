@@ -120,8 +120,8 @@ export const handlePaypalPayment = async (
     const params = new URLSearchParams({
       'flow': 'purchase',
       'intent': 'capture',
-      'currency_code': 'USD',
-      'amount': usdAmount.toString(),
+      'currency_code': 'USD', // تأكيد استخدام عملة الدولار
+      'amount': usdAmount.toString(), // إرسال المبلغ المحول
       'locale': 'ar_SA',
       'client_id': paypalClientId,
       'return_url': returnUrl,
