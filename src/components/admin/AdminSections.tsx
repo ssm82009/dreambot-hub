@@ -6,8 +6,8 @@ import PricingSettingsSection from '@/components/admin/sections/PricingSettingsS
 import PaymentSettingsSection from '@/components/admin/sections/PaymentSettingsSection';
 import UserManagementSection from '@/components/admin/sections/UserManagementSection';
 import PageManagementSection from '@/components/admin/sections/PageManagementSection';
-import NavbarManagementSection from '@/components/admin/NavbarManagementSection';
-import TransactionManagementSection from '@/components/admin/TransactionManagementSection';
+import NavbarManagementSection from '@/components/admin/sections/NavbarManagementSection';
+import TransactionManagementSection from '@/components/admin/sections/TransactionManagementSection';
 import TicketManagementSection from '@/components/admin/sections/TicketManagementSection';
 import ThemeSettingsSection from '@/components/admin/sections/ThemeSettingsSection';
 
