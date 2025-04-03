@@ -19,6 +19,7 @@ import Privacy from "./pages/Privacy";
 import Tickets from "./pages/Tickets";
 import NewTicket from "./pages/NewTicket";
 import TicketDetails from "./pages/TicketDetails";
+import DreamDetails from "./pages/DreamDetails";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -41,6 +42,7 @@ function App() {
             <Route path="/payment/cancel" element={<PaymentCancel />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/dreams/:id" element={<DreamDetails />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/tickets" element={<Tickets />} />

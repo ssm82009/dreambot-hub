@@ -63,10 +63,7 @@ const ProfileDreams: React.FC<ProfileDreamsProps> = ({ userId, dreamsCount }) =>
   };
   
   const handleViewDream = (dreamId: string) => {
-    // يمكن إضافة صفحة لعرض تفاصيل الحلم مستقبلاً
-    // حالياً سننتقل إلى الصفحة الرئيسية
-    navigate(`/`);
-    toast.info("سيتم إضافة صفحة تفاصيل الحلم قريباً");
+    navigate(`/dreams/${dreamId}`);
   };
   
   if (isLoading) {
