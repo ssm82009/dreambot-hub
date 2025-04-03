@@ -52,7 +52,11 @@ const PaymentCard = ({ plan, amount, onPayment, isProcessing }: PaymentCardProps
         <CardDescription>يرجى مراجعة تفاصيل اشتراكك قبل المتابعة</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <PaymentDetails plan={plan} amount={amount} />
+        <PaymentDetails 
+          plan={plan} 
+          amount={amount} 
+          paymentMethod={customerInfo.paymentMethod} 
+        />
         
         {/* إظهار نموذج بيانات الدفع فقط إذا كان المبلغ أكبر من 0 */}
         {amount > 0 && (
