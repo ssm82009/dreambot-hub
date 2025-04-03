@@ -40,6 +40,17 @@ const PaymentSuccess = () => {
             return;
           }
 
+          // Get the current user
+          const { data: { session } } = await supabase.auth.getSession();
+          
+          if (!session?.user) {
+            console.error("No authenticated user found");
+            return;
+          }
+          
+          const userId = session.user.id;
+          console.log("Setting subscription for user:", userId);
+
           if (transactionNo && paymentSettings?.paylink_api_key && paymentSettings?.paylink_secret_key) {
             // التحقق من حالة الدفع باستخدام API
             const status = await getPaylinkInvoiceStatus(
@@ -56,6 +67,25 @@ const PaymentSuccess = () => {
                 .from('payment_invoices')
                 .update({ status: 'Paid' })
                 .eq('invoice_id', transactionNo);
+                
+              // Set expiry date (30 days from now)
+              const expiryDate = new Date();
+              expiryDate.setDate(expiryDate.getDate() + 30);
+              
+              // Update the user's subscription in the database
+              const { error: updateError } = await supabase
+                .from('users')
+                .update({ 
+                  subscription_type: plan,
+                  subscription_expires_at: expiryDate.toISOString()
+                })
+                .eq('id', userId);
+                
+              if (updateError) {
+                console.error("Error updating user subscription:", updateError);
+              } else {
+                console.log("Updated subscription successfully for user:", userId);
+              }
             } else {
               console.warn(`حالة الدفع: ${status || 'غير معروفة'}`);
             }
@@ -63,6 +93,25 @@ const PaymentSuccess = () => {
             // إذا لم نتمكن من التحقق من حالة الدفع، نفترض أنه ناجح
             // لأن المستخدم وصل إلى صفحة النجاح
             toast.success(`تم الاشتراك في الباقة ${plan} بنجاح!`);
+            
+            // Set expiry date (30 days from now)
+            const expiryDate = new Date();
+            expiryDate.setDate(expiryDate.getDate() + 30);
+            
+            // Update the user's subscription in the database
+            const { error: updateError } = await supabase
+              .from('users')
+              .update({ 
+                subscription_type: plan,
+                subscription_expires_at: expiryDate.toISOString()
+              })
+              .eq('id', userId);
+              
+            if (updateError) {
+              console.error("Error updating user subscription:", updateError);
+            } else {
+              console.log("Updated subscription successfully for user:", userId);
+            }
           }
         } catch (error) {
           console.error("Error verifying payment:", error);
@@ -96,9 +145,9 @@ const PaymentSuccess = () => {
             <div className="space-y-3">
               <Button 
                 className="w-full" 
-                onClick={() => navigate('/')}
+                onClick={() => navigate('/profile')}
               >
-                العودة للصفحة الرئيسية
+                الذهاب للملف الشخصي
               </Button>
             </div>
           </div>

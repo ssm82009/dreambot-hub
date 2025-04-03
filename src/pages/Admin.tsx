@@ -9,8 +9,8 @@ import AdminHeader from '@/components/admin/AdminHeader';
 import AdminContent from '@/components/admin/AdminContent';
 
 const AdminDashboard = () => {
-  const { isLoading, setIsLoading } = useAdmin();
-  const { fetchDashboardStats, fetchAllSettings } = useAdminData();
+  const { isLoading, dbLoading, setIsLoading } = useAdmin();
+  const { refreshAdminData } = useAdminData();
 
   // تحديث البيانات عند تحميل المكون
   useEffect(() => {
@@ -19,30 +19,26 @@ const AdminDashboard = () => {
     // تعيين حالة التحميل إلى true لضمان إعادة التحميل
     setIsLoading(true);
     
-    // استدعاء الدوال لجلب أحدث البيانات
-    const loadData = async () => {
-      try {
-        await fetchDashboardStats();
-        await fetchAllSettings();
-      } catch (error) {
-        console.error("Error fetching admin data:", error);
-      } finally {
-        // إنهاء حالة التحميل بعد الانتهاء
+    // استدعاء الدالة لتحديث البيانات
+    refreshAdminData()
+      .then(() => {
+        console.log("Admin data refresh completed");
         setIsLoading(false);
-      }
-    };
-    
-    loadData();
+      })
+      .catch(error => {
+        console.error("Error refreshing admin data:", error);
+        setIsLoading(false);
+      });
   }, []);
 
-  if (isLoading) {
+  if (isLoading || dbLoading) {
     return (
       <div className="min-h-screen flex flex-col">
         <Navbar />
         <main className="flex-1 flex items-center justify-center">
           <div className="flex flex-col items-center">
             <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
-            <p className="text-muted-foreground">جاري التحميل...</p>
+            <p className="text-muted-foreground">جاري تحميل بيانات لوحة التحكم...</p>
           </div>
         </main>
         <Footer />
