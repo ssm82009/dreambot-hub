@@ -50,6 +50,17 @@ const PaymentSuccess = () => {
             console.error("خطأ في جلب إعدادات الدفع:", settingsError);
           }
 
+          // استرجاع إعدادات التسعير للحصول على أسعار الخطط
+          const { data: pricingSettings, error: pricingError } = await supabase
+            .from('pricing_settings')
+            .select('*')
+            .limit(1)
+            .single();
+
+          if (pricingError) {
+            console.error("خطأ في جلب إعدادات التسعير:", pricingError);
+          }
+
           // Get the current user
           const { data: { session } } = await supabase.auth.getSession();
           
@@ -91,10 +102,10 @@ const PaymentSuccess = () => {
                 // تحديد المبلغ بناءً على نوع الخطة
                 let amount = 0;
                 if (plan === 'premium') {
-                  // محاولة استرجاع السعر من إعدادات التسعير، أو استخدام قيمة افتراضية
-                  amount = paymentSettings?.premium_plan_price || 49;
+                  // استخدام السعر من إعدادات التسعير، أو استخدام قيمة افتراضية
+                  amount = pricingSettings?.premium_plan_price || 49;
                 } else if (plan === 'pro') {
-                  amount = paymentSettings?.pro_plan_price || 99;
+                  amount = pricingSettings?.pro_plan_price || 99;
                 }
                 
                 // إنشاء سجل جديد بناءً على معلومات PayPal
