@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { formatPrice } from '@/utils/currency';
+import { formatCurrency } from '@/utils/currency';
 
 interface PaymentDetailsProps {
   plan: string;
@@ -16,7 +16,7 @@ const PaymentDetails = ({ plan, amount }: PaymentDetailsProps) => {
       </div>
       <div className="flex justify-between py-2 border-b">
         <span className="font-medium">المبلغ:</span>
-        <span>{formatPrice(amount, 'SAR')} {amount > 0 ? "/ شهرياً" : ""}</span>
+        <span>{formatCurrency(amount, 'SAR')} {amount > 0 ? "/ شهرياً" : ""}</span>
       </div>
       <div className="flex justify-between py-2 border-b">
         <span className="font-medium">طريقة الدفع:</span>
