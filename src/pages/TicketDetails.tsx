@@ -69,28 +69,39 @@ const TicketDetails = () => {
 
         if (ticketError) throw ticketError;
         
-        // جلب الردود مع معلومات المستخدمين
+        // جلب الردود
         const { data: repliesData, error: repliesError } = await supabase
           .from('ticket_replies')
-          .select(`
-            *,
-            user:user_id (
-              id,
-              email,
-              full_name,
-              role
-            )
-          `)
+          .select('*')
           .eq('ticket_id', id)
           .order('created_at', { ascending: true });
 
         if (repliesError) throw repliesError;
         
+        // Fetch user data separately for each reply
+        const repliesWithUserData = await Promise.all(
+          (repliesData || []).map(async (reply) => {
+            // Fetch user data for this reply
+            const { data: userData, error: userError } = await supabase
+              .from('users')
+              .select('id, email, full_name, role')
+              .eq('id', reply.user_id)
+              .single();
+            
+            if (userError) {
+              console.error('Error fetching user data:', userError);
+              return { ...reply, user: null };
+            }
+            
+            return { ...reply, user: userData };
+          })
+        );
+        
         // دمج البيانات مع التأكد من تطابق الأنواع
         setTicket({
           ...ticketData,
           status: ticketData.status as 'open' | 'closed',
-          replies: repliesData || []
+          replies: repliesWithUserData || []
         });
       } catch (error) {
         console.error('Error fetching ticket details:', error);
@@ -116,32 +127,41 @@ const TicketDetails = () => {
     try {
       setIsSubmitting(true);
 
-      const { data, error } = await supabase
+      // Add reply to the database
+      const { data: replyData, error } = await supabase
         .from('ticket_replies')
         .insert({
           ticket_id: ticket.id,
           content: newReply.trim(),
           user_id: userId
         })
-        .select(`
-          *,
-          user:user_id (
-            id,
-            email,
-            full_name,
-            role
-          )
-        `)
+        .select()
         .single();
 
       if (error) throw error;
 
+      // Fetch user data for the new reply
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('id, email, full_name, role')
+        .eq('id', userId)
+        .single();
+        
+      if (userError) {
+        console.error('Error fetching user data:', userError);
+      }
+
       // تحديث حالة الردود محلياً
+      const newReplyWithUser: TicketReply = {
+        ...replyData,
+        user: userData || undefined
+      };
+      
       setTicket(prev => {
         if (!prev) return prev;
         return {
           ...prev,
-          replies: [...prev.replies, data as TicketReply]
+          replies: [...prev.replies, newReplyWithUser]
         };
       });
       
