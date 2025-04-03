@@ -104,19 +104,13 @@ const TransactionEditForm: React.FC<TransactionEditFormProps> = ({
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label htmlFor="plan_name">الباقة</Label>
-              <Select
+              <Input
+                id="plan_name"
+                name="plan_name"
                 value={formState.plan_name}
-                onValueChange={(value) => handleSelectChange('plan_name', value)}
-              >
-                <SelectTrigger id="plan_name">
-                  <SelectValue placeholder="اختر الباقة" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="free">مجاني</SelectItem>
-                  <SelectItem value="premium">مميز</SelectItem>
-                  <SelectItem value="pro">احترافي</SelectItem>
-                </SelectContent>
-              </Select>
+                onChange={handleInputChange}
+                placeholder="أدخل اسم الباقة"
+              />
             </div>
             
             <div className="grid gap-2">
