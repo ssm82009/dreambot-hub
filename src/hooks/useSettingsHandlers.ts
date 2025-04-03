@@ -7,5 +7,6 @@ export {
   usePricingSettingsHandler,
   usePaymentSettingsHandler,
   useThemeSettingsHandler,
+  useSeoSettingsHandler,
   useLogoutHandler
 } from './settings';

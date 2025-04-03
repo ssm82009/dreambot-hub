@@ -64,6 +64,19 @@ export type ThemeSettingsFormValues = {
   };
 };
 
+export type SeoSettingsFormValues = {
+  metaTitle: string;
+  metaDescription: string;
+  keywords: string;
+  enableSitemap: boolean;
+  enableRobotsTxt: boolean;
+  enableCanonicalUrls: boolean;
+  enableOpenGraph: boolean;
+  enableTwitterCards: boolean;
+  googleAnalyticsId: string;
+  customHeadTags: string;
+};
+
 export type AdminContextType = {
   isAdmin: boolean;
   setIsAdmin: React.Dispatch<React.SetStateAction<boolean>>;
@@ -95,6 +108,8 @@ export type AdminContextType = {
   setPaymentSettingsForm: React.Dispatch<React.SetStateAction<PaymentSettingsFormValues>>;
   themeSettingsForm: ThemeSettingsFormValues;
   setThemeSettingsForm: React.Dispatch<React.SetStateAction<ThemeSettingsFormValues>>;
+  seoSettingsForm: SeoSettingsFormValues;
+  setSeoSettingsForm: React.Dispatch<React.SetStateAction<SeoSettingsFormValues>>;
   activeSections: Record<string, boolean>;
   setActiveSections: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
   toggleSection: (section: string) => void;

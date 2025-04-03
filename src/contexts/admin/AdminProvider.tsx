@@ -9,6 +9,7 @@ import {
   initialPricingSettings,
   initialPaymentSettings,
   initialThemeSettings,
+  initialSeoSettings,
   initialActiveSections
 } from './initialState';
 
@@ -35,6 +36,7 @@ export const AdminProvider: React.FC<AdminProviderProps> = ({ children }) => {
   const [pricingSettingsForm, setPricingSettingsForm] = useState(initialPricingSettings);
   const [paymentSettingsForm, setPaymentSettingsForm] = useState(initialPaymentSettings);
   const [themeSettingsForm, setThemeSettingsForm] = useState(initialThemeSettings);
+  const [seoSettingsForm, setSeoSettingsForm] = useState(initialSeoSettings);
   
   // UI state
   const [activeSections, setActiveSections] = useState(initialActiveSections);
@@ -80,6 +82,8 @@ export const AdminProvider: React.FC<AdminProviderProps> = ({ children }) => {
         setPaymentSettingsForm,
         themeSettingsForm,
         setThemeSettingsForm,
+        seoSettingsForm,
+        setSeoSettingsForm,
         activeSections,
         setActiveSections,
         toggleSection

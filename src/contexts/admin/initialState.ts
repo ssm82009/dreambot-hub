@@ -61,6 +61,19 @@ export const initialThemeSettings = {
   }
 };
 
+export const initialSeoSettings = {
+  metaTitle: 'تفسير الأحلام - موقع تفسير الرؤى والأحلام',
+  metaDescription: 'موقع متخصص في تفسير الأحلام والرؤى وفق المراجع الإسلامية والعلمية. احصل على تفسير حلمك الآن.',
+  keywords: 'تفسير الأحلام, تفسير الرؤى, تفسير حلم, تفسير منام, رؤيا في المنام',
+  enableSitemap: true,
+  enableRobotsTxt: true,
+  enableCanonicalUrls: true,
+  enableOpenGraph: true,
+  enableTwitterCards: true,
+  googleAnalyticsId: '',
+  customHeadTags: ''
+};
+
 export const initialActiveSections = {
   aiSettings: false,
   interpretationSettings: false,
@@ -71,5 +84,6 @@ export const initialActiveSections = {
   navbarManagement: false,
   ticketManagement: false,
   transactionManagement: false,
-  themeSettings: false
+  themeSettings: false,
+  seoSettings: false
 };
