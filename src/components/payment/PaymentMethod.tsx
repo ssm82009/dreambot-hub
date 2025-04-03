@@ -26,7 +26,7 @@ const PaymentMethod = ({ selectedMethod, onMethodChange, availableMethods }: Pay
     <div className="space-y-4">
       <h3 className="font-medium text-center mb-4">اختر طريقة الدفع</h3>
       
-      <div className="flex items-center gap-2 mb-2 flex-row-reverse">
+      <div className="rtl flex items-center gap-2 mb-2">
         <CreditCard className="h-5 w-5" />
         <h4 className="font-medium">طريقة الدفع</h4>
       </div>
@@ -35,7 +35,7 @@ const PaymentMethod = ({ selectedMethod, onMethodChange, availableMethods }: Pay
         <RadioGroup 
           value={selectedMethod} 
           onValueChange={onMethodChange}
-          className="flex flex-col space-y-3"
+          className="rtl flex flex-col space-y-3"
         >
           {enabledMethods.map(method => (
             <div key={method.id} className="flex items-center space-x-2 space-x-reverse">
@@ -54,7 +54,7 @@ const PaymentMethod = ({ selectedMethod, onMethodChange, availableMethods }: Pay
           ))}
         </RadioGroup>
       ) : (
-        <div className="p-3 bg-amber-50 border border-amber-200 rounded">
+        <div className="rtl p-3 bg-amber-50 border border-amber-200 rounded">
           <p className="text-amber-800 text-sm">لم يتم تكوين أي طرق دفع. يرجى الاتصال بالمسؤول.</p>
         </div>
       )}
