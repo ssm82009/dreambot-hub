@@ -12,8 +12,10 @@ const AdminDashboard = () => {
   const { isLoading } = useAdmin();
   const { fetchDashboardStats, fetchAllSettings } = useAdminData();
 
-  // Refetch data on init
+  // Refresh data when the component mounts
   useEffect(() => {
+    console.log("Admin dashboard mounted - fetching fresh data");
+    // Call both functions to ensure we have the latest data
     fetchDashboardStats();
     fetchAllSettings();
   }, []);

@@ -8,7 +8,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 const DashboardStats: React.FC = () => {
   const { dreams, userCount, subscriptions, users } = useAdmin();
   
-  // حساب نسبة الاشتراكات من إجمالي المستخدمين
+  // Calculate subscription percentage from total users
   const subscriptionPercentage = userCount > 0 
     ? Math.round((subscriptions / userCount) * 100) 
     : 0;
@@ -48,7 +48,7 @@ const DashboardStats: React.FC = () => {
               <CardHeader className="pb-2">
                 <CardTitle className="flex items-center gap-2">
                   <CreditCard className="h-5 w-5 text-primary" />
-                  <span>الاشتراكات</span>
+                  <span>الاشتراكات النشطة</span>
                 </CardTitle>
                 <CardDescription>عدد الاشتراكات النشطة ({subscriptionPercentage}% من المستخدمين)</CardDescription>
               </CardHeader>

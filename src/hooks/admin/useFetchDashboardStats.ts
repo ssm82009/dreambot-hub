@@ -3,6 +3,7 @@ import { useAdmin } from '@/contexts/admin';
 import { supabase } from '@/integrations/supabase/client';
 import { User } from '@/types/database';
 import { getSubscriptionStatus } from '@/components/admin/user/SubscriptionBadge';
+import { toast } from 'sonner';
 
 export const useFetchDashboardStats = () => {
   const {
@@ -15,6 +16,8 @@ export const useFetchDashboardStats = () => {
 
   const fetchDashboardStats = async () => {
     try {
+      console.log("Fetching dashboard stats...");
+      
       // Fetch dream count
       const { count: dreamsCount, error: dreamsError } = await supabase
         .from('dreams')
@@ -37,22 +40,26 @@ export const useFetchDashboardStats = () => {
         setUserCount(usersCount || 0);
       }
 
-      // Fetch users
+      // Fetch users with fresh data
       const { data: usersData, error: fetchUsersError } = await supabase
         .from('users')
-        .select('*');
+        .select('*')
+        .order('created_at', { ascending: false });
 
       if (fetchUsersError) {
         console.error("خطأ في جلب المستخدمين:", fetchUsersError);
+        toast.error("حدث خطأ في جلب بيانات المستخدمين");
       } else {
+        console.log("User data received:", usersData?.length);
         setUsers(usersData || []);
         
-        // حساب عدد الاشتراكات النشطة استنادًا إلى حالة الاشتراك المحددة
+        // Calculate active subscriptions based on our improved status logic
         const activeSubscriptions = usersData ? usersData.filter(user => {
           const status = getSubscriptionStatus(user);
           return status.isActive;
         }).length : 0;
         
+        console.log("Active subscriptions:", activeSubscriptions);
         setSubscriptions(activeSubscriptions);
       }
 
@@ -68,6 +75,7 @@ export const useFetchDashboardStats = () => {
       }
     } catch (error) {
       console.error("خطأ في جلب الإحصائيات:", error);
+      toast.error("حدث خطأ في تحديث لوحة التحكم");
     }
   };
 
