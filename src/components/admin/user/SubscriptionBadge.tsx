@@ -14,7 +14,7 @@ type SubscriptionBadgeProps = {
 };
 
 export const getSubscriptionStatus = (user: User): SubscriptionStatus => {
-  // If no subscription or free, return free
+  // تحقق من نوع الاشتراك
   if (!user.subscription_type || user.subscription_type === 'free') {
     return { 
       name: 'مجاني', 
@@ -23,12 +23,12 @@ export const getSubscriptionStatus = (user: User): SubscriptionStatus => {
     };
   }
   
-  // Check if subscription has an expiry date
+  // تحقق مما إذا كان للاشتراك تاريخ انتهاء
   if (user.subscription_expires_at) {
     const expiryDate = new Date(user.subscription_expires_at);
     const now = new Date();
     
-    // If expiry date is in the future, subscription is active
+    // إذا كان تاريخ الانتهاء في المستقبل، فالاشتراك نشط
     if (expiryDate > now) {
       return { 
         name: user.subscription_type === 'premium' ? 'مميز' : 'احترافي',
@@ -36,7 +36,7 @@ export const getSubscriptionStatus = (user: User): SubscriptionStatus => {
         isActive: true
       };
     } else {
-      // If expiry date is in the past, subscription has expired
+      // إذا كان تاريخ الانتهاء في الماضي، فقد انتهى الاشتراك
       return { 
         name: 'منتهي', 
         color: 'destructive',
@@ -45,8 +45,7 @@ export const getSubscriptionStatus = (user: User): SubscriptionStatus => {
     }
   }
   
-  // If there's a subscription type but no expiry date, consider it active
-  // This handles cases where expiry date might not be set properly
+  // إذا كان هناك نوع اشتراك ولكن لا يوجد تاريخ انتهاء، نعتبره نشطاً
   return { 
     name: user.subscription_type === 'premium' ? 'مميز' : 'احترافي',
     color: user.subscription_type === 'premium' ? 'secondary' : 'default',

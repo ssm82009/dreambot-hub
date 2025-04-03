@@ -7,23 +7,37 @@ import { useFetchDashboardStats } from './admin/useFetchDashboardStats';
 import { useFetchSettings } from './admin/useFetchSettings';
 
 export const useAdminData = () => {
-  const { setIsLoading } = useAdmin();
+  const { setIsLoading, setDbLoading } = useAdmin();
   const { checkAdminAuth } = useAdminAuth();
   const { fetchDashboardStats } = useFetchDashboardStats();
   const { fetchAllSettings } = useFetchSettings();
 
-  // Initialize admin data
+  // تهيئة بيانات المشرف
   useEffect(() => {
     const isAuthenticated = checkAdminAuth();
     
-    // If user is admin, fetch data from database
+    // إذا كان المستخدم مشرفًا، فقم بجلب البيانات من قاعدة البيانات
     if (isAuthenticated) {
-      fetchDashboardStats();
-      fetchAllSettings();
-      setIsLoading(false);
+      const initializeData = async () => {
+        try {
+          setDbLoading(true);
+          await Promise.all([
+            fetchDashboardStats(), 
+            fetchAllSettings()
+          ]);
+        } catch (error) {
+          console.error("Error initializing admin data:", error);
+        } finally {
+          setDbLoading(false);
+          setIsLoading(false);
+        }
+      };
+      
+      initializeData();
     }
   }, []);
 
+  // تصدير الدوال لإعادة تحميل البيانات عند الحاجة
   return {
     fetchDashboardStats,
     fetchAllSettings

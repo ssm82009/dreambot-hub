@@ -9,15 +9,30 @@ import AdminHeader from '@/components/admin/AdminHeader';
 import AdminContent from '@/components/admin/AdminContent';
 
 const AdminDashboard = () => {
-  const { isLoading } = useAdmin();
+  const { isLoading, setIsLoading } = useAdmin();
   const { fetchDashboardStats, fetchAllSettings } = useAdminData();
 
-  // Refresh data when the component mounts
+  // تحديث البيانات عند تحميل المكون
   useEffect(() => {
     console.log("Admin dashboard mounted - fetching fresh data");
-    // Call both functions to ensure we have the latest data
-    fetchDashboardStats();
-    fetchAllSettings();
+    
+    // تعيين حالة التحميل إلى true لضمان إعادة التحميل
+    setIsLoading(true);
+    
+    // استدعاء الدوال لجلب أحدث البيانات
+    const loadData = async () => {
+      try {
+        await fetchDashboardStats();
+        await fetchAllSettings();
+      } catch (error) {
+        console.error("Error fetching admin data:", error);
+      } finally {
+        // إنهاء حالة التحميل بعد الانتهاء
+        setIsLoading(false);
+      }
+    };
+    
+    loadData();
   }, []);
 
   if (isLoading) {

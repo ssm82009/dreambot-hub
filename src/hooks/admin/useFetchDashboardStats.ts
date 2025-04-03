@@ -18,7 +18,7 @@ export const useFetchDashboardStats = () => {
     try {
       console.log("Fetching dashboard stats...");
       
-      // Fetch dream count
+      // جلب عدد الأحلام
       const { count: dreamsCount, error: dreamsError } = await supabase
         .from('dreams')
         .select('*', { count: 'exact', head: true });
@@ -29,7 +29,7 @@ export const useFetchDashboardStats = () => {
         setDreams(dreamsCount || 0);
       }
 
-      // Fetch user count
+      // جلب عدد المستخدمين
       const { count: usersCount, error: usersError } = await supabase
         .from('users')
         .select('*', { count: 'exact', head: true });
@@ -40,7 +40,7 @@ export const useFetchDashboardStats = () => {
         setUserCount(usersCount || 0);
       }
 
-      // Fetch users with fresh data
+      // جلب المستخدمين مع البيانات الحديثة
       const { data: usersData, error: fetchUsersError } = await supabase
         .from('users')
         .select('*')
@@ -51,19 +51,33 @@ export const useFetchDashboardStats = () => {
         toast.error("حدث خطأ في جلب بيانات المستخدمين");
       } else {
         console.log("User data received:", usersData?.length);
-        setUsers(usersData || []);
         
-        // Calculate active subscriptions based on our improved status logic
-        const activeSubscriptions = usersData ? usersData.filter(user => {
-          const status = getSubscriptionStatus(user);
-          return status.isActive;
-        }).length : 0;
-        
-        console.log("Active subscriptions:", activeSubscriptions);
-        setSubscriptions(activeSubscriptions);
+        if (usersData) {
+          // تعيين بيانات المستخدمين
+          setUsers(usersData);
+          
+          // حساب الاشتراكات النشطة بناءً على منطق الحالة المحسن
+          const activeSubscriptions = usersData.filter(user => {
+            const status = getSubscriptionStatus(user);
+            return status.isActive;
+          }).length;
+          
+          console.log("Active subscriptions calculated:", activeSubscriptions);
+          console.log("Subscription details:", usersData.map(user => ({
+            email: user.email,
+            type: user.subscription_type,
+            expires: user.subscription_expires_at,
+            isActive: getSubscriptionStatus(user).isActive
+          })));
+          
+          setSubscriptions(activeSubscriptions);
+        } else {
+          setUsers([]);
+          setSubscriptions(0);
+        }
       }
 
-      // Fetch pages
+      // جلب الصفحات
       const { data: pagesData, error: fetchPagesError } = await supabase
         .from('custom_pages')
         .select('*');
