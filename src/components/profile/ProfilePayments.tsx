@@ -13,6 +13,7 @@ interface Payment {
   payment_method: string;
   status: string;
   created_at: string;
+  user_id: string;
 }
 
 interface ProfilePaymentsProps {

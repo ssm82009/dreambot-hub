@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
@@ -51,7 +50,7 @@ const Profile = () => {
           throw userError;
         }
         
-        // Fetch payment invoices separately
+        // Fetch payment invoices separately - make sure we only fetch the current user's payments
         const { data: paymentData, error: paymentError } = await supabase
           .from('payment_invoices')
           .select('*')
@@ -60,7 +59,9 @@ const Profile = () => {
         if (paymentError) {
           console.error('Error fetching payment data:', paymentError);
           // Continue without payment data
+          setPayments([]);
         } else {
+          console.log("Fetched payments for user:", session.user.id, paymentData);
           setPayments(paymentData || []);
         }
         

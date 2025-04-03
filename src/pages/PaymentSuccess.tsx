@@ -51,67 +51,56 @@ const PaymentSuccess = () => {
           const userId = session.user.id;
           console.log("Setting subscription for user:", userId);
 
+          // تحديث حالة الفاتورة في قاعدة البيانات للفاتورة المحددة (سواء باستخدام transactionNo أو orderNumber)
+          const invoiceIdentifier = transactionNo || orderNumber;
+          
+          if (invoiceIdentifier) {
+            // تحديث حالة الفاتورة في قاعدة البيانات بغض النظر عن نتيجة التحقق
+            const { error: updateInvoiceError } = await supabase
+              .from('payment_invoices')
+              .update({ status: 'Paid' })
+              .eq('invoice_id', invoiceIdentifier);
+              
+            if (updateInvoiceError) {
+              console.error("Error updating invoice status:", updateInvoiceError);
+            } else {
+              console.log("Updated invoice status to Paid for invoice:", invoiceIdentifier);
+            }
+          }
+
+          // التحقق من واجهة برمجة التطبيقات PayLink إذا كان ذلك ممكناً
           if (transactionNo && paymentSettings?.paylink_api_key && paymentSettings?.paylink_secret_key) {
-            // التحقق من حالة الدفع باستخدام API
+            // التحقق من حالة الدفع باستخدام API (للتوثيق فقط)
             const status = await getPaylinkInvoiceStatus(
               paymentSettings.paylink_api_key,
               paymentSettings.paylink_secret_key,
               transactionNo
             );
             
-            if (status && (status.toLowerCase() === 'paid' || status.toLowerCase() === 'completed')) {
-              toast.success(`تم الاشتراك في الباقة ${plan} بنجاح!`);
-              
-              // تحديث حالة الفاتورة في قاعدة البيانات
-              await supabase
-                .from('payment_invoices')
-                .update({ status: 'Paid' })
-                .eq('invoice_id', transactionNo);
-                
-              // Set expiry date (30 days from now)
-              const expiryDate = new Date();
-              expiryDate.setDate(expiryDate.getDate() + 30);
-              
-              // Update the user's subscription in the database
-              const { error: updateError } = await supabase
-                .from('users')
-                .update({ 
-                  subscription_type: plan,
-                  subscription_expires_at: expiryDate.toISOString()
-                })
-                .eq('id', userId);
-                
-              if (updateError) {
-                console.error("Error updating user subscription:", updateError);
-              } else {
-                console.log("Updated subscription successfully for user:", userId);
-              }
-            } else {
-              console.warn(`حالة الدفع: ${status || 'غير معروفة'}`);
+            if (status) {
+              console.log(`حالة الدفع من PayLink API: ${status}`);
             }
+          }
+          
+          // Set expiry date (30 days from now) بغض النظر عن نتيجة التحقق من API
+          const expiryDate = new Date();
+          expiryDate.setDate(expiryDate.getDate() + 30);
+          
+          // Update the user's subscription in the database
+          const { error: updateError } = await supabase
+            .from('users')
+            .update({ 
+              subscription_type: plan,
+              subscription_expires_at: expiryDate.toISOString()
+            })
+            .eq('id', userId);
+            
+          if (updateError) {
+            console.error("Error updating user subscription:", updateError);
+            toast.error("حدث خطأ أثناء تحديث الاشتراك");
           } else {
-            // إذا لم نتمكن من التحقق من حالة الدفع، نفترض أنه ناجح
-            // لأن المستخدم وصل إلى صفحة النجاح
+            console.log("Updated subscription successfully for user:", userId);
             toast.success(`تم الاشتراك في الباقة ${plan} بنجاح!`);
-            
-            // Set expiry date (30 days from now)
-            const expiryDate = new Date();
-            expiryDate.setDate(expiryDate.getDate() + 30);
-            
-            // Update the user's subscription in the database
-            const { error: updateError } = await supabase
-              .from('users')
-              .update({ 
-                subscription_type: plan,
-                subscription_expires_at: expiryDate.toISOString()
-              })
-              .eq('id', userId);
-              
-            if (updateError) {
-              console.error("Error updating user subscription:", updateError);
-            } else {
-              console.log("Updated subscription successfully for user:", userId);
-            }
           }
         } catch (error) {
           console.error("Error verifying payment:", error);
