@@ -49,14 +49,14 @@ const PricingPlans = ({ onSubscribe }: PricingPlansProps) => {
           const plans: PricingPlan[] = [
             {
               id: 'المجاني',
-              name: 'المجاني',
+              name: data.free_plan_name || 'المجاني',
               price: Number(data.free_plan_price),
               description: 'للاستخدام الأساسي',
               features: freePlanFeatures
             },
             {
               id: 'المميز',
-              name: 'المميز',
+              name: data.premium_plan_name || 'المميز',
               price: Number(data.premium_plan_price),
               description: 'للمستخدمين النشطين',
               features: premiumPlanFeatures,
@@ -64,7 +64,7 @@ const PricingPlans = ({ onSubscribe }: PricingPlansProps) => {
             },
             {
               id: 'الاحترافي',
-              name: 'الاحترافي',
+              name: data.pro_plan_name || 'الاحترافي',
               price: Number(data.pro_plan_price),
               description: 'للمؤسسات والمحترفين',
               features: proPlanFeatures

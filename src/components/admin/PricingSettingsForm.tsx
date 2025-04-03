@@ -9,16 +9,19 @@ import { PricingSettings } from '@/types/database';
 
 type PricingSettingsFormValues = {
   freePlan: {
+    name: string;
     price: number;
     interpretationsPerMonth: number;
     features: string;
   };
   premiumPlan: {
+    name: string;
     price: number;
     interpretationsPerMonth: number;
     features: string;
   };
   proPlan: {
+    name: string;
     price: number;
     interpretationsPerMonth: number;
     features: string;
@@ -40,6 +43,13 @@ const PricingSettingsForm: React.FC<PricingSettingsFormProps> = ({ initialData, 
       <div className="p-4 border rounded-md">
         <h3 className="text-lg font-semibold mb-3">الخطة المجانية</h3>
         <div className="space-y-3">
+          <div className="space-y-2">
+            <Label>اسم الخطة</Label>
+            <Input 
+              placeholder="اسم الخطة المجانية"
+              {...form.register("freePlan.name")}
+            />
+          </div>
           <div className="space-y-2">
             <Label>السعر (ريال)</Label>
             <Input 
@@ -72,6 +82,13 @@ const PricingSettingsForm: React.FC<PricingSettingsFormProps> = ({ initialData, 
         <h3 className="text-lg font-semibold mb-3">الخطة المميزة</h3>
         <div className="space-y-3">
           <div className="space-y-2">
+            <Label>اسم الخطة</Label>
+            <Input 
+              placeholder="اسم الخطة المميزة"
+              {...form.register("premiumPlan.name")}
+            />
+          </div>
+          <div className="space-y-2">
             <Label>السعر (ريال)</Label>
             <Input 
               type="number" 
@@ -100,6 +117,13 @@ const PricingSettingsForm: React.FC<PricingSettingsFormProps> = ({ initialData, 
       <div className="p-4 border rounded-md">
         <h3 className="text-lg font-semibold mb-3">الخطة الاحترافية</h3>
         <div className="space-y-3">
+          <div className="space-y-2">
+            <Label>اسم الخطة</Label>
+            <Input 
+              placeholder="اسم الخطة الاحترافية"
+              {...form.register("proPlan.name")}
+            />
+          </div>
           <div className="space-y-2">
             <Label>السعر (ريال)</Label>
             <Input 

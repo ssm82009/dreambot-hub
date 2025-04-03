@@ -15,16 +15,19 @@ export const usePricingSettingsHandler = () => {
 
   const handlePricingSettingsSubmit = async (data: {
     freePlan: {
+      name: string;
       price: number;
       interpretationsPerMonth: number;
       features: string;
     };
     premiumPlan: {
+      name: string;
       price: number;
       interpretationsPerMonth: number;
       features: string;
     };
     proPlan: {
+      name: string;
       price: number;
       interpretationsPerMonth: number;
       features: string;
@@ -34,12 +37,15 @@ export const usePricingSettingsHandler = () => {
       const { error } = await supabase
         .from('pricing_settings')
         .update({
+          free_plan_name: data.freePlan.name,
           free_plan_price: data.freePlan.price,
           free_plan_interpretations: data.freePlan.interpretationsPerMonth,
           free_plan_features: data.freePlan.features,
+          premium_plan_name: data.premiumPlan.name,
           premium_plan_price: data.premiumPlan.price,
           premium_plan_interpretations: data.premiumPlan.interpretationsPerMonth,
           premium_plan_features: data.premiumPlan.features,
+          pro_plan_name: data.proPlan.name,
           pro_plan_price: data.proPlan.price,
           pro_plan_interpretations: data.proPlan.interpretationsPerMonth,
           pro_plan_features: data.proPlan.features,

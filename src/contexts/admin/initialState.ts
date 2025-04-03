@@ -14,16 +14,19 @@ export const initialInterpretationSettings = {
 
 export const initialPricingSettings = {
   freePlan: {
+    name: 'المجاني',
     price: 0,
     interpretationsPerMonth: 3,
     features: 'تفسير أساسي للأحلام\nدعم عبر البريد الإلكتروني'
   },
   premiumPlan: {
+    name: 'المميز',
     price: 49,
     interpretationsPerMonth: -1,
     features: 'تفسيرات أحلام غير محدودة\nتفسيرات مفصلة ومعمقة\nأرشيف لتفسيرات أحلامك السابقة\nنصائح وتوجيهات شخصية\nدعم فني على مدار الساعة'
   },
   proPlan: {
+    name: 'الاحترافي',
     price: 99,
     interpretationsPerMonth: -1,
     features: 'كل مميزات الخطة المميزة\nاستشارات شخصية مع خبراء تفسير الأحلام\nتقارير تحليلية شهرية\nإمكانية إضافة 5 حسابات فرعية\nواجهة برمجة التطبيقات API'

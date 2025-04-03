@@ -63,16 +63,19 @@ export const useFetchSettings = () => {
       } else if (pricingData) {
         setPricingSettingsForm({
           freePlan: {
+            name: pricingData.free_plan_name || 'المجاني',
             price: Number(pricingData.free_plan_price),
             interpretationsPerMonth: pricingData.free_plan_interpretations,
             features: pricingData.free_plan_features
           },
           premiumPlan: {
+            name: pricingData.premium_plan_name || 'المميز',
             price: Number(pricingData.premium_plan_price),
             interpretationsPerMonth: pricingData.premium_plan_interpretations,
             features: pricingData.premium_plan_features
           },
           proPlan: {
+            name: pricingData.pro_plan_name || 'الاحترافي',
             price: Number(pricingData.pro_plan_price),
             interpretationsPerMonth: pricingData.pro_plan_interpretations,
             features: pricingData.pro_plan_features
