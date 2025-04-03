@@ -18,7 +18,7 @@ const NavLogo: React.FC<NavLogoProps> = ({
   return (
     <Link to="/" className="flex-shrink-0 flex items-center">
       <span className="font-bold text-primary" style={textStyle}>
-        {logoText}<span className="text-accent">الأحلام</span>
+        {logoText}
       </span>
     </Link>
   );
