@@ -6,6 +6,7 @@ import { User } from '@/types/database';
 type SubscriptionStatus = {
   name: string;
   color: 'default' | 'secondary' | 'destructive' | 'outline';
+  isActive: boolean; // إضافة خاصية لتحديد ما إذا كان الاشتراك نشطًا
 };
 
 type SubscriptionBadgeProps = {
@@ -14,7 +15,11 @@ type SubscriptionBadgeProps = {
 
 export const getSubscriptionStatus = (user: User): SubscriptionStatus => {
   if (!user.subscription_type || user.subscription_type === 'free') {
-    return { name: 'مجاني', color: 'outline' };
+    return { 
+      name: 'مجاني', 
+      color: 'outline',
+      isActive: false
+    };
   }
   
   // التحقق من انتهاء صلاحية الاشتراك
@@ -25,14 +30,24 @@ export const getSubscriptionStatus = (user: User): SubscriptionStatus => {
     if (expiryDate > now) {
       return { 
         name: user.subscription_type === 'premium' ? 'مميز' : 'احترافي',
-        color: user.subscription_type === 'premium' ? 'secondary' : 'default'
+        color: user.subscription_type === 'premium' ? 'secondary' : 'default',
+        isActive: true // اشتراك مدفوع ولم ينتهِ بعد
       };
     } else {
-      return { name: 'منتهي', color: 'destructive' };
+      return { 
+        name: 'منتهي', 
+        color: 'destructive',
+        isActive: false
+      };
     }
   }
   
-  return { name: 'مجاني', color: 'outline' };
+  // إذا كان هناك نوع اشتراك ولكن بدون تاريخ انتهاء، نعتبره نشطًا
+  return { 
+    name: user.subscription_type === 'premium' ? 'مميز' : 'احترافي',
+    color: user.subscription_type === 'premium' ? 'secondary' : 'default',
+    isActive: true
+  };
 };
 
 const SubscriptionBadge: React.FC<SubscriptionBadgeProps> = ({ user }) => {

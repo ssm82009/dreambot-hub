@@ -1,6 +1,8 @@
 
 import { useAdmin } from '@/contexts/admin';
 import { supabase } from '@/integrations/supabase/client';
+import { User } from '@/types/database';
+import { getSubscriptionStatus } from '@/components/admin/user/SubscriptionBadge';
 
 export const useFetchDashboardStats = () => {
   const {
@@ -35,19 +37,6 @@ export const useFetchDashboardStats = () => {
         setUserCount(usersCount || 0);
       }
 
-      // Fetch active subscriptions count
-      const { count: subscriptionsCount, error: subscriptionsError } = await supabase
-        .from('users')
-        .select('*', { count: 'exact', head: true })
-        .neq('subscription_type', 'free')
-        .gt('subscription_expires_at', new Date().toISOString());
-      
-      if (subscriptionsError) {
-        console.error("خطأ في جلب عدد الاشتراكات:", subscriptionsError);
-      } else {
-        setSubscriptions(subscriptionsCount || 0);
-      }
-
       // Fetch users
       const { data: usersData, error: fetchUsersError } = await supabase
         .from('users')
@@ -57,6 +46,14 @@ export const useFetchDashboardStats = () => {
         console.error("خطأ في جلب المستخدمين:", fetchUsersError);
       } else {
         setUsers(usersData || []);
+        
+        // حساب عدد الاشتراكات النشطة استنادًا إلى حالة الاشتراك المحددة
+        const activeSubscriptions = usersData ? usersData.filter(user => {
+          const status = getSubscriptionStatus(user);
+          return status.isActive;
+        }).length : 0;
+        
+        setSubscriptions(activeSubscriptions);
       }
 
       // Fetch pages
