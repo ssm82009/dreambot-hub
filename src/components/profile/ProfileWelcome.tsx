@@ -5,6 +5,7 @@ import { User } from '@/types/database';
 import SubscriptionBadge from '@/components/admin/user/SubscriptionBadge';
 import { formatDate } from '@/lib/utils';
 import { getSubscriptionStatus } from '@/components/admin/user/SubscriptionBadge';
+import { getSubscriptionName } from '@/utils/subscription';
 
 interface ProfileWelcomeProps {
   userData: User & {
@@ -29,18 +30,6 @@ const ProfileWelcome: React.FC<ProfileWelcomeProps> = ({ userData }) => {
   
   // Get subscription status
   const subscriptionStatus = getSubscriptionStatus(userData);
-  
-  // Get subscription name in Arabic
-  const getSubscriptionName = () => {
-    switch (userData.subscription_type?.toLowerCase()) {
-      case 'premium':
-        return 'الباقة المميزة';
-      case 'pro':
-        return 'الباقة الاحترافية';
-      default:
-        return 'الباقة المجانية';
-    }
-  };
 
   // تسجيل البيانات لأغراض التصحيح
   console.log("ProfileWelcome - User subscription data:", {
@@ -94,7 +83,7 @@ const ProfileWelcome: React.FC<ProfileWelcomeProps> = ({ userData }) => {
               {subscriptionStatus.isActive && userData.subscription_type && userData.subscription_type !== 'free' ? (
                 <div className="mt-4 p-3 bg-primary/10 rounded-md">
                   <p className="font-medium text-primary">
-                    أنت مشترك في {getSubscriptionName()}
+                    أنت مشترك في {getSubscriptionName(userData.subscription_type)}
                   </p>
                 </div>
               ) : (
