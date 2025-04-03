@@ -22,7 +22,7 @@ export type TicketReply = {
     email: string;
     full_name?: string;
     role: string;
-  };
+  } | null;
 };
 
 export type TicketWithReplies = Ticket & {
