@@ -46,17 +46,6 @@ const Navbar = () => {
     setIsMenuOpen(!isMenuOpen);
   };
 
-  // Custom logout handler to update local UI state
-  const logout = () => {
-    localStorage.removeItem('isLoggedIn');
-    localStorage.removeItem('isAdminLoggedIn');
-    localStorage.removeItem('userEmail');
-    // Call the imported logout handler
-    handleLogout();
-    // Refresh the page to update state
-    window.location.reload();
-  };
-
   return (
     <nav className="bg-background/80 backdrop-blur-md fixed w-full top-0 z-50 shadow-sm">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -77,7 +66,7 @@ const Navbar = () => {
                   <UserMenu 
                     userEmail={userEmail} 
                     isAdmin={isAdmin} 
-                    handleLogout={logout} 
+                    handleLogout={handleLogout} 
                   />
                 ) : (
                   <AuthButtons />
@@ -108,7 +97,7 @@ const Navbar = () => {
           isLoggedIn={isLoggedIn}
           isAdmin={isAdmin}
           onToggle={toggleMenu}
-          onLogout={logout}
+          onLogout={handleLogout}
         />
       )}
     </nav>
