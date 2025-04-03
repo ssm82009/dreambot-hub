@@ -8,18 +8,20 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 const PaymentSuccess = () => {
-  const { transactionIdentifier } = usePaymentVerification();
+  const { transactionIdentifier, isVerifying } = usePaymentVerification();
   const [isVerified, setIsVerified] = useState(false);
+  const [paymentData, setPaymentData] = useState<any>(null);
 
   // Verify that the subscription has been updated after payment verification
   useEffect(() => {
     const checkSubscription = async () => {
-      if (transactionIdentifier) {
+      if (transactionIdentifier && !isVerifying) {
         try {
           // Check if the current user has a valid subscription
           const { data: { session } } = await supabase.auth.getSession();
           
           if (session?.user?.id) {
+            // Check user subscription status
             const { data: userData, error } = await supabase
               .from('users')
               .select('subscription_type, subscription_expires_at')
@@ -41,6 +43,30 @@ const PaymentSuccess = () => {
                 console.log("Payment successfully verified. Subscription active until:", expiryDate);
               }
             }
+            
+            // Fetch the payment record to display
+            const { data: paymentRecord, error: paymentError } = await supabase
+              .from('payment_invoices')
+              .select('*')
+              .eq('invoice_id', transactionIdentifier)
+              .single();
+              
+            if (!paymentError && paymentRecord) {
+              setPaymentData(paymentRecord);
+              
+              // If payment is still pending despite being on success page, update it
+              if (paymentRecord.status === 'Pending' || paymentRecord.status === 'قيد الانتظار') {
+                const { error: updateError } = await supabase
+                  .from('payment_invoices')
+                  .update({ status: 'مدفوع' })
+                  .eq('id', paymentRecord.id);
+                  
+                if (!updateError) {
+                  console.log("Updated payment status to 'مدفوع'");
+                  setPaymentData({...paymentRecord, status: 'مدفوع'});
+                }
+              }
+            }
           }
         } catch (error) {
           console.error("Error in subscription verification:", error);
@@ -49,7 +75,7 @@ const PaymentSuccess = () => {
     };
     
     checkSubscription();
-  }, [transactionIdentifier]);
+  }, [transactionIdentifier, isVerifying]);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -58,6 +84,8 @@ const PaymentSuccess = () => {
         <PaymentSuccessContent 
           transactionIdentifier={transactionIdentifier}
           isVerified={isVerified}
+          isVerifying={isVerifying}
+          paymentData={paymentData}
         />
       </main>
       <Footer />

@@ -1,11 +1,12 @@
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { verifyPayment } from '@/utils/payment/verifyPayment';
 import { toast } from 'sonner';
 
 export const usePaymentVerification = () => {
   const [searchParams] = useSearchParams();
+  const [isVerifying, setIsVerifying] = useState(true);
   
   // PayLink params
   const transactionNo = searchParams.get('transactionNo') || '';
@@ -24,6 +25,7 @@ export const usePaymentVerification = () => {
   useEffect(() => {
     const handleVerification = async () => {
       try {
+        setIsVerifying(true);
         // تحديث حالة الاشتراك في localStorage
         const plan = localStorage.getItem('pendingSubscriptionPlan');
         if (plan) {
@@ -43,13 +45,17 @@ export const usePaymentVerification = () => {
       } catch (error) {
         console.error("Error in payment verification:", error);
         toast.error("حدث خطأ في التحقق من الدفع. يرجى الاتصال بالدعم الفني.");
+      } finally {
+        setIsVerifying(false);
       }
     };
 
     if (transactionIdentifier) {
       handleVerification();
+    } else {
+      setIsVerifying(false);
     }
   }, [transactionIdentifier, customId, txnId]);
 
-  return { transactionIdentifier };
+  return { transactionIdentifier, isVerifying };
 };

@@ -76,8 +76,8 @@ export const verifyPayment = async (
       if (identifiers.length === 1) {
         invoicesQuery = invoicesQuery.eq('invoice_id', identifiers[0]);
       } else {
-        const orConditions = identifiers.map(id => `invoice_id.eq.${id}`).join(',');
-        invoicesQuery = invoicesQuery.or(orConditions);
+        // Use in operator instead of complex OR conditions
+        invoicesQuery = invoicesQuery.in('invoice_id', identifiers);
       }
       
       // تنفيذ الاستعلام
@@ -123,7 +123,7 @@ export const verifyPayment = async (
               invoice_id: txnId,
               user_id: userId,
               plan_name: plan,
-              status: 'مدفوع',
+              status: 'مدفوع', // Set directly to paid since we're on success page
               payment_method: 'paypal',
               amount: amount
             })
@@ -182,7 +182,7 @@ export const verifyPayment = async (
         .update({ status: 'مدفوع' })
         .eq('user_id', userId)
         .eq('plan_name', plan)
-        .eq('status', 'Pending');
+        .in('status', ['Pending', 'قيد الانتظار']);
         
       if (updateAllInvoicesError) {
         console.error("Error updating related invoices:", updateAllInvoicesError);
