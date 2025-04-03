@@ -61,7 +61,11 @@ const Navbar = () => {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-row-reverse justify-between h-16 items-center">
           <div className="flex items-center">
-            <NavLogo logoText={themeSettings.logoText} fontSize={themeSettings.logoFontSize} />
+            <NavLogo 
+              logoText={themeSettings.logoText} 
+              fontSize={themeSettings.logoFontSize}
+              slug={themeSettings.slug} 
+            />
           </div>
 
           {/* Desktop Menu */}

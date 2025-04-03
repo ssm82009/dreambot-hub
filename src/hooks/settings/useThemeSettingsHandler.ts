@@ -41,6 +41,7 @@ export const useThemeSettingsHandler = () => {
           twitter_link: data.socialLinks.twitter,
           facebook_link: data.socialLinks.facebook,
           instagram_link: data.socialLinks.instagram,
+          slug: data.slug,
           updated_at: new Date().toISOString()
         })
         .eq('id', await getThemeSettingsId());

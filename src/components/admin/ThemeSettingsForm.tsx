@@ -14,6 +14,7 @@ type ThemeSettingsFormValues = {
   backgroundColor: string;
   logoText: string;
   logoFontSize: number;
+  slug?: string;
   headerColor: string;
   footerColor: string;
   footerText: string;
@@ -53,6 +54,7 @@ const ThemeSettingsForm: React.FC<ThemeSettingsFormProps> = ({
       <LogoSection 
         logoText={form.watch("logoText")}
         logoFontSize={form.watch("logoFontSize")}
+        slug={form.watch("slug")}
         register={form.register}
       />
       

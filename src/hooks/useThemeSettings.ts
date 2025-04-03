@@ -17,7 +17,7 @@ export const useThemeSettings = () => {
           .select(`
             primary_color, button_color, text_color, background_color, 
             logo_text, logo_font_size, header_color, footer_color, footer_text, 
-            twitter_link, facebook_link, instagram_link
+            twitter_link, facebook_link, instagram_link, slug
           `)
           .limit(1)
           .single();
@@ -39,7 +39,8 @@ export const useThemeSettings = () => {
               twitter: data.twitter_link || "",
               facebook: data.facebook_link || "",
               instagram: data.instagram_link || ""
-            }
+            },
+            slug: data.slug || "تفسير الأحلام عبر الذكاء الاصطناعي"
           });
         }
       } catch (error) {
