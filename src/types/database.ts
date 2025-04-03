@@ -1,4 +1,3 @@
-
 // أنواع للجداول التي أنشأناها في قاعدة البيانات
 export type AiSettings = {
   id: string;
@@ -111,4 +110,14 @@ export type DreamSymbol = {
   symbol: string;
   interpretation: string;
   category: string | null;
+};
+
+export type NavLink = {
+  id: string;
+  title: string;
+  url: string;
+  order: number;
+  is_admin_only: boolean;
+  created_at?: string;
+  updated_at?: string;
 };

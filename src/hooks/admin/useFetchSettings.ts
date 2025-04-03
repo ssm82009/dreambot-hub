@@ -9,7 +9,8 @@ export const useFetchSettings = () => {
     setInterpretationSettingsForm,
     setPricingSettingsForm,
     setPaymentSettingsForm,
-    setThemeSettingsForm
+    setThemeSettingsForm,
+    setNavLinks
   } = useAdmin();
 
   const fetchAllSettings = async () => {
@@ -130,6 +131,18 @@ export const useFetchSettings = () => {
             instagram: themeData.instagram_link || ""
           }
         });
+      }
+
+      // Fetch navbar links
+      const { data: navLinksData, error: navLinksError } = await supabase
+        .from('navbar_links')
+        .select('*')
+        .order('order', { ascending: true });
+      
+      if (navLinksError) {
+        console.error("خطأ في جلب روابط شريط التنقل:", navLinksError);
+      } else {
+        setNavLinks(navLinksData || []);
       }
     } catch (error) {
       console.error("خطأ في جلب الإعدادات:", error);

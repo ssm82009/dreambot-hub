@@ -1,3 +1,4 @@
+
 import { 
   AiSettingsFormValues, 
   InterpretationSettingsFormValues, 
@@ -76,5 +77,6 @@ export const initialActiveSections = {
   userManagement: false,
   pageManagement: false,
   themeSettings: false,
-  ticketManagement: false
+  ticketManagement: false,
+  navbarManagement: false
 };

@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { AdminContext } from './AdminContext';
 import { AdminProviderProps } from './types';
-import { User, CustomPage } from '@/types/database';
+import { User, CustomPage, NavLink } from '@/types/database';
 import {
   initialAiSettings,
   initialInterpretationSettings,
@@ -27,6 +27,7 @@ export const AdminProvider: React.FC<AdminProviderProps> = ({ children }) => {
   // Data collections
   const [users, setUsers] = useState<User[]>([]);
   const [pages, setPages] = useState<CustomPage[]>([]);
+  const [navLinks, setNavLinks] = useState<NavLink[]>([]);
 
   // Settings form values
   const [aiSettingsForm, setAiSettingsForm] = useState(initialAiSettings);
@@ -67,6 +68,8 @@ export const AdminProvider: React.FC<AdminProviderProps> = ({ children }) => {
         setUsers,
         pages,
         setPages,
+        navLinks,
+        setNavLinks,
         aiSettingsForm,
         setAiSettingsForm,
         interpretationSettingsForm,

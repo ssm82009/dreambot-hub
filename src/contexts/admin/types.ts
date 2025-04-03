@@ -1,6 +1,6 @@
 
 import { ReactNode } from 'react';
-import { User, CustomPage } from '@/types/database';
+import { User, CustomPage, NavLink } from '@/types/database';
 
 export type AiSettingsFormValues = {
   provider: string;
@@ -83,6 +83,8 @@ export type AdminContextType = {
   setUsers: React.Dispatch<React.SetStateAction<User[]>>;
   pages: CustomPage[];
   setPages: React.Dispatch<React.SetStateAction<CustomPage[]>>;
+  navLinks: NavLink[];
+  setNavLinks: React.Dispatch<React.SetStateAction<NavLink[]>>;
   aiSettingsForm: AiSettingsFormValues;
   setAiSettingsForm: React.Dispatch<React.SetStateAction<AiSettingsFormValues>>;
   interpretationSettingsForm: InterpretationSettingsFormValues;
