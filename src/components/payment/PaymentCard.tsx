@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import PaymentDetails from './PaymentDetails';
 import PaymentForm from './PaymentForm';
 import PaymentActions from './PaymentActions';
+import PaymentMethod from './PaymentMethod';
 
 interface PaymentCardProps {
   plan: string;
@@ -34,6 +35,13 @@ const PaymentCard = ({ plan, amount, onPayment, isProcessing }: PaymentCardProps
     setCustomerInfo(info);
   };
 
+  const handlePaymentMethodChange = (method: string) => {
+    setCustomerInfo(prevInfo => ({
+      ...prevInfo,
+      paymentMethod: method
+    }));
+  };
+
   const handlePayment = () => {
     onPayment(customerInfo);
   };
@@ -51,19 +59,37 @@ const PaymentCard = ({ plan, amount, onPayment, isProcessing }: PaymentCardProps
         <CardTitle className="text-2xl font-bold">تفاصيل الدفع</CardTitle>
         <CardDescription>يرجى مراجعة تفاصيل اشتراكك قبل المتابعة</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-6">
+        {/* 1. نوع الباقة والمبلغ */}
         <PaymentDetails 
           plan={plan} 
           amount={amount} 
           paymentMethod={customerInfo.paymentMethod} 
         />
         
-        {/* إظهار نموذج بيانات الدفع فقط إذا كان المبلغ أكبر من 0 */}
         {amount > 0 && (
-          <PaymentForm onCustomerInfoChange={handleCustomerInfoChange} />
+          <>
+            {/* 2. اختيار طريقة الدفع */}
+            <div className="border-t pt-4">
+              <PaymentMethod 
+                selectedMethod={customerInfo.paymentMethod} 
+                onMethodChange={handlePaymentMethodChange} 
+                availableMethods={[
+                  { id: 'paylink', name: 'بطاقة', description: 'بطاقة الدفع الإلكتروني (مدى/فيزا/ماستركارد)', enabled: true },
+                  { id: 'paypal', name: 'PayPal', description: 'الدفع عبر حساب PayPal', enabled: true }
+                ]}
+              />
+            </div>
+            
+            {/* 3. ادخال بيانات العميل */}
+            <div className="border-t pt-4">
+              <PaymentForm onCustomerInfoChange={handleCustomerInfoChange} />
+            </div>
+          </>
         )}
       </CardContent>
       <CardFooter>
+        {/* 4. زر العودة أو اتمام الدفع */}
         <PaymentActions 
           amount={amount} 
           onPayment={handlePayment} 

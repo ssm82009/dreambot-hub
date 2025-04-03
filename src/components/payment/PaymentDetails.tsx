@@ -9,17 +9,6 @@ interface PaymentDetailsProps {
 }
 
 const PaymentDetails = ({ plan, amount, paymentMethod = 'paylink' }: PaymentDetailsProps) => {
-  // Map payment method IDs to display names
-  const getPaymentMethodName = (method: string) => {
-    switch (method) {
-      case 'paypal':
-        return 'PayPal';
-      case 'paylink':
-      default:
-        return 'بطاقة الدفع الإلكتروني';
-    }
-  };
-
   return (
     <div className="space-y-4">
       <div className="flex justify-between py-2 border-b">
@@ -29,10 +18,6 @@ const PaymentDetails = ({ plan, amount, paymentMethod = 'paylink' }: PaymentDeta
       <div className="flex justify-between py-2 border-b">
         <span className="font-medium">المبلغ:</span>
         <span>{formatCurrency(amount, 'SAR')} {amount > 0 ? "/ شهرياً" : ""}</span>
-      </div>
-      <div className="flex justify-between py-2 border-b">
-        <span className="font-medium">طريقة الدفع:</span>
-        <span>{getPaymentMethodName(paymentMethod)}</span>
       </div>
 
       {amount > 0 && paymentMethod === 'paylink' && (
