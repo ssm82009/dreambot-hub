@@ -30,19 +30,6 @@ export const formatCurrency = (amount: number, currency: 'SAR' | 'USD' = 'SAR'):
 };
 
 /**
- * Get formatted price with currency symbol
- * @param amount The amount to format
- * @param currency The currency code ('SAR' or 'USD')
- * @returns Formatted price string with currency symbol
- */
-export const formatPrice = (amount: number, currency: 'SAR' | 'USD'): string => {
-  if (currency === 'USD') {
-    return `$${amount.toFixed(2)}`;
-  }
-  return `${amount.toFixed(2)} ريال`;
-};
-
-/**
  * Get PayPal-ready price based on user payment settings
  * @param sarAmount Amount in Saudi Riyal
  * @returns Object with converted amount and formatted strings
@@ -58,7 +45,7 @@ export const getPayPalPrice = (sarAmount: number): {
   return {
     sarAmount,
     usdAmount,
-    sarFormatted: formatPrice(sarAmount, 'SAR'),
-    usdFormatted: formatPrice(usdAmount, 'USD')
+    sarFormatted: formatCurrency(sarAmount, 'SAR'),
+    usdFormatted: formatCurrency(usdAmount, 'USD')
   };
 };
