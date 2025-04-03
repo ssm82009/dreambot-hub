@@ -45,7 +45,7 @@ const PaymentMethod = ({ selectedMethod, onMethodChange, availableMethods }: Pay
                   method.id === 'paylink' 
                     ? 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100 hover:text-green-800' 
                     : 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 hover:text-blue-800'
-                } font-bold px-2 py-1 text-xs`}>
+                } font-bold px-2 py-1 text-xs rounded-sm`}>
                   {method.name}
                 </Badge>
                 <span>{method.description}</span>
