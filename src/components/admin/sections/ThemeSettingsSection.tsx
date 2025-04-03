@@ -8,7 +8,7 @@ import { useThemeSettingsHandler } from '@/hooks/useSettingsHandlers';
 
 const ThemeSettingsSection = () => {
   const { themeSettingsForm, activeSections, toggleSection } = useAdmin();
-  const { handleThemeSettingsSubmit } = useThemeSettingsHandler();
+  const { handleThemeSettingsSubmit, isUpdating } = useThemeSettingsHandler();
 
   return (
     <AdminSection 
@@ -21,6 +21,7 @@ const ThemeSettingsSection = () => {
       <ThemeSettingsForm 
         initialData={themeSettingsForm}
         onSubmit={handleThemeSettingsSubmit}
+        isLoading={isUpdating}
       />
     </AdminSection>
   );

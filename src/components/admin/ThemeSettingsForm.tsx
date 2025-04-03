@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import ColorsSection from '@/components/admin/theme/ColorsSection';
 import LogoSection from '@/components/admin/theme/LogoSection';
 import HeaderFooterSection from '@/components/admin/theme/HeaderFooterSection';
+import { Loader2, Check } from 'lucide-react';
 
 type ThemeSettingsFormValues = {
   primaryColor: string;
@@ -26,9 +27,14 @@ type ThemeSettingsFormValues = {
 type ThemeSettingsFormProps = {
   initialData: ThemeSettingsFormValues;
   onSubmit: (data: ThemeSettingsFormValues) => Promise<void>;
+  isLoading?: boolean;
 };
 
-const ThemeSettingsForm: React.FC<ThemeSettingsFormProps> = ({ initialData, onSubmit }) => {
+const ThemeSettingsForm: React.FC<ThemeSettingsFormProps> = ({ 
+  initialData, 
+  onSubmit, 
+  isLoading = false 
+}) => {
   const form = useForm<ThemeSettingsFormValues>({
     defaultValues: initialData
   });
@@ -59,7 +65,16 @@ const ThemeSettingsForm: React.FC<ThemeSettingsFormProps> = ({ initialData, onSu
         setValue={form.setValue}
       />
       
-      <Button type="submit">حفظ الإعدادات</Button>
+      <Button type="submit" disabled={isLoading}>
+        {isLoading ? (
+          <>
+            <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+            جاري الحفظ...
+          </>
+        ) : (
+          'حفظ الإعدادات'
+        )}
+      </Button>
     </form>
   );
 };

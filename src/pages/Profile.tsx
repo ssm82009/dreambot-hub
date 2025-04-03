@@ -20,10 +20,11 @@ const Profile = () => {
   
   // تحديث البيانات عند تحميل الصفحة
   useEffect(() => {
+    // إذا كان هناك بيانات للمستخدم، قم بتحديثها
     if (userData?.id) {
       refreshUserData(userData.id);
     }
-  }, []);
+  }, [userData?.id, refreshUserData]);
   
   if (isLoading) {
     return <ProfileLoading />;

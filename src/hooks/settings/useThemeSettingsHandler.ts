@@ -1,9 +1,15 @@
 
+import { useState } from 'react';
 import { toast } from 'sonner';
 import { supabase } from "@/integrations/supabase/client";
+import { useAdmin } from '@/contexts/admin';
+import { ThemeSettingsFormValues } from '@/contexts/admin/types';
 
 // ThemeSettings form handler
 export const useThemeSettingsHandler = () => {
+  const [isUpdating, setIsUpdating] = useState(false);
+  const { setThemeSettingsForm } = useAdmin();
+
   const getThemeSettingsId = async (): Promise<string> => {
     const { data } = await supabase
       .from('theme_settings')
@@ -13,23 +19,13 @@ export const useThemeSettingsHandler = () => {
     return data?.id || '';
   };
 
-  const handleThemeSettingsSubmit = async (data: {
-    primaryColor: string;
-    buttonColor: string;
-    textColor: string;
-    backgroundColor: string;
-    logoText: string;
-    logoFontSize: number;
-    headerColor: string;
-    footerColor: string;
-    footerText: string;
-    socialLinks: {
-      twitter: string;
-      facebook: string;
-      instagram: string;
-    };
-  }) => {
+  const handleThemeSettingsSubmit = async (data: ThemeSettingsFormValues) => {
+    setIsUpdating(true);
+    
     try {
+      // Update local state first for immediate UI feedback
+      setThemeSettingsForm(data);
+      
       const { error } = await supabase
         .from('theme_settings')
         .update({
@@ -58,8 +54,10 @@ export const useThemeSettingsHandler = () => {
     } catch (error) {
       console.error("خطأ:", error);
       toast.error("حدث خطأ غير متوقع");
+    } finally {
+      setIsUpdating(false);
     }
   };
 
-  return { handleThemeSettingsSubmit };
+  return { handleThemeSettingsSubmit, isUpdating };
 };
