@@ -7,16 +7,42 @@ export const normalizePaymentStatus = (status: string | null | undefined): strin
   
   const normalizedStatus = status.toLowerCase().trim();
   
-  if (normalizedStatus.includes('paid') || normalizedStatus.includes('مدفوع')) {
+  // Map all possible payment status variations to standardized Arabic values
+  if (
+    normalizedStatus.includes('paid') || 
+    normalizedStatus.includes('مدفوع') ||
+    normalizedStatus.includes('approved') ||
+    normalizedStatus.includes('completed') ||
+    normalizedStatus.includes('successful') ||
+    normalizedStatus.includes('success')
+  ) {
     return 'مدفوع';
-  } else if (normalizedStatus.includes('pending') || normalizedStatus.includes('قيد الانتظار')) {
+  } else if (
+    normalizedStatus.includes('pending') || 
+    normalizedStatus.includes('قيد الانتظار') ||
+    normalizedStatus.includes('processing') ||
+    normalizedStatus.includes('in process') ||
+    normalizedStatus.includes('waiting')
+  ) {
     return 'قيد الانتظار';
-  } else if (normalizedStatus.includes('failed') || normalizedStatus.includes('فشل')) {
+  } else if (
+    normalizedStatus.includes('failed') || 
+    normalizedStatus.includes('فشل') ||
+    normalizedStatus.includes('declined') ||
+    normalizedStatus.includes('rejected') ||
+    normalizedStatus.includes('error')
+  ) {
     return 'فشل';
-  } else if (normalizedStatus.includes('refunded') || normalizedStatus.includes('مسترجع')) {
+  } else if (
+    normalizedStatus.includes('refunded') || 
+    normalizedStatus.includes('مسترجع') ||
+    normalizedStatus.includes('returned') ||
+    normalizedStatus.includes('chargeback')
+  ) {
     return 'مسترجع';
   }
   
+  // If no match found, return the original status
   return status;
 };
 
@@ -28,11 +54,11 @@ export const normalizePlanName = (planName: string | null | undefined): string =
   
   const normalizedPlan = planName.toLowerCase().trim();
   
-  if (normalizedPlan.includes('premium') || normalizedPlan.includes('مميز')) {
+  if (normalizedPlan === 'premium' || normalizedPlan.includes('مميز')) {
     return 'المميزة';
-  } else if (normalizedPlan.includes('pro') || normalizedPlan.includes('احترافي')) {
+  } else if (normalizedPlan === 'pro' || normalizedPlan.includes('احترافي')) {
     return 'الاحترافية';
-  } else if (normalizedPlan.includes('free') || normalizedPlan.includes('مجاني')) {
+  } else if (normalizedPlan === 'free' || normalizedPlan.includes('مجاني')) {
     return 'المجانية';
   }
   
