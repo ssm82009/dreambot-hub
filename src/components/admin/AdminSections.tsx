@@ -1,3 +1,4 @@
+
 import React from 'react';
 import AdminSection from '@/components/admin/AdminSection';
 import { 
@@ -8,7 +9,8 @@ import {
   FileText, 
   Palette, 
   DollarSign,
-  TicketCheck
+  TicketCheck,
+  LayoutList
 } from 'lucide-react';
 import { useAdmin } from '@/contexts/admin';
 import { toast } from 'sonner';
@@ -20,6 +22,7 @@ import UserManagement from '@/components/admin/UserManagement';
 import PageManagement from '@/components/admin/PageManagement';
 import TicketManagement from '@/components/admin/TicketManagement';
 import ThemeSettingsForm from '@/components/admin/ThemeSettingsForm';
+import NavbarManagement from '@/components/admin/NavbarManagement';
 import { 
   useAiSettingsHandler, 
   useInterpretationSettingsHandler, 
@@ -205,6 +208,16 @@ const AdminSections: React.FC = () => {
           onPageDelete={handlePageDelete}
           isLoading={false}
         />
+      </AdminSection>
+      
+      <AdminSection 
+        title="إدارة شريط التنقل" 
+        description="تخصيص وترتيب روابط شريط التنقل في الموقع"
+        icon={LayoutList}
+        isOpen={activeSections.navbarManagement}
+        onToggle={() => toggleSection('navbarManagement')}
+      >
+        <NavbarManagement />
       </AdminSection>
       
       <AdminSection 

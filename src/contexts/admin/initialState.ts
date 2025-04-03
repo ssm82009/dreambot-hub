@@ -1,72 +1,52 @@
 
-import { 
-  AiSettingsFormValues, 
-  InterpretationSettingsFormValues, 
-  PricingSettingsFormValues, 
-  PaymentSettingsFormValues, 
-  ThemeSettingsFormValues
-} from './types';
-
-export const initialAiSettings: AiSettingsFormValues = {
-  provider: "together",
-  apiKey: "",
-  model: "meta-llama/Llama-3-8b-chat-hf",
+export const initialAiSettings = {
+  provider: 'together',
+  model: 'meta-llama/Llama-3-8b-chat-hf',
+  api_key: ''
 };
 
-export const initialInterpretationSettings: InterpretationSettingsFormValues = {
-  maxInputWords: 500,
-  minOutputWords: 300,
-  maxOutputWords: 1000,
-  systemInstructions: "أنت مفسر أحلام خبير. يجب أن تقدم تفسيرات دقيقة وشاملة استناداً إلى المراجع الإسلامية والعلمية."
+export const initialInterpretationSettings = {
+  max_input_words: 500,
+  max_output_words: 1000,
+  min_output_words: 300,
+  system_instructions: 'أنت مفسر أحلام خبير. يجب أن تقدم تفسيرات دقيقة وشاملة استناداً إلى المراجع الإسلامية والعلمية.'
 };
 
-export const initialPricingSettings: PricingSettingsFormValues = {
-  freePlan: {
-    price: 0,
-    interpretationsPerMonth: 3,
-    features: "تفسير أساسي للأحلام\nدعم عبر البريد الإلكتروني"
-  },
-  premiumPlan: {
-    price: 49,
-    interpretationsPerMonth: -1,
-    features: "تفسيرات أحلام غير محدودة\nتفسيرات مفصلة ومعمقة\nأرشيف لتفسيرات أحلامك السابقة\nنصائح وتوجيهات شخصية\nدعم فني على مدار الساعة"
-  },
-  proPlan: {
-    price: 99,
-    interpretationsPerMonth: -1,
-    features: "كل مميزات الخطة المميزة\nاستشارات شخصية مع خبراء تفسير الأحلام\nتقارير تحليلية شهرية\nإمكانية إضافة 5 حسابات فرعية\nواجهة برمجة التطبيقات API"
-  }
+export const initialPricingSettings = {
+  free_plan_price: 0,
+  free_plan_interpretations: 3,
+  free_plan_features: 'تفسير أساسي للأحلام\nدعم عبر البريد الإلكتروني',
+  premium_plan_price: 49,
+  premium_plan_interpretations: -1,
+  premium_plan_features: 'تفسيرات أحلام غير محدودة\nتفسيرات مفصلة ومعمقة\nأرشيف لتفسيرات أحلامك السابقة\nنصائح وتوجيهات شخصية\nدعم فني على مدار الساعة',
+  pro_plan_price: 99,
+  pro_plan_interpretations: -1,
+  pro_plan_features: 'كل مميزات الخطة المميزة\nاستشارات شخصية مع خبراء تفسير الأحلام\nتقارير تحليلية شهرية\nإمكانية إضافة 5 حسابات فرعية\nواجهة برمجة التطبيقات API'
 };
 
-export const initialPaymentSettings: PaymentSettingsFormValues = {
-  paylink: {
-    enabled: true,
-    apiKey: "",
-    secretKey: ""
-  },
-  paypal: {
-    enabled: false,
-    clientId: "",
-    secret: "",
-    sandbox: true
-  }
+export const initialPaymentSettings = {
+  paylink_enabled: true,
+  paylink_api_key: '',
+  paylink_secret_key: '',
+  paypal_enabled: false,
+  paypal_client_id: '',
+  paypal_secret: '',
+  paypal_sandbox: true
 };
 
-export const initialThemeSettings: ThemeSettingsFormValues = {
-  primaryColor: "#9b87f5",
-  buttonColor: "#9b87f5",
-  textColor: "#1A1F2C",
-  backgroundColor: "#F9F9F9",
-  logoText: "تفسير الأحلام",
-  logoFontSize: 24,
-  headerColor: "#FFFFFF",
-  footerColor: "#1A1F2C",
-  footerText: "جميع الحقوق محفوظة © 2024 تفسير الأحلام",
-  socialLinks: {
-    twitter: "",
-    facebook: "",
-    instagram: ""
-  }
+export const initialThemeSettings = {
+  primary_color: '#9b87f5',
+  button_color: '#9b87f5',
+  text_color: '#1A1F2C',
+  background_color: '#F9F9F9',
+  header_color: '#FFFFFF',
+  footer_color: '#1A1F2C',
+  logo_text: 'تفسير الأحلام',
+  logo_font_size: 24,
+  footer_text: 'جميع الحقوق محفوظة © 2024 تفسير الأحلام',
+  twitter_link: '',
+  facebook_link: '',
+  instagram_link: ''
 };
 
 export const initialActiveSections = {
@@ -76,7 +56,7 @@ export const initialActiveSections = {
   paymentSettings: false,
   userManagement: false,
   pageManagement: false,
-  themeSettings: false,
+  navbarManagement: false,
   ticketManagement: false,
-  navbarManagement: false
+  themeSettings: false
 };
