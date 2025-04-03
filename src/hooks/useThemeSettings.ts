@@ -24,27 +24,31 @@ export const useThemeSettings = () => {
         
         if (error) {
           console.error("خطأ في جلب إعدادات المظهر:", error);
+          // Use default settings if there's an error
+          setThemeSettings(initialThemeSettings);
         } else if (data) {
           setThemeSettings({
-            primaryColor: data.primary_color,
-            buttonColor: data.button_color,
-            textColor: data.text_color,
-            backgroundColor: data.background_color,
-            logoText: data.logo_text,
-            logoFontSize: data.logo_font_size,
-            headerColor: data.header_color,
-            footerColor: data.footer_color,
-            footerText: data.footer_text,
+            primaryColor: data.primary_color || initialThemeSettings.primaryColor,
+            buttonColor: data.button_color || initialThemeSettings.buttonColor,
+            textColor: data.text_color || initialThemeSettings.textColor,
+            backgroundColor: data.background_color || initialThemeSettings.backgroundColor,
+            logoText: data.logo_text || initialThemeSettings.logoText,
+            logoFontSize: data.logo_font_size || initialThemeSettings.logoFontSize,
+            headerColor: data.header_color || initialThemeSettings.headerColor,
+            footerColor: data.footer_color || initialThemeSettings.footerColor,
+            footerText: data.footer_text || initialThemeSettings.footerText,
             socialLinks: {
               twitter: data.twitter_link || "",
               facebook: data.facebook_link || "",
               instagram: data.instagram_link || ""
             },
-            slug: data.slug || "تفسير الأحلام عبر الذكاء الاصطناعي"
+            slug: data.slug || initialThemeSettings.slug
           });
         }
       } catch (error) {
         console.error("خطأ في جلب إعدادات المظهر:", error);
+        // Use default settings if there's an error
+        setThemeSettings(initialThemeSettings);
       } finally {
         setLoading(false);
       }

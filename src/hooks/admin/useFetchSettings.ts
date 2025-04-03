@@ -1,5 +1,7 @@
+
 import { useAdmin } from '@/contexts/admin';
 import { supabase } from '@/integrations/supabase/client';
+import { initialThemeSettings, initialSeoSettings } from '@/contexts/admin/initialState';
 
 export const useFetchSettings = () => {
   const {
@@ -124,38 +126,41 @@ export const useFetchSettings = () => {
       
       if (themeError) {
         console.error("خطأ في جلب إعدادات المظهر:", themeError);
+        // Use default theme settings if there's an error
+        setThemeSettingsForm(initialThemeSettings);
+        setSeoSettingsForm(initialSeoSettings);
       } else if (themeData) {
         // Update theme settings
         setThemeSettingsForm({
-          primaryColor: themeData.primary_color,
-          buttonColor: themeData.button_color,
-          textColor: themeData.text_color,
-          backgroundColor: themeData.background_color,
-          logoText: themeData.logo_text,
-          logoFontSize: themeData.logo_font_size,
-          headerColor: themeData.header_color,
-          footerColor: themeData.footer_color,
-          footerText: themeData.footer_text,
+          primaryColor: themeData.primary_color || initialThemeSettings.primaryColor,
+          buttonColor: themeData.button_color || initialThemeSettings.buttonColor,
+          textColor: themeData.text_color || initialThemeSettings.textColor,
+          backgroundColor: themeData.background_color || initialThemeSettings.backgroundColor,
+          logoText: themeData.logo_text || initialThemeSettings.logoText,
+          logoFontSize: themeData.logo_font_size || initialThemeSettings.logoFontSize,
+          headerColor: themeData.header_color || initialThemeSettings.headerColor,
+          footerColor: themeData.footer_color || initialThemeSettings.footerColor,
+          footerText: themeData.footer_text || initialThemeSettings.footerText,
           socialLinks: {
             twitter: themeData.twitter_link || "",
             facebook: themeData.facebook_link || "",
             instagram: themeData.instagram_link || ""
           },
-          slug: themeData.slug || "تفسير الأحلام عبر الذكاء الاصطناعي"
+          slug: themeData.slug || initialThemeSettings.slug
         });
         
         // Update SEO settings from the same theme_settings table
         setSeoSettingsForm({
-          metaTitle: themeData.meta_title || "",
-          metaDescription: themeData.meta_description || "",
-          keywords: themeData.keywords || "",
-          enableSitemap: themeData.enable_sitemap || false,
-          enableRobotsTxt: themeData.enable_robots_txt || false,
-          enableCanonicalUrls: themeData.enable_canonical_urls || false,
-          enableOpenGraph: themeData.enable_open_graph || false,
-          enableTwitterCards: themeData.enable_twitter_cards || false,
-          googleAnalyticsId: themeData.google_analytics_id || "",
-          customHeadTags: themeData.custom_head_tags || ""
+          metaTitle: themeData.meta_title || initialSeoSettings.metaTitle,
+          metaDescription: themeData.meta_description || initialSeoSettings.metaDescription,
+          keywords: themeData.keywords || initialSeoSettings.keywords,
+          enableSitemap: themeData.enable_sitemap ?? initialSeoSettings.enableSitemap,
+          enableRobotsTxt: themeData.enable_robots_txt ?? initialSeoSettings.enableRobotsTxt,
+          enableCanonicalUrls: themeData.enable_canonical_urls ?? initialSeoSettings.enableCanonicalUrls,
+          enableOpenGraph: themeData.enable_open_graph ?? initialSeoSettings.enableOpenGraph,
+          enableTwitterCards: themeData.enable_twitter_cards ?? initialSeoSettings.enableTwitterCards,
+          googleAnalyticsId: themeData.google_analytics_id || initialSeoSettings.googleAnalyticsId,
+          customHeadTags: themeData.custom_head_tags || initialSeoSettings.customHeadTags
         });
       }
 
