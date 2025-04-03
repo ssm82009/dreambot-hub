@@ -17,16 +17,19 @@ export type InterpretationSettingsFormValues = {
 
 export type PricingSettingsFormValues = {
   freePlan: {
+    name: string;
     price: number;
     interpretationsPerMonth: number;
     features: string;
   };
   premiumPlan: {
+    name: string;
     price: number;
     interpretationsPerMonth: number;
     features: string;
   };
   proPlan: {
+    name: string;
     price: number;
     interpretationsPerMonth: number;
     features: string;

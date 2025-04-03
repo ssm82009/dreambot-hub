@@ -10,6 +10,7 @@ export const useFetchSettings = () => {
     setPricingSettingsForm,
     setPaymentSettingsForm,
     setThemeSettingsForm,
+    setSeoSettingsForm,
     setNavLinks
   } = useAdmin();
 
@@ -134,6 +135,32 @@ export const useFetchSettings = () => {
             instagram: themeData.instagram_link || ""
           }
         });
+      }
+
+      // Try fetching SEO settings if the table exists
+      try {
+        const { data: seoData } = await supabase
+          .from('theme_settings')
+          .select('meta_title, meta_description, keywords, enable_sitemap, enable_robots_txt, enable_canonical_urls, enable_open_graph, enable_twitter_cards, google_analytics_id, custom_head_tags')
+          .limit(1)
+          .single();
+        
+        if (seoData) {
+          setSeoSettingsForm({
+            metaTitle: seoData.meta_title || "",
+            metaDescription: seoData.meta_description || "",
+            keywords: seoData.keywords || "",
+            enableSitemap: seoData.enable_sitemap || false,
+            enableRobotsTxt: seoData.enable_robots_txt || false,
+            enableCanonicalUrls: seoData.enable_canonical_urls || false,
+            enableOpenGraph: seoData.enable_open_graph || false,
+            enableTwitterCards: seoData.enable_twitter_cards || false,
+            googleAnalyticsId: seoData.google_analytics_id || "",
+            customHeadTags: seoData.custom_head_tags || ""
+          });
+        }
+      } catch (seoError) {
+        console.error("لم يتم العثور على إعدادات السيو، سيتم استخدام القيم الافتراضية:", seoError);
       }
 
       // Fetch navbar links

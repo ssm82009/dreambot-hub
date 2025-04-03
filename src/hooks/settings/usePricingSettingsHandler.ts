@@ -1,6 +1,7 @@
 
 import { toast } from 'sonner';
 import { supabase } from "@/integrations/supabase/client";
+import { PricingSettingsFormValues } from '@/contexts/admin/types';
 
 // PricingSettings form handler
 export const usePricingSettingsHandler = () => {
@@ -13,26 +14,7 @@ export const usePricingSettingsHandler = () => {
     return data?.id || '';
   };
 
-  const handlePricingSettingsSubmit = async (data: {
-    freePlan: {
-      name: string;
-      price: number;
-      interpretationsPerMonth: number;
-      features: string;
-    };
-    premiumPlan: {
-      name: string;
-      price: number;
-      interpretationsPerMonth: number;
-      features: string;
-    };
-    proPlan: {
-      name: string;
-      price: number;
-      interpretationsPerMonth: number;
-      features: string;
-    };
-  }) => {
+  const handlePricingSettingsSubmit = async (data: PricingSettingsFormValues) => {
     try {
       const { error } = await supabase
         .from('pricing_settings')

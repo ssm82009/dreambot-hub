@@ -10,9 +10,9 @@ export const useSeoSettingsHandler = () => {
   const [isSuccess, setIsSuccess] = useState(false);
   const { setSeoSettingsForm } = useAdmin();
 
-  const getSeoSettingsId = async (): Promise<string> => {
+  const getThemeSettingsId = async (): Promise<string> => {
     const { data } = await supabase
-      .from('seo_settings')
+      .from('theme_settings')
       .select('id')
       .limit(1)
       .single();
@@ -27,9 +27,9 @@ export const useSeoSettingsHandler = () => {
       // Update local state first for immediate UI feedback
       setSeoSettingsForm(data);
       
-      // Check if seo_settings table exists
+      // Check if theme_settings table exists
       const { data: tableExists } = await supabase
-        .from('seo_settings')
+        .from('theme_settings')
         .select('id')
         .limit(1);
       
@@ -38,7 +38,7 @@ export const useSeoSettingsHandler = () => {
       if (tableExists && tableExists.length > 0) {
         // Update existing record
         result = await supabase
-          .from('seo_settings')
+          .from('theme_settings')
           .update({
             meta_title: data.metaTitle,
             meta_description: data.metaDescription,
@@ -52,11 +52,11 @@ export const useSeoSettingsHandler = () => {
             custom_head_tags: data.customHeadTags,
             updated_at: new Date().toISOString()
           })
-          .eq('id', await getSeoSettingsId());
+          .eq('id', await getThemeSettingsId());
       } else {
         // Create new record if doesn't exist
         result = await supabase
-          .from('seo_settings')
+          .from('theme_settings')
           .insert({
             meta_title: data.metaTitle,
             meta_description: data.metaDescription,

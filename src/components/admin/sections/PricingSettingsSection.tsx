@@ -4,7 +4,7 @@ import { DollarSign } from 'lucide-react';
 import AdminSection from '@/components/admin/AdminSection';
 import PricingSettingsForm from '@/components/admin/PricingSettingsForm';
 import { useAdmin } from '@/contexts/admin';
-import { usePricingSettingsHandler } from '@/hooks/useSettingsHandlers';
+import { usePricingSettingsHandler } from '@/hooks/settings';
 
 const PricingSettingsSection = () => {
   const { pricingSettingsForm, activeSections, toggleSection } = useAdmin();

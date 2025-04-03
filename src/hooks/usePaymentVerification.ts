@@ -34,11 +34,8 @@ export const usePaymentVerification = () => {
           console.log("Payment success with transaction ID:", transactionIdentifier);
           
           // Verify the payment in the database and update invoice status to "Paid"
-          const success = await verifyPayment(transactionIdentifier, customId, txnId, plan);
-          
-          if (success) {
-            toast.success(`تم الاشتراك في الباقة ${plan === 'premium' ? 'المميزة' : 'الاحترافية'} بنجاح!`);
-          }
+          await verifyPayment(transactionIdentifier, customId, txnId, plan);
+          toast.success(`تم الاشتراك في الباقة ${plan === 'premium' ? 'المميزة' : 'الاحترافية'} بنجاح!`);
         }
       } catch (error) {
         console.error("Error in payment verification:", error);
