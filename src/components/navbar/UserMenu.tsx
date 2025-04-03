@@ -25,7 +25,7 @@ const UserMenu: React.FC<{
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
           <Avatar className="h-8 w-8">
-            <AvatarImage src="/images/avatars/01.png" alt={displayName} />
+            {/* Use a placeholder SVG instead of the missing image */}
             <AvatarFallback>{displayName?.charAt(0).toUpperCase() || '?'}</AvatarFallback>
           </Avatar>
         </Button>
