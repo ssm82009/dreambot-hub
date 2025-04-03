@@ -75,7 +75,7 @@ const PaymentCard = ({ plan, amount, onPayment, isProcessing }: PaymentCardProps
                 selectedMethod={customerInfo.paymentMethod} 
                 onMethodChange={handlePaymentMethodChange} 
                 availableMethods={[
-                  { id: 'paylink', name: 'بطاقة بنكية', description: 'بطاقة الدفع الإلكتروني (مدى/فيزا/ماستركارد، أبل باي، stcPay)', enabled: true },
+                  { id: 'paylink', name: 'بطاقة بنكية', description: 'بطاقة الدفع الإلكتروني (مدى، فيزا، ماستركارد، أبل باي، stcPay)', enabled: true },
                   { id: 'paypal', name: 'PayPal', description: 'الدفع عبر حساب PayPal', enabled: true }
                 ]}
               />
