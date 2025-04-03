@@ -305,14 +305,24 @@ export type Database = {
           background_color: string
           button_color: string
           created_at: string | null
+          custom_head_tags: string | null
+          enable_canonical_urls: boolean | null
+          enable_open_graph: boolean | null
+          enable_robots_txt: boolean | null
+          enable_sitemap: boolean | null
+          enable_twitter_cards: boolean | null
           facebook_link: string | null
           footer_color: string
           footer_text: string
+          google_analytics_id: string | null
           header_color: string
           id: string
           instagram_link: string | null
+          keywords: string | null
           logo_font_size: number
           logo_text: string
+          meta_description: string | null
+          meta_title: string | null
           primary_color: string
           text_color: string
           twitter_link: string | null
@@ -322,14 +332,24 @@ export type Database = {
           background_color?: string
           button_color?: string
           created_at?: string | null
+          custom_head_tags?: string | null
+          enable_canonical_urls?: boolean | null
+          enable_open_graph?: boolean | null
+          enable_robots_txt?: boolean | null
+          enable_sitemap?: boolean | null
+          enable_twitter_cards?: boolean | null
           facebook_link?: string | null
           footer_color?: string
           footer_text?: string
+          google_analytics_id?: string | null
           header_color?: string
           id?: string
           instagram_link?: string | null
+          keywords?: string | null
           logo_font_size?: number
           logo_text?: string
+          meta_description?: string | null
+          meta_title?: string | null
           primary_color?: string
           text_color?: string
           twitter_link?: string | null
@@ -339,14 +359,24 @@ export type Database = {
           background_color?: string
           button_color?: string
           created_at?: string | null
+          custom_head_tags?: string | null
+          enable_canonical_urls?: boolean | null
+          enable_open_graph?: boolean | null
+          enable_robots_txt?: boolean | null
+          enable_sitemap?: boolean | null
+          enable_twitter_cards?: boolean | null
           facebook_link?: string | null
           footer_color?: string
           footer_text?: string
+          google_analytics_id?: string | null
           header_color?: string
           id?: string
           instagram_link?: string | null
+          keywords?: string | null
           logo_font_size?: number
           logo_text?: string
+          meta_description?: string | null
+          meta_title?: string | null
           primary_color?: string
           text_color?: string
           twitter_link?: string | null

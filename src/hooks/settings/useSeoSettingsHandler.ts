@@ -27,15 +27,15 @@ export const useSeoSettingsHandler = () => {
       // Update local state first for immediate UI feedback
       setSeoSettingsForm(data);
       
-      // Check if theme_settings table exists
-      const { data: tableExists } = await supabase
+      // Check if theme_settings table has data
+      const { data: themeSettingsExists } = await supabase
         .from('theme_settings')
         .select('id')
         .limit(1);
       
       let result;
       
-      if (tableExists && tableExists.length > 0) {
+      if (themeSettingsExists && themeSettingsExists.length > 0) {
         // Update existing record
         result = await supabase
           .from('theme_settings')

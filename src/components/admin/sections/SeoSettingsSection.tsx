@@ -4,9 +4,11 @@ import { Search } from 'lucide-react';
 import AdminSection from '@/components/admin/AdminSection';
 import SeoSettingsForm from '@/components/admin/SeoSettingsForm';
 import { useAdmin } from '@/contexts/admin';
+import { useSeoSettingsHandler } from '@/hooks/settings';
 
 const SeoSettingsSection = () => {
-  const { activeSections, toggleSection } = useAdmin();
+  const { seoSettingsForm, activeSections, toggleSection } = useAdmin();
+  const { updateSeoSettings, isUpdating, isSuccess } = useSeoSettingsHandler();
 
   return (
     <AdminSection 
@@ -16,7 +18,12 @@ const SeoSettingsSection = () => {
       isOpen={activeSections.seoSettings}
       onToggle={() => toggleSection('seoSettings')}
     >
-      <SeoSettingsForm />
+      <SeoSettingsForm 
+        initialData={seoSettingsForm}
+        onSubmit={updateSeoSettings}
+        isLoading={isUpdating}
+        isSuccess={isSuccess}
+      />
     </AdminSection>
   );
 };
