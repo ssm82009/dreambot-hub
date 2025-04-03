@@ -18,7 +18,7 @@ interface PaymentFormProps {
 const PaymentForm = ({ onCustomerInfoChange }: PaymentFormProps) => {
   const [paymentMethod, setPaymentMethod] = useState<string>('paylink');
   const [availableMethods, setAvailableMethods] = useState([
-    { id: 'paylink', name: 'PayLink', description: 'بطاقة مدى / فيزا / ماستركارد', enabled: true },
+    { id: 'paylink', name: 'بطاقة', description: 'بطاقة الدفع الإلكتروني (مدى/فيزا/ماستركارد)', enabled: true },
     { id: 'paypal', name: 'PayPal', description: 'الدفع عبر حساب PayPal', enabled: false }
   ]);
 

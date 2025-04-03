@@ -16,7 +16,7 @@ const PaymentDetails = ({ plan, amount, paymentMethod = 'paylink' }: PaymentDeta
         return 'PayPal';
       case 'paylink':
       default:
-        return 'بطاقة ائتمان (PayLink)';
+        return 'بطاقة الدفع الإلكتروني';
     }
   };
 
