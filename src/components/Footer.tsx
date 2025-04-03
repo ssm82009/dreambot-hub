@@ -33,8 +33,13 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/login" className="text-secondary-foreground/80 hover:text-accent transition-colors">
-                  تسجيل الدخول
+                <Link to="/terms" className="text-secondary-foreground/80 hover:text-accent transition-colors">
+                  شروط الاستخدام
+                </Link>
+              </li>
+              <li>
+                <Link to="/privacy" className="text-secondary-foreground/80 hover:text-accent transition-colors">
+                  سياسة الخصوصية
                 </Link>
               </li>
             </ul>
