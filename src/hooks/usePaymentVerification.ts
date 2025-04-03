@@ -2,6 +2,7 @@
 import { useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { verifyPayment } from '@/utils/payment/verifyPayment';
+import { toast } from 'sonner';
 
 export const usePaymentVerification = () => {
   const [searchParams] = useSearchParams();
@@ -22,21 +23,32 @@ export const usePaymentVerification = () => {
   
   useEffect(() => {
     const handleVerification = async () => {
-      // تحديث حالة الاشتراك في localStorage
-      const plan = localStorage.getItem('pendingSubscriptionPlan');
-      if (plan) {
-        localStorage.setItem('subscriptionType', plan);
-        localStorage.removeItem('pendingSubscriptionPlan');
-        
-        // تسجيل معرّف العملية في سجل المطور
-        console.log("Payment success with transaction ID:", transactionIdentifier);
-        
-        // Verify the payment in the database
-        await verifyPayment(transactionIdentifier, customId, txnId, plan);
+      try {
+        // تحديث حالة الاشتراك في localStorage
+        const plan = localStorage.getItem('pendingSubscriptionPlan');
+        if (plan) {
+          localStorage.setItem('subscriptionType', plan);
+          localStorage.removeItem('pendingSubscriptionPlan');
+          
+          // تسجيل معرّف العملية في سجل المطور
+          console.log("Payment success with transaction ID:", transactionIdentifier);
+          
+          // Verify the payment in the database and update invoice status to "Paid"
+          const success = await verifyPayment(transactionIdentifier, customId, txnId, plan);
+          
+          if (success) {
+            toast.success(`تم الاشتراك في الباقة ${plan === 'premium' ? 'المميزة' : 'الاحترافية'} بنجاح!`);
+          }
+        }
+      } catch (error) {
+        console.error("Error in payment verification:", error);
+        toast.error("حدث خطأ في التحقق من الدفع. يرجى الاتصال بالدعم الفني.");
       }
     };
 
-    handleVerification();
+    if (transactionIdentifier) {
+      handleVerification();
+    }
   }, [transactionIdentifier, customId, txnId]);
 
   return { transactionIdentifier };
