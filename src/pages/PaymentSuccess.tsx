@@ -55,7 +55,7 @@ const PaymentSuccess = () => {
           const invoiceIdentifier = transactionNo || orderNumber;
           
           if (invoiceIdentifier) {
-            // تحديث حالة الفاتورة في قاعدة البيانات بغض النظر عن نتيجة التحقق
+            // تحديث حالة الفاتورة في قاعدة البيانات إلى "مدفوع"
             const { error: updateInvoiceError } = await supabase
               .from('payment_invoices')
               .update({ status: 'Paid' })
@@ -100,12 +100,12 @@ const PaymentSuccess = () => {
             toast.error("حدث خطأ أثناء تحديث الاشتراك");
           } else {
             console.log("Updated subscription successfully for user:", userId);
-            toast.success(`تم الاشتراك في الباقة ${plan} بنجاح!`);
+            toast.success(`تم الاشتراك في الباقة ${plan === 'premium' ? 'المميزة' : 'الاحترافية'} بنجاح!`);
           }
         } catch (error) {
           console.error("Error verifying payment:", error);
           // نعرض رسالة نجاح على الرغم من الخطأ لأن المستخدم على صفحة النجاح
-          toast.success(`تم الاشتراك في الباقة ${plan} بنجاح!`);
+          toast.success(`تم الاشتراك في الباقة ${plan === 'premium' ? 'المميزة' : 'الاحترافية'} بنجاح!`);
         }
       }
     };

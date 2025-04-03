@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { formatCurrency } from '@/utils/currency';
 import { formatDate } from '@/lib/utils';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 interface Payment {
   id: string;
@@ -86,30 +87,30 @@ const ProfilePayments: React.FC<ProfilePaymentsProps> = ({ payments }) => {
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
-          <table className="w-full text-right">
-            <thead className="border-b">
-              <tr>
-                <th className="pb-3 pt-2 font-medium">التاريخ</th>
-                <th className="pb-3 pt-2 font-medium">رقم الفاتورة</th>
-                <th className="pb-3 pt-2 font-medium">الباقة</th>
-                <th className="pb-3 pt-2 font-medium">المبلغ</th>
-                <th className="pb-3 pt-2 font-medium">طريقة الدفع</th>
-                <th className="pb-3 pt-2 font-medium">الحالة</th>
-              </tr>
-            </thead>
-            <tbody>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="text-right">التاريخ</TableHead>
+                <TableHead className="text-right">رقم الفاتورة</TableHead>
+                <TableHead className="text-right">الباقة</TableHead>
+                <TableHead className="text-right">المبلغ</TableHead>
+                <TableHead className="text-right">طريقة الدفع</TableHead>
+                <TableHead className="text-right">الحالة</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {payments.map((payment) => (
-                <tr key={payment.id} className="border-b">
-                  <td className="py-3">{formatDate(payment.created_at)}</td>
-                  <td className="py-3">{payment.invoice_id}</td>
-                  <td className="py-3">{getPlanTranslation(payment.plan_name)}</td>
-                  <td className="py-3">{formatCurrency(payment.amount)}</td>
-                  <td className="py-3">{getPaymentMethodTranslation(payment.payment_method)}</td>
-                  <td className="py-3">{getStatusBadge(payment.status)}</td>
-                </tr>
+                <TableRow key={payment.id}>
+                  <TableCell>{formatDate(payment.created_at)}</TableCell>
+                  <TableCell>{payment.invoice_id}</TableCell>
+                  <TableCell>{getPlanTranslation(payment.plan_name)}</TableCell>
+                  <TableCell>{formatCurrency(payment.amount)}</TableCell>
+                  <TableCell>{getPaymentMethodTranslation(payment.payment_method)}</TableCell>
+                  <TableCell>{getStatusBadge(payment.status)}</TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
       </CardContent>
     </Card>

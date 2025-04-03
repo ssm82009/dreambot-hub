@@ -19,6 +19,7 @@ const ProfileSubscription: React.FC<ProfileSubscriptionProps> = ({ userData }) =
   const navigate = useNavigate();
   const [pricingSettings, setPricingSettings] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [usedInterpretations, setUsedInterpretations] = useState(0);
   
   useEffect(() => {
     const fetchPricingSettings = async () => {
@@ -38,10 +39,38 @@ const ProfileSubscription: React.FC<ProfileSubscriptionProps> = ({ userData }) =
       }
     };
     
+    const fetchDreamsCount = async () => {
+      if (!userData?.id) return;
+      try {
+        const { count, error } = await supabase
+          .from('dreams')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', userData.id);
+          
+        if (error) throw error;
+        setUsedInterpretations(count || 0);
+      } catch (error) {
+        console.error('Error fetching dreams count:', error);
+      }
+    };
+    
     fetchPricingSettings();
-  }, []);
+    fetchDreamsCount();
+  }, [userData?.id]);
   
   const subscriptionStatus = getSubscriptionStatus(userData);
+  
+  // Get subscription name in Arabic
+  const getSubscriptionName = () => {
+    switch (userData.subscription_type?.toLowerCase()) {
+      case 'premium':
+        return 'الباقة المميزة';
+      case 'pro':
+        return 'الباقة الاحترافية';
+      default:
+        return 'الباقة المجانية';
+    }
+  };
   
   // Calculate remaining interpretations based on the subscription type
   const getTotalInterpretations = () => {
@@ -60,9 +89,6 @@ const ProfileSubscription: React.FC<ProfileSubscriptionProps> = ({ userData }) =
   const totalInterpretations = getTotalInterpretations();
   // If total is -1, it means unlimited
   const isUnlimited = totalInterpretations === -1;
-  
-  // Used interpretations in the current period (this would need to be calculated from the dreams table)
-  const usedInterpretations = userData.dreams_count; 
   
   // Remaining interpretations
   const remainingInterpretations = isUnlimited ? -1 : Math.max(0, totalInterpretations - usedInterpretations);
@@ -112,8 +138,7 @@ const ProfileSubscription: React.FC<ProfileSubscriptionProps> = ({ userData }) =
               <div className="flex justify-between">
                 <span className="text-muted-foreground">نوع الاشتراك:</span>
                 <span className="font-medium">
-                  {userData.subscription_type === 'premium' ? 'الباقة المميزة' :
-                   userData.subscription_type === 'pro' ? 'الباقة الاحترافية' : 'الباقة المجانية'}
+                  {getSubscriptionName()}
                 </span>
               </div>
               

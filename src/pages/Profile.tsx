@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
@@ -54,7 +55,8 @@ const Profile = () => {
         const { data: paymentData, error: paymentError } = await supabase
           .from('payment_invoices')
           .select('*')
-          .eq('user_id', session.user.id);
+          .eq('user_id', session.user.id)
+          .order('created_at', { ascending: false });
           
         if (paymentError) {
           console.error('Error fetching payment data:', paymentError);

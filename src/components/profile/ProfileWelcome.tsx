@@ -25,6 +25,18 @@ const ProfileWelcome: React.FC<ProfileWelcomeProps> = ({ userData }) => {
       </Card>
     );
   }
+  
+  // Get subscription name in Arabic
+  const getSubscriptionName = () => {
+    switch (userData.subscription_type?.toLowerCase()) {
+      case 'premium':
+        return 'الباقة المميزة';
+      case 'pro':
+        return 'الباقة الاحترافية';
+      default:
+        return 'الباقة المجانية';
+    }
+  };
 
   return (
     <Card className="bg-muted/50">
@@ -69,7 +81,7 @@ const ProfileWelcome: React.FC<ProfileWelcomeProps> = ({ userData }) => {
               {userData.subscription_type && userData.subscription_type !== 'free' && (
                 <div className="mt-4 p-3 bg-primary/10 rounded-md">
                   <p className="font-medium text-primary">
-                    أنت مشترك في الباقة {userData.subscription_type === 'premium' ? 'المميزة' : 'الاحترافية'}
+                    أنت مشترك في {getSubscriptionName()}
                   </p>
                 </div>
               )}
