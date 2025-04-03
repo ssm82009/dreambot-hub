@@ -1,3 +1,4 @@
+
 import React from 'react';
 import AdminSection from '@/components/admin/AdminSection';
 import { 
@@ -10,6 +11,7 @@ import {
   DollarSign
 } from 'lucide-react';
 import { useAdmin } from '@/contexts/admin';
+import { toast } from 'sonner';
 import AiSettingsForm from '@/components/admin/AiSettingsForm';
 import InterpretationSettingsForm from '@/components/admin/InterpretationSettingsForm';
 import PricingSettingsForm from '@/components/admin/PricingSettingsForm';
@@ -24,6 +26,8 @@ import {
   usePaymentSettingsHandler, 
   useThemeSettingsHandler 
 } from '@/hooks/useSettingsHandlers';
+import { supabase } from '@/integrations/supabase/client';
+import { CustomPage } from '@/types/database';
 
 const AdminSections: React.FC = () => {
   const { 
@@ -34,8 +38,10 @@ const AdminSections: React.FC = () => {
     themeSettingsForm,
     users,
     pages,
+    setPages,
     activeSections,
-    toggleSection
+    toggleSection,
+    setDbLoading
   } = useAdmin();
 
   const { handleAiSettingsSubmit } = useAiSettingsHandler();
@@ -43,6 +49,77 @@ const AdminSections: React.FC = () => {
   const { handlePricingSettingsSubmit } = usePricingSettingsHandler();
   const { handlePaymentSettingsSubmit } = usePaymentSettingsHandler();
   const { handleThemeSettingsSubmit } = useThemeSettingsHandler();
+
+  // Handler for saving or updating a page
+  const handlePageSave = async (page: Partial<CustomPage>) => {
+    setDbLoading(true);
+    try {
+      if (page.id) {
+        // Update existing page
+        const { error } = await supabase
+          .from('custom_pages')
+          .update({
+            title: page.title,
+            slug: page.slug,
+            content: page.content,
+            status: page.status,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', page.id);
+        
+        if (error) throw error;
+        
+        // Update local state
+        setPages(prev => prev.map(p => p.id === page.id ? { ...p, ...page } : p));
+        toast.success('تم تحديث الصفحة بنجاح');
+      } else {
+        // Create new page
+        const { data, error } = await supabase
+          .from('custom_pages')
+          .insert({
+            title: page.title,
+            slug: page.slug,
+            content: page.content,
+            status: page.status
+          })
+          .select()
+          .single();
+        
+        if (error) throw error;
+        
+        // Add to local state
+        setPages(prev => [...prev, data as CustomPage]);
+        toast.success('تم إنشاء الصفحة بنجاح');
+      }
+    } catch (error) {
+      console.error('Error saving page:', error);
+      toast.error('حدث خطأ أثناء حفظ الصفحة');
+    } finally {
+      setDbLoading(false);
+    }
+  };
+
+  // Handler for deleting a page
+  const handlePageDelete = async (id: string) => {
+    setDbLoading(true);
+    try {
+      const { error } = await supabase
+        .from('custom_pages')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      // Remove from local state
+      setPages(prev => prev.filter(p => p.id !== id));
+      toast.success('تم حذف الصفحة بنجاح');
+    } catch (error) {
+      console.error('Error deleting page:', error);
+      toast.error('حدث خطأ أثناء حذف الصفحة');
+    } finally {
+      setDbLoading(false);
+    }
+  };
 
   // For AI Models dropdown - fixing the type error by ensuring availability is 'free' | 'paid'
   const togetherModels = [
@@ -129,7 +206,12 @@ const AdminSections: React.FC = () => {
         isOpen={activeSections.pageManagement}
         onToggle={() => toggleSection('pageManagement')}
       >
-        <PageManagement pages={pages} />
+        <PageManagement 
+          pages={pages} 
+          onPageSave={handlePageSave}
+          onPageDelete={handlePageDelete}
+          isLoading={false}
+        />
       </AdminSection>
       
       <AdminSection 
