@@ -24,8 +24,8 @@ const PaymentMethod = ({ selectedMethod, onMethodChange, availableMethods }: Pay
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2 mb-4">
-        <CreditCard className="h-5 w-5" />
         <h3 className="font-medium">اختر طريقة الدفع</h3>
+        <CreditCard className="h-5 w-5" />
       </div>
       
       {enabledMethods.length > 0 ? (
