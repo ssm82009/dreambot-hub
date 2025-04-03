@@ -3,14 +3,10 @@ import React, { useEffect } from 'react';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import CustomerInfoForm, { customerInfoSchema, CustomerInfoFormValues } from './CustomerInfoForm';
+import { CustomerInfo } from '@/types/payment';
 
 interface PaymentFormProps {
-  onCustomerInfoChange: (info: {
-    name: string;
-    email: string;
-    phone: string;
-    paymentMethod: string;
-  }) => void;
+  onCustomerInfoChange: (info: CustomerInfo) => void;
 }
 
 const PaymentForm = ({ onCustomerInfoChange }: PaymentFormProps) => {

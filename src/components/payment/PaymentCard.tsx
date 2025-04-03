@@ -5,33 +5,24 @@ import PaymentDetails from './PaymentDetails';
 import PaymentForm from './PaymentForm';
 import PaymentActions from './PaymentActions';
 import PaymentMethod from './PaymentMethod';
+import { CustomerInfo } from '@/types/payment';
 
 interface PaymentCardProps {
   plan: string;
   amount: number;
-  onPayment: (customerInfo: {
-    name: string;
-    email: string;
-    phone: string;
-    paymentMethod: string;
-  }) => void;
+  onPayment: (customerInfo: CustomerInfo) => void;
   isProcessing: boolean;
 }
 
 const PaymentCard = ({ plan, amount, onPayment, isProcessing }: PaymentCardProps) => {
-  const [customerInfo, setCustomerInfo] = useState({
+  const [customerInfo, setCustomerInfo] = useState<CustomerInfo>({
     name: '',
     email: '',
     phone: '',
     paymentMethod: 'paylink'
   });
 
-  const handleCustomerInfoChange = (info: {
-    name: string;
-    email: string;
-    phone: string;
-    paymentMethod: string;
-  }) => {
+  const handleCustomerInfoChange = (info: CustomerInfo) => {
     setCustomerInfo(info);
   };
 
