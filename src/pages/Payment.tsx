@@ -8,7 +8,7 @@ import PaymentCard from '@/components/payment/PaymentCard';
 import { toast } from "sonner";
 import { createPaylinkInvoice } from '@/services/paylinkService';
 import { supabase } from "@/integrations/supabase/client";
-import { sarToUsd } from '@/utils/currency';
+import { sarToUsd, formatCurrency } from '@/utils/currency';
 
 const Payment = () => {
   const location = useLocation();
@@ -186,8 +186,8 @@ const Payment = () => {
     const usdAmount = sarToUsd(amount);
     console.log(`تحويل ${amount} ريال سعودي إلى ${usdAmount} دولار أمريكي`);
 
-    // إنشاء سجل فاتورة في قاعدة البيانات
     try {
+      // إنشاء سجل فاتورة في قاعدة البيانات
       const { data, error } = await supabase.from('payment_invoices').insert([{
         invoice_id: `PP-${Date.now()}`,
         user_id: userId,
@@ -199,16 +199,39 @@ const Payment = () => {
 
       if (error) {
         console.error("فشل في إنشاء سجل الفاتورة:", error);
+        throw new Error("فشل في إنشاء سجل الفاتورة");
       }
 
-      // توجيه المستخدم إلى صفحة الدفع الخاصة بـ PayPal
-      // هنا يجب تنفيذ منطق تكامل PayPal الذي سيتم تطويره لاحقًا
-      // حاليًا سنعرض رسالة تنبيه
-      toast.info("ميزة PayPal قيد التطوير حاليًا. سيتم تفعيلها قريبًا.");
-      setIsProcessing(false);
+      // إنشاء رابط الدفع عبر PayPal
+      // تحديد البيئة (الإنتاج أو الاختبار)
+      const paypalDomain = paypalSandbox 
+        ? 'https://www.sandbox.paypal.com' 
+        : 'https://www.paypal.com';
       
-      // ملاحظة: في التطبيق الحقيقي، هنا سنقوم بتوجيه المستخدم إلى PayPal
-      // window.location.href = paypalPaymentUrl;
+      // إنشاء URL للدفع المباشر
+      const returnUrl = `${window.location.origin}/payment-success`;
+      const cancelUrl = `${window.location.origin}/payment-cancel`;
+      
+      // إنشاء رابط الدفع مع المعلمات اللازمة
+      const paypalPaymentUrl = new URL(`${paypalDomain}/cgi-bin/webscr`);
+      paypalPaymentUrl.searchParams.append('cmd', '_xclick');
+      paypalPaymentUrl.searchParams.append('business', paypalClientId);
+      paypalPaymentUrl.searchParams.append('item_name', `اشتراك ${plan === 'premium' ? 'مميز' : 'احترافي'}`);
+      paypalPaymentUrl.searchParams.append('amount', usdAmount.toString());
+      paypalPaymentUrl.searchParams.append('currency_code', 'USD');
+      paypalPaymentUrl.searchParams.append('return', returnUrl);
+      paypalPaymentUrl.searchParams.append('cancel_return', cancelUrl);
+      paypalPaymentUrl.searchParams.append('custom', data?.[0]?.invoice_id || `PP-${Date.now()}`);
+      
+      // إضافة معلومات المشتري
+      paypalPaymentUrl.searchParams.append('first_name', customerInfo.name.split(' ')[0] || '');
+      paypalPaymentUrl.searchParams.append('last_name', customerInfo.name.split(' ').slice(1).join(' ') || '');
+      paypalPaymentUrl.searchParams.append('email', customerInfo.email);
+      
+      console.log("توجيه المستخدم إلى رابط PayPal:", paypalPaymentUrl.toString());
+      
+      // توجيه المستخدم إلى صفحة الدفع الخاصة بـ PayPal
+      window.location.href = paypalPaymentUrl.toString();
     } catch (error) {
       console.error("خطأ في عملية الدفع عبر PayPal:", error);
       throw new Error("فشل في بدء عملية الدفع عبر PayPal");
