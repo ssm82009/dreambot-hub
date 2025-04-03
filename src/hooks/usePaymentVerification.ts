@@ -8,21 +8,24 @@ import { supabase } from '@/integrations/supabase/client';
 export const usePaymentVerification = () => {
   const [searchParams] = useSearchParams();
   const [isVerifying, setIsVerifying] = useState(true);
+  const [paymentSession, setPaymentSession] = useState<any>(null);
+  
+  // SESSION PARAMS - أهم معرف يجب البحث عنه
+  const sessionId = searchParams.get('session_id') || '';
   
   // PayLink params
   const transactionNo = searchParams.get('transactionNo') || '';
   const orderNumber = searchParams.get('order_number') || '';
   
   // PayPal params
-  const invoiceId = searchParams.get('invoice_id') || '';
   const paymentId = searchParams.get('paymentId') || '';
   const token = searchParams.get('token') || '';
-  const customId = searchParams.get('custom') || ''; // PayPal custom field (contains our invoiceId)
-  const txnId = searchParams.get('tx') || ''; // PayPal transaction ID
-  const payerID = searchParams.get('PayerID') || ''; // PayPal payer ID
+  const customId = searchParams.get('custom') || '';
+  const txnId = searchParams.get('tx') || '';
+  const payerID = searchParams.get('PayerID') || '';
   
   // Get any available transaction identifier
-  const transactionIdentifier = invoiceId || transactionNo || orderNumber || customId || token || paymentId || txnId;
+  const transactionIdentifier = transactionNo || orderNumber || paymentId || token || txnId || customId;
   
   useEffect(() => {
     const handleVerification = async () => {
@@ -31,190 +34,161 @@ export const usePaymentVerification = () => {
         
         // Log all search parameters for debugging
         console.log("Payment verification search params:", Object.fromEntries(searchParams.entries()));
-        console.log("Detected transaction identifier:", transactionIdentifier);
         
-        // Check if we're on the success page with a transaction identifier
-        if (transactionIdentifier) {
-          // تحديث حالة الاشتراك في localStorage
-          const plan = localStorage.getItem('pendingSubscriptionPlan');
-          if (plan) {
-            localStorage.setItem('subscriptionType', plan);
-            localStorage.removeItem('pendingSubscriptionPlan');
+        // Get current user ID for more specific queries
+        const { data: { session } } = await supabase.auth.getSession();
+        const userId = session?.user?.id;
+        
+        if (!userId) {
+          console.error("No authenticated user found");
+          setIsVerifying(false);
+          return;
+        }
+        
+        // STEP 1: Find the payment session in the database
+        let foundPaymentSession = null;
+        
+        // First try to find by session_id (most reliable method)
+        if (sessionId) {
+          console.log("Looking for payment session by session_id:", sessionId);
+          
+          const { data: sessionData, error: sessionError } = await supabase
+            .from('payment_sessions')
+            .select('*')
+            .eq('session_id', sessionId)
+            .eq('user_id', userId)
+            .single();
             
-            // تسجيل معرّف العملية في سجل المطور
-            console.log("Payment success with transaction ID:", transactionIdentifier);
-            
-            // Get current user ID for more specific queries
-            const { data: { session } } = await supabase.auth.getSession();
-            const userId = session?.user?.id;
-            
-            if (userId) {
-              console.log("Updating payment records for user:", userId);
-              
-              // طريقة 1: البحث باستخدام معرف المعاملة
-              const { data: invoicesByID, error: invoiceIDError } = await supabase
-                .from('payment_invoices')
-                .select('*')
-                .eq('invoice_id', transactionIdentifier);
-                
-              if (invoiceIDError) {
-                console.error("Error searching for invoice by ID:", invoiceIDError);
-              } else if (invoicesByID && invoicesByID.length > 0) {
-                console.log("Found invoices by transaction ID:", invoicesByID);
-                
-                // تحديث جميع الفواتير المطابقة
-                for (const invoice of invoicesByID) {
-                  if (invoice.status !== 'مدفوع') {
-                    const { error: updateError } = await supabase
-                      .from('payment_invoices')
-                      .update({ status: 'مدفوع' })
-                      .eq('id', invoice.id);
-                      
-                    if (updateError) {
-                      console.error("Error updating invoice by ID:", updateError);
-                    } else {
-                      console.log("Successfully updated invoice:", invoice.id);
-                    }
-                  }
-                }
-              } else {
-                console.log("No invoices found by transaction ID, trying user ID");
-              }
-              
-              // طريقة 2: البحث باستخدام معرف المستخدم والخطة
-              // هذا يساعد في حالة عدم تخزين transactionIdentifier بشكل صحيح
-              if (plan) {
-                // Normalize plan name for database storage
-                let dbPlanName = plan;
-                if (plan.toLowerCase().includes('مميز') || plan.toLowerCase() === 'premium') {
-                  dbPlanName = 'premium';
-                } else if (plan.toLowerCase().includes('احترافي') || plan.toLowerCase() === 'pro') {
-                  dbPlanName = 'pro';
-                }
-                
-                const { data: invoicesByUser, error: userInvoiceError } = await supabase
-                  .from('payment_invoices')
-                  .select('*')
-                  .eq('user_id', userId)
-                  .eq('plan_name', dbPlanName)
-                  .or(`status.eq.Pending,status.eq.قيد الانتظار,status.eq.pending`);
-                  
-                if (userInvoiceError) {
-                  console.error("Error searching for invoice by user:", userInvoiceError);
-                } else if (invoicesByUser && invoicesByUser.length > 0) {
-                  console.log("Found invoices by user and plan:", invoicesByUser);
-                  
-                  // تحديث جميع الفواتير المعلقة
-                  for (const invoice of invoicesByUser) {
-                    const { error: updateError } = await supabase
-                      .from('payment_invoices')
-                      .update({ status: 'مدفوع' })
-                      .eq('id', invoice.id);
-                      
-                    if (updateError) {
-                      console.error("Error updating invoice by user:", updateError);
-                    } else {
-                      console.log("Successfully updated invoice:", invoice.id);
-                    }
-                  }
-                } else {
-                  console.log("No pending invoices found by user and plan");
-                  
-                  // إذا لم نجد أي فاتورة معلقة، تحقق من آخر الفواتير المضافة للمستخدم
-                  const { data: recentInvoices, error: recentError } = await supabase
-                    .from('payment_invoices')
-                    .select('*')
-                    .eq('user_id', userId)
-                    .order('created_at', { ascending: false })
-                    .limit(1);
-                    
-                  if (recentError) {
-                    console.error("Error fetching recent invoices:", recentError);
-                  } else if (recentInvoices && recentInvoices.length > 0) {
-                    const recentInvoice = recentInvoices[0];
-                    console.log("Found most recent invoice:", recentInvoice);
-                    
-                    // تحديث الفاتورة الأخيرة إذا لم تكن مدفوعة
-                    if (recentInvoice.status !== 'مدفوع') {
-                      const { error: updateError } = await supabase
-                        .from('payment_invoices')
-                        .update({ status: 'مدفوع' })
-                        .eq('id', recentInvoice.id);
-                        
-                      if (updateError) {
-                        console.error("Error updating recent invoice:", updateError);
-                      } else {
-                        console.log("Successfully updated recent invoice:", recentInvoice.id);
-                      }
-                    }
-                  }
-                }
-              }
-              
-              // طريقة 3: إنشاء فاتورة جديدة إذا لم يتم العثور على أي فاتورة
-              // هذا يمكن أن يحدث في بعض الحالات النادرة
-              if (plan && (!invoicesByID || invoicesByID.length === 0)) {
-                const { data: existingCheck, error: existingError } = await supabase
-                  .from('payment_invoices')
-                  .select('count')
-                  .eq('user_id', userId)
-                  .eq('invoice_id', transactionIdentifier);
-                  
-                if (!existingError && (!existingCheck || existingCheck.length === 0)) {
-                  // الحصول على سعر الخطة
-                  const { data: pricingSettings } = await supabase
-                    .from('pricing_settings')
-                    .select('*')
-                    .limit(1)
-                    .single();
-                    
-                  let amount = 0;
-                  let dbPlanName = plan;
-                  
-                  // Normalize plan name for database storage
-                  if (plan.toLowerCase().includes('مميز') || plan.toLowerCase() === 'premium') {
-                    dbPlanName = 'premium';
-                    amount = pricingSettings?.premium_plan_price || 49;
-                  } else if (plan.toLowerCase().includes('احترافي') || plan.toLowerCase() === 'pro') {
-                    dbPlanName = 'pro';
-                    amount = pricingSettings?.pro_plan_price || 99;
-                  }
-                  
-                  // إنشاء فاتورة جديدة
-                  const { error: insertError } = await supabase
-                    .from('payment_invoices')
-                    .insert({
-                      invoice_id: transactionIdentifier,
-                      user_id: userId,
-                      plan_name: dbPlanName,
-                      status: 'مدفوع',
-                      payment_method: token ? 'paypal' : 'paylink',
-                      amount: amount
-                    });
-                    
-                  if (insertError) {
-                    console.error("Error creating new invoice:", insertError);
-                  } else {
-                    console.log("Created new invoice with ID:", transactionIdentifier);
-                  }
-                }
-              }
-            }
-            
-            // Verify the payment in the database and update invoice status to "Paid"
-            await verifyPayment(transactionIdentifier, customId, txnId, plan);
-            
-            // إظهار رسالة نجاح للمستخدم
-            const planName = plan.toLowerCase().includes('مميز') || plan === 'premium' 
-              ? 'المميزة' 
-              : 'الاحترافية';
-            toast.success(`تم الاشتراك في الباقة ${planName} بنجاح!`);
+          if (!sessionError && sessionData) {
+            console.log("Found payment session by session_id:", sessionData);
+            foundPaymentSession = sessionData;
           } else {
-            console.log("No pending subscription plan found in localStorage");
+            console.log("No payment session found by session_id, trying transaction ID");
+          }
+        }
+        
+        // If no session found by session_id, try transaction_identifier
+        if (!foundPaymentSession && transactionIdentifier) {
+          console.log("Looking for payment session by transaction_identifier:", transactionIdentifier);
+          
+          const { data: sessionByTxData, error: sessionByTxError } = await supabase
+            .from('payment_sessions')
+            .select('*')
+            .eq('transaction_identifier', transactionIdentifier)
+            .eq('user_id', userId)
+            .single();
+            
+          if (!sessionByTxError && sessionByTxData) {
+            console.log("Found payment session by transaction_identifier:", sessionByTxData);
+            foundPaymentSession = sessionByTxData;
+          } else {
+            console.log("No payment session found by transaction_identifier");
+          }
+        }
+        
+        // If still no session found, try the latest pending session for the user
+        if (!foundPaymentSession) {
+          console.log("Looking for latest pending payment session for user:", userId);
+          
+          const { data: latestSessionData, error: latestSessionError } = await supabase
+            .from('payment_sessions')
+            .select('*')
+            .eq('user_id', userId)
+            .eq('completed', false)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .single();
+            
+          if (!latestSessionError && latestSessionData) {
+            console.log("Found latest pending payment session:", latestSessionData);
+            foundPaymentSession = latestSessionData;
+          } else {
+            console.log("No pending payment sessions found for user");
+          }
+        }
+        
+        if (!foundPaymentSession) {
+          console.error("No payment session found for verification");
+          setIsVerifying(false);
+          return;
+        }
+        
+        setPaymentSession(foundPaymentSession);
+        
+        // STEP 2: Update payment session with transaction details
+        if (transactionIdentifier && !foundPaymentSession.transaction_identifier) {
+          console.log("Updating payment session with transaction identifier:", transactionIdentifier);
+          
+          await supabase
+            .from('payment_sessions')
+            .update({ transaction_identifier: transactionIdentifier })
+            .eq('id', foundPaymentSession.id);
+        }
+        
+        // STEP 3: Get invoice from payment_invoices
+        const { data: invoiceData, error: invoiceError } = await supabase
+          .from('payment_invoices')
+          .select('*')
+          .or(`invoice_id.eq.${foundPaymentSession.session_id},invoice_id.eq.${transactionIdentifier}`)
+          .eq('user_id', userId)
+          .eq('plan_name', foundPaymentSession.plan_type)
+          .order('created_at', { ascending: false })
+          .limit(1);
+        
+        if (invoiceError) {
+          console.error("Error fetching invoice:", invoiceError);
+        }
+        
+        const invoice = invoiceData && invoiceData.length > 0 ? invoiceData[0] : null;
+        
+        if (invoice) {
+          console.log("Found invoice for payment session:", invoice);
+          
+          // Update invoice status to paid
+          if (invoice.status !== 'مدفوع') {
+            await supabase
+              .from('payment_invoices')
+              .update({ status: 'مدفوع' })
+              .eq('id', invoice.id);
           }
         } else {
-          console.log("No transaction identifier found in URL");
+          console.log("No invoice found, creating a new one");
+          
+          // Create a new invoice record
+          await supabase.from('payment_invoices').insert({
+            invoice_id: transactionIdentifier || foundPaymentSession.session_id,
+            user_id: userId,
+            plan_name: foundPaymentSession.plan_type,
+            amount: foundPaymentSession.amount,
+            status: 'مدفوع',
+            payment_method: foundPaymentSession.payment_method
+          });
         }
+        
+        // STEP 4: Mark the payment session as completed
+        await supabase
+          .from('payment_sessions')
+          .update({ 
+            completed: true,
+            status: 'completed'
+          })
+          .eq('id', foundPaymentSession.id);
+          
+        // STEP 5: Update the user's subscription and verify payment
+        await verifyPayment(
+          transactionIdentifier || foundPaymentSession.transaction_identifier,
+          customId,
+          txnId,
+          foundPaymentSession.plan_type
+        );
+        
+        // Display success message
+        const planName = foundPaymentSession.plan_type.toLowerCase().includes('مميز') || 
+                         foundPaymentSession.plan_type === 'premium' 
+          ? 'المميزة' 
+          : 'الاحترافية';
+          
+        toast.success(`تم الاشتراك في الباقة ${planName} بنجاح!`);
       } catch (error) {
         console.error("Error in payment verification:", error);
         toast.error("حدث خطأ في التحقق من الدفع. يرجى الاتصال بالدعم الفني.");
@@ -223,12 +197,18 @@ export const usePaymentVerification = () => {
       }
     };
 
-    if (transactionIdentifier) {
+    // Only proceed with verification if we have a user
+    if (sessionId || transactionIdentifier) {
       handleVerification();
     } else {
       setIsVerifying(false);
     }
-  }, [transactionIdentifier, customId, txnId, searchParams, payerID]);
+  }, [sessionId, transactionIdentifier, customId, txnId, searchParams, payerID]);
 
-  return { transactionIdentifier, isVerifying };
+  return {
+    paymentSession,
+    transactionIdentifier: transactionIdentifier || (paymentSession?.transaction_identifier || ''),
+    isVerifying,
+    sessionId
+  };
 };

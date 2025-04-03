@@ -17,22 +17,64 @@ export function usePaymentSubmit(
 ) {
   const navigate = useNavigate();
 
+  const createPaymentSession = async (paymentMethod: string): Promise<string | null> => {
+    try {
+      // الحصول على معرف المستخدم الحالي
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (userError || !userData.user) {
+        console.error("خطأ في الحصول على معلومات المستخدم:", userError);
+        return null;
+      }
+      
+      const userId = userData.user.id;
+      
+      // إنشاء معرف جلسة فريد
+      const sessionId = `${paymentMethod.toUpperCase()}-${Date.now()}`;
+      
+      // تخزين معلومات جلسة الدفع في قاعدة البيانات
+      const { data: session, error: sessionError } = await supabase
+        .from('payment_sessions')
+        .insert({
+          user_id: userId,
+          plan_type: plan,
+          amount: amount,
+          payment_method: paymentMethod,
+          session_id: sessionId,
+          status: 'pending'
+        })
+        .select('id')
+        .single();
+
+      if (sessionError) {
+        console.error("خطأ في إنشاء جلسة الدفع:", sessionError);
+        return null;
+      }
+      
+      console.log("تم إنشاء جلسة دفع جديدة:", sessionId);
+      return sessionId;
+    } catch (error) {
+      console.error("خطأ في إنشاء جلسة الدفع:", error);
+      return null;
+    }
+  };
+
   const handlePayment = async (customerInfo: CustomerInfo) => {
     // إذا كانت الباقة مجانية، نقوم بتحديث الاشتراك مباشرة
     if (amount === 0) {
       toast.success(`تم الاشتراك في الباقة ${plan} بنجاح!`);
-      localStorage.setItem('subscriptionType', plan);
-      setTimeout(() => {
-        navigate('/');
-      }, 2000);
+      navigate('/');
       return;
     }
 
     setIsProcessing(true);
 
     try {
-      // حفظ الخطة في التخزين المؤقت لاستخدامها عند عودة المستخدم من صفحة الدفع
-      localStorage.setItem('pendingSubscriptionPlan', plan);
+      // إنشاء جلسة دفع جديدة في قاعدة البيانات
+      const sessionId = await createPaymentSession(customerInfo.paymentMethod);
+      
+      if (!sessionId) {
+        throw new Error("فشل في إنشاء جلسة الدفع");
+      }
 
       // الحصول على معرف المستخدم الحالي
       const { data: userData } = await supabase.auth.getUser();
@@ -53,7 +95,8 @@ export function usePaymentSubmit(
           amount, 
           plan, 
           paylinkApiKey, 
-          paylinkSecretKey
+          paylinkSecretKey,
+          sessionId
         );
       } else if (customerInfo.paymentMethod === 'paypal') {
         // للدفع عبر PayPal، بيانات العميل اختيارية
@@ -64,7 +107,8 @@ export function usePaymentSubmit(
           plan, 
           paypalClientId,
           paypalSandbox,
-          paypalSecret
+          paypalSecret,
+          sessionId
         );
       } else {
         throw new Error("طريقة دفع غير مدعومة");

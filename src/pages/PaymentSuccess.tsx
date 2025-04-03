@@ -8,7 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 const PaymentSuccess = () => {
-  const { transactionIdentifier, isVerifying } = usePaymentVerification();
+  const { transactionIdentifier, isVerifying, paymentSession, sessionId } = usePaymentVerification();
   const [isVerified, setIsVerified] = useState(false);
   const [paymentData, setPaymentData] = useState<any>(null);
   const [isChecking, setIsChecking] = useState(true);
@@ -46,7 +46,25 @@ const PaymentSuccess = () => {
               }
             }
             
-            // الطريقة 1: البحث باستخدام معرف المعاملة
+            // الطريقة 1: البحث باستخدام معرف جلسة الدفع
+            if (sessionId) {
+              console.log("Looking for payment invoice with session ID:", sessionId);
+              
+              const { data: invoiceData, error: invoiceError } = await supabase
+                .from('payment_invoices')
+                .select('*')
+                .eq('invoice_id', sessionId)
+                .limit(1);
+                
+              if (!invoiceError && invoiceData && invoiceData.length > 0) {
+                const paymentRecord = invoiceData[0];
+                console.log("Found payment record by session ID:", paymentRecord);
+                setPaymentData(paymentRecord);
+                return;
+              }
+            }
+            
+            // الطريقة 2: البحث باستخدام معرف المعاملة
             if (transactionIdentifier) {
               console.log("Looking for payment with transaction ID:", transactionIdentifier);
               
@@ -54,40 +72,17 @@ const PaymentSuccess = () => {
                 .from('payment_invoices')
                 .select('*')
                 .eq('invoice_id', transactionIdentifier)
-                .order('created_at', { ascending: false })
                 .limit(1);
                 
               if (!invoiceError && invoiceData && invoiceData.length > 0) {
                 const paymentRecord = invoiceData[0];
                 console.log("Found payment record by transaction ID:", paymentRecord);
                 setPaymentData(paymentRecord);
-                
-                // تحديث حالة السجل إلى "مدفوع" إذا كان معلقاً
-                if (paymentRecord.status !== 'مدفوع') {
-                  console.log("Updating payment status to paid for record:", paymentRecord.id);
-                  
-                  const { error: updateError } = await supabase
-                    .from('payment_invoices')
-                    .update({ status: 'مدفوع' })
-                    .eq('id', paymentRecord.id);
-                    
-                  if (updateError) {
-                    console.error("Error updating payment status:", updateError);
-                  } else {
-                    console.log("Successfully updated payment status to paid");
-                    setPaymentData({...paymentRecord, status: 'مدفوع'});
-                  }
-                }
-                
-                // تم العثور على بيانات الدفع، لا داعي للبحث بطرق أخرى
-                setIsChecking(false);
                 return;
-              } else {
-                console.log("No payment found with transaction ID, trying other methods");
               }
             }
             
-            // الطريقة 2: الحصول على آخر دفعة للمستخدم
+            // الطريقة 3: الحصول على آخر دفعة للمستخدم
             console.log("Looking for user's most recent payment");
             
             const { data: userPayments, error: userPaymentsError } = await supabase
@@ -101,27 +96,6 @@ const PaymentSuccess = () => {
               const paymentRecord = userPayments[0];
               console.log("Found user's most recent payment:", paymentRecord);
               setPaymentData(paymentRecord);
-              
-              // تحديث حالة السجل إلى "مدفوع" إذا كان معلقاً
-              if (paymentRecord.status !== 'مدفوع') {
-                console.log("Updating payment status to paid for record:", paymentRecord.id);
-                
-                const { error: updateError } = await supabase
-                  .from('payment_invoices')
-                  .update({ status: 'مدفوع' })
-                  .eq('id', paymentRecord.id);
-                  
-                if (updateError) {
-                  console.error("Error updating payment status:", updateError);
-                } else {
-                  console.log("Successfully updated payment status to paid");
-                  setPaymentData({...paymentRecord, status: 'مدفوع'});
-                }
-              }
-            } else if (userPaymentsError) {
-              console.error("Error fetching user payments:", userPaymentsError);
-            } else {
-              console.log("No payments found for user");
             }
           }
         } catch (error) {
@@ -133,7 +107,7 @@ const PaymentSuccess = () => {
     };
     
     checkSubscription();
-  }, [transactionIdentifier, isVerifying]);
+  }, [transactionIdentifier, isVerifying, sessionId, paymentSession]);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -144,6 +118,7 @@ const PaymentSuccess = () => {
           isVerified={isVerified}
           isVerifying={isVerifying || isChecking}
           paymentData={paymentData}
+          paymentSession={paymentSession}
         />
       </main>
       <Footer />

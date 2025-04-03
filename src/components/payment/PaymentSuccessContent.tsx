@@ -12,13 +12,15 @@ interface PaymentSuccessContentProps {
   isVerified?: boolean;
   isVerifying?: boolean;
   paymentData?: any;
+  paymentSession?: any;
 }
 
 const PaymentSuccessContent = ({ 
   transactionIdentifier, 
   isVerified = false, 
   isVerifying = false,
-  paymentData
+  paymentData,
+  paymentSession
 }: PaymentSuccessContentProps) => {
   const navigate = useNavigate();
   const [subscriptionName, setSubscriptionName] = useState('');
@@ -26,8 +28,29 @@ const PaymentSuccessContent = ({
   useEffect(() => {
     const fetchSubscriptionInfo = async () => {
       try {
-        // استرجاع نوع الاشتراك من localStorage
-        const planType = localStorage.getItem('subscriptionType');
+        // استرجاع نوع الاشتراك من جلسة الدفع أو من المستخدم الحالي
+        let planType = paymentSession?.plan_type;
+        
+        if (!planType) {
+          // الحصول على اشتراك المستخدم الحالي
+          const { data: { session } } = await supabase.auth.getSession();
+          
+          if (session?.user?.id) {
+            const { data: userData } = await supabase
+              .from('users')
+              .select('subscription_type')
+              .eq('id', session.user.id)
+              .single();
+              
+            if (userData?.subscription_type) {
+              planType = userData.subscription_type;
+            }
+          }
+        }
+        
+        if (!planType && paymentData?.plan_name) {
+          planType = paymentData.plan_name;
+        }
         
         // استرجاع اسم الاشتراك من إعدادات التسعير
         const { data: pricingSettings } = await supabase
@@ -44,7 +67,7 @@ const PaymentSuccessContent = ({
     };
     
     fetchSubscriptionInfo();
-  }, []);
+  }, [paymentSession, paymentData]);
   
   // Always show payment data as "مدفوع" (paid) on the success page
   const displayPaymentData = paymentData ? {
@@ -67,6 +90,16 @@ const PaymentSuccessContent = ({
     }
   };
   
+  const getDislayPlan = () => {
+    if (paymentSession?.plan_type) {
+      return getPlanDisplay(paymentSession.plan_type);
+    } else if (displayPaymentData?.plan_name) {
+      return getPlanDisplay(displayPaymentData.plan_name);
+    } else {
+      return subscriptionName;
+    }
+  };
+  
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-md">
       <div className="bg-white p-8 rounded-lg shadow-lg border-2 border-green-500 text-center">
@@ -83,7 +116,7 @@ const PaymentSuccessContent = ({
             <h1 className="text-2xl font-bold mb-4 text-green-600">تمت عملية الدفع بنجاح!</h1>
             <p className="mb-6 text-gray-600">
               شكراً لاشتراكك معنا. تم تفعيل حسابك بنجاح ويمكنك الآن الاستمتاع بجميع مميزات الباقة
-              {subscriptionName && ` "${subscriptionName}"`}.
+              {getDislayPlan() && ` "${getDislayPlan()}"`}.
             </p>
             
             {displayPaymentData && (

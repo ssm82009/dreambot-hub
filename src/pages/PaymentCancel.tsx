@@ -1,18 +1,63 @@
 
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { XCircle } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 const PaymentCancel = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const sessionId = searchParams.get('session_id') || '';
   
-  React.useEffect(() => {
-    // إزالة بيانات الاشتراك المعلقة
-    localStorage.removeItem('pendingSubscriptionPlan');
-  }, []);
+  useEffect(() => {
+    const updateCancelledSession = async () => {
+      if (sessionId) {
+        try {
+          // Get current user
+          const { data: { session } } = await supabase.auth.getSession();
+          
+          if (!session?.user?.id) {
+            console.error("No authenticated user found");
+            return;
+          }
+          
+          // تحديث جلسة الدفع إلى "ملغي"
+          const { error } = await supabase
+            .from('payment_sessions')
+            .update({
+              status: 'cancelled'
+            })
+            .eq('session_id', sessionId)
+            .eq('user_id', session.user.id);
+            
+          if (error) {
+            console.error("Error updating payment session:", error);
+          } else {
+            console.log("Updated payment session status to cancelled");
+          }
+          
+          // تحديث حالة الفاتورة المرتبطة بجلسة الدفع
+          const { error: invoiceError } = await supabase
+            .from('payment_invoices')
+            .update({
+              status: 'ملغي'
+            })
+            .eq('invoice_id', sessionId);
+            
+          if (invoiceError) {
+            console.error("Error updating invoice status:", invoiceError);
+          }
+        } catch (error) {
+          console.error("Error in payment cancellation process:", error);
+        }
+      }
+    };
+    
+    updateCancelledSession();
+  }, [sessionId]);
 
   return (
     <div className="min-h-screen flex flex-col">

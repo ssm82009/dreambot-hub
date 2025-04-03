@@ -11,6 +11,7 @@ import { createPaylinkInvoice } from '@/services/paylinkService';
  * @param plan نوع الباقة
  * @param paylinkApiKey مفتاح API
  * @param paylinkSecretKey المفتاح السري
+ * @param sessionId معرف جلسة الدفع
  */
 export const handlePaylinkPayment = async (
   customerInfo: any, 
@@ -18,7 +19,8 @@ export const handlePaylinkPayment = async (
   amount: number,
   plan: string,
   paylinkApiKey: string,
-  paylinkSecretKey: string
+  paylinkSecretKey: string,
+  sessionId: string
 ) => {
   // التحقق من توفر بيانات اعتماد API
   if (!paylinkApiKey || !paylinkSecretKey) {
@@ -55,11 +57,20 @@ export const handlePaylinkPayment = async (
   // الحصول على رابط الدفع (دعم كلا التنسيقين)
   const paymentUrl = invoice.payment_url || invoice.url;
 
-  // حفظ معلومات الفاتورة في قاعدة البيانات
+  // تحديث جلسة الدفع بمعرف المعاملة في PayLink
   try {
+    const transactionIdentifier = invoice.transactionNo || invoice.orderNumber;
+    
+    // تحديث معرف المعاملة في جلسة الدفع
+    await supabase.from('payment_sessions')
+      .update({
+        transaction_identifier: transactionIdentifier
+      })
+      .eq('session_id', sessionId);
+
     // إنشاء سجل فاتورة جديد في جدول payment_invoices
     await supabase.from('payment_invoices').insert([{
-      invoice_id: invoice.transactionNo || invoice.orderNumber,
+      invoice_id: transactionIdentifier,
       user_id: userId,
       plan_name: plan,
       amount: amount,
@@ -68,7 +79,7 @@ export const handlePaylinkPayment = async (
     }]);
   } catch (dbError) {
     // نسجل الخطأ ولكن نستمر في العملية
-    console.error("فشل في حفظ بيانات الفاتورة:", dbError);
+    console.error("فشل في تحديث بيانات المعاملة:", dbError);
   }
 
   // توجيه المستخدم إلى صفحة الدفع الخاصة بـ PayLink

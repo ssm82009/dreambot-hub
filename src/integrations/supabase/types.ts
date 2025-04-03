@@ -207,6 +207,48 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_sessions: {
+        Row: {
+          amount: number
+          completed: boolean | null
+          created_at: string
+          expires_at: string
+          id: string
+          payment_method: string
+          plan_type: string
+          session_id: string | null
+          status: string | null
+          transaction_identifier: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          completed?: boolean | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          payment_method: string
+          plan_type: string
+          session_id?: string | null
+          status?: string | null
+          transaction_identifier?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          completed?: boolean | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          payment_method?: string
+          plan_type?: string
+          session_id?: string | null
+          status?: string | null
+          transaction_identifier?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       payment_settings: {
         Row: {
           created_at: string | null

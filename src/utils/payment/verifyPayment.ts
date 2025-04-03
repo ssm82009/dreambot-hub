@@ -39,17 +39,6 @@ export const verifyPayment = async (
       console.error("خطأ في جلب إعدادات الدفع:", settingsError);
     }
 
-    // استرجاع إعدادات التسعير للحصول على أسعار الخطط
-    const { data: pricingSettings, error: pricingError } = await supabase
-      .from('pricing_settings')
-      .select('*')
-      .limit(1)
-      .single();
-
-    if (pricingError) {
-      console.error("خطأ في جلب إعدادات التسعير:", pricingError);
-    }
-
     // Get the current user
     const { data: { session } } = await supabase.auth.getSession();
     
@@ -62,9 +51,7 @@ export const verifyPayment = async (
     console.log("Setting subscription for user:", userId);
 
     // تحديث حالة الفاتورة في قاعدة البيانات للفاتورة المحددة
-    // PayPal يمكن أن يرسل invoice_id في العنوان
-    const invoiceIdParam = new URLSearchParams(window.location.search).get('invoice_id');
-    const identifiers = [transactionIdentifier, customId, txnId, invoiceIdParam].filter(id => id);
+    const identifiers = [transactionIdentifier, customId, txnId].filter(id => id);
     
     let invoiceId = "";
     let foundInvoice = false;
@@ -84,6 +71,17 @@ export const verifyPayment = async (
       
       // إذا كانت العملية من PayPal وليس لدينا فاتورة متطابقة
       if (!foundInvoice && txnId && plan) {
+        // استرجاع إعدادات التسعير للحصول على أسعار الخطط
+        const { data: pricingSettings, error: pricingError } = await supabase
+          .from('pricing_settings')
+          .select('*')
+          .limit(1)
+          .single();
+
+        if (pricingError) {
+          console.error("خطأ في جلب إعدادات التسعير:", pricingError);
+        }
+        
         invoiceId = await createPayPalInvoiceRecord(txnId, userId, plan, pricingSettings);
       }
     }
@@ -106,10 +104,21 @@ export const verifyPayment = async (
     if (subscriptionUpdated) {
       // تحديث جميع الدفعات المرتبطة بهذا المستخدم والخطة إلى حالة "مدفوع"
       await updateAllPendingInvoices(userId, plan);
+      
+      // تحديث جلسات الدفع المعلقة إلى "completed"
+      await supabase.from('payment_sessions')
+        .update({
+          completed: true,
+          status: 'completed'
+        })
+        .eq('user_id', userId)
+        .eq('plan_type', plan)
+        .eq('completed', false);
     }
+    
+    return subscriptionUpdated;
   } catch (error) {
     console.error("Error verifying payment:", error);
-    // نعرض رسالة نجاح على الرغم من الخطأ لأن المستخدم على صفحة النجاح
-    toast.success(`تم الاشتراك في الباقة ${plan === 'premium' ? 'المميزة' : 'الاحترافية'} بنجاح!`);
+    return false;
   }
 };

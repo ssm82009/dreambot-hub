@@ -13,6 +13,7 @@ import { CustomerInfo } from '@/types/payment';
  * @param paypalClientId معرف العميل لـ PayPal
  * @param paypalSandbox تفعيل وضع الاختبار
  * @param paypalSecret المفتاح السري لـ PayPal
+ * @param sessionId معرف جلسة الدفع
  */
 export const handlePaypalPayment = async (
   customerInfo: CustomerInfo, 
@@ -21,7 +22,8 @@ export const handlePaypalPayment = async (
   plan: string,
   paypalClientId: string,
   paypalSandbox: boolean,
-  paypalSecret: string
+  paypalSecret: string,
+  sessionId: string
 ) => {
   // التحقق من توفر بيانات اعتماد PayPal
   if (!paypalClientId || !paypalSecret) {
@@ -33,9 +35,9 @@ export const handlePaypalPayment = async (
   console.log(`تحويل ${amount} ريال سعودي إلى ${usdAmount} دولار أمريكي`);
 
   try {
-    // إنشاء معرف فريد للفاتورة
-    const invoiceId = `PP-${Date.now()}`;
-    console.log("Creating PayPal invoice record with ID:", invoiceId);
+    // إنشاء معرف فريد للفاتورة (نستخدم معرف الجلسة)
+    const invoiceId = sessionId;
+    console.log("Creating PayPal payment with session ID:", invoiceId);
     
     // إنشاء سجل فاتورة في قاعدة البيانات قبل توجيه المستخدم إلى PayPal
     const { data, error } = await supabase.from('payment_invoices').insert([{
@@ -99,8 +101,8 @@ export const handlePaypalPayment = async (
           custom_id: invoiceId
         }],
         application_context: {
-          return_url: `${window.location.origin}/payment/success?invoice_id=${invoiceId}`,
-          cancel_url: `${window.location.origin}/payment/cancel`,
+          return_url: `${window.location.origin}/payment/success?session_id=${invoiceId}`,
+          cancel_url: `${window.location.origin}/payment/cancel?session_id=${invoiceId}`,
           brand_name: 'تفسير الأحلام',
           locale: 'ar-SA',
           landing_page: 'LOGIN',
@@ -118,6 +120,15 @@ export const handlePaypalPayment = async (
 
     const orderData = await orderResponse.json();
     console.log("PayPal order created:", orderData);
+
+    // تحديث معرف المعاملة في جلسة الدفع
+    if (orderData.id) {
+      await supabase.from('payment_sessions')
+        .update({
+          transaction_identifier: orderData.id
+        })
+        .eq('session_id', sessionId);
+    }
 
     // الحصول على رابط الدفع وإعادة توجيه المستخدم
     const approvalUrl = orderData.links.find((link: any) => link.rel === 'approve')?.href;
