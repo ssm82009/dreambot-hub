@@ -15,11 +15,27 @@ const DreamForm = () => {
   const [dreamSymbols, setDreamSymbols] = useState<DreamSymbol[]>([]);
   const [aiSettings, setAiSettings] = useState<any | null>(null);
   const [interpretationSettings, setInterpretationSettings] = useState<InterpretationSettings | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchDreamSymbols();
     fetchSettings();
+    checkAuth();
   }, []);
+
+  const checkAuth = async () => {
+    try {
+      const { data } = await supabase.auth.getSession();
+      if (data.session?.user) {
+        setUserId(data.session.user.id);
+        console.log("User authenticated:", data.session.user.id);
+      } else {
+        console.log("User not authenticated");
+      }
+    } catch (error) {
+      console.error("Error checking auth:", error);
+    }
+  };
 
   const fetchSettings = async () => {
     try {
@@ -87,14 +103,18 @@ const DreamForm = () => {
 
       const generatedInterpretation = aiResponse?.interpretation || "لم نتمكن من الحصول على تفسير في هذا الوقت.";
       
+      // استخراج الكلمات المفتاحية من نص الحلم
+      const extractedTags = extractKeywords(dream);
+      console.log("Extracted tags:", extractedTags);
+      
       // حفظ الحلم والتفسير في قاعدة البيانات
       const { error } = await supabase
         .from('dreams')
         .insert({
           dream_text: dream,
           interpretation: generatedInterpretation,
-          user_id: null,
-          tags: extractKeywords(dream)
+          user_id: userId, // تخزين معرف المستخدم إذا كان متاحًا
+          tags: extractedTags
         });
       
       if (error) {

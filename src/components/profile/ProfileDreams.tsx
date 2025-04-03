@@ -2,10 +2,11 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, Plus } from 'lucide-react';
+import { Loader2, Plus, ExternalLink } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
+import { toast } from "sonner";
 
 interface Dream {
   id: string;
@@ -30,6 +31,8 @@ const ProfileDreams: React.FC<ProfileDreamsProps> = ({ userId, dreamsCount }) =>
       if (!userId) return;
       
       try {
+        console.log("Fetching dreams for user:", userId);
+        
         const { data, error } = await supabase
           .from('dreams')
           .select('*')
@@ -37,8 +40,13 @@ const ProfileDreams: React.FC<ProfileDreamsProps> = ({ userId, dreamsCount }) =>
           .order('created_at', { ascending: false })
           .limit(10);
           
-        if (error) throw error;
+        if (error) {
+          console.error('Error fetching dreams:', error);
+          toast.error("حدث خطأ أثناء تحميل الأحلام");
+          throw error;
+        }
         
+        console.log("Dreams fetched:", data);
         setDreams(data || []);
       } catch (error) {
         console.error('Error fetching dreams:', error);
@@ -52,6 +60,13 @@ const ProfileDreams: React.FC<ProfileDreamsProps> = ({ userId, dreamsCount }) =>
   
   const handleNewDream = () => {
     navigate('/');
+  };
+  
+  const handleViewDream = (dreamId: string) => {
+    // يمكن إضافة صفحة لعرض تفاصيل الحلم مستقبلاً
+    // حالياً سننتقل إلى الصفحة الرئيسية
+    navigate(`/`);
+    toast.info("سيتم إضافة صفحة تفاصيل الحلم قريباً");
   };
   
   if (isLoading) {
@@ -112,6 +127,7 @@ const ProfileDreams: React.FC<ProfileDreamsProps> = ({ userId, dreamsCount }) =>
                 <th className="pb-3 pt-2 font-medium">التاريخ</th>
                 <th className="pb-3 pt-2 font-medium">الحلم</th>
                 <th className="pb-3 pt-2 font-medium">الوسوم</th>
+                <th className="pb-3 pt-2 font-medium">الإجراءات</th>
               </tr>
             </thead>
             <tbody>
@@ -125,7 +141,7 @@ const ProfileDreams: React.FC<ProfileDreamsProps> = ({ userId, dreamsCount }) =>
                   </td>
                   <td className="py-3">
                     <div className="flex flex-wrap gap-1">
-                      {dream.tags ? 
+                      {dream.tags && dream.tags.length > 0 ? 
                         dream.tags.map((tag, index) => (
                           <span key={index} className="inline-block px-2 py-1 text-xs bg-muted rounded-full">
                             {tag}
@@ -134,6 +150,12 @@ const ProfileDreams: React.FC<ProfileDreamsProps> = ({ userId, dreamsCount }) =>
                         <span className="text-muted-foreground text-sm">لا توجد وسوم</span>
                       }
                     </div>
+                  </td>
+                  <td className="py-3">
+                    <Button variant="ghost" size="sm" onClick={() => handleViewDream(dream.id)}>
+                      <ExternalLink className="h-4 w-4 ml-1" />
+                      عرض
+                    </Button>
                   </td>
                 </tr>
               ))}
