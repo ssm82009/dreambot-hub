@@ -59,6 +59,8 @@ const ProfilePayments: React.FC<ProfilePaymentsProps> = ({ payments }) => {
     }
   };
   
+  console.log("ProfilePayments - Payments:", payments);
+  
   if (payments.length === 0) {
     return (
       <Card>

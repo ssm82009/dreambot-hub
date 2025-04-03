@@ -99,7 +99,7 @@ const PaymentSuccess = () => {
             console.error("Error updating user subscription:", updateError);
             toast.error("حدث خطأ أثناء تحديث الاشتراك");
           } else {
-            console.log("Updated subscription successfully for user:", userId);
+            console.log("Updated subscription successfully for user:", userId, "to plan:", plan);
             toast.success(`تم الاشتراك في الباقة ${plan === 'premium' ? 'المميزة' : 'الاحترافية'} بنجاح!`);
           }
         } catch (error) {

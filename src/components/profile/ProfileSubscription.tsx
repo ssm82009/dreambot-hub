@@ -62,7 +62,7 @@ const ProfileSubscription: React.FC<ProfileSubscriptionProps> = ({ userData }) =
   
   // Get subscription name in Arabic
   const getSubscriptionName = () => {
-    switch (userData.subscription_type?.toLowerCase()) {
+    switch (userData?.subscription_type?.toLowerCase()) {
       case 'premium':
         return 'الباقة المميزة';
       case 'pro':
@@ -72,11 +72,14 @@ const ProfileSubscription: React.FC<ProfileSubscriptionProps> = ({ userData }) =
     }
   };
   
+  console.log("ProfileSubscription - User data:", userData);
+  console.log("ProfileSubscription - Subscription status:", subscriptionStatus);
+  
   // Calculate remaining interpretations based on the subscription type
   const getTotalInterpretations = () => {
     if (!pricingSettings) return 0;
     
-    switch (userData.subscription_type) {
+    switch (userData?.subscription_type) {
       case 'premium':
         return pricingSettings.premium_plan_interpretations;
       case 'pro':
@@ -103,7 +106,7 @@ const ProfileSubscription: React.FC<ProfileSubscriptionProps> = ({ userData }) =
   const getCurrentPlanFeatures = () => {
     if (!pricingSettings) return [];
     
-    switch (userData.subscription_type) {
+    switch (userData?.subscription_type) {
       case 'premium':
         return formatPlanFeatures(pricingSettings.premium_plan_features);
       case 'pro':
@@ -149,7 +152,7 @@ const ProfileSubscription: React.FC<ProfileSubscriptionProps> = ({ userData }) =
                 </span>
               </div>
               
-              {userData.subscription_expires_at && (
+              {userData?.subscription_expires_at && (
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">تاريخ انتهاء الاشتراك:</span>
                   <span className="font-medium">{formatDate(userData.subscription_expires_at)}</span>
@@ -193,7 +196,7 @@ const ProfileSubscription: React.FC<ProfileSubscriptionProps> = ({ userData }) =
               </div>
             </div>
             
-            {!subscriptionStatus.isActive || userData.subscription_type === 'free' ? (
+            {!subscriptionStatus.isActive || userData?.subscription_type === 'free' ? (
               <div className="pt-4">
                 <div className="bg-primary/10 p-4 rounded-md mb-4">
                   <p className="text-sm">
@@ -210,7 +213,7 @@ const ProfileSubscription: React.FC<ProfileSubscriptionProps> = ({ userData }) =
         </div>
       </CardContent>
       
-      {subscriptionStatus.isActive && userData.subscription_type !== 'free' && (
+      {subscriptionStatus.isActive && userData?.subscription_type !== 'free' && (
         <CardFooter>
           <p className="text-sm text-muted-foreground">
             يتجدد اشتراكك تلقائياً في {userData.subscription_expires_at ? formatDate(userData.subscription_expires_at) : 'تاريخ غير محدد'}

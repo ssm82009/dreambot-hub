@@ -14,6 +14,8 @@ type SubscriptionBadgeProps = {
 };
 
 export const getSubscriptionStatus = (user: User): SubscriptionStatus => {
+  console.log("Getting subscription status for user:", user);
+  
   // تحقق من نوع الاشتراك
   if (!user.subscription_type || user.subscription_type === 'free') {
     return { 
@@ -27,6 +29,8 @@ export const getSubscriptionStatus = (user: User): SubscriptionStatus => {
   if (user.subscription_expires_at) {
     const expiryDate = new Date(user.subscription_expires_at);
     const now = new Date();
+    
+    console.log("Subscription expiry date:", expiryDate, "Current date:", now);
     
     // إذا كان تاريخ الانتهاء في المستقبل، فالاشتراك نشط
     if (expiryDate > now) {

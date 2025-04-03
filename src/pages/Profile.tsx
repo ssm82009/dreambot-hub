@@ -51,6 +51,8 @@ const Profile = () => {
           throw userError;
         }
         
+        console.log("Fetched user data:", userData);
+        
         // Fetch payment invoices separately - make sure we only fetch the current user's payments
         const { data: paymentData, error: paymentError } = await supabase
           .from('payment_invoices')
