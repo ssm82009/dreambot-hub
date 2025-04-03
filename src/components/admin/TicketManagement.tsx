@@ -31,7 +31,11 @@ const TicketManagement: React.FC = () => {
           throw error;
         }
 
-        setTickets(data || []);
+        // Cast the data to ensure it matches our Ticket type
+        setTickets(data?.map(ticket => ({
+          ...ticket,
+          status: ticket.status as 'open' | 'closed'
+        })) || []);
       } catch (error) {
         console.error('Error fetching tickets:', error);
         toast.error('حدث خطأ في جلب بيانات التذاكر');
@@ -71,7 +75,7 @@ const TicketManagement: React.FC = () => {
 
       // تحديث القائمة محلياً
       setTickets(prev => 
-        prev.map(t => t.id === ticket.id ? { ...t, status: newStatus as 'open' | 'closed', updated_at: new Date().toISOString() } : t)
+        prev.map(t => t.id === ticket.id ? { ...t, status: newStatus, updated_at: new Date().toISOString() } : t)
       );
 
       toast.success(`تم ${newStatus === 'closed' ? 'إغلاق' : 'إعادة فتح'} التذكرة بنجاح`);

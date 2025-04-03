@@ -22,8 +22,31 @@ const TicketDetails = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [newReply, setNewReply] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
+    // Get the current user ID
+    const getUserId = async () => {
+      try {
+        const { data } = await supabase.auth.getSession();
+        const userId = data.session?.user?.id;
+        if (userId) {
+          setUserId(userId);
+        } else {
+          // Fallback - Use stored user ID if auth doesn't work
+          const storedUserId = localStorage.getItem('userId');
+          if (storedUserId) {
+            setUserId(storedUserId);
+          } else {
+            toast.error('يجب تسجيل الدخول لعرض التذاكر');
+            navigate('/login');
+          }
+        }
+      } catch (error) {
+        console.error('Error getting user session:', error);
+      }
+    };
+
     // التحقق من صلاحيات المشرف
     const checkAdminStatus = () => {
       const adminStatus = localStorage.getItem('isAdminLoggedIn') === 'true';
@@ -55,9 +78,10 @@ const TicketDetails = () => {
 
         if (repliesError) throw repliesError;
         
-        // دمج البيانات
+        // دمج البيانات مع التأكد من تطابق الأنواع
         setTicket({
           ...ticketData,
+          status: ticketData.status as 'open' | 'closed',
           replies: repliesData || []
         });
       } catch (error) {
@@ -69,13 +93,14 @@ const TicketDetails = () => {
       }
     };
 
+    getUserId();
     checkAdminStatus();
     fetchTicketDetails();
   }, [id, navigate]);
 
   // إضافة رد جديد
   const handleAddReply = async () => {
-    if (!newReply.trim() || !ticket) {
+    if (!newReply.trim() || !ticket || !userId) {
       toast.error('يرجى كتابة رد قبل الإرسال');
       return;
     }
@@ -87,7 +112,8 @@ const TicketDetails = () => {
         .from('ticket_replies')
         .insert({
           ticket_id: ticket.id,
-          content: newReply.trim()
+          content: newReply.trim(),
+          user_id: userId
         })
         .select()
         .single();

@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -16,13 +16,45 @@ const NewTicket = () => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
   const navigate = useNavigate();
+
+  // Get the current user ID
+  useEffect(() => {
+    const getUserId = async () => {
+      try {
+        const { data } = await supabase.auth.getSession();
+        const userId = data.session?.user?.id;
+        if (userId) {
+          setUserId(userId);
+        } else {
+          // Fallback - Use stored user ID if auth doesn't work
+          const storedUserId = localStorage.getItem('userId');
+          if (storedUserId) {
+            setUserId(storedUserId);
+          } else {
+            toast.error('يجب تسجيل الدخول لإنشاء تذكرة');
+            navigate('/login');
+          }
+        }
+      } catch (error) {
+        console.error('Error getting user session:', error);
+      }
+    };
+
+    getUserId();
+  }, [navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!title.trim() || !description.trim()) {
       toast.error('يرجى تعبئة جميع الحقول المطلوبة');
+      return;
+    }
+
+    if (!userId) {
+      toast.error('لا يمكن إنشاء تذكرة. الرجاء تسجيل الدخول');
       return;
     }
 
@@ -35,6 +67,7 @@ const NewTicket = () => {
           title: title.trim(),
           description: description.trim(),
           status: 'open',
+          user_id: userId
         })
         .select()
         .single();

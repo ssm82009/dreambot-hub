@@ -44,7 +44,11 @@ const TicketsPage = () => {
           throw error;
         }
 
-        setTickets(data || []);
+        // Cast the data to ensure it matches our Ticket type
+        setTickets(data?.map(ticket => ({
+          ...ticket,
+          status: ticket.status as 'open' | 'closed'
+        })) || []);
       } catch (error) {
         console.error('Error fetching tickets:', error);
         toast.error('حدث خطأ أثناء جلب التذاكر');
