@@ -40,7 +40,7 @@ const PaymentMethod = ({ selectedMethod, onMethodChange, availableMethods }: Pay
             <div key={method.id} className="flex items-center space-x-2 space-x-reverse">
               <RadioGroupItem value={method.id} id={method.id} />
               <Label htmlFor={method.id} className="flex items-center gap-2">
-                <div className={`flex items-center justify-center ${method.id === 'paylink' ? 'bg-blue-50 text-blue-700' : 'bg-green-50 text-green-700'} font-bold rounded px-2 py-1 text-xs`}>
+                <div className={`${method.id === 'paylink' ? 'bg-blue-50 text-blue-700' : 'bg-green-50 text-green-700'} font-bold rounded px-2 py-1 text-xs`}>
                   {method.name}
                 </div>
                 <span>{method.description}</span>

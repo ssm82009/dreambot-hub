@@ -18,6 +18,11 @@ export const handlePaylinkPayment = async (
     throw new Error("لم يتم تكوين بيانات اعتماد PayLink");
   }
 
+  // التحقق من توفر بيانات العميل
+  if (!customerInfo.name || !customerInfo.email || !customerInfo.phone) {
+    throw new Error("يرجى إدخال جميع بيانات العميل المطلوبة");
+  }
+
   // لأغراض الاختبار، استخدم مفتاح الوضع التجريبي الذي يبدأ بـ 'test_'
   const isTestMode = paylinkApiKey.toLowerCase().startsWith('test_');
   console.log("Using PayLink in", isTestMode ? "test" : "production", "mode");
@@ -118,10 +123,15 @@ export const handlePaypalPayment = async (
     paypalPaymentUrl.searchParams.append('cancel_return', cancelUrl);
     paypalPaymentUrl.searchParams.append('custom', data?.[0]?.invoice_id || `PP-${Date.now()}`);
     
-    // إضافة معلومات المشتري
-    paypalPaymentUrl.searchParams.append('first_name', customerInfo.name.split(' ')[0] || '');
-    paypalPaymentUrl.searchParams.append('last_name', customerInfo.name.split(' ').slice(1).join(' ') || '');
-    paypalPaymentUrl.searchParams.append('email', customerInfo.email);
+    // إضافة معلومات المشتري إذا كانت متوفرة
+    if (customerInfo.name) {
+      paypalPaymentUrl.searchParams.append('first_name', customerInfo.name.split(' ')[0] || '');
+      paypalPaymentUrl.searchParams.append('last_name', customerInfo.name.split(' ').slice(1).join(' ') || '');
+    }
+    
+    if (customerInfo.email) {
+      paypalPaymentUrl.searchParams.append('email', customerInfo.email);
+    }
     
     console.log("توجيه المستخدم إلى رابط PayPal:", paypalPaymentUrl.toString());
     

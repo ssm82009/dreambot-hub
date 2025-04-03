@@ -46,6 +46,13 @@ export function usePaymentSubmit(
 
       // معالجة الدفع بناءً على طريقة الدفع المختارة
       if (customerInfo.paymentMethod === 'paylink') {
+        // للدفع عبر PayLink، نحتاج التحقق من إدخال بيانات العميل
+        if (!customerInfo.name.trim() || !customerInfo.email.trim() || !customerInfo.phone.trim()) {
+          setIsProcessing(false);
+          toast.error("يرجى إدخال جميع بيانات العميل المطلوبة");
+          return;
+        }
+        
         await handlePaylinkPayment(
           customerInfo, 
           userId, 
@@ -55,6 +62,7 @@ export function usePaymentSubmit(
           paylinkSecretKey
         );
       } else if (customerInfo.paymentMethod === 'paypal') {
+        // للدفع عبر PayPal، بيانات العميل اختيارية
         await handlePaypalPayment(
           customerInfo, 
           userId, 

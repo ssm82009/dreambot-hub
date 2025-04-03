@@ -9,15 +9,22 @@ interface PaymentActionsProps {
   onPayment: () => void;
   isDisabled?: boolean;
   isProcessing?: boolean;
+  paymentMethod?: string;
 }
 
 const PaymentActions = ({ 
   amount, 
   onPayment, 
   isDisabled = false,
-  isProcessing = false 
+  isProcessing = false,
+  paymentMethod = 'paylink'
 }: PaymentActionsProps) => {
   const navigate = useNavigate();
+  
+  const paymentButtonText = () => {
+    if (amount === 0) return "اشترك مجانًا";
+    return paymentMethod === 'paypal' ? "الدفع عبر PayPal" : "إتمام الدفع";
+  };
   
   return (
     <div className="flex flex-col sm:flex-row gap-4 justify-between w-full">
@@ -41,7 +48,7 @@ const PaymentActions = ({
             جاري المعالجة...
           </>
         ) : (
-          amount === 0 ? "اشترك مجانًا" : "إتمام الدفع"
+          paymentButtonText()
         )}
       </Button>
     </div>

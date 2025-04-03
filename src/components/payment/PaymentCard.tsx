@@ -47,11 +47,12 @@ const PaymentCard = ({ plan, amount, onPayment, isProcessing }: PaymentCardProps
   };
 
   // التحقق من صحة بيانات العميل
-  const isFormValid = amount === 0 || (
-    customerInfo.name.trim() !== '' && 
-    customerInfo.email.trim() !== '' && 
-    customerInfo.phone.trim() !== ''
-  );
+  const isFormValid = 
+    amount === 0 || 
+    customerInfo.paymentMethod === 'paypal' || 
+    (customerInfo.name.trim() !== '' && 
+     customerInfo.email.trim() !== '' && 
+     customerInfo.phone.trim() !== '');
 
   return (
     <Card className="max-w-2xl mx-auto border-2 border-primary/50 shadow-lg">
@@ -64,7 +65,6 @@ const PaymentCard = ({ plan, amount, onPayment, isProcessing }: PaymentCardProps
         <PaymentDetails 
           plan={plan} 
           amount={amount} 
-          paymentMethod={customerInfo.paymentMethod} 
         />
         
         {amount > 0 && (
@@ -81,10 +81,12 @@ const PaymentCard = ({ plan, amount, onPayment, isProcessing }: PaymentCardProps
               />
             </div>
             
-            {/* 3. ادخال بيانات العميل */}
-            <div className="border-t pt-4">
-              <PaymentForm onCustomerInfoChange={handleCustomerInfoChange} />
-            </div>
+            {/* 3. ادخال بيانات العميل - فقط إذا كانت طريقة الدفع هي بطاقة */}
+            {customerInfo.paymentMethod === 'paylink' && (
+              <div className="border-t pt-4">
+                <PaymentForm onCustomerInfoChange={handleCustomerInfoChange} />
+              </div>
+            )}
           </>
         )}
       </CardContent>
@@ -95,6 +97,7 @@ const PaymentCard = ({ plan, amount, onPayment, isProcessing }: PaymentCardProps
           onPayment={handlePayment} 
           isDisabled={!isFormValid || isProcessing}
           isProcessing={isProcessing}
+          paymentMethod={customerInfo.paymentMethod}
         />
       </CardFooter>
     </Card>
