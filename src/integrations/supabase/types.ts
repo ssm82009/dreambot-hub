@@ -144,6 +144,36 @@ export type Database = {
         }
         Relationships: []
       }
+      navbar_links: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_admin_only: boolean
+          order: number
+          title: string
+          updated_at: string | null
+          url: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_admin_only?: boolean
+          order: number
+          title: string
+          updated_at?: string | null
+          url: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_admin_only?: boolean
+          order?: number
+          title?: string
+          updated_at?: string | null
+          url?: string
+        }
+        Relationships: []
+      }
       payment_invoices: {
         Row: {
           amount: number

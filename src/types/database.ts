@@ -1,3 +1,4 @@
+
 // أنواع للجداول التي أنشأناها في قاعدة البيانات
 export type AiSettings = {
   id: string;
