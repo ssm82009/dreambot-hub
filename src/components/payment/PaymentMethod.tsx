@@ -7,9 +7,18 @@ import { CreditCard } from 'lucide-react';
 interface PaymentMethodProps {
   selectedMethod: string;
   onMethodChange: (method: string) => void;
+  availableMethods: {
+    id: string;
+    name: string;
+    description: string;
+    enabled: boolean;
+  }[];
 }
 
-const PaymentMethod = ({ selectedMethod, onMethodChange }: PaymentMethodProps) => {
+const PaymentMethod = ({ selectedMethod, onMethodChange, availableMethods }: PaymentMethodProps) => {
+  // تصفية طرق الدفع المفعلة فقط
+  const enabledMethods = availableMethods.filter(method => method.enabled);
+  
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2 mb-4">
@@ -17,22 +26,29 @@ const PaymentMethod = ({ selectedMethod, onMethodChange }: PaymentMethodProps) =
         <h3 className="font-medium">اختر طريقة الدفع</h3>
       </div>
       
-      <RadioGroup 
-        value={selectedMethod} 
-        onValueChange={onMethodChange}
-        className="flex flex-col space-y-3"
-      >
-        <div className="flex items-center space-x-2 space-x-reverse">
-          <RadioGroupItem value="paylink" id="paylink" />
-          <Label htmlFor="paylink" className="flex items-center gap-2">
-            {/* استخدام رمز معبر عن PayLink بدلاً من صورة خارجية */}
-            <div className="flex items-center justify-center bg-blue-50 text-blue-700 font-bold rounded px-2 py-1 text-xs">
-              PayLink
+      {enabledMethods.length > 0 ? (
+        <RadioGroup 
+          value={selectedMethod} 
+          onValueChange={onMethodChange}
+          className="flex flex-col space-y-3"
+        >
+          {enabledMethods.map(method => (
+            <div key={method.id} className="flex items-center space-x-2 space-x-reverse">
+              <RadioGroupItem value={method.id} id={method.id} />
+              <Label htmlFor={method.id} className="flex items-center gap-2">
+                <div className={`flex items-center justify-center ${method.id === 'paylink' ? 'bg-blue-50 text-blue-700' : 'bg-green-50 text-green-700'} font-bold rounded px-2 py-1 text-xs`}>
+                  {method.name}
+                </div>
+                <span>{method.description}</span>
+              </Label>
             </div>
-            <span>بطاقة مدى / فيزا / ماستركارد</span>
-          </Label>
+          ))}
+        </RadioGroup>
+      ) : (
+        <div className="p-3 bg-amber-50 border border-amber-200 rounded">
+          <p className="text-amber-800 text-sm">لم يتم تكوين أي طرق دفع. يرجى الاتصال بالمسؤول.</p>
         </div>
-      </RadioGroup>
+      )}
     </div>
   );
 };
