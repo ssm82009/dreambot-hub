@@ -1,7 +1,7 @@
-
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { normalizePaymentStatus } from '@/utils/payment/statusNormalizer';
 
 export const useTransactionManagement = () => {
   const [transactions, setTransactions] = useState<any[]>([]);
@@ -54,19 +54,7 @@ export const useTransactionManagement = () => {
         // التحقق من حالات الدفع وتنسيقها
         const formattedTransactions = transactionsData.map(transaction => {
           // تطبيع حالة الدفع
-          let status = transaction.status || '';
-          if (typeof status === 'string') {
-            const normalizedStatus = status.toLowerCase();
-            if (normalizedStatus.includes('paid') || normalizedStatus.includes('مدفوع')) {
-              status = 'مدفوع';
-            } else if (normalizedStatus.includes('pending') || normalizedStatus.includes('قيد الانتظار')) {
-              status = 'قيد الانتظار';
-            } else if (normalizedStatus.includes('failed') || normalizedStatus.includes('فشل')) {
-              status = 'فشل';
-            } else if (normalizedStatus.includes('refunded') || normalizedStatus.includes('مسترجع')) {
-              status = 'مسترجع';
-            }
-          }
+          const status = normalizePaymentStatus(transaction.status);
           
           return {
             ...transaction,

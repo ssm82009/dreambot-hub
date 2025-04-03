@@ -84,13 +84,20 @@ export const usePaymentVerification = () => {
               // طريقة 2: البحث باستخدام معرف المستخدم والخطة
               // هذا يساعد في حالة عدم تخزين transactionIdentifier بشكل صحيح
               if (plan) {
+                // Normalize plan name for database storage
+                let dbPlanName = plan;
+                if (plan.toLowerCase().includes('مميز') || plan.toLowerCase() === 'premium') {
+                  dbPlanName = 'premium';
+                } else if (plan.toLowerCase().includes('احترافي') || plan.toLowerCase() === 'pro') {
+                  dbPlanName = 'pro';
+                }
+                
                 const { data: invoicesByUser, error: userInvoiceError } = await supabase
                   .from('payment_invoices')
                   .select('*')
                   .eq('user_id', userId)
-                  .eq('plan_name', plan)
-                  .in('status', ['Pending', 'قيد الانتظار', 'pending'])
-                  .order('created_at', { ascending: false });
+                  .eq('plan_name', dbPlanName)
+                  .or(`status.eq.Pending,status.eq.قيد الانتظار,status.eq.pending`);
                   
                 if (userInvoiceError) {
                   console.error("Error searching for invoice by user:", userInvoiceError);
@@ -162,9 +169,14 @@ export const usePaymentVerification = () => {
                     .single();
                     
                   let amount = 0;
-                  if (plan === 'premium') {
+                  let dbPlanName = plan;
+                  
+                  // Normalize plan name for database storage
+                  if (plan.toLowerCase().includes('مميز') || plan.toLowerCase() === 'premium') {
+                    dbPlanName = 'premium';
                     amount = pricingSettings?.premium_plan_price || 49;
-                  } else if (plan === 'pro') {
+                  } else if (plan.toLowerCase().includes('احترافي') || plan.toLowerCase() === 'pro') {
+                    dbPlanName = 'pro';
                     amount = pricingSettings?.pro_plan_price || 99;
                   }
                   
@@ -174,7 +186,7 @@ export const usePaymentVerification = () => {
                     .insert({
                       invoice_id: transactionIdentifier,
                       user_id: userId,
-                      plan_name: plan,
+                      plan_name: dbPlanName,
                       status: 'مدفوع',
                       payment_method: token ? 'paypal' : 'paylink',
                       amount: amount
@@ -193,7 +205,9 @@ export const usePaymentVerification = () => {
             await verifyPayment(transactionIdentifier, customId, txnId, plan);
             
             // إظهار رسالة نجاح للمستخدم
-            const planName = plan === 'premium' ? 'المميزة' : 'الاحترافية';
+            const planName = plan.toLowerCase().includes('مميز') || plan === 'premium' 
+              ? 'المميزة' 
+              : 'الاحترافية';
             toast.success(`تم الاشتراك في الباقة ${planName} بنجاح!`);
           } else {
             console.log("No pending subscription plan found in localStorage");

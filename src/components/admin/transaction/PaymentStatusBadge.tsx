@@ -1,34 +1,30 @@
 
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
+import { normalizePaymentStatus } from '@/utils/payment/statusNormalizer';
 
 type PaymentStatusBadgeProps = {
   status: string;
 };
 
 const PaymentStatusBadge: React.FC<PaymentStatusBadgeProps> = ({ status }) => {
-  // تحسين عرض حالة الدفع مع مراعاة حالات الأحرف واللغة
-  const normalizedStatus = status?.toLowerCase()?.trim() || '';
+  // Use the normalizer utility to standardize status
+  const normalizedStatus = normalizePaymentStatus(status);
   
   let variant: 'default' | 'secondary' | 'destructive' | 'outline' = 'outline';
-  let label = status || '';
   
-  // التحقق من القيم المحتملة للحالة
-  if (normalizedStatus.includes('paid') || normalizedStatus.includes('مدفوع')) {
+  // Map the normalized status to a badge variant
+  if (normalizedStatus === 'مدفوع') {
     variant = 'default';
-    label = 'مدفوع';
-  } else if (normalizedStatus.includes('pending') || normalizedStatus.includes('قيد الانتظار')) {
+  } else if (normalizedStatus === 'قيد الانتظار') {
     variant = 'secondary';
-    label = 'قيد الانتظار';
-  } else if (normalizedStatus.includes('failed') || normalizedStatus.includes('فشل')) {
+  } else if (normalizedStatus === 'فشل') {
     variant = 'destructive';
-    label = 'فشل';
-  } else if (normalizedStatus.includes('refunded') || normalizedStatus.includes('مسترجع')) {
+  } else if (normalizedStatus === 'مسترجع') {
     variant = 'outline';
-    label = 'مسترجع';
   }
   
-  return <Badge variant={variant}>{label}</Badge>;
+  return <Badge variant={variant}>{normalizedStatus}</Badge>;
 };
 
 export default PaymentStatusBadge;

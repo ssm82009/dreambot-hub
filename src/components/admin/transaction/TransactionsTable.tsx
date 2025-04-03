@@ -5,6 +5,7 @@ import { Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import PaymentStatusBadge from './PaymentStatusBadge';
+import { normalizePaymentStatus, normalizePlanName, normalizePaymentMethod } from '@/utils/payment/statusNormalizer';
 
 interface TransactionsTableProps {
   transactions: any[];
@@ -17,59 +18,6 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({
   users, 
   onEditClick 
 }) => {
-  const getPlanLabel = (planName: string) => {
-    if (!planName) return '';
-    
-    // تحويل اسم الخطة إلى حروف صغيرة للمقارنة
-    const normalizedPlan = planName.toLowerCase();
-    
-    if (normalizedPlan.includes('premium') || normalizedPlan.includes('مميز')) {
-      return 'المميزة';
-    } else if (normalizedPlan.includes('pro') || normalizedPlan.includes('احترافي')) {
-      return 'الاحترافية';
-    } else if (normalizedPlan.includes('free') || normalizedPlan.includes('مجاني')) {
-      return 'المجانية';
-    }
-    
-    // إذا لم يتم العثور على تطابق، أعد النص الأصلي
-    return planName;
-  };
-  
-  const getPaymentMethodLabel = (method: string) => {
-    if (!method) return '';
-    
-    const normalizedMethod = method.toLowerCase();
-    
-    if (normalizedMethod.includes('paylink')) {
-      return 'باي لينك';
-    } else if (normalizedMethod.includes('paypal')) {
-      return 'باي بال';
-    } else if (normalizedMethod.includes('manual')) {
-      return 'يدوي';
-    }
-    
-    return method;
-  };
-
-  // Normalize status to handle different status formats
-  const normalizeStatus = (status: string) => {
-    if (!status) return '';
-    
-    const normalizedStatus = status.toLowerCase();
-    
-    if (normalizedStatus.includes('paid') || normalizedStatus.includes('مدفوع')) {
-      return 'مدفوع';
-    } else if (normalizedStatus.includes('pending') || normalizedStatus.includes('قيد الانتظار')) {
-      return 'قيد الانتظار';
-    } else if (normalizedStatus.includes('failed') || normalizedStatus.includes('فشل')) {
-      return 'فشل';
-    } else if (normalizedStatus.includes('refunded') || normalizedStatus.includes('مسترجع')) {
-      return 'مسترجع';
-    }
-    
-    return status;
-  };
-
   return (
     <div className="overflow-x-auto">
       <Table>
@@ -89,7 +37,9 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({
         <TableBody>
           {transactions.map((transaction) => {
             const user = users[transaction.user_id] || {};
-            const normalizedStatus = normalizeStatus(transaction.status);
+            const normalizedStatus = normalizePaymentStatus(transaction.status);
+            const normalizedPlanName = normalizePlanName(transaction.plan_name);
+            const normalizedPaymentMethod = normalizePaymentMethod(transaction.payment_method);
             
             return (
               <TableRow key={transaction.id}>
@@ -97,8 +47,8 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({
                   {user.email || 'غير مسجل'}
                 </TableCell>
                 <TableCell>{transaction.invoice_id}</TableCell>
-                <TableCell>{getPlanLabel(transaction.plan_name)}</TableCell>
-                <TableCell>{getPaymentMethodLabel(transaction.payment_method)}</TableCell>
+                <TableCell>{normalizedPlanName}</TableCell>
+                <TableCell>{normalizedPaymentMethod}</TableCell>
                 <TableCell>{transaction.amount}</TableCell>
                 <TableCell>
                   {transaction.created_at && format(new Date(transaction.created_at), 'yyyy/MM/dd')}

@@ -67,7 +67,7 @@ export const findPendingInvoiceByUserPlan = async (
       .select('*')
       .eq('user_id', userId)
       .eq('plan_name', plan)
-      .in('status', ['Pending', 'قيد الانتظار', 'pending']);
+      .or(`status.eq.Pending,status.eq.قيد الانتظار,status.eq.pending`);
       
     if (userInvoicesError) {
       console.error("Error finding user invoices:", userInvoicesError);
@@ -117,10 +117,14 @@ export const createPayPalInvoiceRecord = async (
     
     // تحديد المبلغ بناءً على نوع الخطة
     let amount = 0;
-    if (plan === 'premium') {
-      // استخدام السعر من إعدادات التسعير، أو استخدام قيمة افتراضية
+    let planName = plan;
+    
+    // Normalize the plan name to database format
+    if (plan.toLowerCase().includes('مميز') || plan.toLowerCase() === 'premium') {
+      planName = 'premium';
       amount = pricingSettings?.premium_plan_price || 49;
-    } else if (plan === 'pro') {
+    } else if (plan.toLowerCase().includes('احترافي') || plan.toLowerCase() === 'pro') {
+      planName = 'pro';
       amount = pricingSettings?.pro_plan_price || 99;
     }
     
@@ -130,7 +134,7 @@ export const createPayPalInvoiceRecord = async (
       .insert({
         invoice_id: txnId,
         user_id: userId,
-        plan_name: plan,
+        plan_name: planName,
         status: 'مدفوع', // Set directly to paid since we're on success page
         payment_method: 'paypal',
         amount: amount
@@ -164,7 +168,7 @@ export const updateAllPendingInvoices = async (userId: string, plan: string): Pr
       .update({ status: 'مدفوع' })
       .eq('user_id', userId)
       .eq('plan_name', plan)
-      .in('status', ['Pending', 'قيد الانتظار', 'pending']);
+      .or(`status.eq.Pending,status.eq.قيد الانتظار,status.eq.pending`);
       
     if (updateAllInvoicesError) {
       console.error("Error updating related invoices:", updateAllInvoicesError);

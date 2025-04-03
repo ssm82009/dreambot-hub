@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { formatCurrency } from '@/utils/currency';
 import { formatDate } from '@/lib/utils';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { normalizePaymentStatus, normalizePlanName, normalizePaymentMethod } from '@/utils/payment/statusNormalizer';
 
 interface Payment {
   id: string;
@@ -24,7 +25,7 @@ interface ProfilePaymentsProps {
 const ProfilePayments: React.FC<ProfilePaymentsProps> = ({ payments }) => {
   const [refreshedPayments, setRefreshedPayments] = useState<Payment[]>(payments);
 
-  // Automatically refresh payment data when component mounts
+  // Automatically refresh payment data when component mounts or payments prop changes
   useEffect(() => {
     setRefreshedPayments(payments);
     
@@ -33,56 +34,20 @@ const ProfilePayments: React.FC<ProfilePaymentsProps> = ({ payments }) => {
   }, [payments]);
 
   const getStatusBadge = (status: string) => {
-    // تحسين عرض حالة الدفع مع مراعاة حالات الأحرف واللغة
-    const normalizedStatus = status?.toLowerCase()?.trim();
+    // Use our utility function for normalization
+    const normalizedStatus = normalizePaymentStatus(status);
     
     switch (normalizedStatus) {
-      case 'paid':
       case 'مدفوع':
         return <Badge variant="default">مدفوع</Badge>;
-      case 'pending':
       case 'قيد الانتظار':
         return <Badge variant="secondary">قيد الانتظار</Badge>;
-      case 'failed':
       case 'فشل':
         return <Badge variant="destructive">فشل</Badge>;
+      case 'مسترجع':
+        return <Badge variant="outline">مسترجع</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
-    }
-  };
-  
-  const getPlanTranslation = (planName: string) => {
-    if (!planName) return 'غير محدد';
-    
-    switch (planName.toLowerCase()) {
-      case 'premium':
-      case 'المميز':
-      case 'مميز':
-        return 'الباقة المميزة';
-      case 'pro':
-      case 'الاحترافي':
-      case 'احترافي':
-        return 'الباقة الاحترافية';
-      case 'free':
-      case 'مجاني':
-        return 'الباقة المجانية';
-      default:
-        return planName;
-    }
-  };
-  
-  const getPaymentMethodTranslation = (method: string) => {
-    if (!method) return 'غير محدد';
-    
-    switch (method.toLowerCase()) {
-      case 'paylink':
-      case 'باي لينك':
-        return 'باي لينك';
-      case 'paypal':
-      case 'باي بال':
-        return 'باي بال';
-      default:
-        return method;
     }
   };
   
@@ -130,9 +95,9 @@ const ProfilePayments: React.FC<ProfilePaymentsProps> = ({ payments }) => {
                 <TableRow key={payment.id}>
                   <TableCell>{formatDate(payment.created_at)}</TableCell>
                   <TableCell>{payment.invoice_id}</TableCell>
-                  <TableCell>{getPlanTranslation(payment.plan_name)}</TableCell>
+                  <TableCell>{normalizePlanName(payment.plan_name)}</TableCell>
                   <TableCell>{formatCurrency(payment.amount)}</TableCell>
-                  <TableCell>{getPaymentMethodTranslation(payment.payment_method)}</TableCell>
+                  <TableCell>{normalizePaymentMethod(payment.payment_method)}</TableCell>
                   <TableCell>{getStatusBadge(payment.status)}</TableCell>
                 </TableRow>
               ))}
