@@ -10,7 +10,8 @@ import {
   Palette, 
   DollarSign,
   TicketCheck,
-  LayoutList
+  LayoutList,
+  Receipt
 } from 'lucide-react';
 import { useAdmin } from '@/contexts/admin';
 import { toast } from 'sonner';
@@ -23,6 +24,7 @@ import PageManagement from '@/components/admin/PageManagement';
 import TicketManagement from '@/components/admin/TicketManagement';
 import ThemeSettingsForm from '@/components/admin/ThemeSettingsForm';
 import NavbarManagement from '@/components/admin/NavbarManagement';
+import TransactionManagementSection from '@/components/admin/TransactionManagementSection';
 import { 
   useAiSettingsHandler, 
   useInterpretationSettingsHandler, 
@@ -184,6 +186,8 @@ const AdminSections: React.FC = () => {
           onSubmit={handlePaymentSettingsSubmit}
         />
       </AdminSection>
+      
+      <TransactionManagementSection />
       
       <AdminSection 
         title="إدارة الأعضاء والصلاحيات" 

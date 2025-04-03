@@ -70,5 +70,6 @@ export const initialActiveSections = {
   pageManagement: false,
   navbarManagement: false,
   ticketManagement: false,
+  transactionManagement: false,
   themeSettings: false
 };
