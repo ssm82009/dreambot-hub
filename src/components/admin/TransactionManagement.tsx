@@ -6,6 +6,7 @@ import TransactionSearch from './transaction/TransactionSearch';
 import TransactionsTable from './transaction/TransactionsTable';
 import TransactionStateDisplay from './transaction/TransactionStateDisplay';
 import TransactionEditForm from './transaction/TransactionEditForm';
+import TransactionPagination from './transaction/TransactionPagination';
 
 const TransactionManagement: React.FC = () => {
   const {
@@ -15,6 +16,7 @@ const TransactionManagement: React.FC = () => {
     searchTerm,
     editingTransaction,
     isEmpty,
+    pagination,
     handleSearch,
     handleEditClick,
     handleEditClose,
@@ -39,11 +41,22 @@ const TransactionManagement: React.FC = () => {
         />
         
         {!loading && !isEmpty && (
-          <TransactionsTable 
-            transactions={transactions} 
-            users={users} 
-            onEditClick={handleEditClick} 
-          />
+          <>
+            <TransactionsTable 
+              transactions={transactions} 
+              users={users} 
+              onEditClick={handleEditClick} 
+            />
+            <div className="mt-4">
+              <TransactionPagination 
+                currentPage={pagination.currentPage}
+                totalPages={pagination.totalPages}
+                onPageChange={pagination.goToPage}
+                onNextPage={pagination.nextPage}
+                onPreviousPage={pagination.previousPage}
+              />
+            </div>
+          </>
         )}
         
         {editingTransaction && (

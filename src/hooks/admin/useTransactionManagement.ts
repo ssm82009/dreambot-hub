@@ -10,6 +10,11 @@ export const useTransactionManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [editingTransaction, setEditingTransaction] = useState<any | null>(null);
   
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const rowsPerPage = 10;
+  
   const fetchTransactions = async () => {
     setLoading(true);
     try {
@@ -55,6 +60,7 @@ export const useTransactionManagement = () => {
   
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
+    setCurrentPage(1); // Reset to first page when searching
   };
   
   const handleEditClick = (transaction: any) => {
@@ -83,12 +89,53 @@ export const useTransactionManagement = () => {
     );
   });
 
+  // Calculate pagination
+  useEffect(() => {
+    setTotalPages(Math.max(1, Math.ceil(filteredTransactions.length / rowsPerPage)));
+    if (currentPage > Math.ceil(filteredTransactions.length / rowsPerPage)) {
+      setCurrentPage(1);
+    }
+  }, [filteredTransactions, rowsPerPage]);
+
+  // Get current page transactions
+  const currentTransactions = filteredTransactions.slice(
+    (currentPage - 1) * rowsPerPage,
+    currentPage * rowsPerPage
+  );
+
+  // Pagination controls
+  const goToPage = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
+
+  const nextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(prev => prev + 1);
+    }
+  };
+
+  const previousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(prev => prev - 1);
+    }
+  };
+
   return {
-    transactions: filteredTransactions,
+    transactions: currentTransactions,
+    allTransactions: filteredTransactions,
     users,
     loading,
     searchTerm,
     editingTransaction,
+    pagination: {
+      currentPage,
+      totalPages,
+      goToPage,
+      nextPage,
+      previousPage
+    },
     handleSearch,
     handleEditClick,
     handleEditClose,
