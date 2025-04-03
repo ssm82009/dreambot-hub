@@ -1,74 +1,70 @@
-
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
-  NavigationMenu,
-  NavigationMenuContent,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-  NavigationMenuTrigger,
-} from "@/components/ui/navigation-menu";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { User, LogOut, LayoutDashboard, TicketCheck } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { useUserDisplayName } from '@/hooks/useUserDisplayName';
 
-interface UserMenuProps {
+const UserMenu: React.FC<{
   userEmail: string;
   isAdmin: boolean;
   handleLogout: () => void;
-}
-
-const UserMenu: React.FC<UserMenuProps> = ({ userEmail, isAdmin, handleLogout }) => {
-  // Get initials for avatar
-  const getInitials = () => {
-    if (!userEmail) return 'U';
-    return userEmail.substring(0, 2).toUpperCase();
-  };
+}> = ({ userEmail, isAdmin, handleLogout }) => {
+  const displayName = useUserDisplayName(userEmail);
 
   return (
-    <NavigationMenu dir="rtl">
-      <NavigationMenuList>
-        <NavigationMenuItem>
-          <NavigationMenuTrigger className="gap-1 px-0">
-            <Avatar className="h-8 w-8">
-              <AvatarFallback>{getInitials()}</AvatarFallback>
-            </Avatar>
-          </NavigationMenuTrigger>
-          <NavigationMenuContent>
-            <div className="w-56 p-2">
-              <div className="mb-2 px-2 py-1.5 text-sm font-medium">
-                {userEmail}
-              </div>
-              <NavigationMenuLink asChild>
-                <Link
-                  to="/profile"
-                  className="block px-2 py-1.5 text-sm rounded-sm hover:bg-accent"
-                >
-                  الملف الشخصي
-                </Link>
-              </NavigationMenuLink>
-              {isAdmin && (
-                <NavigationMenuLink asChild>
-                  <Link
-                    to="/admin"
-                    className="block px-2 py-1.5 text-sm rounded-sm hover:bg-accent"
-                  >
-                    لوحة التحكم
-                  </Link>
-                </NavigationMenuLink>
-              )}
-              <div className="mt-2 border-t pt-1.5">
-                <button
-                  onClick={handleLogout}
-                  className="block w-full text-right px-2 py-1.5 text-sm text-destructive rounded-sm hover:bg-accent"
-                >
-                  تسجيل الخروج
-                </button>
-              </div>
-            </div>
-          </NavigationMenuContent>
-        </NavigationMenuItem>
-      </NavigationMenuList>
-    </NavigationMenu>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+          <Avatar className="h-8 w-8">
+            <AvatarImage src="/images/avatars/01.png" alt={displayName} />
+            <AvatarFallback>{displayName?.charAt(0).toUpperCase() || '?'}</AvatarFallback>
+          </Avatar>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-56">
+        <DropdownMenuLabel className="font-normal">
+          <div className="flex flex-col space-y-1">
+            <p className="text-sm font-medium leading-none">{displayName}</p>
+            <p className="text-xs leading-none text-muted-foreground">
+              {userEmail}
+            </p>
+          </div>
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem asChild>
+          <a href="/profile">
+            <User className="ml-2 h-4 w-4" />
+            <span>الملف الشخصي</span>
+          </a>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <a href="/tickets">
+            <TicketCheck className="ml-2 h-4 w-4" />
+            <span>التذاكر والدعم</span>
+          </a>
+        </DropdownMenuItem>
+        {isAdmin && (
+          <DropdownMenuItem asChild>
+            <a href="/admin">
+              <LayoutDashboard className="ml-2 h-4 w-4" />
+              <span>لوحة التحكم</span>
+            </a>
+          </DropdownMenuItem>
+        )}
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={handleLogout}>
+          <LogOut className="ml-2 h-4 w-4" />
+          <span>تسجيل الخروج</span>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 };
 

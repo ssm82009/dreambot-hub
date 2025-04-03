@@ -1,4 +1,3 @@
-
 import React from 'react';
 import AdminSection from '@/components/admin/AdminSection';
 import { 
@@ -8,7 +7,8 @@ import {
   Users, 
   FileText, 
   Palette, 
-  DollarSign
+  DollarSign,
+  TicketCheck
 } from 'lucide-react';
 import { useAdmin } from '@/contexts/admin';
 import { toast } from 'sonner';
@@ -18,6 +18,7 @@ import PricingSettingsForm from '@/components/admin/PricingSettingsForm';
 import PaymentSettingsForm from '@/components/admin/PaymentSettingsForm';
 import UserManagement from '@/components/admin/UserManagement';
 import PageManagement from '@/components/admin/PageManagement';
+import TicketManagement from '@/components/admin/TicketManagement';
 import ThemeSettingsForm from '@/components/admin/ThemeSettingsForm';
 import { 
   useAiSettingsHandler, 
@@ -50,12 +51,10 @@ const AdminSections: React.FC = () => {
   const { handlePaymentSettingsSubmit } = usePaymentSettingsHandler();
   const { handleThemeSettingsSubmit } = useThemeSettingsHandler();
 
-  // Handler for saving or updating a page
   const handlePageSave = async (page: Partial<CustomPage>) => {
     setDbLoading(true);
     try {
       if (page.id) {
-        // Update existing page
         const { error } = await supabase
           .from('custom_pages')
           .update({
@@ -69,11 +68,9 @@ const AdminSections: React.FC = () => {
         
         if (error) throw error;
         
-        // Update local state
         setPages(prev => prev.map(p => p.id === page.id ? { ...p, ...page } : p));
         toast.success('تم تحديث الصفحة بنجاح');
       } else {
-        // Create new page
         const { data, error } = await supabase
           .from('custom_pages')
           .insert({
@@ -87,7 +84,6 @@ const AdminSections: React.FC = () => {
         
         if (error) throw error;
         
-        // Add to local state
         setPages(prev => [...prev, data as CustomPage]);
         toast.success('تم إنشاء الصفحة بنجاح');
       }
@@ -99,7 +95,6 @@ const AdminSections: React.FC = () => {
     }
   };
 
-  // Handler for deleting a page
   const handlePageDelete = async (id: string) => {
     setDbLoading(true);
     try {
@@ -110,7 +105,6 @@ const AdminSections: React.FC = () => {
       
       if (error) throw error;
       
-      // Remove from local state
       setPages(prev => prev.filter(p => p.id !== id));
       toast.success('تم حذف الصفحة بنجاح');
     } catch (error) {
@@ -121,7 +115,6 @@ const AdminSections: React.FC = () => {
     }
   };
 
-  // For AI Models dropdown - fixing the type error by ensuring availability is 'free' | 'paid'
   const togetherModels = [
     { id: 'meta-llama/Llama-3-70b-chat-hf', name: 'Llama 3 70B Chat', description: 'أقوى نموذج مفتوح المصدر للمحادثة', availability: 'paid' as const },
     { id: 'meta-llama/Llama-3-8b-chat-hf', name: 'Llama 3 8B Chat', description: 'نموذج متوسط الحجم مثالي للتطبيقات العامة', availability: 'free' as const },
@@ -212,6 +205,16 @@ const AdminSections: React.FC = () => {
           onPageDelete={handlePageDelete}
           isLoading={false}
         />
+      </AdminSection>
+      
+      <AdminSection 
+        title="إدارة التذاكر" 
+        description="إدارة تذاكر الدعم الفني والشكاوى"
+        icon={TicketCheck}
+        isOpen={activeSections.ticketManagement}
+        onToggle={() => toggleSection('ticketManagement')}
+      >
+        <TicketManagement />
       </AdminSection>
       
       <AdminSection 

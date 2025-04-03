@@ -1,4 +1,3 @@
-
 import { 
   AiSettingsFormValues, 
   InterpretationSettingsFormValues, 
@@ -69,12 +68,13 @@ export const initialThemeSettings: ThemeSettingsFormValues = {
   }
 };
 
-export const initialActiveSections: Record<string, boolean> = {
+export const initialActiveSections = {
   aiSettings: false,
   interpretationSettings: false,
   pricingSettings: false,
   paymentSettings: false,
-  userManagement: true,
+  userManagement: false,
   pageManagement: false,
   themeSettings: false,
+  ticketManagement: false
 };
