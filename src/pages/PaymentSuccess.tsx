@@ -46,78 +46,82 @@ const PaymentSuccess = () => {
               }
             }
             
-            // Fetch the payment record to display - first try with transaction identifier
-            let paymentRecord = null;
-            let paymentError = null;
-            
+            // الطريقة 1: البحث باستخدام معرف المعاملة
             if (transactionIdentifier) {
+              console.log("Looking for payment with transaction ID:", transactionIdentifier);
+              
               const { data: invoiceData, error: invoiceError } = await supabase
                 .from('payment_invoices')
                 .select('*')
                 .eq('invoice_id', transactionIdentifier)
-                .single();
-                
-              if (!invoiceError && invoiceData) {
-                paymentRecord = invoiceData;
-                paymentError = null;
-              } else {
-                console.log("No invoice found with transaction ID, looking for user's recent invoices");
-                
-                // If not found by transaction ID, try getting the most recent invoice for this user
-                const { data: userInvoices, error: userInvoicesError } = await supabase
-                  .from('payment_invoices')
-                  .select('*')
-                  .eq('user_id', session.user.id)
-                  .order('created_at', { ascending: false })
-                  .limit(1);
-                
-                if (!userInvoicesError && userInvoices && userInvoices.length > 0) {
-                  paymentRecord = userInvoices[0];
-                  paymentError = null;
-                } else {
-                  paymentError = userInvoicesError || new Error("No payment records found");
-                }
-              }
-            } else {
-              // If no transaction identifier, just get the user's most recent invoice
-              const { data: userInvoices, error: userInvoicesError } = await supabase
-                .from('payment_invoices')
-                .select('*')
-                .eq('user_id', session.user.id)
                 .order('created_at', { ascending: false })
                 .limit(1);
-              
-              if (!userInvoicesError && userInvoices && userInvoices.length > 0) {
-                paymentRecord = userInvoices[0];
-                paymentError = null;
+                
+              if (!invoiceError && invoiceData && invoiceData.length > 0) {
+                const paymentRecord = invoiceData[0];
+                console.log("Found payment record by transaction ID:", paymentRecord);
+                setPaymentData(paymentRecord);
+                
+                // تحديث حالة السجل إلى "مدفوع" إذا كان معلقاً
+                if (paymentRecord.status !== 'مدفوع') {
+                  console.log("Updating payment status to paid for record:", paymentRecord.id);
+                  
+                  const { error: updateError } = await supabase
+                    .from('payment_invoices')
+                    .update({ status: 'مدفوع' })
+                    .eq('id', paymentRecord.id);
+                    
+                  if (updateError) {
+                    console.error("Error updating payment status:", updateError);
+                  } else {
+                    console.log("Successfully updated payment status to paid");
+                    setPaymentData({...paymentRecord, status: 'مدفوع'});
+                  }
+                }
+                
+                // تم العثور على بيانات الدفع، لا داعي للبحث بطرق أخرى
+                setIsChecking(false);
+                return;
               } else {
-                paymentError = userInvoicesError || new Error("No payment records found");
+                console.log("No payment found with transaction ID, trying other methods");
               }
             }
             
-            if (paymentRecord) {
+            // الطريقة 2: الحصول على آخر دفعة للمستخدم
+            console.log("Looking for user's most recent payment");
+            
+            const { data: userPayments, error: userPaymentsError } = await supabase
+              .from('payment_invoices')
+              .select('*')
+              .eq('user_id', session.user.id)
+              .order('created_at', { ascending: false })
+              .limit(1);
+              
+            if (!userPaymentsError && userPayments && userPayments.length > 0) {
+              const paymentRecord = userPayments[0];
+              console.log("Found user's most recent payment:", paymentRecord);
               setPaymentData(paymentRecord);
               
-              // If payment is still pending despite being on success page, update it
-              if (paymentRecord.status === 'Pending' || 
-                  paymentRecord.status === 'قيد الانتظار' || 
-                  paymentRecord.status === 'pending') {
-                console.log("Found pending payment record. Updating to paid:", paymentRecord);
+              // تحديث حالة السجل إلى "مدفوع" إذا كان معلقاً
+              if (paymentRecord.status !== 'مدفوع') {
+                console.log("Updating payment status to paid for record:", paymentRecord.id);
                 
                 const { error: updateError } = await supabase
                   .from('payment_invoices')
                   .update({ status: 'مدفوع' })
                   .eq('id', paymentRecord.id);
                   
-                if (!updateError) {
-                  console.log("Updated payment status to 'مدفوع'");
-                  setPaymentData({...paymentRecord, status: 'مدفوع'});
-                } else {
+                if (updateError) {
                   console.error("Error updating payment status:", updateError);
+                } else {
+                  console.log("Successfully updated payment status to paid");
+                  setPaymentData({...paymentRecord, status: 'مدفوع'});
                 }
               }
-            } else if (paymentError) {
-              console.error("Error fetching payment data:", paymentError);
+            } else if (userPaymentsError) {
+              console.error("Error fetching user payments:", userPaymentsError);
+            } else {
+              console.log("No payments found for user");
             }
           }
         } catch (error) {

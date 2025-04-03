@@ -9,13 +9,14 @@ import { supabase } from '@/integrations/supabase/client';
 export const getSubscriptionName = async (subscriptionType: string | null, pricingSettings?: any): Promise<string> => {
   if (!subscriptionType) return 'الباقة المجانية';
   
+  // تطبيع نوع الاشتراك للمقارنة
   const type = subscriptionType.toLowerCase();
   
   // If pricing settings are provided, use them
   if (pricingSettings) {
-    if (type === 'premium' || type === 'المميز' || type === 'مميز') {
+    if (type.includes('premium') || type.includes('مميز')) {
       return pricingSettings.premium_plan_name || 'الباقة المميزة';
-    } else if (type === 'pro' || type === 'الاحترافي' || type === 'احترافي') {
+    } else if (type.includes('pro') || type.includes('احترافي')) {
       return pricingSettings.pro_plan_name || 'الباقة الاحترافية';
     } else {
       return pricingSettings.free_plan_name || 'الباقة المجانية';
@@ -33,9 +34,9 @@ export const getSubscriptionName = async (subscriptionType: string | null, prici
     if (error) throw error;
     
     if (settings) {
-      if (type === 'premium' || type === 'المميز' || type === 'مميز') {
+      if (type.includes('premium') || type.includes('مميز')) {
         return settings.premium_plan_name || 'الباقة المميزة';
-      } else if (type === 'pro' || type === 'الاحترافي' || type === 'احترافي') {
+      } else if (type.includes('pro') || type.includes('احترافي')) {
         return settings.pro_plan_name || 'الباقة الاحترافية';
       } else {
         return settings.free_plan_name || 'الباقة المجانية';
@@ -46,17 +47,12 @@ export const getSubscriptionName = async (subscriptionType: string | null, prici
   }
   
   // Default fallback names if everything else fails
-  switch (type) {
-    case 'premium':
-    case 'المميز':
-    case 'مميز':
-      return 'الباقة المميزة';
-    case 'pro':
-    case 'الاحترافي':
-    case 'احترافي':
-      return 'الباقة الاحترافية';
-    default:
-      return 'الباقة المجانية';
+  if (type.includes('premium') || type.includes('مميز')) {
+    return 'الباقة المميزة';
+  } else if (type.includes('pro') || type.includes('احترافي')) {
+    return 'الباقة الاحترافية';
+  } else {
+    return 'الباقة المجانية';
   }
 };
 

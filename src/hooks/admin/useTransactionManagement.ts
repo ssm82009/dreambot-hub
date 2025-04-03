@@ -25,6 +25,8 @@ export const useTransactionManagement = () => {
       
       if (error) throw error;
       
+      console.log("Fetched transactions:", transactionsData?.length || 0);
+      
       // الحصول على قائمة معرفات المستخدمين الفريدة
       const userIds = [...new Set(transactionsData?.map(t => t.user_id).filter(Boolean))];
       
@@ -36,6 +38,8 @@ export const useTransactionManagement = () => {
         
         if (usersError) throw usersError;
         
+        console.log("Fetched users:", usersData?.length || 0);
+        
         // تحويل بيانات المستخدمين إلى كائن للوصول السريع
         const usersMap = (usersData || []).reduce((acc, user) => ({
           ...acc,
@@ -45,7 +49,35 @@ export const useTransactionManagement = () => {
         setUsers(usersMap);
       }
       
-      setTransactions(transactionsData || []);
+      // إذا تم استرجاع البيانات بنجاح، قم بتسجيلها
+      if (transactionsData && transactionsData.length > 0) {
+        // التحقق من حالات الدفع وتنسيقها
+        const formattedTransactions = transactionsData.map(transaction => {
+          // تطبيع حالة الدفع
+          let status = transaction.status || '';
+          if (typeof status === 'string') {
+            const normalizedStatus = status.toLowerCase();
+            if (normalizedStatus.includes('paid') || normalizedStatus.includes('مدفوع')) {
+              status = 'مدفوع';
+            } else if (normalizedStatus.includes('pending') || normalizedStatus.includes('قيد الانتظار')) {
+              status = 'قيد الانتظار';
+            } else if (normalizedStatus.includes('failed') || normalizedStatus.includes('فشل')) {
+              status = 'فشل';
+            } else if (normalizedStatus.includes('refunded') || normalizedStatus.includes('مسترجع')) {
+              status = 'مسترجع';
+            }
+          }
+          
+          return {
+            ...transaction,
+            status
+          };
+        });
+        
+        setTransactions(formattedTransactions);
+      } else {
+        setTransactions([]);
+      }
     } catch (error) {
       console.error('Error fetching transactions:', error);
       toast.error('حدث خطأ أثناء تحميل بيانات المعاملات');
@@ -75,18 +107,58 @@ export const useTransactionManagement = () => {
     fetchTransactions();
   };
   
+  // تحسين وظيفة البحث لتكون أكثر شمولية
   const filteredTransactions = transactions.filter((transaction) => {
     const user = users[transaction.user_id] || {};
-    const searchString = searchTerm.toLowerCase();
+    const searchString = searchTerm.toLowerCase().trim();
     
-    return (
-      user.email?.toLowerCase().includes(searchString) ||
-      user.full_name?.toLowerCase().includes(searchString) ||
-      transaction.invoice_id?.toLowerCase().includes(searchString) ||
-      transaction.plan_name?.toLowerCase().includes(searchString) ||
-      transaction.payment_method?.toLowerCase().includes(searchString) ||
-      transaction.status?.toLowerCase().includes(searchString)
-    );
+    // إذا كان مصطلح البحث فارغًا، أعرض جميع المعاملات
+    if (!searchString) return true;
+    
+    // بحث في بريد المستخدم
+    const userEmail = (user.email || '').toLowerCase();
+    if (userEmail.includes(searchString)) return true;
+    
+    // بحث في اسم المستخدم
+    const userName = (user.full_name || '').toLowerCase();
+    if (userName.includes(searchString)) return true;
+    
+    // بحث في رقم الفاتورة
+    const invoiceId = (transaction.invoice_id || '').toLowerCase();
+    if (invoiceId.includes(searchString)) return true;
+    
+    // بحث في نوع الخطة
+    const planName = (transaction.plan_name || '').toLowerCase();
+    if (planName.includes(searchString)) return true;
+    
+    // بحث في أسماء الخطط المترجمة
+    if ('مميز'.includes(searchString) && (planName.includes('premium') || planName.includes('مميز'))) return true;
+    if ('احترافي'.includes(searchString) && (planName.includes('pro') || planName.includes('احترافي'))) return true;
+    if ('مجاني'.includes(searchString) && (planName.includes('free') || planName.includes('مجاني'))) return true;
+    
+    // بحث في طريقة الدفع
+    const paymentMethod = (transaction.payment_method || '').toLowerCase();
+    if (paymentMethod.includes(searchString)) return true;
+    
+    // بحث في أسماء طرق الدفع المترجمة
+    if ('باي بال'.includes(searchString) && paymentMethod.includes('paypal')) return true;
+    if ('باي لينك'.includes(searchString) && paymentMethod.includes('paylink')) return true;
+    
+    // بحث في الحالة
+    const status = (transaction.status || '').toLowerCase();
+    if (status.includes(searchString)) return true;
+    
+    // بحث في حالات الدفع المترجمة
+    if ('مدفوع'.includes(searchString) && (status.includes('paid') || status.includes('مدفوع'))) return true;
+    if ('قيد الانتظار'.includes(searchString) && (status.includes('pending') || status.includes('قيد الانتظار'))) return true;
+    if ('فشل'.includes(searchString) && (status.includes('failed') || status.includes('فشل'))) return true;
+    if ('مسترجع'.includes(searchString) && (status.includes('refunded') || status.includes('مسترجع'))) return true;
+    
+    // بحث في المبلغ
+    const amount = String(transaction.amount || '');
+    if (amount.includes(searchString)) return true;
+    
+    return false;
   });
 
   // Calculate pagination

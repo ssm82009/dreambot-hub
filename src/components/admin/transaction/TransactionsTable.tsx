@@ -18,35 +18,55 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({
   onEditClick 
 }) => {
   const getPlanLabel = (planName: string) => {
-    switch (planName?.toLowerCase()) {
-      case 'premium': return 'مميز';
-      case 'pro': return 'احترافي';
-      case 'free': return 'مجاني';
-      default: return planName;
+    if (!planName) return '';
+    
+    // تحويل اسم الخطة إلى حروف صغيرة للمقارنة
+    const normalizedPlan = planName.toLowerCase();
+    
+    if (normalizedPlan.includes('premium') || normalizedPlan.includes('مميز')) {
+      return 'المميزة';
+    } else if (normalizedPlan.includes('pro') || normalizedPlan.includes('احترافي')) {
+      return 'الاحترافية';
+    } else if (normalizedPlan.includes('free') || normalizedPlan.includes('مجاني')) {
+      return 'المجانية';
     }
+    
+    // إذا لم يتم العثور على تطابق، أعد النص الأصلي
+    return planName;
   };
   
   const getPaymentMethodLabel = (method: string) => {
-    switch (method?.toLowerCase()) {
-      case 'paylink': return 'باي لينك';
-      case 'paypal': return 'باي بال';
-      case 'manual': return 'يدوي';
-      default: return method;
+    if (!method) return '';
+    
+    const normalizedMethod = method.toLowerCase();
+    
+    if (normalizedMethod.includes('paylink')) {
+      return 'باي لينك';
+    } else if (normalizedMethod.includes('paypal')) {
+      return 'باي بال';
+    } else if (normalizedMethod.includes('manual')) {
+      return 'يدوي';
     }
+    
+    return method;
   };
 
   // Normalize status to handle different status formats
   const normalizeStatus = (status: string) => {
-    const normalizedStatus = status?.toLowerCase();
-    if (normalizedStatus === 'paid' || normalizedStatus === 'مدفوع') {
+    if (!status) return '';
+    
+    const normalizedStatus = status.toLowerCase();
+    
+    if (normalizedStatus.includes('paid') || normalizedStatus.includes('مدفوع')) {
       return 'مدفوع';
-    } else if (normalizedStatus === 'pending' || normalizedStatus === 'قيد الانتظار') {
+    } else if (normalizedStatus.includes('pending') || normalizedStatus.includes('قيد الانتظار')) {
       return 'قيد الانتظار';
-    } else if (normalizedStatus === 'failed' || normalizedStatus === 'فشل') {
+    } else if (normalizedStatus.includes('failed') || normalizedStatus.includes('فشل')) {
       return 'فشل';
-    } else if (normalizedStatus === 'refunded' || normalizedStatus === 'مسترجع') {
+    } else if (normalizedStatus.includes('refunded') || normalizedStatus.includes('مسترجع')) {
       return 'مسترجع';
     }
+    
     return status;
   };
 

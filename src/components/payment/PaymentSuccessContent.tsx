@@ -52,6 +52,21 @@ const PaymentSuccessContent = ({
     status: 'مدفوع' // Always show as paid on success page
   } : null;
   
+  // تحسين عرض اسم الباقة
+  const getPlanDisplay = (planName: string) => {
+    if (!planName) return '';
+    
+    const normalizedPlan = planName.toLowerCase();
+    
+    if (normalizedPlan.includes('premium') || normalizedPlan.includes('مميز')) {
+      return 'المميزة';
+    } else if (normalizedPlan.includes('pro') || normalizedPlan.includes('احترافي')) {
+      return 'الاحترافية';
+    } else {
+      return planName;
+    }
+  };
+  
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-md">
       <div className="bg-white p-8 rounded-lg shadow-lg border-2 border-green-500 text-center">
@@ -80,8 +95,7 @@ const PaymentSuccessContent = ({
                   </div>
                   <div className="flex justify-between my-1">
                     <span className="font-medium">الباقة:</span>
-                    <span>{displayPaymentData.plan_name === 'premium' ? 'المميزة' : 
-                           displayPaymentData.plan_name === 'pro' ? 'الاحترافية' : displayPaymentData.plan_name}</span>
+                    <span>{getPlanDisplay(displayPaymentData.plan_name)}</span>
                   </div>
                   <div className="flex justify-between my-1">
                     <span className="font-medium">المبلغ:</span>
