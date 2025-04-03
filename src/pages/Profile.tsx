@@ -12,11 +12,13 @@ import ProfileDreams from '@/components/profile/ProfileDreams';
 import ProfileSettings from '@/components/profile/ProfileSettings';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/components/ui/use-toast';
 
 const Profile = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
   const [userData, setUserData] = useState<any>(null);
+  const [payments, setPayments] = useState<any[]>([]);
   
   useEffect(() => {
     const checkAuth = async () => {
@@ -35,13 +37,31 @@ const Profile = () => {
         // Fetch user data from the users table
         const { data: userData, error: userError } = await supabase
           .from('users')
-          .select('*, payment_invoices(*)')
+          .select('*')
           .eq('id', session.user.id)
           .single();
         
         if (userError) {
           console.error('Error fetching user data:', userError);
+          toast({
+            title: "خطأ في تحميل البيانات",
+            description: "حدث خطأ أثناء تحميل بيانات المستخدم، يرجى المحاولة مرة أخرى.",
+            variant: "destructive"
+          });
           throw userError;
+        }
+        
+        // Fetch payment invoices separately
+        const { data: paymentData, error: paymentError } = await supabase
+          .from('payment_invoices')
+          .select('*')
+          .eq('user_id', session.user.id);
+          
+        if (paymentError) {
+          console.error('Error fetching payment data:', paymentError);
+          // Continue without payment data
+        } else {
+          setPayments(paymentData || []);
         }
         
         // Fetch user dreams count
@@ -62,6 +82,11 @@ const Profile = () => {
         });
       } catch (error) {
         console.error('Error in profile data loading:', error);
+        toast({
+          title: "خطأ في تحميل البيانات",
+          description: "حدث خطأ أثناء تحميل البيانات، يرجى المحاولة مرة أخرى.",
+          variant: "destructive"
+        });
       } finally {
         setIsLoading(false);
       }
@@ -115,7 +140,7 @@ const Profile = () => {
             </TabsContent>
             
             <TabsContent value="payments">
-              <ProfilePayments payments={userData?.payment_invoices || []} />
+              <ProfilePayments payments={payments} />
             </TabsContent>
             
             <TabsContent value="dreams">

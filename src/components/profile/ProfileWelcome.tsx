@@ -13,12 +13,25 @@ interface ProfileWelcomeProps {
 }
 
 const ProfileWelcome: React.FC<ProfileWelcomeProps> = ({ userData }) => {
+  // Add a safety check for null userData
+  if (!userData) {
+    return (
+      <Card className="bg-muted/50">
+        <CardContent className="pt-6">
+          <div className="text-center p-4">
+            <p className="text-muted-foreground">جاري تحميل بيانات الملف الشخصي...</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="bg-muted/50">
       <CardContent className="pt-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <h3 className="text-xl font-semibold mb-2">مرحباً، {userData.full_name}</h3>
+            <h3 className="text-xl font-semibold mb-2">مرحباً، {userData.full_name || 'مستخدم'}</h3>
             <p className="text-muted-foreground mb-4">{userData.email}</p>
             
             <div className="space-y-2">
