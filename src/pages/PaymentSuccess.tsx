@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
@@ -21,9 +20,11 @@ const PaymentSuccess = () => {
   const invoiceId = searchParams.get('invoice_id') || '';
   const paymentId = searchParams.get('paymentId') || '';
   const token = searchParams.get('token') || '';
+  const customId = searchParams.get('custom') || ''; // PayPal custom field (contains our invoiceId)
+  const txnId = searchParams.get('tx') || ''; // PayPal transaction ID
   
   // Get any available transaction identifier
-  const transactionIdentifier = transactionNo || orderNumber || invoiceId || token || paymentId;
+  const transactionIdentifier = transactionNo || orderNumber || invoiceId || customId || token || paymentId || txnId;
   
   useEffect(() => {
     const verifyPayment = async () => {
@@ -61,16 +62,41 @@ const PaymentSuccess = () => {
 
           // تحديث حالة الفاتورة في قاعدة البيانات للفاتورة المحددة
           if (transactionIdentifier) {
-            // تحديث حالة الفاتورة في قاعدة البيانات إلى "مدفوع"
-            const { error: updateInvoiceError } = await supabase
+            // نبحث عن الفاتورة بأي من المعرفات المحتملة
+            const { data: invoices, error: findError } = await supabase
               .from('payment_invoices')
-              .update({ status: 'Paid' })
-              .eq('invoice_id', transactionIdentifier);
+              .select('*')
+              .or(`invoice_id.eq.${transactionIdentifier},invoice_id.eq.${customId}`);
               
-            if (updateInvoiceError) {
-              console.error("Error updating invoice status:", updateInvoiceError);
+            if (findError) {
+              console.error("Error finding invoice:", findError);
+            } else if (invoices && invoices.length > 0) {
+              // تحديث حالة الفاتورة في قاعدة البيانات إلى "مدفوع"
+              const { error: updateInvoiceError } = await supabase
+                .from('payment_invoices')
+                .update({ status: 'Paid' })
+                .eq('id', invoices[0].id);
+                
+              if (updateInvoiceError) {
+                console.error("Error updating invoice status:", updateInvoiceError);
+              } else {
+                console.log("Updated invoice status to Paid for invoice:", invoices[0].invoice_id);
+              }
             } else {
-              console.log("Updated invoice status to Paid for invoice:", transactionIdentifier);
+              console.log("No matching invoice found for identifier:", transactionIdentifier);
+              
+              // إذا كانت العملية من PayPal وليس لدينا فاتورة متطابقة
+              if (txnId && plan) {
+                // إنشاء سجل جديد بناءً على معلومات PayPal
+                await supabase.from('payment_invoices').insert([{
+                  invoice_id: txnId,
+                  user_id: userId,
+                  plan_name: plan,
+                  status: 'Paid',
+                  payment_method: 'paypal'
+                }]);
+                console.log("Created new payment record from PayPal data with txnId:", txnId);
+              }
             }
           }
 
@@ -131,7 +157,7 @@ const PaymentSuccess = () => {
     };
 
     verifyPayment();
-  }, [transactionIdentifier, navigate]);
+  }, [transactionIdentifier, navigate, customId, txnId]);
 
   return (
     <div className="min-h-screen flex flex-col">

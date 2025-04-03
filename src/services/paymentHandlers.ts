@@ -1,4 +1,3 @@
-
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { createPaylinkInvoice } from '@/services/paylinkService';
@@ -108,54 +107,50 @@ export const handlePaypalPayment = async (
       ? 'https://www.sandbox.paypal.com' 
       : 'https://www.paypal.com';
     
-    // إنشاء URL للدفع المباشر
-    const returnUrl = `${window.location.origin}/payment-success?invoice_id=${invoiceId}`;
-    const cancelUrl = `${window.location.origin}/payment-cancel`;
+    // إنشاء رابط الدفع المباشر وفقاً لمواصفات PayPal REST API
+    const returnUrl = `${window.location.origin}/payment/success?invoice_id=${invoiceId}`;
+    const cancelUrl = `${window.location.origin}/payment/cancel`;
     
-    // إنشاء رابط الدفع باستخدام طريقة الدفع المباشر (checkout/payment)
-    const paypalPaymentUrl = new URL(`${paypalDomain}/checkoutnow`);
+    // بناء رابط PayPal وفقاً لتوثيق الواجهة البرمجية الرسمية
+    const paypalCheckoutUrl = new URL(`${paypalDomain}/cgi-bin/webscr`);
     
-    // Adding essential PayPal parameters
-    const params = {
-      token: invoiceId,
-      useraction: 'commit',
+    // إضافة المعلمات الإلزامية لـ PayPal
+    const params = new URLSearchParams({
       cmd: '_xclick',
       business: paypalClientId,
+      lc: 'US',
       item_name: `اشتراك ${plan === 'premium' ? 'مميز' : 'احترافي'}`,
+      item_number: invoiceId,
       amount: usdAmount.toString(),
       currency_code: 'USD',
+      button_subtype: 'services',
+      no_note: '1',
+      no_shipping: '1',
+      rm: '1',
       return: returnUrl,
       cancel_return: cancelUrl,
-      custom: invoiceId,
-      no_shipping: '1',
-      no_note: '1',
-      rm: '2'
-    };
+      bn: 'PP-BuyNowBF:btn_buynowCC_LG.gif:NonHosted',
+      custom: invoiceId
+    });
     
-    // Adding buyer info if available
+    // إضافة معلومات العميل إذا كانت متوفرة
     if (customerInfo.name) {
       const nameParts = customerInfo.name.split(' ');
-      params['first_name'] = nameParts[0] || '';
-      params['last_name'] = nameParts.slice(1).join(' ') || '';
+      params.append('first_name', nameParts[0] || '');
+      params.append('last_name', nameParts.slice(1).join(' ') || '');
     }
     
     if (customerInfo.email) {
-      params['email'] = customerInfo.email;
+      params.append('email', customerInfo.email);
     }
     
-    // Build the complete URL with all parameters
-    const urlParams = new URLSearchParams();
-    for (const [key, value] of Object.entries(params)) {
-      urlParams.append(key, value as string);
-    }
+    // بناء الرابط النهائي مع جميع المعلمات
+    const finalPaypalUrl = `${paypalCheckoutUrl.toString()}?${params.toString()}`;
     
-    // Alternative approach using PayPal hosted button
-    const hostedPaymentUrl = `${paypalDomain}/cgi-bin/webscr?${urlParams.toString()}`;
-    
-    console.log("توجيه المستخدم إلى رابط PayPal:", hostedPaymentUrl);
+    console.log("توجيه المستخدم إلى رابط PayPal:", finalPaypalUrl);
     
     // توجيه المستخدم إلى صفحة الدفع الخاصة بـ PayPal
-    window.location.href = hostedPaymentUrl;
+    window.location.href = finalPaypalUrl;
   } catch (error) {
     console.error("خطأ في عملية الدفع عبر PayPal:", error);
     throw new Error("فشل في بدء عملية الدفع عبر PayPal");
