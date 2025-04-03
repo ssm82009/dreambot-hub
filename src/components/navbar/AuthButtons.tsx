@@ -3,13 +3,18 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 
-const AuthButtons = () => {
+interface AuthButtonsProps {
+  isMobile?: boolean;
+  onClick?: () => void;
+}
+
+const AuthButtons: React.FC<AuthButtonsProps> = ({ isMobile, onClick }) => {
   return (
     <>
-      <Link to="/login">
+      <Link to="/login" onClick={onClick}>
         <Button variant="ghost">تسجيل الدخول</Button>
       </Link>
-      <Link to="/register">
+      <Link to="/register" onClick={onClick}>
         <Button>إنشاء حساب</Button>
       </Link>
     </>
