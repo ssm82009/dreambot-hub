@@ -102,31 +102,42 @@ export const handlePaypalPayment = async (
       throw new Error("فشل في إنشاء سجل الفاتورة");
     }
 
-    // إنشاء رابط الدفع عبر PayPal
     // تحديد البيئة (الإنتاج أو الاختبار)
     const paypalDomain = paypalSandbox 
       ? 'https://www.sandbox.paypal.com' 
       : 'https://www.paypal.com';
     
-    // إنشاء URL للدفع المباشر
+    // إنشاء URL للدفع المباشر باستخدام اسم التاجر
     const returnUrl = `${window.location.origin}/payment-success`;
     const cancelUrl = `${window.location.origin}/payment-cancel`;
     
     // إنشاء رابط الدفع مع المعلمات اللازمة
     const paypalPaymentUrl = new URL(`${paypalDomain}/cgi-bin/webscr`);
     paypalPaymentUrl.searchParams.append('cmd', '_xclick');
+    
+    // بدلاً من استخدام معرف العميل، استخدم البريد الإلكتروني المسجل
+    // يكون معرف العميل هو عنوان البريد الإلكتروني الخاص بحساب PayPal
     paypalPaymentUrl.searchParams.append('business', paypalClientId);
+    
     paypalPaymentUrl.searchParams.append('item_name', `اشتراك ${plan === 'premium' ? 'مميز' : 'احترافي'}`);
     paypalPaymentUrl.searchParams.append('amount', usdAmount.toString());
     paypalPaymentUrl.searchParams.append('currency_code', 'USD');
     paypalPaymentUrl.searchParams.append('return', returnUrl);
     paypalPaymentUrl.searchParams.append('cancel_return', cancelUrl);
+    
+    // إضافة معرف الفاتورة لتتبعها
     paypalPaymentUrl.searchParams.append('custom', data?.[0]?.invoice_id || `PP-${Date.now()}`);
+    
+    // إضافة معلومات إضافية لتجنب الرفض
+    paypalPaymentUrl.searchParams.append('no_shipping', '1'); // لا داعي لعنوان الشحن
+    paypalPaymentUrl.searchParams.append('no_note', '1'); // لا داعي لملاحظات
+    paypalPaymentUrl.searchParams.append('rm', '2'); // إرسال البيانات كمتغيرات POST
     
     // إضافة معلومات المشتري إذا كانت متوفرة
     if (customerInfo.name) {
-      paypalPaymentUrl.searchParams.append('first_name', customerInfo.name.split(' ')[0] || '');
-      paypalPaymentUrl.searchParams.append('last_name', customerInfo.name.split(' ').slice(1).join(' ') || '');
+      const nameParts = customerInfo.name.split(' ');
+      paypalPaymentUrl.searchParams.append('first_name', nameParts[0] || '');
+      paypalPaymentUrl.searchParams.append('last_name', nameParts.slice(1).join(' ') || '');
     }
     
     if (customerInfo.email) {
