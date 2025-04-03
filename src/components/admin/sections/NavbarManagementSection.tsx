@@ -1,8 +1,8 @@
 
 import React from 'react';
 import { LayoutList } from 'lucide-react';
-import AdminSection from './AdminSection';
-import NavbarManagement from './NavbarManagement';
+import AdminSection from '@/components/admin/AdminSection';
+import NavbarManagement from '@/components/admin/NavbarManagement';
 import { useAdmin } from '@/contexts/admin';
 
 const NavbarManagementSection = () => {

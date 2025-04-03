@@ -1,8 +1,8 @@
 
 import React from 'react';
 import { Receipt } from 'lucide-react';
-import AdminSection from './AdminSection';
-import TransactionManagement from './TransactionManagement';
+import AdminSection from '@/components/admin/AdminSection';
+import TransactionManagement from '@/components/admin/TransactionManagement';
 import { useAdmin } from '@/contexts/admin';
 
 const TransactionManagementSection = () => {
