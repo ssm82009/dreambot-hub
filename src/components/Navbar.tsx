@@ -2,6 +2,7 @@
 import React, { useEffect } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useLogoutHandler } from '@/hooks/settings/useLogoutHandler';
+import { useThemeSettings } from '@/hooks/useThemeSettings';
 
 import NavLogo from './navbar/NavLogo';
 import NavLinks from './navbar/NavLinks';
@@ -19,6 +20,7 @@ const Navbar = () => {
   const [userEmail, setUserEmail] = React.useState('');
   const isMobile = useIsMobile();
   const { handleLogout } = useLogoutHandler();
+  const { themeSettings } = useThemeSettings();
 
   useEffect(() => {
     // Check if user is logged in
@@ -46,12 +48,20 @@ const Navbar = () => {
     setIsMenuOpen(!isMenuOpen);
   };
 
+  // تطبيق لون الهيدر من الإعدادات
+  const headerStyle = {
+    backgroundColor: themeSettings.headerColor || 'bg-background/80',
+  };
+
   return (
-    <nav className="bg-background/80 backdrop-blur-md fixed w-full top-0 z-50 shadow-sm">
+    <nav 
+      className="backdrop-blur-md fixed w-full top-0 z-50 shadow-sm"
+      style={headerStyle}
+    >
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-row-reverse justify-between h-16 items-center">
           <div className="flex items-center">
-            <NavLogo />
+            <NavLogo logoText={themeSettings.logoText} fontSize={themeSettings.logoFontSize} />
           </div>
 
           {/* Desktop Menu */}
@@ -98,6 +108,7 @@ const Navbar = () => {
           isAdmin={isAdmin}
           onToggle={toggleMenu}
           onLogout={handleLogout}
+          headerColor={themeSettings.headerColor}
         />
       )}
     </nav>

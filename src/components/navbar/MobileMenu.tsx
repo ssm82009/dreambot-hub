@@ -1,8 +1,8 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Button } from "@/components/ui/button";
-import { LayoutDashboard, User } from "lucide-react";
+import { LogOut } from 'lucide-react';
+import AuthButtons from './AuthButtons';
 
 interface MobileMenuProps {
   isOpen: boolean;
@@ -10,63 +10,70 @@ interface MobileMenuProps {
   isAdmin: boolean;
   onToggle: () => void;
   onLogout: () => void;
+  headerColor?: string;
 }
 
-const MobileMenu: React.FC<MobileMenuProps> = ({
-  isOpen,
-  isLoggedIn,
-  isAdmin,
-  onToggle,
-  onLogout
+const MobileMenu: React.FC<MobileMenuProps> = ({ 
+  isOpen, 
+  isLoggedIn, 
+  isAdmin, 
+  onToggle, 
+  onLogout,
+  headerColor 
 }) => {
   if (!isOpen) return null;
-  
+
+  const menuStyle = {
+    backgroundColor: headerColor || 'var(--background)',
+  };
+
   return (
-    <div className="md:hidden bg-background/95 backdrop-blur-md shadow-lg p-4">
-      <div className="flex flex-col space-y-3 text-right">
-        <Link to="/" className="text-foreground/90 hover:text-primary px-3 py-2 font-medium" onClick={onToggle}>
+    <div 
+      className="md:hidden w-full border-t border-border rtl"
+      style={menuStyle}
+    >
+      <div className="p-4 space-y-3">
+        <Link to="/" className="block py-2" onClick={onToggle}>
           الرئيسية
         </Link>
-        <Link to="/about" className="text-foreground/90 hover:text-primary px-3 py-2 font-medium" onClick={onToggle}>
+        <Link to="/about" className="block py-2" onClick={onToggle}>
           عن الخدمة
         </Link>
-        <Link to="/pricing" className="text-foreground/90 hover:text-primary px-3 py-2 font-medium" onClick={onToggle}>
+        <Link to="/pricing" className="block py-2" onClick={onToggle}>
           الأسعار
         </Link>
         
         {isLoggedIn && (
-          <Link to="/profile" className="text-foreground/90 hover:text-primary px-3 py-2 font-medium flex items-center justify-end" onClick={onToggle}>
-            <User className="ml-2 h-4 w-4" />
-            الملف الشخصي
-          </Link>
-        )}
-        
-        {isAdmin && (
-          <Link to="/admin" className="text-foreground/90 hover:text-primary px-3 py-2 font-medium flex items-center justify-end" onClick={onToggle}>
-            <LayoutDashboard className="ml-2 h-4 w-4" />
-            لوحة التحكم
-          </Link>
-        )}
-        
-        <div className="flex flex-col pt-4 space-y-3">
-          {isLoggedIn ? (
-            <Button variant="outline" className="w-full" onClick={() => {
-              onLogout();
-              onToggle();
-            }}>
+          <>
+            <Link to="/profile" className="block py-2" onClick={onToggle}>
+              الملف الشخصي
+            </Link>
+            <Link to="/tickets" className="block py-2" onClick={onToggle}>
+              الدعم الفني
+            </Link>
+            {isAdmin && (
+              <Link to="/admin" className="block py-2" onClick={onToggle}>
+                لوحة التحكم
+              </Link>
+            )}
+            <button 
+              onClick={() => {
+                onLogout();
+                onToggle();
+              }} 
+              className="flex items-center py-2 text-destructive"
+            >
+              <LogOut className="ml-2 h-4 w-4" />
               تسجيل الخروج
-            </Button>
-          ) : (
-            <>
-              <Link to="/login" onClick={onToggle}>
-                <Button variant="outline" className="w-full">تسجيل الدخول</Button>
-              </Link>
-              <Link to="/register" onClick={onToggle}>
-                <Button className="w-full">إنشاء حساب</Button>
-              </Link>
-            </>
-          )}
-        </div>
+            </button>
+          </>
+        )}
+        
+        {!isLoggedIn && (
+          <div className="pt-2">
+            <AuthButtons isMobile onClick={onToggle} />
+          </div>
+        )}
       </div>
     </div>
   );
