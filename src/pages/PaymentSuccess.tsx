@@ -12,9 +12,18 @@ import { supabase } from "@/integrations/supabase/client";
 const PaymentSuccess = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  // في الكود PHP، هناك transactionNo - نتحقق من كلاهما
+  
+  // PayLink params
   const transactionNo = searchParams.get('transactionNo') || '';
   const orderNumber = searchParams.get('order_number') || '';
+  
+  // PayPal params
+  const invoiceId = searchParams.get('invoice_id') || '';
+  const paymentId = searchParams.get('paymentId') || '';
+  const token = searchParams.get('token') || '';
+  
+  // Get any available transaction identifier
+  const transactionIdentifier = transactionNo || orderNumber || invoiceId || token || paymentId;
   
   useEffect(() => {
     const verifyPayment = async () => {
@@ -25,7 +34,7 @@ const PaymentSuccess = () => {
         localStorage.removeItem('pendingSubscriptionPlan');
         
         // تسجيل معرّف العملية في سجل المطور
-        console.log("Payment success for transaction:", transactionNo || orderNumber);
+        console.log("Payment success with transaction ID:", transactionIdentifier);
         
         try {
           // استرجاع بيانات اعتماد PayLink
@@ -37,7 +46,6 @@ const PaymentSuccess = () => {
 
           if (settingsError) {
             console.error("خطأ في جلب إعدادات الدفع:", settingsError);
-            return;
           }
 
           // Get the current user
@@ -51,20 +59,18 @@ const PaymentSuccess = () => {
           const userId = session.user.id;
           console.log("Setting subscription for user:", userId);
 
-          // تحديث حالة الفاتورة في قاعدة البيانات للفاتورة المحددة (سواء باستخدام transactionNo أو orderNumber)
-          const invoiceIdentifier = transactionNo || orderNumber;
-          
-          if (invoiceIdentifier) {
+          // تحديث حالة الفاتورة في قاعدة البيانات للفاتورة المحددة
+          if (transactionIdentifier) {
             // تحديث حالة الفاتورة في قاعدة البيانات إلى "مدفوع"
             const { error: updateInvoiceError } = await supabase
               .from('payment_invoices')
               .update({ status: 'Paid' })
-              .eq('invoice_id', invoiceIdentifier);
+              .eq('invoice_id', transactionIdentifier);
               
             if (updateInvoiceError) {
               console.error("Error updating invoice status:", updateInvoiceError);
             } else {
-              console.log("Updated invoice status to Paid for invoice:", invoiceIdentifier);
+              console.log("Updated invoice status to Paid for invoice:", transactionIdentifier);
             }
           }
 
@@ -125,7 +131,7 @@ const PaymentSuccess = () => {
     };
 
     verifyPayment();
-  }, [transactionNo, orderNumber]);
+  }, [transactionIdentifier, navigate]);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -140,9 +146,9 @@ const PaymentSuccess = () => {
             <p className="mb-6 text-gray-600">
               شكراً لاشتراكك معنا. تم تفعيل حسابك بنجاح ويمكنك الآن الاستمتاع بجميع مميزات الباقة.
             </p>
-            {(transactionNo || orderNumber) && (
+            {transactionIdentifier && (
               <p className="mb-6 text-sm text-gray-500">
-                رقم العملية: {transactionNo || orderNumber}
+                رقم العملية: {transactionIdentifier}
               </p>
             )}
             <div className="space-y-3">

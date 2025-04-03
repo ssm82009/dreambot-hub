@@ -5,7 +5,7 @@
  */
 
 // Exchange rate (approximate, should be updated with real-time rates in production)
-const SAR_TO_USD_RATE = 0.26;
+const SAR_TO_USD_RATE = 0.27;
 
 /**
  * Convert Saudi Riyal to US Dollar

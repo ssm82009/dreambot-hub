@@ -88,8 +88,9 @@ export const handlePaypalPayment = async (
 
   try {
     // إنشاء سجل فاتورة في قاعدة البيانات
+    const invoiceId = `PP-${Date.now()}`;
     const { data, error } = await supabase.from('payment_invoices').insert([{
-      invoice_id: `PP-${Date.now()}`,
+      invoice_id: invoiceId,
       user_id: userId,
       plan_name: plan,
       amount: amount,
@@ -107,47 +108,54 @@ export const handlePaypalPayment = async (
       ? 'https://www.sandbox.paypal.com' 
       : 'https://www.paypal.com';
     
-    // إنشاء URL للدفع المباشر باستخدام اسم التاجر
-    const returnUrl = `${window.location.origin}/payment-success`;
+    // إنشاء URL للدفع المباشر
+    const returnUrl = `${window.location.origin}/payment-success?invoice_id=${invoiceId}`;
     const cancelUrl = `${window.location.origin}/payment-cancel`;
     
-    // إنشاء رابط الدفع مع المعلمات اللازمة
-    const paypalPaymentUrl = new URL(`${paypalDomain}/cgi-bin/webscr`);
-    paypalPaymentUrl.searchParams.append('cmd', '_xclick');
+    // إنشاء رابط الدفع باستخدام طريقة الدفع المباشر (checkout/payment)
+    const paypalPaymentUrl = new URL(`${paypalDomain}/checkoutnow`);
     
-    // بدلاً من استخدام معرف العميل، استخدم البريد الإلكتروني المسجل
-    // يكون معرف العميل هو عنوان البريد الإلكتروني الخاص بحساب PayPal
-    paypalPaymentUrl.searchParams.append('business', paypalClientId);
+    // Adding essential PayPal parameters
+    const params = {
+      token: invoiceId,
+      useraction: 'commit',
+      cmd: '_xclick',
+      business: paypalClientId,
+      item_name: `اشتراك ${plan === 'premium' ? 'مميز' : 'احترافي'}`,
+      amount: usdAmount.toString(),
+      currency_code: 'USD',
+      return: returnUrl,
+      cancel_return: cancelUrl,
+      custom: invoiceId,
+      no_shipping: '1',
+      no_note: '1',
+      rm: '2'
+    };
     
-    paypalPaymentUrl.searchParams.append('item_name', `اشتراك ${plan === 'premium' ? 'مميز' : 'احترافي'}`);
-    paypalPaymentUrl.searchParams.append('amount', usdAmount.toString());
-    paypalPaymentUrl.searchParams.append('currency_code', 'USD');
-    paypalPaymentUrl.searchParams.append('return', returnUrl);
-    paypalPaymentUrl.searchParams.append('cancel_return', cancelUrl);
-    
-    // إضافة معرف الفاتورة لتتبعها
-    paypalPaymentUrl.searchParams.append('custom', data?.[0]?.invoice_id || `PP-${Date.now()}`);
-    
-    // إضافة معلومات إضافية لتجنب الرفض
-    paypalPaymentUrl.searchParams.append('no_shipping', '1'); // لا داعي لعنوان الشحن
-    paypalPaymentUrl.searchParams.append('no_note', '1'); // لا داعي لملاحظات
-    paypalPaymentUrl.searchParams.append('rm', '2'); // إرسال البيانات كمتغيرات POST
-    
-    // إضافة معلومات المشتري إذا كانت متوفرة
+    // Adding buyer info if available
     if (customerInfo.name) {
       const nameParts = customerInfo.name.split(' ');
-      paypalPaymentUrl.searchParams.append('first_name', nameParts[0] || '');
-      paypalPaymentUrl.searchParams.append('last_name', nameParts.slice(1).join(' ') || '');
+      params['first_name'] = nameParts[0] || '';
+      params['last_name'] = nameParts.slice(1).join(' ') || '';
     }
     
     if (customerInfo.email) {
-      paypalPaymentUrl.searchParams.append('email', customerInfo.email);
+      params['email'] = customerInfo.email;
     }
     
-    console.log("توجيه المستخدم إلى رابط PayPal:", paypalPaymentUrl.toString());
+    // Build the complete URL with all parameters
+    const urlParams = new URLSearchParams();
+    for (const [key, value] of Object.entries(params)) {
+      urlParams.append(key, value as string);
+    }
+    
+    // Alternative approach using PayPal hosted button
+    const hostedPaymentUrl = `${paypalDomain}/cgi-bin/webscr?${urlParams.toString()}`;
+    
+    console.log("توجيه المستخدم إلى رابط PayPal:", hostedPaymentUrl);
     
     // توجيه المستخدم إلى صفحة الدفع الخاصة بـ PayPal
-    window.location.href = paypalPaymentUrl.toString();
+    window.location.href = hostedPaymentUrl;
   } catch (error) {
     console.error("خطأ في عملية الدفع عبر PayPal:", error);
     throw new Error("فشل في بدء عملية الدفع عبر PayPal");
