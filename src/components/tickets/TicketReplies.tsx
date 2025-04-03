@@ -16,13 +16,26 @@ const TicketReplies: React.FC<TicketRepliesProps> = ({ replies }) => {
     );
   }
 
+  // دالة لمعالجة اسم المستخدم حسب الدور
+  const formatUserName = (reply: TicketReply) => {
+    // تحقق مما إذا كان المستخدم هو مشرف (الدعم الفني)
+    if (reply.user?.role === 'admin') {
+      // الحصول على أول 3 أحرف من البريد الإلكتروني
+      const emailPrefix = reply.user.email ? reply.user.email.substring(0, 3) : '';
+      return `الدعم الفني: ${emailPrefix}`;
+    }
+    
+    // إذا لم يكن مشرفًا، أعرض الاسم الكامل أو "مستخدم" إذا لم يكن متاحًا
+    return reply.user?.full_name || 'مستخدم';
+  };
+
   return (
     <div className="space-y-4">
       {replies.map((reply) => (
         <div key={reply.id} className="border rounded-md p-4">
           <div className="flex justify-between items-start mb-2">
             <p className="font-semibold">
-              {reply.user?.full_name || 'مستخدم'}
+              {formatUserName(reply)}
             </p>
             <span className="text-sm text-muted-foreground">
               {formatDate(reply.created_at)}
