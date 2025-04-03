@@ -251,13 +251,16 @@ export type Database = {
           created_at: string | null
           free_plan_features: string
           free_plan_interpretations: number
+          free_plan_name: string
           free_plan_price: number
           id: string
           premium_plan_features: string
           premium_plan_interpretations: number
+          premium_plan_name: string
           premium_plan_price: number
           pro_plan_features: string
           pro_plan_interpretations: number
+          pro_plan_name: string
           pro_plan_price: number
           updated_at: string | null
         }
@@ -265,13 +268,16 @@ export type Database = {
           created_at?: string | null
           free_plan_features?: string
           free_plan_interpretations?: number
+          free_plan_name?: string
           free_plan_price?: number
           id?: string
           premium_plan_features?: string
           premium_plan_interpretations?: number
+          premium_plan_name?: string
           premium_plan_price?: number
           pro_plan_features?: string
           pro_plan_interpretations?: number
+          pro_plan_name?: string
           pro_plan_price?: number
           updated_at?: string | null
         }
@@ -279,13 +285,16 @@ export type Database = {
           created_at?: string | null
           free_plan_features?: string
           free_plan_interpretations?: number
+          free_plan_name?: string
           free_plan_price?: number
           id?: string
           premium_plan_features?: string
           premium_plan_interpretations?: number
+          premium_plan_name?: string
           premium_plan_price?: number
           pro_plan_features?: string
           pro_plan_interpretations?: number
+          pro_plan_name?: string
           pro_plan_price?: number
           updated_at?: string | null
         }
