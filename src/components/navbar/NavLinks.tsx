@@ -21,16 +21,16 @@ const NavLinks: React.FC<{ isAdmin: boolean }> = ({ isAdmin }) => {
           throw error;
         }
 
-        setLinks(data || []);
+        setLinks(data as NavLinkType[] || []);
       } catch (error) {
         console.error('Error fetching navbar links:', error);
         // Fallback to default links if there's an error
         setLinks([
-          { id: '1', title: 'الرئيسية', url: '/', order: 1, is_admin_only: false },
-          { id: '2', title: 'الأسعار', url: '/pricing', order: 2, is_admin_only: false },
-          { id: '3', title: 'حول الموقع', url: '/about', order: 3, is_admin_only: false },
-          { id: '4', title: 'الدعم الفني', url: '/tickets', order: 4, is_admin_only: false },
-          { id: '5', title: 'لوحة التحكم', url: '/admin', order: 5, is_admin_only: true }
+          { id: '1', title: 'الرئيسية', url: '/', order: 1, is_admin_only: false, created_at: new Date().toISOString() },
+          { id: '2', title: 'الأسعار', url: '/pricing', order: 2, is_admin_only: false, created_at: new Date().toISOString() },
+          { id: '3', title: 'حول الموقع', url: '/about', order: 3, is_admin_only: false, created_at: new Date().toISOString() },
+          { id: '4', title: 'الدعم الفني', url: '/tickets', order: 4, is_admin_only: false, created_at: new Date().toISOString() },
+          { id: '5', title: 'لوحة التحكم', url: '/admin', order: 5, is_admin_only: true, created_at: new Date().toISOString() }
         ]);
       } finally {
         setIsLoading(false);

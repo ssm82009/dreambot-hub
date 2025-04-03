@@ -35,7 +35,8 @@ const NavbarManagement = () => {
         throw error;
       }
 
-      setNavLinks(data || []);
+      // Cast the data to NavLink type
+      setNavLinks(data as NavLink[] || []);
     } catch (error) {
       console.error('Error fetching navbar links:', error);
       toast.error('حدث خطأ أثناء جلب روابط شريط التنقل');
@@ -161,7 +162,7 @@ const NavbarManagement = () => {
       if (error) throw error;
       
       if (data && data.length > 0) {
-        setNavLinks([...navLinks, data[0]]);
+        setNavLinks([...navLinks, data[0] as NavLink]);
         // Reset form
         setNewLink({
           title: "",
