@@ -109,10 +109,17 @@ export const useFetchSettings = () => {
         });
       }
 
-      // Fetch theme settings and SEO settings (now in the same table)
+      // Fetch theme settings and SEO settings (from the same table)
       const { data: themeData, error: themeError } = await supabase
         .from('theme_settings')
-        .select('*')
+        .select(`
+          id, primary_color, button_color, text_color, background_color, 
+          logo_text, logo_font_size, header_color, footer_color, footer_text, 
+          twitter_link, facebook_link, instagram_link, created_at, updated_at,
+          meta_title, meta_description, keywords, enable_sitemap, enable_robots_txt,
+          enable_canonical_urls, enable_open_graph, enable_twitter_cards,
+          google_analytics_id, custom_head_tags
+        `)
         .limit(1)
         .single();
       
