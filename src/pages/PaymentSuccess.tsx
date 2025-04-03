@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
@@ -87,14 +88,24 @@ const PaymentSuccess = () => {
               
               // إذا كانت العملية من PayPal وليس لدينا فاتورة متطابقة
               if (txnId && plan) {
+                // تحديد المبلغ بناءً على نوع الخطة
+                let amount = 0;
+                if (plan === 'premium') {
+                  // محاولة استرجاع السعر من إعدادات التسعير، أو استخدام قيمة افتراضية
+                  amount = paymentSettings?.premium_plan_price || 49;
+                } else if (plan === 'pro') {
+                  amount = paymentSettings?.pro_plan_price || 99;
+                }
+                
                 // إنشاء سجل جديد بناءً على معلومات PayPal
-                await supabase.from('payment_invoices').insert([{
+                await supabase.from('payment_invoices').insert({
                   invoice_id: txnId,
                   user_id: userId,
                   plan_name: plan,
                   status: 'Paid',
-                  payment_method: 'paypal'
-                }]);
+                  payment_method: 'paypal',
+                  amount: amount  // إضافة المبلغ المطلوب
+                });
                 console.log("Created new payment record from PayPal data with txnId:", txnId);
               }
             }
