@@ -103,12 +103,15 @@ export const verifyPayment = async (
     }
 
     // التحقق من واجهة برمجة التطبيقات PayLink إذا كان ذلك ممكناً
-    if (transactionNo && paymentSettings?.paylink_api_key && paymentSettings?.paylink_secret_key) {
+    // Extract PayLink transaction number if present in the transactionIdentifier
+    const payLinkTransactionNumber = transactionIdentifier.startsWith('PLI') ? transactionIdentifier : '';
+    
+    if (payLinkTransactionNumber && paymentSettings?.paylink_api_key && paymentSettings?.paylink_secret_key) {
       // التحقق من حالة الدفع باستخدام API (للتوثيق فقط)
       const status = await getPaylinkInvoiceStatus(
         paymentSettings.paylink_api_key,
         paymentSettings.paylink_secret_key,
-        transactionNo
+        payLinkTransactionNumber
       );
       
       if (status) {
