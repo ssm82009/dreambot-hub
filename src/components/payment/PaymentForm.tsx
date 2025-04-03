@@ -2,19 +2,9 @@
 import React, { useState, useEffect } from 'react';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import * as z from "zod";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
-import PaymentMethod from './PaymentMethod';
 import { supabase } from "@/integrations/supabase/client";
-
-// تعريف مخطط التحقق من صحة النموذج
-const formSchema = z.object({
-  name: z.string().min(3, { message: "الاسم يجب أن يكون 3 أحرف على الأقل" }),
-  email: z.string().email({ message: "البريد الإلكتروني غير صالح" }),
-  phone: z.string().min(10, { message: "رقم الهاتف يجب أن يكون 10 أرقام على الأقل" })
-});
+import PaymentMethod from './PaymentMethod';
+import CustomerInfoForm, { customerInfoSchema, CustomerInfoFormValues } from './CustomerInfoForm';
 
 interface PaymentFormProps {
   onCustomerInfoChange: (info: {
@@ -32,9 +22,9 @@ const PaymentForm = ({ onCustomerInfoChange }: PaymentFormProps) => {
     { id: 'paypal', name: 'PayPal', description: 'الدفع عبر حساب PayPal', enabled: false }
   ]);
 
-  // نموذج البيانات
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  // Initialize form with validation schema
+  const form = useForm<CustomerInfoFormValues>({
+    resolver: zodResolver(customerInfoSchema),
     defaultValues: {
       name: "",
       email: "",
@@ -42,7 +32,7 @@ const PaymentForm = ({ onCustomerInfoChange }: PaymentFormProps) => {
     }
   });
 
-  // جلب إعدادات بوابات الدفع
+  // Fetch payment gateway settings
   useEffect(() => {
     const fetchPaymentGateways = async () => {
       try {
@@ -63,7 +53,7 @@ const PaymentForm = ({ onCustomerInfoChange }: PaymentFormProps) => {
             { id: 'paypal', name: 'PayPal', description: 'الدفع عبر حساب PayPal', enabled: data.paypal_enabled }
           ]);
 
-          // تعيين طريقة الدفع الافتراضية إلى أول طريقة مفعلة
+          // Set default payment method to first enabled method
           if (!data.paylink_enabled && data.paypal_enabled) {
             setPaymentMethod('paypal');
           }
@@ -76,7 +66,7 @@ const PaymentForm = ({ onCustomerInfoChange }: PaymentFormProps) => {
     fetchPaymentGateways();
   }, []);
 
-  // مراقبة التغييرات وإرسالها إلى المكون الأب
+  // Monitor changes and send to parent component
   useEffect(() => {
     const values = form.getValues();
     onCustomerInfoChange({
@@ -87,58 +77,14 @@ const PaymentForm = ({ onCustomerInfoChange }: PaymentFormProps) => {
     });
   }, [form.watch(), paymentMethod, onCustomerInfoChange]);
 
-  // عند تغيير طريقة الدفع
+  // Handle payment method change
   const handlePaymentMethodChange = (method: string) => {
     setPaymentMethod(method);
   };
 
   return (
     <div className="space-y-6">
-      <Form {...form}>
-        <div className="space-y-4">
-          <FormField
-            control={form.control}
-            name="name"
-            render={({ field }) => (
-              <FormItem>
-                <Label htmlFor="name">الاسم الكامل</Label>
-                <FormControl>
-                  <Input id="name" placeholder="أدخل اسمك الكامل" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          
-          <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem>
-                <Label htmlFor="email">البريد الإلكتروني</Label>
-                <FormControl>
-                  <Input id="email" type="email" placeholder="أدخل بريدك الإلكتروني" dir="ltr" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          
-          <FormField
-            control={form.control}
-            name="phone"
-            render={({ field }) => (
-              <FormItem>
-                <Label htmlFor="phone">رقم الهاتف</Label>
-                <FormControl>
-                  <Input id="phone" type="tel" placeholder="05xxxxxxxx" dir="ltr" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-      </Form>
+      <CustomerInfoForm form={form} />
       
       <div className="border-t pt-4">
         <PaymentMethod 

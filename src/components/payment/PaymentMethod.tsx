@@ -4,19 +4,21 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { CreditCard } from 'lucide-react';
 
+export interface PaymentMethodOption {
+  id: string;
+  name: string;
+  description: string;
+  enabled: boolean;
+}
+
 interface PaymentMethodProps {
   selectedMethod: string;
   onMethodChange: (method: string) => void;
-  availableMethods: {
-    id: string;
-    name: string;
-    description: string;
-    enabled: boolean;
-  }[];
+  availableMethods: PaymentMethodOption[];
 }
 
 const PaymentMethod = ({ selectedMethod, onMethodChange, availableMethods }: PaymentMethodProps) => {
-  // تصفية طرق الدفع المفعلة فقط
+  // Filter only enabled payment methods
   const enabledMethods = availableMethods.filter(method => method.enabled);
   
   return (
