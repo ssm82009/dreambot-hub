@@ -68,7 +68,7 @@ export function usePaymentSubmit(
           userId, 
           amount, 
           plan, 
-          paypalClientId, 
+          paypalClientId,
           paypalSandbox
         );
       } else {

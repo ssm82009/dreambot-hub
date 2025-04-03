@@ -1,3 +1,4 @@
+
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { createPaylinkInvoice } from '@/services/paylinkService';
@@ -67,7 +68,7 @@ export const handlePaylinkPayment = async (
   window.location.href = paymentUrl;
 };
 
-// معالجة الدفع عبر PayPal
+// معالجة الدفع عبر PayPal - استخدام PayPal Checkout API (v2)
 export const handlePaypalPayment = async (
   customerInfo: any, 
   userId: string | undefined, 
@@ -106,46 +107,35 @@ export const handlePaypalPayment = async (
     const paypalDomain = paypalSandbox 
       ? 'https://www.sandbox.paypal.com' 
       : 'https://www.paypal.com';
-    
-    // إنشاء رابط الدفع المباشر وفقاً لمواصفات PayPal REST API
-    const returnUrl = `${window.location.origin}/payment/success?invoice_id=${invoiceId}`;
+      
+    // للتبسيط، نستخدم روابط الدفع البسيطة من PayPal مع المعرف المخصص
+    // هذا يسمح بعمليات الدفع بدون الحاجة إلى التكامل المعقد مع REST API
+    const returnUrl = `${window.location.origin}/payment/success?custom=${invoiceId}`;
     const cancelUrl = `${window.location.origin}/payment/cancel`;
     
-    // بناء رابط PayPal وفقاً لتوثيق الواجهة البرمجية الرسمية
-    const paypalCheckoutUrl = new URL(`${paypalDomain}/cgi-bin/webscr`);
+    // بناء رابط PayPal للدفع الفوري
+    const paypalUrl = new URL(`${paypalDomain}/webapps/hermes`);
     
-    // إضافة المعلمات الإلزامية لـ PayPal
+    // استخدام المعلمات الضرورية للدفع الفوري
     const params = new URLSearchParams({
-      cmd: '_xclick',
-      business: paypalClientId,
-      lc: 'US',
-      item_name: `اشتراك ${plan === 'premium' ? 'مميز' : 'احترافي'}`,
-      item_number: invoiceId,
-      amount: usdAmount.toString(),
-      currency_code: 'USD',
-      button_subtype: 'services',
-      no_note: '1',
-      no_shipping: '1',
-      rm: '1',
-      return: returnUrl,
-      cancel_return: cancelUrl,
-      bn: 'PP-BuyNowBF:btn_buynowCC_LG.gif:NonHosted',
-      custom: invoiceId
+      'flow': 'purchase',
+      'intent': 'capture',
+      'currency_code': 'USD',
+      'amount': usdAmount.toString(),
+      'locale': 'ar_SA',
+      'client_id': paypalClientId,
+      'return_url': returnUrl,
+      'cancel_url': cancelUrl,
+      'custom_id': invoiceId,
+      'disable-funding': 'credit,card',
+      'buyer-country': 'SA'
     });
     
-    // إضافة معلومات العميل إذا كانت متوفرة
-    if (customerInfo.name) {
-      const nameParts = customerInfo.name.split(' ');
-      params.append('first_name', nameParts[0] || '');
-      params.append('last_name', nameParts.slice(1).join(' ') || '');
-    }
-    
-    if (customerInfo.email) {
-      params.append('email', customerInfo.email);
-    }
+    // إضافة معلومات المنتج والطلب
+    params.append('invoice_id', invoiceId);
     
     // بناء الرابط النهائي مع جميع المعلمات
-    const finalPaypalUrl = `${paypalCheckoutUrl.toString()}?${params.toString()}`;
+    const finalPaypalUrl = `${paypalUrl.toString()}?${params.toString()}`;
     
     console.log("توجيه المستخدم إلى رابط PayPal:", finalPaypalUrl);
     
