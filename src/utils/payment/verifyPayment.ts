@@ -64,34 +64,35 @@ export const verifyPayment = async (
     const invoiceIdParam = new URLSearchParams(window.location.search).get('invoice_id');
     const identifiers = [transactionIdentifier, customId, txnId, invoiceIdParam].filter(id => id);
     
+    let invoiceId = "";
+    
     if (identifiers.length > 0) {
       console.log("Looking for invoice with identifiers:", identifiers);
       
-      // بناء استعلام البحث عن الفاتورة
-      let query = supabase
-        .from('payment_invoices')
-        .select('*');
+      // بناء استعلام البحث عن الفاتورة باستخدام OR لكل معرّف
+      let invoicesQuery = supabase.from('payment_invoices').select('*');
       
-      // إضافة شروط البحث لكل معرف
+      // إضافة شروط البحث عن المعرفات
       if (identifiers.length === 1) {
-        query = query.eq('invoice_id', identifiers[0]);
+        invoicesQuery = invoicesQuery.eq('invoice_id', identifiers[0]);
       } else {
-        // بناء استعلام OR للبحث عن أي من المعرفات
         const orConditions = identifiers.map(id => `invoice_id.eq.${id}`).join(',');
-        query = query.or(orConditions);
+        invoicesQuery = invoicesQuery.or(orConditions);
       }
       
-      const { data: invoices, error: findError } = await query;
+      // تنفيذ الاستعلام
+      const { data: invoices, error: findError } = await invoicesQuery;
         
       if (findError) {
         console.error("Error finding invoice:", findError);
       } else if (invoices && invoices.length > 0) {
         console.log("Found matching invoices:", invoices);
+        invoiceId = invoices[0].id;
         
         // تحديث حالة الفاتورة في قاعدة البيانات إلى "مدفوع"
         const { error: updateInvoiceError } = await supabase
           .from('payment_invoices')
-          .update({ status: 'Paid' })
+          .update({ status: 'مدفوع' })
           .eq('id', invoices[0].id);
           
         if (updateInvoiceError) {
@@ -116,15 +117,25 @@ export const verifyPayment = async (
           console.log("Creating new PayPal invoice record for txnId:", txnId);
           
           // إنشاء سجل جديد بناءً على معلومات PayPal
-          await supabase.from('payment_invoices').insert({
-            invoice_id: txnId,
-            user_id: userId,
-            plan_name: plan,
-            status: 'Paid',
-            payment_method: 'paypal',
-            amount: amount  // إضافة المبلغ المطلوب
-          });
-          console.log("Created new payment record from PayPal data with txnId:", txnId);
+          const { data: newInvoice, error: newInvoiceError } = await supabase
+            .from('payment_invoices')
+            .insert({
+              invoice_id: txnId,
+              user_id: userId,
+              plan_name: plan,
+              status: 'مدفوع',
+              payment_method: 'paypal',
+              amount: amount
+            })
+            .select()
+            .single();
+            
+          if (newInvoiceError) {
+            console.error("Error creating new invoice:", newInvoiceError);
+          } else if (newInvoice) {
+            invoiceId = newInvoice.id;
+            console.log("Created new payment record from PayPal data with ID:", invoiceId);
+          }
         }
       }
     }
@@ -164,12 +175,11 @@ export const verifyPayment = async (
       toast.error("حدث خطأ أثناء تحديث الاشتراك");
     } else {
       console.log("Updated subscription successfully for user:", userId, "to plan:", plan);
-      toast.success(`تم الاشتراك في الباقة ${plan === 'premium' ? 'المميزة' : 'الاحترافية'} بنجاح!`);
       
       // تحديث جميع الدفعات المرتبطة بهذا المستخدم والخطة إلى حالة "مدفوع"
       const { error: updateAllInvoicesError } = await supabase
         .from('payment_invoices')
-        .update({ status: 'Paid' })
+        .update({ status: 'مدفوع' })
         .eq('user_id', userId)
         .eq('plan_name', plan)
         .eq('status', 'Pending');
