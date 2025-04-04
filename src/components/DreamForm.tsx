@@ -2,11 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Lock } from 'lucide-react';
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { DreamSymbol, InterpretationSettings } from '@/types/database';
 import { Progress } from "@/components/ui/progress";
+import { useNavigate } from 'react-router-dom';
 
 const DreamForm = () => {
   const [dreamText, setDreamText] = useState('');
@@ -18,6 +19,8 @@ const DreamForm = () => {
   const [userId, setUserId] = useState<string | null>(null);
   const [charCount, setCharCount] = useState(0);
   const [wordCount, setWordCount] = useState(0);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchDreamSymbols();
@@ -35,12 +38,16 @@ const DreamForm = () => {
       const { data } = await supabase.auth.getSession();
       if (data.session?.user) {
         setUserId(data.session.user.id);
+        setIsAuthenticated(true);
         console.log("User authenticated:", data.session.user.id);
       } else {
         console.log("User not authenticated");
+        setIsAuthenticated(false);
+        setUserId(null);
       }
     } catch (error) {
       console.error("Error checking auth:", error);
+      setIsAuthenticated(false);
     }
   };
 
@@ -144,8 +151,19 @@ const DreamForm = () => {
     return commonKeywords.filter(keyword => text.includes(keyword));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (isAuthenticated === null) {
+      await checkAuth();
+    }
+    
+    if (!isAuthenticated) {
+      toast.error("يجب عليك تسجيل الدخول أولاً للاستفادة من خدمة تفسير الأحلام");
+      navigate('/login');
+      return;
+    }
+    
     if (dreamText.trim()) {
       if (interpretationSettings) {
         const wordCount = dreamText.trim().split(/\s+/).length;
@@ -171,6 +189,18 @@ const DreamForm = () => {
     return "bg-red-500";
   };
 
+  const renderAuthenticationStatus = () => {
+    if (isAuthenticated === false) {
+      return (
+        <div className="flex items-center justify-center gap-2 text-amber-500 mb-2">
+          <Lock className="h-4 w-4" />
+          <span className="text-sm font-medium">قم بتسجيل الدخول للاستفادة من خدمة تفسير الأحلام</span>
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
     <div className="container mx-auto px-4 py-12 rtl" id="dream-form-section">
       <div className="max-w-3xl mx-auto">
@@ -180,6 +210,7 @@ const DreamForm = () => {
             <CardDescription>
               اكتب تفاصيل حلمك بدقة للحصول على تفسير أكثر دقة
             </CardDescription>
+            {renderAuthenticationStatus()}
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit}>

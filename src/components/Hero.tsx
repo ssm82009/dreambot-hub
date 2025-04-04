@@ -1,7 +1,9 @@
 
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
+import { useToast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface HeroProps {
   title?: string;
@@ -12,11 +14,28 @@ const Hero: React.FC<HeroProps> = ({
   title = "تفسير الأحلام بالذكاء الاصطناعي",
   subtitle = "فسّر أحلامك بدقة عالية باستخدام أحدث تقنيات الذكاء الاصطناعي واستنادًا إلى مراجع التفسير الإسلامية الموثوقة."
 }) => {
-  // وظيفة للتمرير إلى قسم كتابة الحلم
-  const scrollToDreamForm = () => {
-    const dreamSectionElement = document.getElementById('dream-form-section');
-    if (dreamSectionElement) {
-      dreamSectionElement.scrollIntoView({ behavior: 'smooth' });
+  const navigate = useNavigate();
+  const toast = useToast();
+  
+  // وظيفة للتمرير إلى قسم كتابة الحلم مع التحقق من تسجيل الدخول
+  const handleStartNow = async () => {
+    try {
+      const { data } = await supabase.auth.getSession();
+      
+      if (data.session?.user) {
+        // المستخدم مسجل الدخول، يمكن التمرير إلى قسم كتابة الحلم
+        const dreamSectionElement = document.getElementById('dream-form-section');
+        if (dreamSectionElement) {
+          dreamSectionElement.scrollIntoView({ behavior: 'smooth' });
+        }
+      } else {
+        // المستخدم غير مسجل، توجيه إلى صفحة تسجيل الدخول
+        toast.info("يرجى تسجيل الدخول أولاً للاستفادة من خدمة تفسير الأحلام");
+        navigate('/login');
+      }
+    } catch (error) {
+      console.error("خطأ في التحقق من حالة تسجيل الدخول:", error);
+      navigate('/login');
     }
   };
 
@@ -41,7 +60,7 @@ const Hero: React.FC<HeroProps> = ({
           </p>
           
           <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-6 rtl:space-x-reverse">
-            <Button size="lg" className="text-lg px-8" onClick={scrollToDreamForm}>ابدأ الآن</Button>
+            <Button size="lg" className="text-lg px-8" onClick={handleStartNow}>ابدأ الآن</Button>
             <Link to="/about">
               <Button size="lg" variant="outline" className="text-lg px-8">اعرف المزيد</Button>
             </Link>
