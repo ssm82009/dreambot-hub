@@ -27,6 +27,7 @@ type RPCPaymentResponse = Payment[] | null;
 
 const ProfilePayments: React.FC<ProfilePaymentsProps> = ({ payments }) => {
   const [refreshedPayments, setRefreshedPayments] = useState<Payment[]>([]);
+  const [paymentUpdated, setPaymentUpdated] = useState(false);
 
   useEffect(() => {
     const processPayments = async () => {
@@ -38,6 +39,12 @@ const ProfilePayments: React.FC<ProfilePaymentsProps> = ({ payments }) => {
       try {
         const isSuccessPage = window.location.href.includes('success');
         console.log("Is success page:", isSuccessPage);
+        
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.user?.id) {
+          setRefreshedPayments(payments);
+          return;
+        }
         
         const { data: latestInvoicesData, error: rpcError } = await supabase
           .rpc('get_latest_payment_invoices') as { data: RPCPaymentResponse, error: any };
@@ -63,15 +70,20 @@ const ProfilePayments: React.FC<ProfilePaymentsProps> = ({ payments }) => {
             payments.some(p => p.user_id === payment.user_id)
           );
           
-          const processedPayments = isSuccessPage 
+          const shouldUpdateStatus = isSuccessPage || 
+            window.location.href.includes('profile') || 
+            filteredLatestPayments.some(p => p.status === PAYMENT_STATUS.PENDING || p.status === 'pending' || p.status === 'Pending');
+            
+          if (shouldUpdateStatus) {
+            console.log("Attempting to update payment statuses as user");
+            await updatePaymentStatuses(filteredLatestPayments, session.user.id);
+          }
+            
+          const processedPayments = shouldUpdateStatus
             ? filteredLatestPayments.map(payment => ({ ...payment, status: PAYMENT_STATUS.PAID }))
             : filteredLatestPayments;
             
           setRefreshedPayments(processedPayments);
-          
-          if (isSuccessPage && filteredLatestPayments.length > 0) {
-            await updatePaymentStatuses(filteredLatestPayments);
-          }
         } else {
           console.log("RPC function returned data:", latestInvoicesData);
           if (latestInvoicesData && latestInvoicesData.length > 0) {
@@ -79,16 +91,21 @@ const ProfilePayments: React.FC<ProfilePaymentsProps> = ({ payments }) => {
               payments.some(p => p.invoice_id === invoice.invoice_id || p.user_id === invoice.user_id)
             );
             
-            const processedPayments = isSuccessPage 
+            const shouldUpdateStatus = isSuccessPage || 
+              window.location.href.includes('profile') || 
+              userPayments.some(p => p.status === PAYMENT_STATUS.PENDING || p.status === 'pending' || p.status === 'Pending');
+            
+            if (shouldUpdateStatus) {
+              console.log("Attempting to update payment statuses as user from RPC function");
+              await updatePaymentStatuses(userPayments, session.user.id);
+            }
+              
+            const processedPayments = shouldUpdateStatus
               ? userPayments.map(payment => ({ ...payment, status: PAYMENT_STATUS.PAID }))
               : userPayments;
               
             console.log("ProfilePayments - Latest filtered payments:", processedPayments);
             setRefreshedPayments(processedPayments);
-            
-            if (isSuccessPage && userPayments.length > 0) {
-              await updatePaymentStatuses(userPayments);
-            }
           } else {
             console.log("No payments returned from RPC function");
             setRefreshedPayments([]);
@@ -103,28 +120,52 @@ const ProfilePayments: React.FC<ProfilePaymentsProps> = ({ payments }) => {
     processPayments();
   }, [payments]);
   
-  const updatePaymentStatuses = async (paymentsList: Payment[]) => {
+  const updatePaymentStatuses = async (paymentsList: Payment[], userId: string) => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user?.id) return;
+      let anyUpdateSucceeded = false;
       
       for (const payment of paymentsList) {
-        await supabase
-          .from('payment_invoices')
-          .update({ status: PAYMENT_STATUS.PAID })
-          .eq('id', payment.id);
-          
-        console.log(`Updated payment status for ID ${payment.id} to مدفوع`);
+        if (payment.status !== PAYMENT_STATUS.PAID) {
+          try {
+            const { error: paymentUpdateError } = await supabase
+              .from('payment_invoices')
+              .update({ status: PAYMENT_STATUS.PAID })
+              .eq('id', payment.id)
+              .eq('user_id', userId);
+              
+            if (!paymentUpdateError) {
+              console.log(`Updated payment status for ID ${payment.id} to مدفوع`);
+              anyUpdateSucceeded = true;
+            } else {
+              console.error(`Error updating payment status for ID ${payment.id}:`, paymentUpdateError);
+            }
+          } catch (error) {
+            console.error(`Exception updating payment for ID ${payment.id}:`, error);
+          }
+        }
         
         if (payment.invoice_id) {
-          await supabase
-            .from('payment_invoices')
-            .update({ status: PAYMENT_STATUS.PAID })
-            .eq('invoice_id', payment.invoice_id)
-            .eq('user_id', session.user.id);
-            
-          console.log(`Updated all payment records with invoice_id ${payment.invoice_id} to مدفوع`);
+          try {
+            const { error: invoiceUpdateError } = await supabase
+              .from('payment_invoices')
+              .update({ status: PAYMENT_STATUS.PAID })
+              .eq('invoice_id', payment.invoice_id)
+              .eq('user_id', userId);
+              
+            if (!invoiceUpdateError) {
+              console.log(`Updated all payment records with invoice_id ${payment.invoice_id} to مدفوع`);
+              anyUpdateSucceeded = true;
+            } else {
+              console.error(`Error updating by invoice_id ${payment.invoice_id}:`, invoiceUpdateError);
+            }
+          } catch (error) {
+            console.error(`Exception updating by invoice_id ${payment.invoice_id}:`, error);
+          }
         }
+      }
+      
+      if (anyUpdateSucceeded) {
+        setPaymentUpdated(true);
       }
     } catch (error) {
       console.error("Error updating payment statuses:", error);
@@ -179,7 +220,7 @@ const ProfilePayments: React.FC<ProfilePaymentsProps> = ({ payments }) => {
                   <TableCell>{formatCurrency(payment.amount)}</TableCell>
                   <TableCell>{normalizePaymentMethod(payment.payment_method)}</TableCell>
                   <TableCell>
-                    <PaymentStatusBadge status={payment.status} />
+                    <PaymentStatusBadge status={paymentUpdated ? PAYMENT_STATUS.PAID : payment.status} />
                   </TableCell>
                 </TableRow>
               ))}

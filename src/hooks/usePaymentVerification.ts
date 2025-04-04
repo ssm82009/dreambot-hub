@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { useSearchParams, useLocation } from 'react-router-dom';
 import { verifyPayment } from '@/utils/payment/verifyPayment';
@@ -10,6 +11,7 @@ export const usePaymentVerification = () => {
   const location = useLocation();
   const [isVerifying, setIsVerifying] = useState(true);
   const [paymentSession, setPaymentSession] = useState<any>(null);
+  const [paymentUpdated, setPaymentUpdated] = useState(false);
   
   const isSuccessPage = location.pathname.includes('success');
   
@@ -67,10 +69,17 @@ export const usePaymentVerification = () => {
               status: isSuccessPage ? PAYMENT_STATUS.PAID : invoiceData.status
             };
             
-            await supabase
+            const { error: updateError } = await supabase
               .from('payment_invoices')
               .update({ status: PAYMENT_STATUS.PAID })
               .eq('id', invoiceData.id);
+              
+            if (!updateError) {
+              setPaymentUpdated(true);
+              console.log("Updated payment status for invoice with ID:", invoiceData.id);
+            } else {
+              console.error("Failed to update payment status:", updateError);
+            }
           } else {
             console.log("No payment record found by session_id, trying transaction ID");
           }
@@ -101,10 +110,17 @@ export const usePaymentVerification = () => {
               status: isSuccessPage ? PAYMENT_STATUS.PAID : invoiceByTxData.status
             };
             
-            await supabase
+            const { error: updateError } = await supabase
               .from('payment_invoices')
               .update({ status: PAYMENT_STATUS.PAID })
               .eq('id', invoiceByTxData.id);
+              
+            if (!updateError) {
+              setPaymentUpdated(true);
+              console.log("Updated payment status for invoice with ID:", invoiceByTxData.id);
+            } else {
+              console.error("Failed to update payment status:", updateError);
+            }
           } else {
             console.log("No payment record found by transaction_identifier");
           }
@@ -136,10 +152,17 @@ export const usePaymentVerification = () => {
               status: isSuccessPage ? PAYMENT_STATUS.PAID : latestInvoiceData.status
             };
             
-            await supabase
+            const { error: updateError } = await supabase
               .from('payment_invoices')
               .update({ status: PAYMENT_STATUS.PAID })
               .eq('id', latestInvoiceData.id);
+              
+            if (!updateError) {
+              setPaymentUpdated(true);
+              console.log("Updated payment status for latest invoice with ID:", latestInvoiceData.id);
+            } else {
+              console.error("Failed to update payment status:", updateError);
+            }
           } else {
             console.log("No payment records found for user");
           }
@@ -160,16 +183,22 @@ export const usePaymentVerification = () => {
           foundPaymentSession.plan_type
         );
         
-        const { error: updateError } = await supabase
+        // تحديث جميع المدفوعات المعلقة
+        const { error: updatePendingError } = await supabase
           .from('payment_invoices')
-          .update({ status: PAYMENT_STATUS.PAID })
+          .update({ 
+            status: PAYMENT_STATUS.PAID,
+            expires_at: new Date(Date.now() + (30 * 24 * 60 * 60 * 1000)).toISOString() 
+          })
           .eq('user_id', userId)
-          .eq('plan_name', foundPaymentSession.plan_type);
+          .eq('plan_name', foundPaymentSession.plan_type)
+          .or(`status.eq.${PAYMENT_STATUS.PENDING},status.eq.Pending,status.eq.pending`);
           
-        if (updateError) {
-          console.error("خطأ في تحديث حالات الدفع:", updateError);
+        if (updatePendingError) {
+          console.error("خطأ في تحديث حالات الدفع:", updatePendingError);
         } else {
           console.log("تم تحديث جميع حالات الدفع للمستخدم:", userId);
+          setPaymentUpdated(true);
         }
         
         const planName = foundPaymentSession.plan_type.toLowerCase().includes('مميز') || 
@@ -198,6 +227,7 @@ export const usePaymentVerification = () => {
     transactionIdentifier: transactionIdentifier || (paymentSession?.transaction_identifier || ''),
     isVerifying,
     sessionId,
-    isSuccessPage
+    isSuccessPage,
+    paymentUpdated
   };
 };

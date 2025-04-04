@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -25,6 +26,7 @@ const PaymentSuccessContent = ({
   const navigate = useNavigate();
   const location = useLocation();
   const [subscriptionName, setSubscriptionName] = useState('');
+  const [updateSuccess, setUpdateSuccess] = useState(false);
   
   const isSuccessPage = location.pathname.includes('success');
   
@@ -32,60 +34,95 @@ const PaymentSuccessContent = ({
     const updatePaymentStatus = async () => {
       const paidStatus = PAYMENT_STATUS.PAID;
       
-      if (paymentData?.id) {
-        try {
-          await supabase
-            .from('payment_invoices')
-            .update({ status: paidStatus })
-            .eq('id', paymentData.id);
-            
-          console.log("Payment status updated to 'مدفوع' for ID:", paymentData.id);
-        } catch (error) {
-          console.error("Error updating payment status:", error);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.user?.id) {
+          console.error("No authenticated user found");
+          return;
         }
-      }
-      
-      if (paymentData?.invoice_id) {
-        try {
-          await supabase
-            .from('payment_invoices')
-            .update({ status: paidStatus })
-            .eq('invoice_id', paymentData.invoice_id);
-            
-          console.log("Updated all records with invoice_id:", paymentData.invoice_id);
-        } catch (error) {
-          console.error("Error updating payment records by invoice_id:", error);
+        
+        console.log("Updating payment status for user:", session.user.id);
+        
+        // Approach 1: Update by paymentData.id if available
+        if (paymentData?.id) {
+          try {
+            const { data, error } = await supabase
+              .from('payment_invoices')
+              .update({ status: paidStatus })
+              .eq('id', paymentData.id);
+              
+            if (error) {
+              console.error("Error updating payment status by ID:", error);
+            } else {
+              console.log("Payment status updated to 'مدفوع' for ID:", paymentData.id);
+              setUpdateSuccess(true);
+            }
+          } catch (error) {
+            console.error("Exception updating payment status by ID:", error);
+          }
         }
-      }
-      
-      if (transactionIdentifier && !paymentData) {
-        try {
-          await supabase
-            .from('payment_invoices')
-            .update({ status: paidStatus })
-            .eq('invoice_id', transactionIdentifier);
-            
-          console.log("Updated all records with transactionIdentifier:", transactionIdentifier);
-        } catch (error) {
-          console.error("Error updating payment records by transactionIdentifier:", error);
+        
+        // Approach 2: Update by invoice_id if available
+        if (paymentData?.invoice_id) {
+          try {
+            const { data, error } = await supabase
+              .from('payment_invoices')
+              .update({ status: paidStatus })
+              .eq('invoice_id', paymentData.invoice_id)
+              .eq('user_id', session.user.id);
+              
+            if (error) {
+              console.error("Error updating payment status by invoice_id:", error);
+            } else {
+              console.log("Updated records with invoice_id:", paymentData.invoice_id);
+              setUpdateSuccess(true);
+            }
+          } catch (error) {
+            console.error("Exception updating payment records by invoice_id:", error);
+          }
         }
-      }
-      
-      if (isSuccessPage) {
-        try {
-          const { data: { session } } = await supabase.auth.getSession();
-          if (session?.user?.id) {
-            await supabase
+        
+        // Approach 3: Update by transactionIdentifier if available
+        if (transactionIdentifier && !paymentData) {
+          try {
+            const { data, error } = await supabase
+              .from('payment_invoices')
+              .update({ status: paidStatus })
+              .eq('invoice_id', transactionIdentifier)
+              .eq('user_id', session.user.id);
+              
+            if (error) {
+              console.error("Error updating payment status by transactionIdentifier:", error);
+            } else {
+              console.log("Updated records with transactionIdentifier:", transactionIdentifier);
+              setUpdateSuccess(true);
+            }
+          } catch (error) {
+            console.error("Exception updating payment records by transactionIdentifier:", error);
+          }
+        }
+        
+        // Approach 4: Update all pending payments for current user if on success page
+        if (isSuccessPage) {
+          try {
+            const { data, error } = await supabase
               .from('payment_invoices')
               .update({ status: paidStatus })
               .eq('user_id', session.user.id)
               .or(`status.eq.${PAYMENT_STATUS.PENDING},status.eq.Pending,status.eq.pending`);
               
-            console.log("Updated all pending payments for current user");
+            if (error) {
+              console.error("Error updating pending payments for user:", error);
+            } else {
+              console.log("Updated all pending payments for current user");
+              setUpdateSuccess(true);
+            }
+          } catch (error) {
+            console.error("Exception updating pending payments for user:", error);
           }
-        } catch (error) {
-          console.error("Error updating pending payments for user:", error);
         }
+      } catch (error) {
+        console.error("General error in updatePaymentStatus:", error);
       }
     };
     
@@ -204,7 +241,7 @@ const PaymentSuccessContent = ({
               </Button>
             </div>
             
-            {isVerified && (
+            {(isVerified || updateSuccess) && (
               <div className="mt-4 p-3 bg-green-50 rounded text-green-700 text-sm">
                 تم التحقق من حالة الاشتراك وتفعيله بنجاح
               </div>

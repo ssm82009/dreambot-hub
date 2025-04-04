@@ -8,7 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 const PaymentSuccess = () => {
-  const { transactionIdentifier, isVerifying, paymentSession, sessionId } = usePaymentVerification();
+  const { transactionIdentifier, isVerifying, paymentSession, sessionId, paymentUpdated } = usePaymentVerification();
   const [isVerified, setIsVerified] = useState(false);
   const [paymentData, setPaymentData] = useState<any>(null);
   const [isChecking, setIsChecking] = useState(true);
@@ -54,6 +54,7 @@ const PaymentSuccess = () => {
                 .from('payment_invoices')
                 .select('*')
                 .eq('invoice_id', sessionId)
+                .eq('user_id', session.user.id)
                 .limit(1);
                 
               if (!invoiceError && invoiceData && invoiceData.length > 0) {
@@ -72,6 +73,7 @@ const PaymentSuccess = () => {
                 .from('payment_invoices')
                 .select('*')
                 .eq('invoice_id', transactionIdentifier)
+                .eq('user_id', session.user.id)
                 .limit(1);
                 
               if (!invoiceError && invoiceData && invoiceData.length > 0) {
@@ -107,7 +109,7 @@ const PaymentSuccess = () => {
     };
     
     checkSubscription();
-  }, [transactionIdentifier, isVerifying, sessionId, paymentSession]);
+  }, [transactionIdentifier, isVerifying, sessionId, paymentSession, paymentUpdated]);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -115,7 +117,7 @@ const PaymentSuccess = () => {
       <main className="flex-1 py-20 rtl">
         <PaymentSuccessContent 
           transactionIdentifier={transactionIdentifier}
-          isVerified={isVerified}
+          isVerified={isVerified || paymentUpdated}
           isVerifying={isVerifying || isChecking}
           paymentData={paymentData}
           paymentSession={paymentSession}
