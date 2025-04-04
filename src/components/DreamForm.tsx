@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -27,7 +26,6 @@ const DreamForm = () => {
   }, []);
 
   useEffect(() => {
-    // تحديث عدد الكلمات والأحرف عند تغير النص
     setCharCount(dreamText.length);
     setWordCount(dreamText.trim() ? dreamText.trim().split(/\s+/).length : 0);
   }, [dreamText]);
@@ -48,7 +46,6 @@ const DreamForm = () => {
 
   const fetchSettings = async () => {
     try {
-      // جلب إعدادات الذكاء الاصطناعي
       const { data: aiData, error: aiError } = await supabase
         .from('ai_settings')
         .select('*')
@@ -61,7 +58,6 @@ const DreamForm = () => {
         setAiSettings(aiData);
       }
 
-      // جلب إعدادات التفسير
       const { data: interpretationData, error: interpretationError } = await supabase
         .from('interpretation_settings')
         .select('*')
@@ -98,7 +94,6 @@ const DreamForm = () => {
     setIsLoading(true);
     
     try {
-      // استخدام وظيفة الحافة لتفسير الحلم
       const { data: aiResponse, error: aiError } = await supabase.functions.invoke('interpret-dream', {
         body: { dreamText: dream }
       });
@@ -112,17 +107,15 @@ const DreamForm = () => {
 
       const generatedInterpretation = aiResponse?.interpretation || "لم نتمكن من الحصول على تفسير في هذا الوقت.";
       
-      // استخراج الكلمات المفتاحية من نص الحلم
       const extractedTags = extractKeywords(dream);
       console.log("Extracted tags:", extractedTags);
       
-      // حفظ الحلم والتفسير في قاعدة البيانات
       const { error } = await supabase
         .from('dreams')
         .insert({
           dream_text: dream,
           interpretation: generatedInterpretation,
-          user_id: userId, // تخزين معرف المستخدم إذا كان متاحًا
+          user_id: userId,
           tags: extractedTags
         });
       
@@ -154,7 +147,6 @@ const DreamForm = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (dreamText.trim()) {
-      // التحقق من عدد الكلمات إذا كانت إعدادات التفسير متاحة
       if (interpretationSettings) {
         const wordCount = dreamText.trim().split(/\s+/).length;
         if (wordCount > interpretationSettings.max_input_words) {
@@ -166,14 +158,12 @@ const DreamForm = () => {
     }
   };
 
-  // حساب نسبة الكلمات من الحد الأقصى
   const calculateWordPercentage = (): number => {
     if (!interpretationSettings || !wordCount) return 0;
     const percentage = (wordCount / interpretationSettings.max_input_words) * 100;
-    return Math.min(percentage, 100); // لا تتجاوز 100%
+    return Math.min(percentage, 100);
   };
 
-  // تحديد لون شريط التقدم بناءً على النسبة
   const getProgressColor = (): string => {
     const percentage = calculateWordPercentage();
     if (percentage < 60) return "bg-green-500";
@@ -182,7 +172,7 @@ const DreamForm = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-12 rtl">
+    <div className="container mx-auto px-4 py-12 rtl" id="dream-form-section">
       <div className="max-w-3xl mx-auto">
         <Card className="shadow-lg border-border/50">
           <CardHeader>
@@ -195,6 +185,7 @@ const DreamForm = () => {
             <form onSubmit={handleSubmit}>
               <div className="space-y-4">
                 <Textarea
+                  id="dream-form-textarea"
                   placeholder="صف حلمك بالتفصيل..."
                   className="min-h-[150px] resize-none"
                   value={dreamText}

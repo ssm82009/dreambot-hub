@@ -12,6 +12,17 @@ const Hero: React.FC<HeroProps> = ({
   title = "تفسير الأحلام بالذكاء الاصطناعي",
   subtitle = "فسّر أحلامك بدقة عالية باستخدام أحدث تقنيات الذكاء الاصطناعي واستنادًا إلى مراجع التفسير الإسلامية الموثوقة."
 }) => {
+  // وظيفة للتمرير إلى قسم كتابة الحلم
+  const scrollToDreamForm = () => {
+    const dreamFormElement = document.getElementById('dream-form-textarea');
+    if (dreamFormElement) {
+      dreamFormElement.scrollIntoView({ behavior: 'smooth' });
+      setTimeout(() => {
+        dreamFormElement.focus();
+      }, 800);
+    }
+  };
+
   return (
     <div className="relative overflow-hidden pt-24 pb-16 rtl">
       <div className="absolute inset-0 dream-pattern opacity-50 z-0"></div>
@@ -33,9 +44,7 @@ const Hero: React.FC<HeroProps> = ({
           </p>
           
           <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-6 rtl:space-x-reverse">
-            <Link to="/register">
-              <Button size="lg" className="text-lg px-8">ابدأ الآن</Button>
-            </Link>
+            <Button size="lg" className="text-lg px-8" onClick={scrollToDreamForm}>ابدأ الآن</Button>
             <Link to="/about">
               <Button size="lg" variant="outline" className="text-lg px-8">اعرف المزيد</Button>
             </Link>
