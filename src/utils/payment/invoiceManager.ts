@@ -31,7 +31,7 @@ export const findInvoiceByIdentifiers = async (
       console.log("Found matching invoices:", invoices);
       const invoiceId = invoices[0].id;
       
-      // دائماً تحديث حالة الفاتورة في قاعدة البيانات إلى "مدفوع" عند التحقق من الدفع
+      // تحديث حالة الفاتورة في قاعدة البيانات إلى "مدفوع" عند التحقق من الدفع
       const { error: updateInvoiceError } = await supabase
         .from('payment_invoices')
         .update({ status: 'مدفوع' })

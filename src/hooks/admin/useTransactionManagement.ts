@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -47,15 +46,8 @@ export const useTransactionManagement = () => {
         const formattedTransactions = transactionsData.map(transaction => {
           const user = usersMap[transaction.user_id] || {};
           
-          // إذا كان المستخدم مشترك بالفعل في نفس الخطة، فالمعاملة يجب أن تكون "مدفوع"
-          let status = transaction.status;
-          if (user.subscription_type === transaction.plan_name && 
-              user.subscription_type !== 'free') {
-            status = 'مدفوع';
-          } else {
-            // غير ذلك، استخدم دالة التطبيع
-            status = normalizePaymentStatus(transaction.status);
-          }
+          // استخدم دالة التطبيع لكن بدون تغيير بناءً على حالة الاشتراك
+          const status = normalizePaymentStatus(transaction.status);
           
           return {
             ...transaction,

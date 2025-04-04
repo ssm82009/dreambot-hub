@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -52,17 +51,8 @@ export const useProfileData = () => {
         } else {
           console.log("Refreshed payments:", paymentData);
           
-          // عند استرجاع المدفوعات من صفحة النجاح، قم بتعيين جميع المدفوعات التي تم التحقق منها كـ "مدفوع"
+          // استخدم دالة التطبيع مباشرة بدون تغيير إضافي
           const normalizedPayments = paymentData?.map(payment => {
-            // إذا كان المستخدم مشترك، ضع كل الدفعات المرتبطة بخطته الحالية كـ "مدفوع"
-            if (refreshedUserData.subscription_type === payment.plan_name && 
-                refreshedUserData.subscription_type !== 'free') {
-              return {
-                ...payment,
-                status: 'مدفوع'
-              };
-            }
-            
             return {
               ...payment,
               status: normalizePaymentStatus(payment.status)
@@ -132,16 +122,8 @@ export const useProfileData = () => {
         } else {
           console.log("Fetched payments for user:", session.user.id, paymentData);
           
-          // إذا كان المستخدم مشترك، ضع كل الدفعات المرتبطة بخطته الحالية كـ "مدفوع"
+          // استخدم دالة التطبيع مباشرة بدون تغيير إضافي
           const normalizedPayments = paymentData?.map(payment => {
-            if (userData.subscription_type === payment.plan_name && 
-                userData.subscription_type !== 'free') {
-              return {
-                ...payment,
-                status: 'مدفوع'
-              };
-            }
-            
             return {
               ...payment,
               status: normalizePaymentStatus(payment.status)
