@@ -1,6 +1,5 @@
-
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { CheckCircle, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -23,14 +22,15 @@ const PaymentSuccessContent = ({
   paymentSession
 }: PaymentSuccessContentProps) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [subscriptionName, setSubscriptionName] = useState('');
   
-  // Make sure to update the payment status to مدفوع on the success page
+  const isSuccessPage = location.pathname.includes('success');
+  
   useEffect(() => {
     const updatePaymentStatus = async () => {
       if (paymentData?.id) {
         try {
-          // Update payment record status to مدفوع
           await supabase
             .from('payment_invoices')
             .update({ status: 'مدفوع' })
@@ -42,7 +42,6 @@ const PaymentSuccessContent = ({
         }
       }
       
-      // Also ensure that all invoices with the same invoice_id are updated to مدفوع
       if (paymentData?.invoice_id) {
         try {
           await supabase
@@ -56,7 +55,6 @@ const PaymentSuccessContent = ({
         }
       }
       
-      // If we have a transaction identifier but no payment data, try to update using that
       if (transactionIdentifier && !paymentData) {
         try {
           await supabase
@@ -69,19 +67,34 @@ const PaymentSuccessContent = ({
           console.error("Error updating payment records by transactionIdentifier:", error);
         }
       }
+      
+      if (isSuccessPage) {
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session?.user?.id) {
+            await supabase
+              .from('payment_invoices')
+              .update({ status: 'مدفوع' })
+              .eq('user_id', session.user.id)
+              .eq('status', 'Pending');
+              
+            console.log("Updated all pending payments for current user");
+          }
+        } catch (error) {
+          console.error("Error updating pending payments for user:", error);
+        }
+      }
     };
     
     updatePaymentStatus();
-  }, [paymentData, transactionIdentifier]);
+  }, [paymentData, transactionIdentifier, isSuccessPage]);
   
   useEffect(() => {
     const fetchSubscriptionInfo = async () => {
       try {
-        // استرجاع نوع الاشتراك من جلسة الدفع أو من المستخدم الحالي
         let planType = paymentSession?.plan_type;
         
         if (!planType) {
-          // الحصول على اشتراك المستخدم الحالي
           const { data: { session } } = await supabase.auth.getSession();
           
           if (session?.user?.id) {
@@ -101,7 +114,6 @@ const PaymentSuccessContent = ({
           planType = paymentData.plan_name;
         }
         
-        // استرجاع اسم الاشتراك من إعدادات التسعير
         const { data: pricingSettings } = await supabase
           .from('pricing_settings')
           .select('*')
@@ -118,10 +130,8 @@ const PaymentSuccessContent = ({
     fetchSubscriptionInfo();
   }, [paymentSession, paymentData]);
   
-  // Always show payment status as "مدفوع" (paid) on the success page
   const normalizedStatus = 'مدفوع';
   
-  // الحصول على اسم الباقة الديناميكي
   const getDisplayPlan = () => {
     if (subscriptionName) {
       return subscriptionName;

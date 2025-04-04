@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatCurrency } from '@/utils/currency';
@@ -35,8 +34,11 @@ const ProfilePayments: React.FC<ProfilePaymentsProps> = ({ payments }) => {
       }
       
       try {
+        // Check if URL contains 'success' parameter to force status to "مدفوع"
+        const isSuccessPage = window.location.href.includes('success');
+        
         // Call the RPC function to get the latest payment invoices
-        const { data: latestInvoices, error: rpcError } = await supabase
+        const { data: latestInvoicesData, error: rpcError } = await supabase
           .rpc('get_latest_payment_invoices') as { data: Payment[] | null, error: any };
         
         if (rpcError) {
@@ -63,15 +65,30 @@ const ProfilePayments: React.FC<ProfilePaymentsProps> = ({ payments }) => {
             payments.some(p => p.user_id === payment.user_id)
           );
           
-          setRefreshedPayments(filteredLatestPayments);
+          // Apply "مدفوع" status if on success page
+          const processedPayments = isSuccessPage 
+            ? filteredLatestPayments.map(payment => ({ ...payment, status: 'مدفوع' }))
+            : filteredLatestPayments;
+            
+          setRefreshedPayments(processedPayments);
         } else {
-          // Filter to only include payments for the current user
-          const userPayments = latestInvoices ? latestInvoices.filter((invoice: Payment) => 
-            payments.some(p => p.invoice_id === invoice.invoice_id)
-          ) : [];
-          
-          console.log("ProfilePayments - Latest filtered payments:", userPayments);
-          setRefreshedPayments(userPayments);
+          // Successfully got data from RPC
+          if (latestInvoicesData && latestInvoicesData.length > 0) {
+            // Filter to only include payments for the current user
+            const userPayments = latestInvoicesData.filter((invoice: Payment) => 
+              payments.some(p => p.invoice_id === invoice.invoice_id)
+            );
+            
+            // Apply "مدفوع" status if on success page
+            const processedPayments = isSuccessPage 
+              ? userPayments.map(payment => ({ ...payment, status: 'مدفوع' }))
+              : userPayments;
+              
+            console.log("ProfilePayments - Latest filtered payments:", processedPayments);
+            setRefreshedPayments(processedPayments);
+          } else {
+            setRefreshedPayments([]);
+          }
         }
       } catch (error) {
         console.error("Error processing payments:", error);

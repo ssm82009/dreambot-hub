@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useLocation } from 'react-router-dom';
 import { verifyPayment } from '@/utils/payment/verifyPayment';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -8,8 +8,12 @@ import { normalizePaymentStatus } from '@/utils/payment/statusNormalizer';
 
 export const usePaymentVerification = () => {
   const [searchParams] = useSearchParams();
+  const location = useLocation();
   const [isVerifying, setIsVerifying] = useState(true);
   const [paymentSession, setPaymentSession] = useState<any>(null);
+  
+  // Check if we're on the success page to force status to "مدفوع"
+  const isSuccessPage = location.pathname.includes('success');
   
   // SESSION PARAMS - أهم معرف يجب البحث عنه
   const sessionId = searchParams.get('session_id') || '';
@@ -73,7 +77,7 @@ export const usePaymentVerification = () => {
               transaction_identifier: transactionIdentifier,
               payment_method: invoiceData.payment_method,
               created_at: invoiceData.created_at,
-              status: 'مدفوع' // دائماً تعيين الحالة كمدفوع في صفحة النجاح
+              status: isSuccessPage ? 'مدفوع' : invoiceData.status // Force status if on success page
             };
             
             // تحديث الفاتورة لتكون مدفوعة - CRITICAL FIX HERE
@@ -110,7 +114,7 @@ export const usePaymentVerification = () => {
               transaction_identifier: transactionIdentifier,
               payment_method: invoiceByTxData.payment_method,
               created_at: invoiceByTxData.created_at,
-              status: 'مدفوع' // دائماً تعيين الحالة كمدفوع في صفحة النجاح
+              status: isSuccessPage ? 'مدفوع' : invoiceByTxData.status // Force status if on success page
             };
             
             // تحديث الفاتورة لتكون مدفوعة - CRITICAL FIX HERE
@@ -148,7 +152,7 @@ export const usePaymentVerification = () => {
               transaction_identifier: transactionIdentifier,
               payment_method: latestInvoiceData.payment_method,
               created_at: latestInvoiceData.created_at,
-              status: 'مدفوع' // دائماً تعيين الحالة كمدفوع في صفحة النجاح
+              status: isSuccessPage ? 'مدفوع' : latestInvoiceData.status // Force status if on success page
             };
             
             // تحديث الفاتورة لتكون مدفوعة - CRITICAL FIX HERE
@@ -206,17 +210,18 @@ export const usePaymentVerification = () => {
     };
 
     // Only proceed with verification if we have a user
-    if (sessionId || transactionIdentifier) {
+    if (sessionId || transactionIdentifier || isSuccessPage) {
       handleVerification();
     } else {
       setIsVerifying(false);
     }
-  }, [sessionId, transactionIdentifier, customId, txnId, searchParams, payerID]);
+  }, [sessionId, transactionIdentifier, customId, txnId, searchParams, payerID, isSuccessPage]);
 
   return {
     paymentSession,
     transactionIdentifier: transactionIdentifier || (paymentSession?.transaction_identifier || ''),
     isVerifying,
-    sessionId
+    sessionId,
+    isSuccessPage
   };
 };

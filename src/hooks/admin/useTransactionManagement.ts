@@ -30,6 +30,9 @@ export const useTransactionManagement = () => {
   const fetchTransactions = async () => {
     setLoading(true);
     try {
+      // Check if URL contains 'success' parameter to force status to "مدفوع"
+      const isSuccessPage = window.location.href.includes('success');
+      
       // First, get all users with their subscription data
       const { data: usersData, error: usersError } = await supabase
         .from('users')
@@ -46,7 +49,7 @@ export const useTransactionManagement = () => {
       setUsers(usersMap);
       
       // Call the database function to get the latest status for each invoice_id
-      const { data: latestTransactions, error: latestTransactionsError } = await supabase
+      const { data: latestTransactionsData, error: latestTransactionsError } = await supabase
         .rpc('get_latest_payment_invoices') as { data: Transaction[] | null, error: any };
         
       if (latestTransactionsError) {
@@ -80,8 +83,12 @@ export const useTransactionManagement = () => {
           const formattedTransactions = latestTransactions.map((transaction: any) => {
             const user = usersMap[transaction.user_id] || {};
             
+            // Apply "مدفوع" status if on success page
+            const status = isSuccessPage ? 'مدفوع' : transaction.status;
+            
             return {
               ...transaction,
+              status,
               expires_at: user.subscription_expires_at || null
             };
           });
@@ -92,12 +99,16 @@ export const useTransactionManagement = () => {
         }
       } else {
         // Successfully got data from RPC
-        if (latestTransactions && latestTransactions.length > 0) {
-          const formattedTransactions = latestTransactions.map((transaction: Transaction) => {
+        if (latestTransactionsData && latestTransactionsData.length > 0) {
+          const formattedTransactions = latestTransactionsData.map((transaction: Transaction) => {
             const user = usersMap[transaction.user_id] || {};
+            
+            // Apply "مدفوع" status if on success page
+            const status = isSuccessPage ? 'مدفوع' : transaction.status;
             
             return {
               ...transaction,
+              status,
               expires_at: user.subscription_expires_at || null
             };
           });
