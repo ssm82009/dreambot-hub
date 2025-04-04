@@ -17,6 +17,20 @@ export const useTransactionManagement = () => {
   const fetchTransactions = async () => {
     setLoading(true);
     try {
+      const { data: usersData, error: usersError } = await supabase
+        .from('users')
+        .select('id, email, full_name, subscription_expires_at')
+        .order('created_at', { ascending: false });
+      
+      if (usersError) throw usersError;
+      
+      const usersMap = (usersData || []).reduce((acc, user) => ({
+        ...acc,
+        [user.id]: user
+      }), {});
+      
+      setUsers(usersMap);
+      
       const { data: transactionsData, error } = await supabase
         .from('payment_invoices')
         .select('*')
@@ -26,34 +40,15 @@ export const useTransactionManagement = () => {
       
       console.log("Fetched transactions:", transactionsData?.length || 0);
       
-      const userIds = [...new Set(transactionsData?.map(t => t.user_id).filter(Boolean))];
-      
-      if (userIds.length > 0) {
-        const { data: usersData, error: usersError } = await supabase
-          .from('users')
-          .select('id, email, full_name')
-          .in('id', userIds);
-        
-        if (usersError) throw usersError;
-        
-        console.log("Fetched users:", usersData?.length || 0);
-        
-        const usersMap = (usersData || []).reduce((acc, user) => ({
-          ...acc,
-          [user.id]: user
-        }), {});
-        
-        setUsers(usersMap);
-      }
-      
       if (transactionsData && transactionsData.length > 0) {
         const formattedTransactions = transactionsData.map(transaction => {
           const normalizedStatus = normalizePaymentStatus(transaction.status);
+          const user = usersMap[transaction.user_id] || {};
           
           return {
             ...transaction,
             status: normalizedStatus,
-            expires_at: transaction.expires_at || null
+            expires_at: user.subscription_expires_at || null
           };
         });
         
@@ -90,7 +85,7 @@ export const useTransactionManagement = () => {
   const handleEditSuccess = () => {
     fetchTransactions();
   };
-  
+
   const filteredTransactions = transactions.filter((transaction) => {
     const user = users[transaction.user_id] || {};
     const searchString = searchTerm.toLowerCase().trim();
