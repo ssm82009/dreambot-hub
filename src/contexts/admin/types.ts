@@ -26,14 +26,14 @@ export type AdminContextType = {
   setAiSettingsForm: (settings: AiSettingsForm) => void;
   interpretationSettingsForm: InterpretationSettingsForm;
   setInterpretationSettingsForm: (settings: InterpretationSettingsForm) => void;
-  pricingSettingsForm: PricingSettingsForm;
-  setPricingSettingsForm: (settings: PricingSettingsForm) => void;
-  paymentSettingsForm: PaymentSettingsForm;
-  setPaymentSettingsForm: (settings: PaymentSettingsForm) => void;
-  themeSettingsForm: ThemeSettingsForm;
-  setThemeSettingsForm: (settings: ThemeSettingsForm) => void;
-  seoSettingsForm: SeoSettingsForm;
-  setSeoSettingsForm: (settings: SeoSettingsForm) => void;
+  pricingSettingsForm: PricingSettingsFormValues;
+  setPricingSettingsForm: (settings: PricingSettingsFormValues) => void;
+  paymentSettingsForm: PaymentSettingsFormValues;
+  setPaymentSettingsForm: (settings: PaymentSettingsFormValues) => void;
+  themeSettingsForm: ThemeSettingsFormValues;
+  setThemeSettingsForm: (settings: ThemeSettingsFormValues) => void;
+  seoSettingsForm: SeoSettingsFormValues;
+  setSeoSettingsForm: (settings: SeoSettingsFormValues) => void;
   activeSections: ActiveSections;
   setActiveSections: (sections: ActiveSections) => void;
   toggleSection: (section: string) => void;
@@ -71,29 +71,42 @@ export type InterpretationSettingsForm = {
   systemInstructions: string;
 };
 
-export type PricingSettingsForm = {
-  freePlanPrice: number;
-  freePlanInterpretations: number;
-  freePlanFeatures: string;
-  premiumPlanPrice: number;
-  premiumPlanInterpretations: number;
-  premiumPlanFeatures: string;
-  proPlanPrice: number;
-  proPlanInterpretations: number;
-  proPlanFeatures: string;
+export type PricingSettingsFormValues = {
+  freePlan: {
+    name: string;
+    price: number;
+    interpretationsPerMonth: number;
+    features: string;
+  };
+  premiumPlan: {
+    name: string;
+    price: number;
+    interpretationsPerMonth: number;
+    features: string;
+  };
+  proPlan: {
+    name: string;
+    price: number;
+    interpretationsPerMonth: number;
+    features: string;
+  };
 };
 
-export type PaymentSettingsForm = {
-  paylinkEnabled: boolean;
-  paylinkApiKey: string;
-  paylinkSecretKey: string;
-  paypalEnabled: boolean;
-  paypalClientId: string;
-  paypalSecret: string;
-  paypalSandbox: boolean;
+export type PaymentSettingsFormValues = {
+  paylink: {
+    enabled: boolean;
+    apiKey: string;
+    secretKey: string;
+  };
+  paypal: {
+    enabled: boolean;
+    clientId: string;
+    secret: string;
+    sandbox: boolean;
+  };
 };
 
-export type ThemeSettingsForm = {
+export type ThemeSettingsFormValues = {
   primaryColor: string;
   buttonColor: string;
   textColor: string;
@@ -103,12 +116,15 @@ export type ThemeSettingsForm = {
   headerColor: string;
   footerColor: string;
   footerText: string;
-  twitterLink: string;
-  facebookLink: string;
-  instagramLink: string;
+  socialLinks: {
+    twitter: string;
+    facebook: string;
+    instagram: string;
+  };
+  slug?: string;
 };
 
-export type SeoSettingsForm = {
+export type SeoSettingsFormValues = {
   metaTitle: string;
   metaDescription: string;
   keywords: string;

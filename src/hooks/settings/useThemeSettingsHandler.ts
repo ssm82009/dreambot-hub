@@ -38,9 +38,9 @@ export const useThemeSettingsHandler = () => {
           header_color: data.headerColor,
           footer_color: data.footerColor,
           footer_text: data.footerText,
-          twitter_link: data.socialLinks.twitter,
-          facebook_link: data.socialLinks.facebook,
-          instagram_link: data.socialLinks.instagram,
+          twitter_link: data.socialLinks?.twitter,
+          facebook_link: data.socialLinks?.facebook,
+          instagram_link: data.socialLinks?.instagram,
           slug: data.slug,
           updated_at: new Date().toISOString()
         })

@@ -2,28 +2,11 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { useForm } from 'react-hook-form';
+import { ThemeSettingsFormValues } from '@/contexts/admin/types';
 import ColorsSection from '@/components/admin/theme/ColorsSection';
 import LogoSection from '@/components/admin/theme/LogoSection';
 import HeaderFooterSection from '@/components/admin/theme/HeaderFooterSection';
 import { Loader2, Check } from 'lucide-react';
-
-type ThemeSettingsFormValues = {
-  primaryColor: string;
-  buttonColor: string;
-  textColor: string;
-  backgroundColor: string;
-  logoText: string;
-  logoFontSize: number;
-  slug?: string;
-  headerColor: string;
-  footerColor: string;
-  footerText: string;
-  socialLinks: {
-    twitter: string;
-    facebook: string;
-    instagram: string;
-  };
-};
 
 type ThemeSettingsFormProps = {
   initialData: ThemeSettingsFormValues;
