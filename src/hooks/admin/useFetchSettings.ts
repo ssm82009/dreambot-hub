@@ -1,4 +1,3 @@
-
 import { useAdmin } from '@/contexts/admin';
 import { supabase } from '@/integrations/supabase/client';
 import { initialThemeSettings, initialSeoSettings } from '@/contexts/admin/initialState';
@@ -141,11 +140,9 @@ export const useFetchSettings = () => {
           headerColor: themeData.header_color || initialThemeSettings.headerColor,
           footerColor: themeData.footer_color || initialThemeSettings.footerColor,
           footerText: themeData.footer_text || initialThemeSettings.footerText,
-          socialLinks: {
-            twitter: themeData.twitter_link || "",
-            facebook: themeData.facebook_link || "",
-            instagram: themeData.instagram_link || ""
-          },
+          twitterLink: themeData.twitter_link || "",
+          facebookLink: themeData.facebook_link || "",
+          instagramLink: themeData.instagram_link || "",
           slug: themeData.slug || initialThemeSettings.slug
         });
         
@@ -154,6 +151,7 @@ export const useFetchSettings = () => {
           metaTitle: themeData.meta_title || initialSeoSettings.metaTitle,
           metaDescription: themeData.meta_description || initialSeoSettings.metaDescription,
           keywords: themeData.keywords || initialSeoSettings.keywords,
+          slug: themeData.slug || initialSeoSettings.slug,
           enableSitemap: themeData.enable_sitemap ?? initialSeoSettings.enableSitemap,
           enableRobotsTxt: themeData.enable_robots_txt ?? initialSeoSettings.enableRobotsTxt,
           enableCanonicalUrls: themeData.enable_canonical_urls ?? initialSeoSettings.enableCanonicalUrls,

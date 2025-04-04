@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { AdminContext } from './AdminContext';
-import { AdminProviderProps } from './types';
+import { AdminProviderProps, ThemeSettingsFormValues, ActiveSections } from './types';
 import { User, CustomPage, NavLink } from '@/types/database';
 import {
   initialAiSettings,
@@ -13,7 +13,6 @@ import {
   initialHomeSections,
   initialActiveSections
 } from './initialState';
-import { ThemeSettingsFormValues } from './types';
 
 export const AdminProvider: React.FC<AdminProviderProps> = ({ children }) => {
   // Auth and loading states
@@ -43,10 +42,10 @@ export const AdminProvider: React.FC<AdminProviderProps> = ({ children }) => {
   const [homeSectionsForm, setHomeSectionsForm] = useState(initialHomeSections);
   
   // UI state
-  const [activeSections, setActiveSections] = useState(initialActiveSections);
+  const [activeSections, setActiveSections] = useState<ActiveSections>(initialActiveSections);
 
   // Toggle section function
-  const toggleSection = (section: string) => {
+  const toggleSection = (section: keyof ActiveSections) => {
     setActiveSections(prev => ({
       ...prev,
       [section]: !prev[section]
@@ -97,7 +96,9 @@ export const AdminProvider: React.FC<AdminProviderProps> = ({ children }) => {
           setHomeSectionsForm(prev => ({ ...prev, ...settings }));
         },
         activeSections,
-        setActiveSections,
+        setActiveSections: (sections) => {
+          setActiveSections(prev => ({ ...prev, ...sections }));
+        },
         toggleSection
       }}
     >

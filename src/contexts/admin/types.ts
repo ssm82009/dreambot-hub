@@ -78,19 +78,18 @@ export type PricingSettingsFormValues = {
 };
 
 export type ActiveSections = {
-  ai: boolean;
-  interpretation: boolean;
-  pricing: boolean;
-  payment: boolean;
-  transactions: boolean;
-  users: boolean;
-  pages: boolean;
-  navbar: boolean;
-  tickets: boolean;
-  theme: boolean;
-  seo: boolean;
-  homeSections: boolean;
+  aiSettings: boolean;
+  interpretationSettings: boolean;
+  pricingSettings: boolean;
+  paymentSettings: boolean;
+  transactionManagement: boolean;
+  userManagement: boolean;
+  pageManagement: boolean;
+  navbarManagement: boolean;
+  ticketManagement: boolean;
   themeSettings: boolean;
+  seoSettings: boolean;
+  homeSections: boolean;
 };
 
 export type AdminContextType = {

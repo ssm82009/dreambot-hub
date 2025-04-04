@@ -1,4 +1,3 @@
-
 export const initialAiSettings = {
   provider: 'together',
   model: 'meta-llama/Llama-3-8b-chat-hf',
@@ -85,16 +84,17 @@ export const initialHomeSections = {
   ]
 };
 
+// Export initial active sections state
 export const initialActiveSections = {
   aiSettings: false,
   interpretationSettings: false,
   pricingSettings: false,
   paymentSettings: false,
+  transactionManagement: false,
   userManagement: false,
   pageManagement: false,
   navbarManagement: false,
   ticketManagement: false,
-  transactionManagement: false,
   themeSettings: false,
   seoSettings: false,
   homeSections: false
