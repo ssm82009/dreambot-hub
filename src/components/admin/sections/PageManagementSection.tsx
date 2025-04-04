@@ -28,9 +28,12 @@ const PageManagementSection = () => {
         
         if (error) throw error;
         
-        // Fixed: Explicitly cast the result to CustomPage[]
-        setPages((prev) => {
-          return prev.map(p => p.id === page.id ? { ...p, ...page } as CustomPage : p)
+        // Fixed: Add proper typing to the state update function
+        setPages(prev => {
+          const updatedPages = prev.map(p => 
+            p.id === page.id ? { ...p, ...page } as CustomPage : p
+          );
+          return updatedPages;
         });
         toast.success('تم تحديث الصفحة بنجاح');
       } else {
@@ -47,9 +50,13 @@ const PageManagementSection = () => {
         
         if (error) throw error;
         
-        // Fixed: Explicitly cast the result to CustomPage[]
-        setPages((prev) => {
-          return [...prev, data as CustomPage];
+        // Fixed: Add proper typing to the state update function
+        setPages(prev => {
+          const newPages = [...prev];
+          if (data) {
+            newPages.push(data as CustomPage);
+          }
+          return newPages;
         });
         toast.success('تم إنشاء الصفحة بنجاح');
       }
@@ -71,9 +78,10 @@ const PageManagementSection = () => {
       
       if (error) throw error;
       
-      // Fixed: Explicitly cast the result to CustomPage[]
-      setPages((prev) => {
-        return prev.filter(p => p.id !== id);
+      // Fixed: Add proper typing to the state update function
+      setPages(prev => {
+        const filteredPages = prev.filter(p => p.id !== id);
+        return filteredPages;
       });
       toast.success('تم حذف الصفحة بنجاح');
     } catch (error) {

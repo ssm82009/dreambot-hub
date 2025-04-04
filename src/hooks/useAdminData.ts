@@ -9,7 +9,7 @@ import { useFetchSettings } from './admin/useFetchSettings';
 export const useAdminData = () => {
   const { setIsLoading, setDbLoading } = useAdmin();
   const { checkAdminAuth } = useAdminAuth();
-  const { fetchSettings: fetchDashboardStats } = useFetchDashboardStats();
+  const dashboardStatsHook = useFetchDashboardStats(); // Proper naming for clarity
   const { fetchAllSettings } = useFetchSettings();
   const navigate = useNavigate();
 
@@ -59,6 +59,17 @@ export const useAdminData = () => {
     initializeData();
   }, []);
 
+  // Define fetchStats function at the module level to avoid the undefined reference
+  const fetchStats = async () => {
+    try {
+      const fetchData = await fetch('/api/admin/stats');
+      const data = await fetchData.json();
+      return data;
+    } catch (error) {
+      console.error("Error fetching dashboard stats:", error);
+    }
+  };
+
   // Refresh admin data function with detailed logging
   const refreshAdminData = async () => {
     try {
@@ -66,17 +77,6 @@ export const useAdminData = () => {
       setDbLoading(true);
       
       console.log("Fetching dashboard stats...");
-      // Create a custom fetchDashboardStats function as above
-      const fetchStats = async () => {
-        try {
-          const fetchData = await fetch('/api/admin/stats');
-          const data = await fetchData.json();
-          return data;
-        } catch (error) {
-          console.error("Error fetching dashboard stats:", error);
-        }
-      };
-      
       await fetchStats();
       console.log("Dashboard stats fetched successfully");
       
