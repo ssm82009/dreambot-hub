@@ -1,8 +1,7 @@
-
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { useToast } from "sonner";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
 interface HeroProps {
@@ -15,7 +14,6 @@ const Hero: React.FC<HeroProps> = ({
   subtitle = "فسّر أحلامك بدقة عالية باستخدام أحدث تقنيات الذكاء الاصطناعي واستنادًا إلى مراجع التفسير الإسلامية الموثوقة."
 }) => {
   const navigate = useNavigate();
-  const toast = useToast();
   
   // وظيفة للتمرير إلى قسم كتابة الحلم مع التحقق من تسجيل الدخول
   const handleStartNow = async () => {
