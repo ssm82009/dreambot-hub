@@ -41,10 +41,38 @@ const PaymentSuccessContent = ({
           console.error("Error updating payment status:", error);
         }
       }
+      
+      // Also ensure that all invoices with the same invoice_id are updated to مدفوع
+      if (paymentData?.invoice_id) {
+        try {
+          await supabase
+            .from('payment_invoices')
+            .update({ status: 'مدفوع' })
+            .eq('invoice_id', paymentData.invoice_id);
+            
+          console.log("Updated all records with invoice_id:", paymentData.invoice_id);
+        } catch (error) {
+          console.error("Error updating payment records by invoice_id:", error);
+        }
+      }
+      
+      // If we have a transaction identifier but no payment data, try to update using that
+      if (transactionIdentifier && !paymentData) {
+        try {
+          await supabase
+            .from('payment_invoices')
+            .update({ status: 'مدفوع' })
+            .eq('invoice_id', transactionIdentifier);
+            
+          console.log("Updated all records with transactionIdentifier:", transactionIdentifier);
+        } catch (error) {
+          console.error("Error updating payment records by transactionIdentifier:", error);
+        }
+      }
     };
     
     updatePaymentStatus();
-  }, [paymentData]);
+  }, [paymentData, transactionIdentifier]);
   
   useEffect(() => {
     const fetchSubscriptionInfo = async () => {

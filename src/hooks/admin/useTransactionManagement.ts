@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -32,34 +33,68 @@ export const useTransactionManagement = () => {
       
       setUsers(usersMap);
       
-      // Then get all transactions
-      const { data: transactionsData, error } = await supabase
-        .from('payment_invoices')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
-      if (error) throw error;
-      
-      console.log("Fetched transactions:", transactionsData?.length || 0);
-      
-      if (transactionsData && transactionsData.length > 0) {
-        const formattedTransactions = transactionsData.map(transaction => {
-          const user = usersMap[transaction.user_id] || {};
-          
-          // استخدم دالة التطبيع لكن بدون تغيير بناءً على حالة الاشتراك
-          const status = normalizePaymentStatus(transaction.status);
-          
-          return {
-            ...transaction,
-            status: status,
-            expires_at: user.subscription_expires_at || null
-          };
-        });
+      // Then get all transactions, grouped by invoice_id to get the latest status
+      // Using SQL query to group by invoice_id and get the most recent record
+      const { data: latestTransactions, error: latestTransactionsError } = await supabase
+        .rpc('get_latest_payment_invoices');
         
-        console.log("Transactions after normalization:", formattedTransactions);
-        setTransactions(formattedTransactions);
+      if (latestTransactionsError) {
+        console.error("Error fetching latest transactions:", latestTransactionsError);
+        
+        // Fallback to regular query if RPC fails
+        const { data: transactionsData, error } = await supabase
+          .from('payment_invoices')
+          .select('*')
+          .order('created_at', { ascending: false });
+          
+        if (error) throw error;
+        
+        if (transactionsData && transactionsData.length > 0) {
+          // Group by invoice_id and get the latest record
+          const invoiceGroups = transactionsData.reduce((groups: any, transaction: any) => {
+            if (!groups[transaction.invoice_id]) {
+              groups[transaction.invoice_id] = [];
+            }
+            groups[transaction.invoice_id].push(transaction);
+            return groups;
+          }, {});
+          
+          // Get the latest transaction for each invoice_id
+          const latestTransactions = Object.values(invoiceGroups).map((group: any) => {
+            return group.sort((a: any, b: any) => 
+              new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+            )[0];
+          });
+          
+          const formattedTransactions = latestTransactions.map((transaction: any) => {
+            const user = usersMap[transaction.user_id] || {};
+            
+            return {
+              ...transaction,
+              expires_at: user.subscription_expires_at || null
+            };
+          });
+          
+          setTransactions(formattedTransactions);
+        } else {
+          setTransactions([]);
+        }
       } else {
-        setTransactions([]);
+        // Successfully got data from RPC
+        if (latestTransactions && latestTransactions.length > 0) {
+          const formattedTransactions = latestTransactions.map((transaction: any) => {
+            const user = usersMap[transaction.user_id] || {};
+            
+            return {
+              ...transaction,
+              expires_at: user.subscription_expires_at || null
+            };
+          });
+          
+          setTransactions(formattedTransactions);
+        } else {
+          setTransactions([]);
+        }
       }
     } catch (error) {
       console.error('Error fetching transactions:', error);

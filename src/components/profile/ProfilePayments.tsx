@@ -6,6 +6,7 @@ import { formatDate } from '@/lib/utils';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { normalizePlanName, normalizePaymentMethod } from '@/utils/payment/statusNormalizer';
 import PaymentStatusBadge from '@/components/admin/transaction/PaymentStatusBadge';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Payment {
   id: string;
@@ -23,14 +24,65 @@ interface ProfilePaymentsProps {
 }
 
 const ProfilePayments: React.FC<ProfilePaymentsProps> = ({ payments }) => {
-  const [refreshedPayments, setRefreshedPayments] = useState<Payment[]>(payments);
+  const [refreshedPayments, setRefreshedPayments] = useState<Payment[]>([]);
 
-  // Automatically refresh payment data when component mounts or payments prop changes
+  // Process payments to get the latest status for each invoice_id
   useEffect(() => {
-    setRefreshedPayments(payments);
+    const processPayments = async () => {
+      if (!payments || payments.length === 0) {
+        setRefreshedPayments([]);
+        return;
+      }
+      
+      try {
+        // Group payments by invoice_id
+        const invoiceGroups = payments.reduce((groups: Record<string, Payment[]>, payment) => {
+          if (!groups[payment.invoice_id]) {
+            groups[payment.invoice_id] = [];
+          }
+          groups[payment.invoice_id].push(payment);
+          return groups;
+        }, {});
+        
+        // For each invoice_id, get the most recent payment record
+        const latestPayments = Object.values(invoiceGroups).map(group => {
+          return group.sort((a, b) => 
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          )[0];
+        });
+        
+        // For each latest payment, check if its status needs to be updated from database
+        const updatedPayments = await Promise.all(
+          latestPayments.map(async (payment) => {
+            // Double-check the latest status directly from the database
+            const { data, error } = await supabase
+              .from('payment_invoices')
+              .select('status')
+              .eq('invoice_id', payment.invoice_id)
+              .order('created_at', { ascending: false })
+              .limit(1)
+              .single();
+              
+            if (!error && data) {
+              return {
+                ...payment,
+                status: data.status
+              };
+            }
+            
+            return payment;
+          })
+        );
+        
+        console.log("ProfilePayments - Latest payments with updated status:", updatedPayments);
+        setRefreshedPayments(updatedPayments);
+      } catch (error) {
+        console.error("Error processing payments:", error);
+        setRefreshedPayments(payments);
+      }
+    };
     
-    // Log the payment data for debugging
-    console.log("ProfilePayments - Received payments:", payments);
+    processPayments();
   }, [payments]);
   
   if (refreshedPayments.length === 0) {

@@ -29,7 +29,11 @@ export const findInvoiceByIdentifiers = async (
     
     if (invoices && invoices.length > 0) {
       console.log("Found matching invoices:", invoices);
-      const invoiceId = invoices[0].id;
+      // Sort by created_at in descending order to get the latest invoice
+      const sortedInvoices = invoices.sort((a, b) => 
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+      const invoiceId = sortedInvoices[0].id;
       
       // تحديث حالة الفاتورة في قاعدة البيانات إلى "مدفوع" عند التحقق من الدفع
       const { error: updateInvoiceError } = await supabase
@@ -40,7 +44,7 @@ export const findInvoiceByIdentifiers = async (
       if (updateInvoiceError) {
         console.error("Error updating invoice status:", updateInvoiceError);
       } else {
-        console.log("Updated invoice status to مدفوع for invoice:", invoices[0].invoice_id);
+        console.log("Updated invoice status to مدفوع for invoice:", sortedInvoices[0].invoice_id);
       }
       
       return { invoiceId, foundInvoice: true };
@@ -129,28 +133,61 @@ export const createPayPalInvoiceRecord = async (
       amount = pricingSettings?.pro_plan_price || 99;
     }
     
-    // إنشاء سجل جديد بناءً على معلومات PayPal - دائماً بحالة "مدفوع"
-    const { data: newInvoice, error: newInvoiceError } = await supabase
+    // Check if an invoice already exists with this txnId
+    const { data: existingInvoices, error: existingError } = await supabase
       .from('payment_invoices')
-      .insert({
-        invoice_id: txnId,
-        user_id: userId,
-        plan_name: planName,
-        status: 'مدفوع', // Set directly to paid since we're on success page
-        payment_method: 'paypal',
-        amount: amount
-      })
-      .select()
-      .single();
+      .select('*')
+      .eq('invoice_id', txnId);
       
-    if (newInvoiceError) {
-      console.error("Error creating new invoice:", newInvoiceError);
-      return "";
-    } 
+    if (existingError) {
+      console.error("Error checking existing invoices:", existingError);
+    }
     
-    if (newInvoice) {
-      console.log("Created new payment record from PayPal data with ID:", newInvoice.id);
-      return newInvoice.id;
+    if (existingInvoices && existingInvoices.length > 0) {
+      // Update the existing invoice instead of creating a new one
+      const { data: updatedInvoice, error: updateError } = await supabase
+        .from('payment_invoices')
+        .update({
+          status: 'مدفوع', // Always set to paid
+          user_id: userId,
+          plan_name: planName,
+          payment_method: 'paypal',
+          amount: amount
+        })
+        .eq('id', existingInvoices[0].id)
+        .select()
+        .single();
+        
+      if (updateError) {
+        console.error("Error updating existing invoice:", updateError);
+      } else {
+        console.log("Updated existing invoice to paid status:", updatedInvoice);
+        return updatedInvoice.id;
+      }
+    } else {
+      // إنشاء سجل جديد بناءً على معلومات PayPal - دائماً بحالة "مدفوع"
+      const { data: newInvoice, error: newInvoiceError } = await supabase
+        .from('payment_invoices')
+        .insert({
+          invoice_id: txnId,
+          user_id: userId,
+          plan_name: planName,
+          status: 'مدفوع', // Set directly to paid since we're on success page
+          payment_method: 'paypal',
+          amount: amount
+        })
+        .select()
+        .single();
+        
+      if (newInvoiceError) {
+        console.error("Error creating new invoice:", newInvoiceError);
+        return "";
+      } 
+      
+      if (newInvoice) {
+        console.log("Created new payment record from PayPal data with ID:", newInvoice.id);
+        return newInvoice.id;
+      }
     }
   } catch (error) {
     console.error("Error in createPayPalInvoiceRecord:", error);
@@ -178,5 +215,30 @@ export const updateAllPendingInvoices = async (userId: string, plan: string): Pr
     }
   } catch (error) {
     console.error("Error in updateAllPendingInvoices:", error);
+  }
+};
+
+/**
+ * Get the latest payment status for a specific invoice_id
+ */
+export const getLatestPaymentStatus = async (invoiceId: string): Promise<string> => {
+  try {
+    const { data, error } = await supabase
+      .from('payment_invoices')
+      .select('status')
+      .eq('invoice_id', invoiceId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+      
+    if (error) {
+      console.error("Error getting latest payment status:", error);
+      return "قيد الانتظار"; // Default to pending
+    }
+    
+    return data?.status || "قيد الانتظار";
+  } catch (error) {
+    console.error("Error in getLatestPaymentStatus:", error);
+    return "قيد الانتظار";
   }
 };
