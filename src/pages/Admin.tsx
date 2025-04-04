@@ -10,15 +10,15 @@ import AdminContent from '@/components/admin/AdminContent';
 
 const AdminDashboard = () => {
   const { isLoading, dbLoading } = useAdmin();
+  // استخدام useAdminData لضمان تحميل البيانات
+  const adminData = useAdminData();
   
-  // تمت إزالة استدعاء refreshAdminData لأن التحميل يتم تلقائيًا من خلال useAdminData
-
-  // نحتفظ بـ useEffect فقط للتسجيل دون استدعاء أي وظائف تحديث
   useEffect(() => {
     console.log("Admin dashboard mounted");
-  }, []);
+    console.log("Loading states:", { isLoading, dbLoading });
+  }, [isLoading, dbLoading]);
 
-  if (isLoading || dbLoading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col">
         <Navbar />

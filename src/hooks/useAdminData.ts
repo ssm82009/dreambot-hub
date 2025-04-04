@@ -36,29 +36,30 @@ export const useAdminData = () => {
     });
   }, [totalUsers, totalDreams, activeSubscriptions, setUserCount, setDreams, setSubscriptions]);
 
-  // تهيئة بيانات المشرف - تعديل المنطق لمنع التحميل اللانهائي
+  // تهيئة بيانات المشرف
   useEffect(() => {
-    // استخدام ref بدلاً من state لمنع إعادة التحميل
+    // تجنب تنفيذ التهيئة أكثر من مرة
     if (initializedRef.current) {
       console.log("Admin data already initialized, skipping");
       return;
     }
     
-    const isAuthenticated = checkAdminAuth();
-    
-    // إذا لم يكن المستخدم مشرفًا، قم بتوجيهه إلى صفحة تسجيل الدخول
-    if (!isAuthenticated) {
-      console.log("User is not admin, redirecting to login");
-      navigate('/login');
-      return;
-    }
-    
-    // إذا كان المستخدم مشرفًا، فقم بجلب البيانات من قاعدة البيانات
     const initializeData = async () => {
       try {
         console.log("Initializing admin data...");
         setDbLoading(true);
+        setIsLoading(true);
         
+        const isAuthenticated = checkAdminAuth();
+        
+        // إذا لم يكن المستخدم مشرفًا، قم بتوجيهه إلى صفحة تسجيل الدخول
+        if (!isAuthenticated) {
+          console.log("User is not admin, redirecting to login");
+          navigate('/login');
+          return;
+        }
+        
+        // إذا كان المستخدم مشرفًا، فقم بجلب البيانات من قاعدة البيانات
         await Promise.all([
           fetchDashboardStats(), 
           fetchAllSettings()
@@ -68,16 +69,20 @@ export const useAdminData = () => {
         
         // تعيين قيمة المرجع إلى true لمنع تكرار التهيئة
         initializedRef.current = true;
+        
+        // إنهاء حالة التحميل بعد اكتمال تحميل البيانات
+        setDbLoading(false);
+        setIsLoading(false);
       } catch (error) {
         console.error("Error initializing admin data:", error);
-      } finally {
+        // إنهاء حالة التحميل حتى في حالة حدوث خطأ
         setDbLoading(false);
         setIsLoading(false);
       }
     };
     
     initializeData();
-  }, []); // إزالة الاعتماد على الحالة لمنع إعادة التشغيل
+  }, []); // تقليل التبعيات لمنع إعادة التشغيل
 
   // Refresh admin data function with detailed logging
   const refreshAdminData = async () => {
