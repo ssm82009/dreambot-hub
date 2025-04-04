@@ -11,9 +11,10 @@ export const usePageMeta = () => {
   const location = useLocation();
 
   useEffect(() => {
-    // Update page title
+    // Update page title - make sure we prioritize the meta title from settings
     if (seoSettingsForm.metaTitle) {
       document.title = seoSettingsForm.metaTitle;
+      console.log('Page title updated to:', seoSettingsForm.metaTitle);
     }
 
     // Update meta description
@@ -144,3 +145,4 @@ export const usePageMeta = () => {
 
   return null;
 };
+

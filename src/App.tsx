@@ -51,6 +51,7 @@ const App = () => {
 
 // Separated for using usePageMeta hook which requires Router context
 const AppContent = () => {
+  // استدعاء hook لضمان تطبيق إعدادات SEO فور بدء التطبيق
   usePageMeta();
   
   return (
