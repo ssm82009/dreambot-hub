@@ -7,6 +7,7 @@ import { Loader2 } from 'lucide-react';
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { DreamSymbol, InterpretationSettings } from '@/types/database';
+import { Progress } from "@/components/ui/progress";
 
 const DreamForm = () => {
   const [dreamText, setDreamText] = useState('');
@@ -16,12 +17,20 @@ const DreamForm = () => {
   const [aiSettings, setAiSettings] = useState<any | null>(null);
   const [interpretationSettings, setInterpretationSettings] = useState<InterpretationSettings | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [charCount, setCharCount] = useState(0);
+  const [wordCount, setWordCount] = useState(0);
 
   useEffect(() => {
     fetchDreamSymbols();
     fetchSettings();
     checkAuth();
   }, []);
+
+  useEffect(() => {
+    // تحديث عدد الكلمات والأحرف عند تغير النص
+    setCharCount(dreamText.length);
+    setWordCount(dreamText.trim() ? dreamText.trim().split(/\s+/).length : 0);
+  }, [dreamText]);
 
   const checkAuth = async () => {
     try {
@@ -157,6 +166,21 @@ const DreamForm = () => {
     }
   };
 
+  // حساب نسبة الكلمات من الحد الأقصى
+  const calculateWordPercentage = (): number => {
+    if (!interpretationSettings || !wordCount) return 0;
+    const percentage = (wordCount / interpretationSettings.max_input_words) * 100;
+    return Math.min(percentage, 100); // لا تتجاوز 100%
+  };
+
+  // تحديد لون شريط التقدم بناءً على النسبة
+  const getProgressColor = (): string => {
+    const percentage = calculateWordPercentage();
+    if (percentage < 60) return "bg-green-500";
+    if (percentage < 80) return "bg-yellow-500";
+    return "bg-red-500";
+  };
+
   return (
     <div className="container mx-auto px-4 py-12 rtl">
       <div className="max-w-3xl mx-auto">
@@ -165,11 +189,6 @@ const DreamForm = () => {
             <CardTitle className="text-2xl">فسّر حلمك الآن</CardTitle>
             <CardDescription>
               اكتب تفاصيل حلمك بدقة للحصول على تفسير أكثر دقة
-              {interpretationSettings && (
-                <span className="block mt-1 text-xs">
-                  (الحد الأقصى: {interpretationSettings.max_input_words} كلمة)
-                </span>
-              )}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -182,12 +201,34 @@ const DreamForm = () => {
                   onChange={(e) => setDreamText(e.target.value)}
                   required
                 />
+                <div className="space-y-2">
+                  {interpretationSettings && (
+                    <>
+                      <div className="flex justify-between text-xs text-muted-foreground">
+                        <div>
+                          <span>{wordCount}</span>
+                          <span> / </span>
+                          <span>{interpretationSettings.max_input_words}</span>
+                          <span> كلمة</span>
+                        </div>
+                        <div>
+                          <span>{charCount}</span>
+                          <span> حرف</span>
+                        </div>
+                      </div>
+                      <Progress 
+                        value={calculateWordPercentage()} 
+                        className={`h-1 ${getProgressColor()}`} 
+                      />
+                    </>
+                  )}
+                </div>
               </div>
               <div className="mt-6">
                 <Button
                   type="submit"
                   className="w-full"
-                  disabled={isLoading || !dreamText.trim()}
+                  disabled={isLoading || !dreamText.trim() || (interpretationSettings && wordCount > interpretationSettings.max_input_words)}
                 >
                   {isLoading ? (
                     <>
