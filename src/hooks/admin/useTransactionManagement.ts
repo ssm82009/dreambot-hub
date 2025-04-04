@@ -52,24 +52,20 @@ export const useTransactionManagement = () => {
       
       setUsers(usersMap);
       
-      // Directly fetch transactions
-      // Try using get_latest_payment_invoices function if available, otherwise direct query
-      let transactionsData: any[] = [];
+      // Try using get_latest_payment_invoices function
+      let transactionsData: Transaction[] = [];
       let transactionsError: any = null;
       
       try {
-        // Try using the function first
-        const response = await supabase
-          .rpc('get_latest_payment_invoices');
-          
+        const response = await supabase.rpc('get_latest_payment_invoices');
         transactionsData = response.data || [];
         transactionsError = response.error;
         
         console.log('Got transactions via RPC function:', response);
       } catch (rpcError) {
-        console.log('RPC function failed, falling back to direct query', rpcError);
+        console.error('RPC function failed, falling back to direct query', rpcError);
         
-        // Fallback to direct query if function fails
+        // Fallback query if RPC fails
         const response = await supabase
           .from('payment_invoices')
           .select('*')
@@ -87,23 +83,8 @@ export const useTransactionManagement = () => {
       if (transactionsData && transactionsData.length > 0) {
         console.log('Successfully fetched transactions:', transactionsData.length);
         
-        // Group transactions by invoice_id and get the latest for each
-        const invoiceGroups = transactionsData.reduce((groups: Record<string, any[]>, transaction: any) => {
-          if (!groups[transaction.invoice_id]) {
-            groups[transaction.invoice_id] = [];
-          }
-          groups[transaction.invoice_id].push(transaction);
-          return groups;
-        }, {});
-        
-        const latestTransactions = Object.values(invoiceGroups).map((group: any[]) => {
-          return group.sort((a: any, b: any) => 
-            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-          )[0];
-        });
-        
         // Format transactions with user data
-        const formattedTransactions = latestTransactions.map((transaction: any) => {
+        const formattedTransactions = transactionsData.map((transaction: Transaction) => {
           const user = usersMap[transaction.user_id] || {};
           
           const status = isSuccessPage ? 

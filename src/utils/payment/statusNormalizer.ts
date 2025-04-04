@@ -12,9 +12,6 @@ export const PAYMENT_STATUS = {
  * Normalizes payment status to a consistent format
  */
 export const normalizePaymentStatus = (status: string): string => {
-  // Log the status that's being normalized for debugging
-  console.log('Normalizing payment status:', status);
-  
   if (!status) return PAYMENT_STATUS.PENDING;
   
   // Convert to lowercase for consistent comparison

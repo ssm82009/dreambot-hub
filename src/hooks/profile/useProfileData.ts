@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -37,11 +38,42 @@ export const useProfileData = () => {
           console.error('Error refreshing dreams count:', dreamsError);
         }
         
-        const { data: paymentData, error: paymentError } = await supabase
-          .from('payment_invoices')
-          .select('*')
-          .eq('user_id', userId)
-          .order('created_at', { ascending: false });
+        // Try using the RPC function first
+        let paymentData;
+        let paymentError;
+        
+        try {
+          const rpcResult = await supabase.rpc('get_latest_payment_invoices');
+          console.log("RPC result:", rpcResult);
+          
+          if (rpcResult.error) {
+            console.log("Falling back to direct query due to RPC error:", rpcResult.error);
+            const directResult = await supabase
+              .from('payment_invoices')
+              .select('*')
+              .eq('user_id', userId)
+              .order('created_at', { ascending: false });
+              
+            paymentData = directResult.data;
+            paymentError = directResult.error;
+          } else {
+            // Filter the RPC results for this user
+            paymentData = rpcResult.data?.filter(payment => payment.user_id === userId) || [];
+            paymentError = rpcResult.error;
+          }
+        } catch (error) {
+          console.error('Error with RPC call:', error);
+          
+          // Fallback to direct query
+          const directResult = await supabase
+            .from('payment_invoices')
+            .select('*')
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false });
+            
+          paymentData = directResult.data;
+          paymentError = directResult.error;
+        }
         
         if (paymentError) {
           console.error('Error refreshing payment data:', paymentError);
@@ -80,6 +112,14 @@ export const useProfileData = () => {
                 }));
                 
                 setPayments(normalizedPayments);
+                
+                const session = await supabase.auth.getSession();
+                setUserData({
+                  ...refreshedUserData,
+                  dreams_count: dreamsCount || 0,
+                  email: session.data.session?.user.email
+                });
+                
                 return;
               }
             }
@@ -135,11 +175,41 @@ export const useProfileData = () => {
         
         console.log("Fetched user data:", userData);
         
-        const { data: paymentData, error: paymentError } = await supabase
-          .from('payment_invoices')
-          .select('*')
-          .eq('user_id', session.user.id)
-          .order('created_at', { ascending: false });
+        // Try using the RPC function first for consistent behavior
+        let paymentData;
+        let paymentError;
+        
+        try {
+          const rpcResult = await supabase.rpc('get_latest_payment_invoices');
+          
+          if (rpcResult.error) {
+            console.log("Falling back to direct query due to RPC error:", rpcResult.error);
+            const directResult = await supabase
+              .from('payment_invoices')
+              .select('*')
+              .eq('user_id', session.user.id)
+              .order('created_at', { ascending: false });
+              
+            paymentData = directResult.data;
+            paymentError = directResult.error;
+          } else {
+            // Filter the RPC results for this user
+            paymentData = rpcResult.data?.filter(payment => payment.user_id === session.user.id) || [];
+            paymentError = rpcResult.error;
+          }
+        } catch (error) {
+          console.error('Error with RPC call:', error);
+          
+          // Fallback to direct query
+          const directResult = await supabase
+            .from('payment_invoices')
+            .select('*')
+            .eq('user_id', session.user.id)
+            .order('created_at', { ascending: false });
+            
+          paymentData = directResult.data;
+          paymentError = directResult.error;
+        }
           
         if (paymentError) {
           console.error('Error fetching payment data:', paymentError);
