@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { supabase } from '@/integrations/supabase/client';
+import { normalizePlanName } from '@/utils/payment/statusNormalizer';
 
 interface TransactionEditFormProps {
   transaction: any;
@@ -119,9 +120,9 @@ const TransactionEditForm: React.FC<TransactionEditFormProps> = ({
                   <SelectValue placeholder="اختر نوع الباقة" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="premium">المميز</SelectItem>
-                  <SelectItem value="pro">الاحترافي</SelectItem>
-                  <SelectItem value="free">المجاني</SelectItem>
+                  <SelectItem value="premium">المميزة</SelectItem>
+                  <SelectItem value="pro">الاحترافية</SelectItem>
+                  <SelectItem value="free">المجانية</SelectItem>
                 </SelectContent>
               </Select>
             </div>

@@ -1,4 +1,5 @@
 
+
 /**
  * Normalize payment status strings to standard Arabic terms
  */
@@ -30,12 +31,13 @@ export const normalizePlanName = (planName: string | null | undefined): string =
   
   const planLower = planName.toLowerCase();
   
-  if (planLower === 'premium' || planLower.includes('مميز')) {
-    return 'المميز';
-  } else if (planLower === 'pro' || planLower.includes('احترافي')) {
-    return 'الاحترافي';
-  } else if (planLower === 'free' || planLower.includes('مجاني')) {
-    return 'المجاني';
+  // Map old plan name "الاحترافي" to "الاحترافية"
+  if (planLower === 'pro' || planLower === 'احترافي' || planLower === 'الاحترافي') {
+    return 'الاحترافية';
+  } else if (planLower === 'premium' || planLower === 'مميز' || planLower === 'المميز') {
+    return 'المميزة';
+  } else if (planLower === 'free' || planLower === 'مجاني' || planLower === 'المجاني') {
+    return 'المجانية';
   }
   
   return planName; // Return original if no mapping found
@@ -59,3 +61,4 @@ export const normalizePaymentMethod = (method: string | null | undefined): strin
   
   return method; // Return original if no mapping found
 };
+

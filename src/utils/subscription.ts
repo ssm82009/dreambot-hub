@@ -1,6 +1,7 @@
 import { User } from '@/types/database';
 import { getSubscriptionStatus } from '@/components/admin/user/SubscriptionBadge';
 import { supabase } from '@/integrations/supabase/client';
+import { normalizePlanName } from '@/utils/payment/statusNormalizer';
 
 /**
  * Get subscription name in Arabic based on subscription type
@@ -46,14 +47,8 @@ export const getSubscriptionName = async (subscriptionType: string | null, prici
     console.error('Error fetching pricing settings:', error);
   }
   
-  // Default fallback names if everything else fails
-  if (type.includes('premium') || type.includes('مميز')) {
-    return 'الباقة المميزة';
-  } else if (type.includes('pro') || type.includes('احترافي')) {
-    return 'الباقة الاحترافية';
-  } else {
-    return 'الباقة المجانية';
-  }
+  // Use the normalization utility as a fallback if database settings are unavailable
+  return normalizePlanName(subscriptionType);
 };
 
 /**
