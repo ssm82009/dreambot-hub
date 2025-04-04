@@ -67,6 +67,21 @@ export const normalizePaymentStatus = (status: string): string => {
 };
 
 /**
+ * Checks if a status is a pending payment status
+ */
+export const isPendingPaymentStatus = (status: string): boolean => {
+  const normalizedStatus = normalizePaymentStatus(status);
+  return normalizedStatus === PAYMENT_STATUS.PENDING;
+};
+
+/**
+ * Gets a properly formatted status for database storage
+ */
+export const getDbPaymentStatus = (status: string): string => {
+  return normalizePaymentStatus(status);
+};
+
+/**
  * Normalizes plan type to a consistent format (free, premium, pro)
  */
 export const normalizePlanType = (planType: string): string => {
@@ -83,6 +98,23 @@ export const normalizePlanType = (planType: string): string => {
   }
   
   return 'free';
+};
+
+/**
+ * Normalizes plan name for display
+ */
+export const normalizePlanName = (planName: string): string => {
+  const planType = normalizePlanType(planName);
+  
+  if (planType === 'premium') {
+    return 'الباقة المميزة';
+  }
+  
+  if (planType === 'pro') {
+    return 'الباقة الاحترافية';
+  }
+  
+  return 'الباقة المجانية';
 };
 
 /**

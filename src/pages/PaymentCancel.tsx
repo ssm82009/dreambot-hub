@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
@@ -6,7 +5,7 @@ import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { XCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { PAYMENT_STATUS, getDbPaymentStatus } from '@/utils/payment/statusNormalizer';
+import { PAYMENT_STATUS } from '@/utils/payment/statusNormalizer';
 
 const PaymentCancel = () => {
   const navigate = useNavigate();
@@ -17,7 +16,6 @@ const PaymentCancel = () => {
     const updateCancelledSession = async () => {
       if (sessionId) {
         try {
-          // Get current user
           const { data: { session } } = await supabase.auth.getSession();
           
           if (!session?.user?.id) {
@@ -25,7 +23,6 @@ const PaymentCancel = () => {
             return;
           }
           
-          // تحديث حالة الفاتورة إلى "ملغي"
           const { error } = await supabase
             .from('payment_invoices')
             .update({

@@ -5,7 +5,7 @@ import { CheckCircle, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { getSubscriptionName } from '@/utils/subscription';
 import PaymentStatusBadge from '@/components/admin/transaction/PaymentStatusBadge';
-import { getDbPaymentStatus, PAYMENT_STATUS } from '@/utils/payment/statusNormalizer';
+import { PAYMENT_STATUS } from '@/utils/payment/statusNormalizer';
 
 interface PaymentSuccessContentProps {
   transactionIdentifier: string;
