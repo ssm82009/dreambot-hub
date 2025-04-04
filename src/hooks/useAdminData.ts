@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAdmin } from '@/contexts/admin';
 import { useAdminAuth } from './admin/useAdminAuth';
@@ -19,9 +19,6 @@ export const useAdminData = () => {
   } = useFetchDashboardStats();
   const { fetchAllSettings } = useFetchSettings();
   const navigate = useNavigate();
-  
-  // استخدام ref بدلاً من state لتتبع حالة التهيئة لتجنب إعادة التحميل
-  const initializedRef = useRef(false);
 
   // Update context when stats change
   useEffect(() => {
@@ -38,48 +35,37 @@ export const useAdminData = () => {
 
   // تهيئة بيانات المشرف
   useEffect(() => {
-    // تجنب تنفيذ التهيئة أكثر من مرة
-    if (initializedRef.current) {
-      console.log("Admin data already initialized, skipping");
+    const isAuthenticated = checkAdminAuth();
+    
+    // إذا لم يكن المستخدم مشرفًا، قم بتوجيهه إلى صفحة تسجيل الدخول
+    if (!isAuthenticated) {
+      console.log("User is not admin, redirecting to login");
+      navigate('/login');
       return;
     }
     
+    // إذا كان المستخدم مشرفًا، فقم بجلب البيانات من قاعدة البيانات
     const initializeData = async () => {
       try {
         console.log("Initializing admin data...");
         setDbLoading(true);
-        setIsLoading(true);
         
-        const isAuthenticated = checkAdminAuth();
-        
-        // إذا لم يكن المستخدم مشرفًا، قم بتوجيهه إلى صفحة تسجيل الدخول
-        if (!isAuthenticated) {
-          console.log("User is not admin, redirecting to login");
-          navigate('/login');
-          return;
-        }
-        
-        // إذا كان المستخدم مشرفًا، فقم بجلب البيانات من قاعدة البيانات
         await Promise.all([
           fetchDashboardStats(), 
           fetchAllSettings()
         ]);
-        
+                
         console.log("Admin data initialized successfully");
-        
-        // تعيين قيمة المرجع إلى true لمنع تكرار التهيئة
-        initializedRef.current = true;
       } catch (error) {
         console.error("Error initializing admin data:", error);
       } finally {
-        // إنهاء حالة التحميل في جميع الحالات
         setDbLoading(false);
         setIsLoading(false);
       }
     };
     
     initializeData();
-  }, []); // تقليل التبعيات لمنع إعادة التشغيل
+  }, []);
 
   // Refresh admin data function with detailed logging
   const refreshAdminData = async () => {
