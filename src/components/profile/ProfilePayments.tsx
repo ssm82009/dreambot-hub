@@ -35,47 +35,47 @@ const ProfilePayments: React.FC<ProfilePaymentsProps> = ({ payments }) => {
       }
       
       try {
-        // Group payments by invoice_id
-        const invoiceGroups = payments.reduce((groups: Record<string, Payment[]>, payment) => {
-          if (!groups[payment.invoice_id]) {
-            groups[payment.invoice_id] = [];
-          }
-          groups[payment.invoice_id].push(payment);
-          return groups;
-        }, {});
+        // Get unique invoice_ids from the payments array
+        const invoiceIds = [...new Set(payments.map(payment => payment.invoice_id))];
         
-        // For each invoice_id, get the most recent payment record
-        const latestPayments = Object.values(invoiceGroups).map(group => {
-          return group.sort((a, b) => 
-            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-          )[0];
-        });
+        // Call the RPC function to get the latest payment invoices
+        const { data: latestInvoices, error: rpcError } = await supabase
+          .rpc('get_latest_payment_invoices');
         
-        // For each latest payment, check if its status needs to be updated from database
-        const updatedPayments = await Promise.all(
-          latestPayments.map(async (payment) => {
-            // Double-check the latest status directly from the database
-            const { data, error } = await supabase
-              .from('payment_invoices')
-              .select('status')
-              .eq('invoice_id', payment.invoice_id)
-              .order('created_at', { ascending: false })
-              .limit(1)
-              .single();
-              
-            if (!error && data) {
-              return {
-                ...payment,
-                status: data.status
-              };
+        if (rpcError) {
+          console.error("Error calling get_latest_payment_invoices:", rpcError);
+          
+          // Fallback: Group payments by invoice_id and get the most recent
+          const invoiceGroups = payments.reduce((groups: Record<string, Payment[]>, payment) => {
+            if (!groups[payment.invoice_id]) {
+              groups[payment.invoice_id] = [];
             }
-            
-            return payment;
-          })
-        );
-        
-        console.log("ProfilePayments - Latest payments with updated status:", updatedPayments);
-        setRefreshedPayments(updatedPayments);
+            groups[payment.invoice_id].push(payment);
+            return groups;
+          }, {});
+          
+          // For each invoice_id, get the most recent payment record
+          const latestPayments = Object.values(invoiceGroups).map(group => {
+            return group.sort((a, b) => 
+              new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+            )[0];
+          });
+          
+          // Filter to only include payments found in the original payments array
+          const filteredLatestPayments = latestPayments.filter(payment => 
+            payments.some(p => p.user_id === payment.user_id)
+          );
+          
+          setRefreshedPayments(filteredLatestPayments);
+        } else {
+          // Filter to only include payments for the current user
+          const userPayments = latestInvoices.filter((invoice: Payment) => 
+            payments.some(p => p.invoice_id === invoice.invoice_id)
+          );
+          
+          console.log("ProfilePayments - Latest filtered payments:", userPayments);
+          setRefreshedPayments(userPayments);
+        }
       } catch (error) {
         console.error("Error processing payments:", error);
         setRefreshedPayments(payments);

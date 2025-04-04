@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -33,8 +32,7 @@ export const useTransactionManagement = () => {
       
       setUsers(usersMap);
       
-      // Then get all transactions, grouped by invoice_id to get the latest status
-      // Using SQL query to group by invoice_id and get the most recent record
+      // Call the database function to get the latest status for each invoice_id
       const { data: latestTransactions, error: latestTransactionsError } = await supabase
         .rpc('get_latest_payment_invoices');
         
@@ -51,7 +49,7 @@ export const useTransactionManagement = () => {
         
         if (transactionsData && transactionsData.length > 0) {
           // Group by invoice_id and get the latest record
-          const invoiceGroups = transactionsData.reduce((groups: any, transaction: any) => {
+          const invoiceGroups = transactionsData.reduce((groups: Record<string, any[]>, transaction: any) => {
             if (!groups[transaction.invoice_id]) {
               groups[transaction.invoice_id] = [];
             }
@@ -60,7 +58,7 @@ export const useTransactionManagement = () => {
           }, {});
           
           // Get the latest transaction for each invoice_id
-          const latestTransactions = Object.values(invoiceGroups).map((group: any) => {
+          const latestTransactions = Object.values(invoiceGroups).map((group: any[]) => {
             return group.sort((a: any, b: any) => 
               new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
             )[0];

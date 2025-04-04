@@ -529,7 +529,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_latest_payment_invoices: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          amount: number
+          created_at: string
+          id: string
+          invoice_id: string
+          payment_method: string
+          plan_name: string
+          status: string
+          user_id: string | null
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
