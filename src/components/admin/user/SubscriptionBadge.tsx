@@ -1,8 +1,9 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { User } from '@/types/database';
-import { normalizePlanName } from '@/utils/payment/statusNormalizer';
+import { normalizePlanType } from '@/utils/payment/statusNormalizer';
+import { supabase } from '@/integrations/supabase/client';
 
 type SubscriptionStatus = {
   name: string;
@@ -35,14 +36,14 @@ export const getSubscriptionStatus = (user: User): SubscriptionStatus => {
     
     // If expiry date is in the future, subscription is active
     if (expiryDate > now) {
-      // Convert premium subscription values from different languages and formats
-      const normalizedType = normalizePlanName(user.subscription_type);
+      // Normalize the subscription type
+      const normalizedType = normalizePlanType(user.subscription_type);
       
-      // Map normalized plan name to display name
+      // Map normalized plan type to badge color and simple display name
       let displayName = 'مميز';
       let badgeColor: 'default' | 'secondary' = 'secondary';
       
-      if (normalizedType === 'الاحترافية') {
+      if (normalizedType === 'pro') {
         displayName = 'احترافي';
         badgeColor = 'default';
       }
@@ -63,13 +64,13 @@ export const getSubscriptionStatus = (user: User): SubscriptionStatus => {
   }
   
   // If there's a subscription type but no expiry date, consider it active
-  const normalizedType = normalizePlanName(user.subscription_type);
+  const normalizedType = normalizePlanType(user.subscription_type);
   
-  // Map normalized plan name to display name
+  // Map normalized plan type to badge color and simple display name
   let displayName = 'مميز';
   let badgeColor: 'default' | 'secondary' = 'secondary';
   
-  if (normalizedType === 'الاحترافية') {
+  if (normalizedType === 'pro') {
     displayName = 'احترافي';
     badgeColor = 'default';
   }
@@ -82,8 +83,37 @@ export const getSubscriptionStatus = (user: User): SubscriptionStatus => {
 };
 
 const SubscriptionBadge: React.FC<SubscriptionBadgeProps> = ({ user }) => {
+  const [planNames, setPlanNames] = useState<Record<string, string>>({});
   const subscriptionStatus = getSubscriptionStatus(user);
   
+  useEffect(() => {
+    // Fetch current plan names from pricing settings
+    const fetchPlanNames = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('pricing_settings')
+          .select('free_plan_name, premium_plan_name, pro_plan_name')
+          .limit(1)
+          .single();
+          
+        if (error) throw error;
+        
+        if (data) {
+          setPlanNames({
+            free: data.free_plan_name,
+            premium: data.premium_plan_name,
+            pro: data.pro_plan_name
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching plan names:', error);
+      }
+    };
+    
+    fetchPlanNames();
+  }, []);
+
+  // For the badge, we continue using the simplified status names since they're better for UI
   return (
     <Badge variant={subscriptionStatus.color}>
       {subscriptionStatus.name}

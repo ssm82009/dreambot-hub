@@ -1,7 +1,8 @@
+
 import { User } from '@/types/database';
 import { getSubscriptionStatus } from '@/components/admin/user/SubscriptionBadge';
 import { supabase } from '@/integrations/supabase/client';
-import { normalizePlanName } from '@/utils/payment/statusNormalizer';
+import { normalizePlanType } from '@/utils/payment/statusNormalizer';
 
 /**
  * Get subscription name in Arabic based on subscription type
@@ -11,13 +12,13 @@ export const getSubscriptionName = async (subscriptionType: string | null, prici
   if (!subscriptionType) return 'الباقة المجانية';
   
   // تطبيع نوع الاشتراك للمقارنة
-  const type = subscriptionType.toLowerCase();
+  const normalizedType = normalizePlanType(subscriptionType);
   
   // If pricing settings are provided, use them
   if (pricingSettings) {
-    if (type.includes('premium') || type.includes('مميز')) {
+    if (normalizedType === 'premium') {
       return pricingSettings.premium_plan_name || 'الباقة المميزة';
-    } else if (type.includes('pro') || type.includes('احترافي')) {
+    } else if (normalizedType === 'pro') {
       return pricingSettings.pro_plan_name || 'الباقة الاحترافية';
     } else {
       return pricingSettings.free_plan_name || 'الباقة المجانية';
@@ -35,9 +36,9 @@ export const getSubscriptionName = async (subscriptionType: string | null, prici
     if (error) throw error;
     
     if (settings) {
-      if (type.includes('premium') || type.includes('مميز')) {
+      if (normalizedType === 'premium') {
         return settings.premium_plan_name || 'الباقة المميزة';
-      } else if (type.includes('pro') || type.includes('احترافي')) {
+      } else if (normalizedType === 'pro') {
         return settings.pro_plan_name || 'الباقة الاحترافية';
       } else {
         return settings.free_plan_name || 'الباقة المجانية';
@@ -47,8 +48,14 @@ export const getSubscriptionName = async (subscriptionType: string | null, prici
     console.error('Error fetching pricing settings:', error);
   }
   
-  // Use the normalization utility as a fallback if database settings are unavailable
-  return normalizePlanName(subscriptionType);
+  // Default fallback values
+  if (normalizedType === 'premium') {
+    return 'الباقة المميزة';
+  } else if (normalizedType === 'pro') {
+    return 'الباقة الاحترافية';
+  } else {
+    return 'الباقة المجانية';
+  }
 };
 
 /**
@@ -62,11 +69,11 @@ export const getTotalInterpretations = (
   
   if (!userData?.subscription_type) return pricingSettings.free_plan_interpretations;
   
-  const subscriptionType = userData.subscription_type.toLowerCase();
+  const normalizedType = normalizePlanType(userData.subscription_type);
   
-  if (subscriptionType === 'premium' || subscriptionType === 'المميز' || subscriptionType === 'مميز') {
+  if (normalizedType === 'premium') {
     return pricingSettings.premium_plan_interpretations;
-  } else if (subscriptionType === 'pro' || subscriptionType === 'الاحترافي' || subscriptionType === 'احترافي') {
+  } else if (normalizedType === 'pro') {
     return pricingSettings.pro_plan_interpretations;
   } else {
     return pricingSettings.free_plan_interpretations;
@@ -91,11 +98,11 @@ export const getCurrentPlanFeatures = (
   
   if (!userData?.subscription_type) return formatPlanFeatures(pricingSettings.free_plan_features);
   
-  const subscriptionType = userData.subscription_type.toLowerCase();
+  const normalizedType = normalizePlanType(userData.subscription_type);
   
-  if (subscriptionType === 'premium' || subscriptionType === 'المميز' || subscriptionType === 'مميز') {
+  if (normalizedType === 'premium') {
     return formatPlanFeatures(pricingSettings.premium_plan_features);
-  } else if (subscriptionType === 'pro' || subscriptionType === 'الاحترافي' || subscriptionType === 'احترافي') {
+  } else if (normalizedType === 'pro') {
     return formatPlanFeatures(pricingSettings.pro_plan_features);
   } else {
     return formatPlanFeatures(pricingSettings.free_plan_features);

@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import { toast } from 'sonner';
@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { supabase } from '@/integrations/supabase/client';
-import { normalizePlanName } from '@/utils/payment/statusNormalizer';
+import { normalizePlanType } from '@/utils/payment/statusNormalizer';
 
 interface TransactionEditFormProps {
   transaction: any;
@@ -33,6 +33,39 @@ const TransactionEditForm: React.FC<TransactionEditFormProps> = ({
     expires_at: transaction.expires_at ? new Date(transaction.expires_at) : undefined,
     isLoading: false
   });
+  
+  const [planOptions, setPlanOptions] = useState<{value: string, label: string}[]>([
+    { value: 'free', label: 'المجانية' },
+    { value: 'premium', label: 'المميزة' },
+    { value: 'pro', label: 'الاحترافية' }
+  ]);
+
+  useEffect(() => {
+    // Fetch current plan names from pricing settings
+    const fetchPlanNames = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('pricing_settings')
+          .select('free_plan_name, premium_plan_name, pro_plan_name')
+          .limit(1)
+          .single();
+          
+        if (error) throw error;
+        
+        if (data) {
+          setPlanOptions([
+            { value: 'free', label: data.free_plan_name || 'المجانية' },
+            { value: 'premium', label: data.premium_plan_name || 'المميزة' },
+            { value: 'pro', label: data.pro_plan_name || 'الاحترافية' }
+          ]);
+        }
+      } catch (error) {
+        console.error('Error fetching plan names:', error);
+      }
+    };
+    
+    fetchPlanNames();
+  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -102,6 +135,11 @@ const TransactionEditForm: React.FC<TransactionEditFormProps> = ({
     }
   };
 
+  // Helper to get normalized plan type for the current transaction
+  const getNormalizedPlanType = () => {
+    return normalizePlanType(transaction.plan_name);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]">
@@ -113,16 +151,18 @@ const TransactionEditForm: React.FC<TransactionEditFormProps> = ({
             <div className="grid gap-2">
               <Label htmlFor="plan_name">الباقة</Label>
               <Select
-                value={formState.plan_name}
+                value={formState.plan_name || getNormalizedPlanType()}
                 onValueChange={(value) => handleSelectChange('plan_name', value)}
               >
                 <SelectTrigger id="plan_name">
                   <SelectValue placeholder="اختر نوع الباقة" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="premium">المميزة</SelectItem>
-                  <SelectItem value="pro">الاحترافية</SelectItem>
-                  <SelectItem value="free">المجانية</SelectItem>
+                  {planOptions.map(option => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

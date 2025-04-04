@@ -1,5 +1,4 @@
 
-
 /**
  * Normalize payment status strings to standard Arabic terms
  */
@@ -24,20 +23,20 @@ export const normalizePaymentStatus = (status: string | null | undefined): strin
 };
 
 /**
- * Normalize plan name strings
+ * Basic normalization for plan types (used for internal matching, not display)
+ * This preserves the original functionality while making it clear this is for internal use
  */
-export const normalizePlanName = (planName: string | null | undefined): string => {
-  if (!planName) return 'غير معروف';
+export const normalizePlanType = (planName: string | null | undefined): string => {
+  if (!planName) return 'free';
   
   const planLower = planName.toLowerCase();
   
-  // Map old plan name "الاحترافي" to "الاحترافية"
-  if (planLower === 'pro' || planLower === 'احترافي' || planLower === 'الاحترافي') {
-    return 'الاحترافية';
-  } else if (planLower === 'premium' || planLower === 'مميز' || planLower === 'المميز') {
-    return 'المميزة';
-  } else if (planLower === 'free' || planLower === 'مجاني' || planLower === 'المجاني') {
-    return 'المجانية';
+  if (planLower.includes('premium') || planLower.includes('مميز')) {
+    return 'premium';
+  } else if (planLower.includes('pro') || planLower.includes('احترافي')) {
+    return 'pro';
+  } else if (planLower.includes('free') || planLower.includes('مجاني')) {
+    return 'free';
   }
   
   return planName; // Return original if no mapping found
@@ -61,4 +60,3 @@ export const normalizePaymentMethod = (method: string | null | undefined): strin
   
   return method; // Return original if no mapping found
 };
-
