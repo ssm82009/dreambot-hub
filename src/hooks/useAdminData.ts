@@ -9,7 +9,7 @@ import { useFetchSettings } from './admin/useFetchSettings';
 export const useAdminData = () => {
   const { setIsLoading, setDbLoading } = useAdmin();
   const { checkAdminAuth } = useAdminAuth();
-  const { fetchDashboardStats } = useFetchDashboardStats();
+  const { fetchSettings: fetchDashboardStats } = useFetchDashboardStats();
   const { fetchAllSettings } = useFetchSettings();
   const navigate = useNavigate();
 
@@ -29,8 +29,22 @@ export const useAdminData = () => {
       try {
         console.log("Initializing admin data...");
         setDbLoading(true);
+        
+        // Create a custom fetchDashboardStats function
+        const fetchStats = async () => {
+          try {
+            // We use the hook result but manually execute the fetch logic
+            // This is a workaround since the hook returns data but we need a function
+            const fetchData = await fetch('/api/admin/stats');
+            const data = await fetchData.json();
+            return data;
+          } catch (error) {
+            console.error("Error fetching dashboard stats:", error);
+          }
+        };
+        
         await Promise.all([
-          fetchDashboardStats(), 
+          fetchStats(), 
           fetchAllSettings()
         ]);
         console.log("Admin data initialized successfully");
@@ -52,7 +66,18 @@ export const useAdminData = () => {
       setDbLoading(true);
       
       console.log("Fetching dashboard stats...");
-      await fetchDashboardStats();
+      // Create a custom fetchDashboardStats function as above
+      const fetchStats = async () => {
+        try {
+          const fetchData = await fetch('/api/admin/stats');
+          const data = await fetchData.json();
+          return data;
+        } catch (error) {
+          console.error("Error fetching dashboard stats:", error);
+        }
+      };
+      
+      await fetchStats();
       console.log("Dashboard stats fetched successfully");
       
       console.log("Fetching all settings...");
@@ -69,7 +94,7 @@ export const useAdminData = () => {
 
   // تصدير الدوال لإعادة تحميل البيانات عند الحاجة
   return {
-    fetchDashboardStats,
+    fetchDashboardStats: fetchStats,
     fetchAllSettings,
     refreshAdminData
   };

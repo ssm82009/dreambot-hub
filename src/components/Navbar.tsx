@@ -55,11 +55,11 @@ const Navbar = () => {
 
   return (
     <nav 
-      className="backdrop-blur-md fixed w-full top-0 z-50 shadow-sm"
+      className="backdrop-blur-md fixed w-full top-0 z-50 shadow-sm rtl"
       style={headerStyle}
     >
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-row-reverse justify-between h-16 items-center">
+        <div className="flex justify-between h-16 items-center">
           <div className="flex items-center">
             <NavLogo 
               logoText={themeSettings.logoText} 
@@ -70,12 +70,12 @@ const Navbar = () => {
 
           {/* Desktop Menu */}
           {!isMobile && (
-            <div className="hidden md:flex items-center space-x-6 flex-row-reverse rtl:space-x-reverse">
+            <div className="hidden md:flex items-center space-x-6 rtl:space-x-reverse">
               <NavLinks isAdmin={isAdmin} />
               
               <ThemeToggle isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
 
-              <div className="flex items-center space-x-3 flex-row-reverse rtl:space-x-reverse">
+              <div className="flex items-center space-x-3 rtl:space-x-reverse">
                 {isLoggedIn ? (
                   <UserMenu 
                     userEmail={userEmail} 

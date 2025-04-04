@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { AdminContext } from './AdminContext';
 import { AdminProviderProps } from './types';
@@ -11,6 +12,7 @@ import {
   initialSeoSettings,
   initialActiveSections
 } from './initialState';
+import { ThemeSettingsFormValues } from './types';
 
 export const AdminProvider: React.FC<AdminProviderProps> = ({ children }) => {
   // Auth and loading states

@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { FileText } from 'lucide-react';
 import AdminSection from '@/components/admin/AdminSection';
@@ -27,7 +28,10 @@ const PageManagementSection = () => {
         
         if (error) throw error;
         
-        setPages((prev: CustomPage[]) => prev.map(p => p.id === page.id ? { ...p, ...page } as CustomPage : p));
+        // Fixed: Explicitly cast the result to CustomPage[]
+        setPages((prev) => {
+          return prev.map(p => p.id === page.id ? { ...p, ...page } as CustomPage : p)
+        });
         toast.success('تم تحديث الصفحة بنجاح');
       } else {
         const { data, error } = await supabase
@@ -43,7 +47,10 @@ const PageManagementSection = () => {
         
         if (error) throw error;
         
-        setPages((prev: CustomPage[]) => [...prev, data as CustomPage]);
+        // Fixed: Explicitly cast the result to CustomPage[]
+        setPages((prev) => {
+          return [...prev, data as CustomPage];
+        });
         toast.success('تم إنشاء الصفحة بنجاح');
       }
     } catch (error) {
@@ -64,7 +71,10 @@ const PageManagementSection = () => {
       
       if (error) throw error;
       
-      setPages((prev: CustomPage[]) => prev.filter(p => p.id !== id));
+      // Fixed: Explicitly cast the result to CustomPage[]
+      setPages((prev) => {
+        return prev.filter(p => p.id !== id);
+      });
       toast.success('تم حذف الصفحة بنجاح');
     } catch (error) {
       console.error('Error deleting page:', error);
