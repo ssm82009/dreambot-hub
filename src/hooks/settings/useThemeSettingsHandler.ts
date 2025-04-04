@@ -24,7 +24,8 @@ export const useThemeSettingsHandler = () => {
     
     try {
       // Update local state first for immediate UI feedback
-      setThemeSettingsForm(data);
+      // Fixed: Cast to Partial<ThemeSettingsFormValues> to match the updated type signature
+      setThemeSettingsForm(data as Partial<ThemeSettingsFormValues>);
       
       const { error } = await supabase
         .from('theme_settings')

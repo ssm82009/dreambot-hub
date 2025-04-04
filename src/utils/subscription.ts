@@ -1,6 +1,6 @@
 
 import { User } from '@/types/database';
-import { getSubscriptionStatus } from '@/components/admin/user/SubscriptionBadge';
+import { getSubscriptionStatus } from '@/utils/subscriptionStatus';
 import { supabase } from '@/integrations/supabase/client';
 import { normalizePlanType } from '@/utils/payment/statusNormalizer';
 

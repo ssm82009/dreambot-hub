@@ -1,9 +1,8 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { User } from '@/types/database';
-import { getSubscriptionStatus } from '@/components/admin/user/SubscriptionBadge';
+import { getSubscriptionStatus } from '@/utils/subscriptionStatus';
 
 interface UpgradeSectionProps {
   userData: User & {

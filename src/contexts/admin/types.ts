@@ -31,7 +31,7 @@ export type AdminContextType = {
   paymentSettingsForm: PaymentSettingsFormValues;
   setPaymentSettingsForm: (settings: PaymentSettingsFormValues) => void;
   themeSettingsForm: ThemeSettingsFormValues;
-  setThemeSettingsForm: (settings: ThemeSettingsFormValues) => void;
+  setThemeSettingsForm: (settings: Partial<ThemeSettingsFormValues>) => void;
   seoSettingsForm: SeoSettingsFormValues;
   setSeoSettingsForm: (settings: SeoSettingsFormValues) => void;
   activeSections: ActiveSections;
@@ -121,7 +121,8 @@ export type ThemeSettingsFormValues = {
     facebook: string;
     instagram: string;
   };
-  slug?: string;
+  // Make slug property required to match the implementation
+  slug: string;
 };
 
 export type SeoSettingsFormValues = {

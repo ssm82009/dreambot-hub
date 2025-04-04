@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { User } from '@/types/database';
-import { getSubscriptionStatus } from '@/components/admin/user/SubscriptionBadge';
+import { getSubscriptionStatus } from '@/utils/subscriptionStatus';
 import { getSubscriptionName } from '@/utils/subscription';
 import { formatDate } from '@/lib/utils';
 

@@ -2,7 +2,7 @@
 import { useAdmin } from '@/contexts/admin';
 import { supabase } from '@/integrations/supabase/client';
 import { User } from '@/types/database';
-import { getSubscriptionStatus } from '@/components/admin/user/SubscriptionBadge';
+import { getSubscriptionStatus } from '@/utils/subscriptionStatus';
 import { toast } from 'sonner';
 
 export const useFetchDashboardStats = () => {

@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { User } from '@/types/database';
-import { getSubscriptionStatus } from '@/components/admin/user/SubscriptionBadge';
+import { getSubscriptionStatus } from '@/utils/subscriptionStatus';
 import { supabase } from '@/integrations/supabase/client';
 import { formatDate } from '@/lib/utils';
 import SubscriptionDetails from './subscription/SubscriptionDetails';

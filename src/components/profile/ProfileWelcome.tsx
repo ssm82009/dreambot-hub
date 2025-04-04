@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { User } from '@/types/database';
 import SubscriptionBadge from '@/components/admin/user/SubscriptionBadge';
 import { formatDate } from '@/lib/utils';
-import { getSubscriptionStatus } from '@/components/admin/user/SubscriptionBadge';
+import { getSubscriptionStatus } from '@/utils/subscriptionStatus';
 import { getSubscriptionName } from '@/utils/subscription';
 import { supabase } from '@/integrations/supabase/client';
 
