@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { Calendar as CalendarIcon } from 'lucide-react';
@@ -11,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { supabase } from '@/integrations/supabase/client';
-import { normalizePlanType } from '@/utils/payment/statusNormalizer';
+import { normalizePlanType, getDbPaymentStatus } from '@/utils/payment/statusNormalizer';
 
 interface TransactionEditFormProps {
   transaction: any;
@@ -41,7 +40,6 @@ const TransactionEditForm: React.FC<TransactionEditFormProps> = ({
   ]);
 
   useEffect(() => {
-    // Fetch current plan names from pricing settings
     const fetchPlanNames = async () => {
       try {
         const { data, error } = await supabase
@@ -91,21 +89,18 @@ const TransactionEditForm: React.FC<TransactionEditFormProps> = ({
         .update({
           plan_name: formState.plan_name,
           payment_method: formState.payment_method,
-          status: formState.status,
+          status: getDbPaymentStatus(formState.status),
           expires_at: formState.expires_at ? formState.expires_at.toISOString() : null
         })
         .eq('id', transaction.id);
       
       if (error) throw error;
       
-      // تحديث بيانات الاشتراك في جدول المستخدمين إذا تم تغيير خطة الاشتراك أو تاريخ الانتهاء
-      // أو تغيير الحالة إلى "مدفوع"
       if (transaction.user_id && (
         formState.plan_name !== transaction.plan_name || 
         formState.expires_at !== (transaction.expires_at ? new Date(transaction.expires_at) : undefined) ||
-        (formState.status === 'مدفوع' || formState.status === 'paid')
+        normalizePlanType(formState.status) === 'مدفوع'
       )) {
-        // Set expiry date (30 days from now if not set)
         const expiryDate = formState.expires_at || new Date(Date.now() + (30 * 24 * 60 * 60 * 1000));
         
         const { error: userError } = await supabase
@@ -135,7 +130,6 @@ const TransactionEditForm: React.FC<TransactionEditFormProps> = ({
     }
   };
 
-  // Helper to get normalized plan type for the current transaction
   const getNormalizedPlanType = () => {
     return normalizePlanType(transaction.plan_name);
   };

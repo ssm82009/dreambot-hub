@@ -6,6 +6,7 @@ import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { XCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { getDbPaymentStatus } from '@/utils/payment/statusNormalizer';
 
 const PaymentCancel = () => {
   const navigate = useNavigate();
@@ -28,7 +29,7 @@ const PaymentCancel = () => {
           const { error } = await supabase
             .from('payment_invoices')
             .update({
-              status: 'ملغي'
+              status: getDbPaymentStatus('ملغي')
             })
             .eq('invoice_id', sessionId)
             .eq('user_id', session.user.id);

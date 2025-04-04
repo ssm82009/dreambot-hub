@@ -1,3 +1,4 @@
+
 /**
  * Normalizes a plan type string
  */
@@ -59,7 +60,32 @@ export const normalizePaymentStatus = (status: string): string => {
     return 'فشل';
   } else if (statusLower === 'مسترجع' || statusLower === 'refunded') {
     return 'مسترجع';
+  } else if (statusLower === 'ملغي' || statusLower === 'cancelled' || statusLower === 'canceled') {
+    return 'ملغي';
   } else {
     return status || 'قيد الانتظار';
+  }
+};
+
+/**
+ * Get the database value for a payment status 
+ * This ensures that we always store the status in the correct format in the database
+ */
+export const getDbPaymentStatus = (status: string): string => {
+  const normalizedStatus = normalizePaymentStatus(status);
+  
+  // Return status values that will be stored in the database
+  if (normalizedStatus === 'مدفوع') {
+    return 'مدفوع';
+  } else if (normalizedStatus === 'قيد الانتظار') {
+    return 'قيد الانتظار';
+  } else if (normalizedStatus === 'فشل') {
+    return 'فشل';
+  } else if (normalizedStatus === 'مسترجع') {
+    return 'مسترجع';
+  } else if (normalizedStatus === 'ملغي') {
+    return 'ملغي';
+  } else {
+    return 'قيد الانتظار';
   }
 };

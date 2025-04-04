@@ -1,10 +1,9 @@
-
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatCurrency } from '@/utils/currency';
 import { formatDate } from '@/lib/utils';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { normalizePlanName, normalizePaymentMethod } from '@/utils/payment/statusNormalizer';
+import { normalizePlanName, normalizePaymentMethod, getDbPaymentStatus } from '@/utils/payment/statusNormalizer';
 import PaymentStatusBadge from '@/components/admin/transaction/PaymentStatusBadge';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -71,25 +70,35 @@ const ProfilePayments: React.FC<ProfilePaymentsProps> = ({ payments }) => {
           
           // Apply "مدفوع" status if on success page
           const processedPayments = isSuccessPage 
-            ? filteredLatestPayments.map(payment => ({ ...payment, status: 'مدفوع' }))
+            ? filteredLatestPayments.map(payment => ({ ...payment, status: getDbPaymentStatus('مدفوع') }))
             : filteredLatestPayments;
             
           setRefreshedPayments(processedPayments);
+          
+          // Update payment status in the database if on success page
+          if (isSuccessPage && filteredLatestPayments.length > 0) {
+            await updatePaymentStatuses(filteredLatestPayments);
+          }
         } else {
           // Successfully got data from RPC
           if (latestInvoicesData && latestInvoicesData.length > 0) {
             // Filter to only include payments for the current user
             const userPayments = latestInvoicesData.filter((invoice: Payment) => 
-              payments.some(p => p.invoice_id === invoice.invoice_id)
+              payments.some(p => p.invoice_id === invoice.invoice_id || p.user_id === invoice.user_id)
             );
             
             // Apply "مدفوع" status if on success page
             const processedPayments = isSuccessPage 
-              ? userPayments.map(payment => ({ ...payment, status: 'مدفوع' }))
+              ? userPayments.map(payment => ({ ...payment, status: getDbPaymentStatus('مدفوع') }))
               : userPayments;
               
             console.log("ProfilePayments - Latest filtered payments:", processedPayments);
             setRefreshedPayments(processedPayments);
+            
+            // Update payment status in the database if on success page
+            if (isSuccessPage && userPayments.length > 0) {
+              await updatePaymentStatuses(userPayments);
+            }
           } else {
             setRefreshedPayments([]);
           }
@@ -102,6 +111,36 @@ const ProfilePayments: React.FC<ProfilePaymentsProps> = ({ payments }) => {
     
     processPayments();
   }, [payments]);
+  
+  // Helper function to update payment statuses in the database
+  const updatePaymentStatuses = async (paymentsList: Payment[]) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user?.id) return;
+      
+      for (const payment of paymentsList) {
+        await supabase
+          .from('payment_invoices')
+          .update({ status: getDbPaymentStatus('مدفوع') })
+          .eq('id', payment.id);
+          
+        console.log(`Updated payment status for ID ${payment.id} to مدفوع`);
+        
+        // Also update all records with the same invoice_id
+        if (payment.invoice_id) {
+          await supabase
+            .from('payment_invoices')
+            .update({ status: getDbPaymentStatus('مدفوع') })
+            .eq('invoice_id', payment.invoice_id)
+            .eq('user_id', session.user.id);
+            
+          console.log(`Updated all payment records with invoice_id ${payment.invoice_id} to مدفوع`);
+        }
+      }
+    } catch (error) {
+      console.error("Error updating payment statuses:", error);
+    }
+  };
   
   if (refreshedPayments.length === 0) {
     return (

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
-import { normalizePaymentStatus } from '@/utils/payment/statusNormalizer';
+import { normalizePaymentStatus, getDbPaymentStatus } from '@/utils/payment/statusNormalizer';
 
 export const useProfileData = () => {
   const navigate = useNavigate();
@@ -14,7 +14,6 @@ export const useProfileData = () => {
     try {
       console.log("Refreshing user data for ID:", userId);
       
-      // تحديث بيانات المستخدم
       const { data: refreshedUserData, error: userError } = await supabase
         .from('users')
         .select('*')
@@ -29,7 +28,6 @@ export const useProfileData = () => {
       if (refreshedUserData) {
         console.log("Refreshed user data:", refreshedUserData);
         
-        // تحديث عدد الأحلام
         const { count: dreamsCount, error: dreamsError } = await supabase
           .from('dreams')
           .select('*', { count: 'exact', head: true })
@@ -39,7 +37,6 @@ export const useProfileData = () => {
           console.error('Error refreshing dreams count:', dreamsError);
         }
         
-        // تحديث المدفوعات
         const { data: paymentData, error: paymentError } = await supabase
           .from('payment_invoices')
           .select('*')
@@ -51,18 +48,50 @@ export const useProfileData = () => {
         } else {
           console.log("Refreshed payments:", paymentData);
           
-          // استخدم دالة التطبيع مباشرة بدون تغيير إضافي
-          const normalizedPayments = paymentData?.map(payment => {
-            return {
-              ...payment,
-              status: normalizePaymentStatus(payment.status)
-            };
-          }) || [];
+          if (refreshedUserData.subscription_type && 
+              refreshedUserData.subscription_type !== 'free' &&
+              paymentData?.length > 0) {
+            
+            const pendingPayments = paymentData.filter(payment => 
+              ['pending', 'Pending', 'قيد الانتظار'].includes(payment.status)
+            );
+            
+            if (pendingPayments.length > 0) {
+              for (const payment of pendingPayments) {
+                await supabase
+                  .from('payment_invoices')
+                  .update({ status: getDbPaymentStatus('مدفوع') })
+                  .eq('id', payment.id);
+                  
+                console.log(`Fixed inconsistent payment status for ID ${payment.id}`);
+              }
+              
+              const { data: updatedPayments } = await supabase
+                .from('payment_invoices')
+                .select('*')
+                .eq('user_id', userId)
+                .order('created_at', { ascending: false });
+                
+              if (updatedPayments) {
+                const normalizedPayments = updatedPayments.map(payment => ({
+                  ...payment,
+                  status: normalizePaymentStatus(payment.status)
+                }));
+                
+                setPayments(normalizedPayments);
+                return;
+              }
+            }
+          }
+          
+          const normalizedPayments = paymentData?.map(payment => ({
+            ...payment,
+            status: normalizePaymentStatus(payment.status)
+          })) || [];
           
           setPayments(normalizedPayments);
         }
         
-        // تحديث بيانات المستخدم
         const session = await supabase.auth.getSession();
         setUserData({
           ...refreshedUserData,
@@ -79,17 +108,14 @@ export const useProfileData = () => {
     const checkAuth = async () => {
       setIsLoading(true);
       
-      // Check if user is logged in
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
-        // Redirect to login if not authenticated
         navigate('/login');
         return;
       }
       
       try {
-        // Fetch user data from the users table
         const { data: userData, error: userError } = await supabase
           .from('users')
           .select('*')
@@ -108,7 +134,6 @@ export const useProfileData = () => {
         
         console.log("Fetched user data:", userData);
         
-        // Fetch payment invoices separately - make sure we only fetch the current user's payments
         const { data: paymentData, error: paymentError } = await supabase
           .from('payment_invoices')
           .select('*')
@@ -117,23 +142,18 @@ export const useProfileData = () => {
           
         if (paymentError) {
           console.error('Error fetching payment data:', paymentError);
-          // Continue without payment data
           setPayments([]);
         } else {
           console.log("Fetched payments for user:", session.user.id, paymentData);
           
-          // استخدم دالة التطبيع مباشرة بدون تغيير إضافي
-          const normalizedPayments = paymentData?.map(payment => {
-            return {
-              ...payment,
-              status: normalizePaymentStatus(payment.status)
-            };
-          }) || [];
+          const normalizedPayments = paymentData?.map(payment => ({
+            ...payment,
+            status: normalizePaymentStatus(payment.status)
+          })) || [];
           
           setPayments(normalizedPayments);
         }
         
-        // Fetch user dreams count
         const { count: dreamsCount, error: dreamsError } = await supabase
           .from('dreams')
           .select('*', { count: 'exact', head: true })
@@ -143,7 +163,6 @@ export const useProfileData = () => {
           console.error('Error fetching dreams count:', dreamsError);
         }
         
-        // Set combined user data
         setUserData({
           ...userData,
           dreams_count: dreamsCount || 0,

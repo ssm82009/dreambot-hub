@@ -5,6 +5,7 @@ import { CheckCircle, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { getSubscriptionName } from '@/utils/subscription';
 import PaymentStatusBadge from '@/components/admin/transaction/PaymentStatusBadge';
+import { getDbPaymentStatus } from '@/utils/payment/statusNormalizer';
 
 interface PaymentSuccessContentProps {
   transactionIdentifier: string;
@@ -29,11 +30,13 @@ const PaymentSuccessContent = ({
   
   useEffect(() => {
     const updatePaymentStatus = async () => {
+      const paidStatus = getDbPaymentStatus('مدفوع');
+      
       if (paymentData?.id) {
         try {
           await supabase
             .from('payment_invoices')
-            .update({ status: 'مدفوع' })
+            .update({ status: paidStatus })
             .eq('id', paymentData.id);
             
           console.log("Payment status updated to 'مدفوع' for ID:", paymentData.id);
@@ -46,7 +49,7 @@ const PaymentSuccessContent = ({
         try {
           await supabase
             .from('payment_invoices')
-            .update({ status: 'مدفوع' })
+            .update({ status: paidStatus })
             .eq('invoice_id', paymentData.invoice_id);
             
           console.log("Updated all records with invoice_id:", paymentData.invoice_id);
@@ -59,7 +62,7 @@ const PaymentSuccessContent = ({
         try {
           await supabase
             .from('payment_invoices')
-            .update({ status: 'مدفوع' })
+            .update({ status: paidStatus })
             .eq('invoice_id', transactionIdentifier);
             
           console.log("Updated all records with transactionIdentifier:", transactionIdentifier);
@@ -74,9 +77,9 @@ const PaymentSuccessContent = ({
           if (session?.user?.id) {
             await supabase
               .from('payment_invoices')
-              .update({ status: 'مدفوع' })
+              .update({ status: paidStatus })
               .eq('user_id', session.user.id)
-              .eq('status', 'Pending');
+              .or(`status.eq.قيد الانتظار,status.eq.Pending,status.eq.pending`);
               
             console.log("Updated all pending payments for current user");
           }
@@ -130,7 +133,7 @@ const PaymentSuccessContent = ({
     fetchSubscriptionInfo();
   }, [paymentSession, paymentData]);
   
-  const normalizedStatus = 'مدفوع';
+  const normalizedStatus = getDbPaymentStatus('مدفوع');
   
   const getDisplayPlan = () => {
     if (subscriptionName) {
