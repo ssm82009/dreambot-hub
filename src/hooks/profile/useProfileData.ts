@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
+import { normalizePaymentStatus } from '@/utils/payment/statusNormalizer';
 
 export const useProfileData = () => {
   const navigate = useNavigate();
@@ -50,7 +51,14 @@ export const useProfileData = () => {
           console.error('Error refreshing payment data:', paymentError);
         } else {
           console.log("Refreshed payments:", paymentData);
-          setPayments(paymentData || []);
+          
+          // تطبيق دالة التطبيع على حالة المدفوعات
+          const normalizedPayments = paymentData?.map(payment => ({
+            ...payment,
+            status: normalizePaymentStatus(payment.status)
+          })) || [];
+          
+          setPayments(normalizedPayments);
         }
         
         // تحديث بيانات المستخدم
@@ -112,7 +120,14 @@ export const useProfileData = () => {
           setPayments([]);
         } else {
           console.log("Fetched payments for user:", session.user.id, paymentData);
-          setPayments(paymentData || []);
+          
+          // تطبيق دالة التطبيع على حالة المدفوعات
+          const normalizedPayments = paymentData?.map(payment => ({
+            ...payment,
+            status: normalizePaymentStatus(payment.status)
+          })) || [];
+          
+          setPayments(normalizedPayments);
         }
         
         // Fetch user dreams count

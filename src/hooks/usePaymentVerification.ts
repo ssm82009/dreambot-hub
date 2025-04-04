@@ -4,6 +4,7 @@ import { useSearchParams } from 'react-router-dom';
 import { verifyPayment } from '@/utils/payment/verifyPayment';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { normalizePaymentStatus } from '@/utils/payment/statusNormalizer';
 
 export const usePaymentVerification = () => {
   const [searchParams] = useSearchParams();
@@ -72,7 +73,7 @@ export const usePaymentVerification = () => {
               transaction_identifier: transactionIdentifier,
               payment_method: invoiceData.payment_method,
               created_at: invoiceData.created_at,
-              status: invoiceData.status
+              status: normalizePaymentStatus(invoiceData.status) // استخدام الوظيفة لتوحيد حالة الدفع
             };
           } else {
             console.log("No payment record found by session_id, trying transaction ID");
@@ -103,7 +104,7 @@ export const usePaymentVerification = () => {
               transaction_identifier: transactionIdentifier,
               payment_method: invoiceByTxData.payment_method,
               created_at: invoiceByTxData.created_at,
-              status: invoiceByTxData.status
+              status: normalizePaymentStatus(invoiceByTxData.status) // استخدام الوظيفة لتوحيد حالة الدفع
             };
           } else {
             console.log("No payment record found by transaction_identifier");
@@ -136,7 +137,7 @@ export const usePaymentVerification = () => {
               transaction_identifier: transactionIdentifier,
               payment_method: latestInvoiceData.payment_method,
               created_at: latestInvoiceData.created_at,
-              status: latestInvoiceData.status
+              status: normalizePaymentStatus(latestInvoiceData.status) // استخدام الوظيفة لتوحيد حالة الدفع
             };
           } else {
             console.log("No pending payment records found for user");

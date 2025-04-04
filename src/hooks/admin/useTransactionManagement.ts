@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -47,7 +48,7 @@ export const useTransactionManagement = () => {
           
           return {
             ...transaction,
-            status: normalizedStatus,
+            status: normalizedStatus, // استخدام الحالة المُنَمَّطة
             expires_at: user.subscription_expires_at || null
           };
         });

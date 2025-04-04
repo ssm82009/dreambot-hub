@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { findInvoiceByIdentifiers, findPendingInvoiceByUserPlan, createPayPalInvoiceRecord, updateAllPendingInvoices } from './invoiceManager';
 import { updateUserSubscription } from './subscriptionUpdater';
 import { verifyPaylinkPayment } from './paylinkVerifier';
+import { normalizePaymentStatus } from './statusNormalizer';
 
 /**
  * Verifies a payment and updates the user's subscription status
