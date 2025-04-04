@@ -1,76 +1,65 @@
-
 /**
- * Normalize payment status strings to standard Arabic terms
+ * Normalizes a plan type string
  */
-export const normalizePaymentStatus = (status: string | null | undefined): string => {
-  if (!status) return 'غير معروف';
+export const normalizePlanType = (planType: string): string => {
+  const planTypeLower = planType?.toLowerCase() || '';
   
-  const statusLower = status.toLowerCase();
-  
-  // أولوية "مدفوع" أعلى من غيرها من الحالات
-  if (statusLower === 'paid' || statusLower === 'مدفوع' || statusLower.includes('مدفوع') || 
-      statusLower === 'success' || statusLower === 'sucsess' || statusLower.includes('نجاح')) {
-    return 'مدفوع';
-  } 
-  // إذا كانت حالة من حالات الانتظار
-  else if (statusLower === 'pending' || statusLower === 'قيد الانتظار' || statusLower.includes('انتظار')) {
-    return 'قيد الانتظار';
-  } 
-  // إذا كانت حالة فشل
-  else if (statusLower === 'failed' || statusLower === 'فشل' || statusLower.includes('فشل')) {
-    return 'فشل';
-  } 
-  // إذا كانت حالة استرجاع
-  else if (statusLower === 'refunded' || statusLower === 'مسترجع' || statusLower.includes('استرجاع')) {
-    return 'مسترجع';
-  } 
-  // إذا كانت حالة إلغاء
-  else if (statusLower === 'cancelled' || statusLower === 'ملغي' || statusLower.includes('الغاء')) {
-    return 'ملغي';
-  }
-  
-  return status; // Return original if no mapping found
-};
-
-/**
- * Basic normalization for plan types (used for internal matching, not display)
- */
-export const normalizePlanType = (planName: string | null | undefined): string => {
-  if (!planName) return 'free';
-  
-  const planLower = planName.toLowerCase();
-  
-  if (planLower.includes('premium') || planLower.includes('مميز')) {
+  if (planTypeLower.includes('premium') || planTypeLower.includes('مميز')) {
     return 'premium';
-  } else if (planLower.includes('pro') || planLower.includes('احترافي')) {
+  } else if (planTypeLower.includes('pro') || planTypeLower.includes('احترافي')) {
     return 'pro';
-  } else if (planLower.includes('free') || planLower.includes('مجاني')) {
+  } else {
     return 'free';
   }
-  
-  return planName; // Return original if no mapping found
 };
 
 /**
- * Normalize payment method strings
+ * Normalizes a plan name string
  */
-export const normalizePaymentMethod = (method: string | null | undefined): string => {
-  if (!method) return 'غير معروف';
+export const normalizePlanName = (planName: string): string => {
+  const planNameLower = planName?.toLowerCase() || '';
   
-  const methodLower = method.toLowerCase();
-  
-  if (methodLower === 'paylink' || methodLower.includes('paylink')) {
-    return 'باي لينك';
-  } else if (methodLower === 'paypal' || methodLower.includes('paypal')) {
-    return 'باي بال';
-  } else if (methodLower === 'manual' || methodLower.includes('manual')) {
-    return 'يدوي';
+  if (planNameLower.includes('premium') || planNameLower.includes('مميز')) {
+    return 'الباقة المميزة';
+  } else if (planNameLower.includes('pro') || planNameLower.includes('احترافي')) {
+    return 'الباقة الاحترافية';
+  } else {
+    return 'الباقة المجانية';
   }
-  
-  return method; // Return original if no mapping found
 };
 
 /**
- * Alias for normalizePlanType for backward compatibility
+ * Normalizes a payment method string
  */
-export const normalizePlanName = normalizePlanType;
+export const normalizePaymentMethod = (paymentMethod: string): string => {
+  const paymentMethodLower = paymentMethod?.toLowerCase() || '';
+  
+  if (paymentMethodLower === 'paylink') {
+    return 'باي لينك';
+  } else if (paymentMethodLower === 'paypal') {
+    return 'باي بال';
+  } else if (paymentMethodLower === 'manual') {
+    return 'يدوي';
+  } else {
+    return paymentMethod || 'غير محدد';
+  }
+};
+
+/**
+ * Normalizes a payment status string
+ */
+export const normalizePaymentStatus = (status: string): string => {
+  const statusLower = status?.toLowerCase() || '';
+  
+  if (statusLower === 'مدفوع' || statusLower === 'paid' || statusLower === 'completed' || statusLower === 'success') {
+    return 'مدفوع';
+  } else if (statusLower === 'قيد الانتظار' || statusLower === 'pending' || statusLower === 'waiting') {
+    return 'قيد الانتظار';
+  } else if (statusLower === 'فشل' || statusLower === 'failed') {
+    return 'فشل';
+  } else if (statusLower === 'مسترجع' || statusLower === 'refunded') {
+    return 'مسترجع';
+  } else {
+    return status || 'قيد الانتظار';
+  }
+};

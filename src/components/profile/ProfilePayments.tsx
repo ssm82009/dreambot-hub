@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatCurrency } from '@/utils/currency';
@@ -22,6 +23,9 @@ interface ProfilePaymentsProps {
   payments: Payment[];
 }
 
+// Define the expected return type from the RPC function
+type RPCPaymentResponse = Payment[] | null;
+
 const ProfilePayments: React.FC<ProfilePaymentsProps> = ({ payments }) => {
   const [refreshedPayments, setRefreshedPayments] = useState<Payment[]>([]);
 
@@ -37,9 +41,9 @@ const ProfilePayments: React.FC<ProfilePaymentsProps> = ({ payments }) => {
         // Check if URL contains 'success' parameter to force status to "مدفوع"
         const isSuccessPage = window.location.href.includes('success');
         
-        // Call the RPC function to get the latest payment invoices
+        // Call the RPC function to get the latest payment invoices with proper typing
         const { data: latestInvoicesData, error: rpcError } = await supabase
-          .rpc('get_latest_payment_invoices') as { data: Payment[] | null, error: any };
+          .rpc('get_latest_payment_invoices') as { data: RPCPaymentResponse, error: any };
         
         if (rpcError) {
           console.error("Error calling get_latest_payment_invoices:", rpcError);

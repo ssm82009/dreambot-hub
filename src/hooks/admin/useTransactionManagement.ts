@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -15,6 +16,9 @@ interface Transaction {
   expires_at?: string | null;
   [key: string]: any;
 }
+
+// Define the expected return type from the RPC function
+type RPCTransactionResponse = Transaction[] | null;
 
 export const useTransactionManagement = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -48,9 +52,9 @@ export const useTransactionManagement = () => {
       
       setUsers(usersMap);
       
-      // Call the database function to get the latest status for each invoice_id
+      // Call the database function to get the latest status for each invoice_id with proper typing
       const { data: latestTransactionsData, error: latestTransactionsError } = await supabase
-        .rpc('get_latest_payment_invoices') as { data: Transaction[] | null, error: any };
+        .rpc('get_latest_payment_invoices') as { data: RPCTransactionResponse, error: any };
         
       if (latestTransactionsError) {
         console.error("Error fetching latest transactions:", latestTransactionsError);
