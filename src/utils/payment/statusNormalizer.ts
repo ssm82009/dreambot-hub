@@ -60,3 +60,9 @@ export const normalizePaymentMethod = (method: string | null | undefined): strin
   
   return method; // Return original if no mapping found
 };
+
+/**
+ * Alias for normalizePlanType for backward compatibility
+ * This ensures existing code continues to work
+ */
+export const normalizePlanName = normalizePlanType;
