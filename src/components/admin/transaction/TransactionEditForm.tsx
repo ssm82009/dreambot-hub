@@ -65,21 +65,28 @@ const TransactionEditForm: React.FC<TransactionEditFormProps> = ({
       if (error) throw error;
       
       // تحديث بيانات الاشتراك في جدول المستخدمين إذا تم تغيير خطة الاشتراك أو تاريخ الانتهاء
+      // أو تغيير الحالة إلى "مدفوع"
       if (transaction.user_id && (
         formState.plan_name !== transaction.plan_name || 
-        formState.expires_at !== (transaction.expires_at ? new Date(transaction.expires_at) : undefined)
+        formState.expires_at !== (transaction.expires_at ? new Date(transaction.expires_at) : undefined) ||
+        (formState.status === 'مدفوع' || formState.status === 'paid')
       )) {
+        // Set expiry date (30 days from now if not set)
+        const expiryDate = formState.expires_at || new Date(Date.now() + (30 * 24 * 60 * 60 * 1000));
+        
         const { error: userError } = await supabase
           .from('users')
           .update({
             subscription_type: formState.plan_name,
-            subscription_expires_at: formState.expires_at ? formState.expires_at.toISOString() : null
+            subscription_expires_at: expiryDate.toISOString()
           })
           .eq('id', transaction.user_id);
         
         if (userError) {
           console.error('Error updating user subscription:', userError);
           toast.error('تم تحديث المعاملة ولكن فشل تحديث بيانات اشتراك المستخدم');
+        } else {
+          console.log('Updated user subscription successfully');
         }
       }
       
@@ -104,13 +111,19 @@ const TransactionEditForm: React.FC<TransactionEditFormProps> = ({
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label htmlFor="plan_name">الباقة</Label>
-              <Input
-                id="plan_name"
-                name="plan_name"
+              <Select
                 value={formState.plan_name}
-                onChange={handleInputChange}
-                placeholder="أدخل اسم الباقة"
-              />
+                onValueChange={(value) => handleSelectChange('plan_name', value)}
+              >
+                <SelectTrigger id="plan_name">
+                  <SelectValue placeholder="اختر نوع الباقة" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="premium">المميز</SelectItem>
+                  <SelectItem value="pro">الاحترافي</SelectItem>
+                  <SelectItem value="free">المجاني</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             
             <div className="grid gap-2">
@@ -140,10 +153,10 @@ const TransactionEditForm: React.FC<TransactionEditFormProps> = ({
                   <SelectValue placeholder="اختر حالة الدفع" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="paid">مدفوع</SelectItem>
-                  <SelectItem value="pending">قيد الانتظار</SelectItem>
-                  <SelectItem value="failed">فشل</SelectItem>
-                  <SelectItem value="refunded">مسترجع</SelectItem>
+                  <SelectItem value="مدفوع">مدفوع</SelectItem>
+                  <SelectItem value="قيد الانتظار">قيد الانتظار</SelectItem>
+                  <SelectItem value="فشل">فشل</SelectItem>
+                  <SelectItem value="مسترجع">مسترجع</SelectItem>
                 </SelectContent>
               </Select>
             </div>

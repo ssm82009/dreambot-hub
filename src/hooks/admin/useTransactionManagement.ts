@@ -48,14 +48,16 @@ export const useTransactionManagement = () => {
       
       if (transactionsData && transactionsData.length > 0) {
         const formattedTransactions = transactionsData.map(transaction => {
-          const status = normalizePaymentStatus(transaction.status);
+          const normalizedStatus = normalizePaymentStatus(transaction.status);
           
           return {
             ...transaction,
-            status
+            status: normalizedStatus,
+            expires_at: transaction.expires_at || null
           };
         });
         
+        console.log("Transactions after normalization:", formattedTransactions);
         setTransactions(formattedTransactions);
       } else {
         setTransactions([]);

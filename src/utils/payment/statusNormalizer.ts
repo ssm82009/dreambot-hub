@@ -1,85 +1,61 @@
 
 /**
- * Utility to normalize payment status across different languages and formats
+ * Normalize payment status strings to standard Arabic terms
  */
 export const normalizePaymentStatus = (status: string | null | undefined): string => {
-  if (!status) return '';
+  if (!status) return 'غير معروف';
   
-  const normalizedStatus = status.toLowerCase().trim();
+  const statusLower = status.toLowerCase();
   
-  // Map all possible payment status variations to standardized Arabic values
-  if (
-    normalizedStatus.includes('paid') || 
-    normalizedStatus.includes('مدفوع') ||
-    normalizedStatus.includes('approved') ||
-    normalizedStatus.includes('completed') ||
-    normalizedStatus.includes('successful') ||
-    normalizedStatus.includes('success')
-  ) {
+  if (statusLower === 'paid' || statusLower === 'مدفوع' || statusLower.includes('مدفوع')) {
     return 'مدفوع';
-  } else if (
-    normalizedStatus.includes('pending') || 
-    normalizedStatus.includes('قيد الانتظار') ||
-    normalizedStatus.includes('processing') ||
-    normalizedStatus.includes('in process') ||
-    normalizedStatus.includes('waiting')
-  ) {
+  } else if (statusLower === 'pending' || statusLower === 'قيد الانتظار' || statusLower.includes('انتظار')) {
     return 'قيد الانتظار';
-  } else if (
-    normalizedStatus.includes('failed') || 
-    normalizedStatus.includes('فشل') ||
-    normalizedStatus.includes('declined') ||
-    normalizedStatus.includes('rejected') ||
-    normalizedStatus.includes('error')
-  ) {
+  } else if (statusLower === 'failed' || statusLower === 'فشل' || statusLower.includes('فشل')) {
     return 'فشل';
-  } else if (
-    normalizedStatus.includes('refunded') || 
-    normalizedStatus.includes('مسترجع') ||
-    normalizedStatus.includes('returned') ||
-    normalizedStatus.includes('chargeback')
-  ) {
+  } else if (statusLower === 'refunded' || statusLower === 'مسترجع' || statusLower.includes('استرجاع')) {
     return 'مسترجع';
+  } else if (statusLower === 'cancelled' || statusLower === 'ملغي' || statusLower.includes('الغاء')) {
+    return 'ملغي';
   }
   
-  // If no match found, return the original status
-  return status;
+  return status; // Return original if no mapping found
 };
 
 /**
- * Normalize plan name to standardized Arabic format
+ * Normalize plan name strings
  */
 export const normalizePlanName = (planName: string | null | undefined): string => {
-  if (!planName) return '';
+  if (!planName) return 'غير معروف';
   
-  const normalizedPlan = planName.toLowerCase().trim();
+  const planLower = planName.toLowerCase();
   
-  if (normalizedPlan === 'premium' || normalizedPlan.includes('مميز')) {
-    return 'المميزة';
-  } else if (normalizedPlan === 'pro' || normalizedPlan.includes('احترافي')) {
-    return 'الاحترافية';
-  } else if (normalizedPlan === 'free' || normalizedPlan.includes('مجاني')) {
-    return 'المجانية';
+  if (planLower === 'premium' || planLower.includes('مميز')) {
+    return 'المميز';
+  } else if (planLower === 'pro' || planLower.includes('احترافي')) {
+    return 'الاحترافي';
+  } else if (planLower === 'free' || planLower.includes('مجاني')) {
+    return 'المجاني';
   }
   
-  return planName;
+  return planName; // Return original if no mapping found
 };
 
 /**
- * Normalize payment method to standardized Arabic format
+ * Normalize payment method strings
  */
 export const normalizePaymentMethod = (method: string | null | undefined): string => {
-  if (!method) return '';
+  if (!method) return 'غير معروف';
   
-  const normalizedMethod = method.toLowerCase().trim();
+  const methodLower = method.toLowerCase();
   
-  if (normalizedMethod.includes('paylink')) {
+  if (methodLower === 'paylink' || methodLower.includes('paylink')) {
     return 'باي لينك';
-  } else if (normalizedMethod.includes('paypal')) {
+  } else if (methodLower === 'paypal' || methodLower.includes('paypal')) {
     return 'باي بال';
-  } else if (normalizedMethod.includes('manual')) {
+  } else if (methodLower === 'manual' || methodLower.includes('manual')) {
     return 'يدوي';
   }
   
-  return method;
+  return method; // Return original if no mapping found
 };
