@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAdmin } from '@/contexts/admin';
 import { useAdminAuth } from './admin/useAdminAuth';
@@ -21,7 +21,7 @@ export const useAdminData = () => {
   const navigate = useNavigate();
   
   // استخدام ref بدلاً من state لتتبع حالة التهيئة لتجنب إعادة التحميل
-  const initializedRef = React.useRef(false);
+  const initializedRef = useRef(false);
 
   // Update context when stats change
   useEffect(() => {
