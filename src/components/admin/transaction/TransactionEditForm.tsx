@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { Calendar as CalendarIcon } from 'lucide-react';
@@ -80,7 +81,7 @@ const TransactionEditForm: React.FC<TransactionEditFormProps> = ({
   };
 
   const handleSelectChange = (name: string, value: string) => {
-    console.log(Changing ${name} to ${value});
+    console.log(`Changing ${name} to ${value}`);
     setFormState(prev => ({ ...prev, [name]: value }));
   };
 
@@ -104,6 +105,7 @@ const TransactionEditForm: React.FC<TransactionEditFormProps> = ({
         expires_at: formState.expires_at ? formState.expires_at.toISOString() : null
       });
 
+      // استخدام جلسة المشرف مع الاستفادة من RLS policies الجديدة
       const { data, error } = await supabase
         .from('payment_invoices')
         .update({
