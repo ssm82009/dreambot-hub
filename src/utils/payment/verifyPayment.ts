@@ -105,6 +105,24 @@ export const verifyPayment = async (
     if (subscriptionUpdated) {
       // تحديث جميع الدفعات المرتبطة بهذا المستخدم والخطة إلى حالة "مدفوع"
       await updateAllPendingInvoices(userId, plan);
+      
+      // وأيضاً تحديث المدفوعات الأخرى التي تحمل نفس المعرّفات
+      if (identifiers.length > 0) {
+        for (const identifier of identifiers) {
+          if (identifier) {
+            const { error: updateError } = await supabase
+              .from('payment_invoices')
+              .update({ status: 'مدفوع' })
+              .eq('invoice_id', identifier);
+              
+            if (updateError) {
+              console.error(`خطأ في تحديث حالة الفاتورة ${identifier}:`, updateError);
+            } else {
+              console.log(`تم تحديث حالة الفاتورة ${identifier} إلى مدفوع`);
+            }
+          }
+        }
+      }
     }
     
     return subscriptionUpdated;

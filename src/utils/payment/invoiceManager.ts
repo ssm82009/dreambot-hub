@@ -31,7 +31,7 @@ export const findInvoiceByIdentifiers = async (
       console.log("Found matching invoices:", invoices);
       const invoiceId = invoices[0].id;
       
-      // تحديث حالة الفاتورة في قاعدة البيانات إلى "مدفوع"
+      // دائماً تحديث حالة الفاتورة في قاعدة البيانات إلى "مدفوع" عند التحقق من الدفع
       const { error: updateInvoiceError } = await supabase
         .from('payment_invoices')
         .update({ status: 'مدفوع' })
@@ -59,15 +59,16 @@ export const findPendingInvoiceByUserPlan = async (
   userId: string,
   plan: string
 ): Promise<{ invoiceId: string; foundInvoice: boolean }> => {
-  console.log("Looking for pending invoices for user:", userId, "and plan:", plan);
+  console.log("Looking for invoices for user:", userId, "and plan:", plan);
   
   try {
+    // البحث عن جميع الفواتير للمستخدم والخطة المحددة (وليس فقط قيد الانتظار)
     const { data: userInvoices, error: userInvoicesError } = await supabase
       .from('payment_invoices')
       .select('*')
       .eq('user_id', userId)
       .eq('plan_name', plan)
-      .or(`status.eq.Pending,status.eq.قيد الانتظار,status.eq.pending`);
+      .order('created_at', { ascending: false });
       
     if (userInvoicesError) {
       console.error("Error finding user invoices:", userInvoicesError);
@@ -75,10 +76,10 @@ export const findPendingInvoiceByUserPlan = async (
     } 
     
     if (userInvoices && userInvoices.length > 0) {
-      console.log("Found pending invoices for user:", userInvoices);
+      console.log("Found invoices for user:", userInvoices);
       const invoiceId = userInvoices[0].id;
       
-      // تحديث حالة الفاتورة في قاعدة البيانات إلى "مدفوع"
+      // تحديث حالة الفاتورة في قاعدة البيانات إلى "مدفوع" دائماً عند التحقق
       const { error: updateInvoiceError } = await supabase
         .from('payment_invoices')
         .update({ status: 'مدفوع' })
@@ -128,7 +129,7 @@ export const createPayPalInvoiceRecord = async (
       amount = pricingSettings?.pro_plan_price || 99;
     }
     
-    // إنشاء سجل جديد بناءً على معلومات PayPal
+    // إنشاء سجل جديد بناءً على معلومات PayPal - دائماً بحالة "مدفوع"
     const { data: newInvoice, error: newInvoiceError } = await supabase
       .from('payment_invoices')
       .insert({
@@ -163,17 +164,17 @@ export const createPayPalInvoiceRecord = async (
  */
 export const updateAllPendingInvoices = async (userId: string, plan: string): Promise<void> => {
   try {
+    // تحديث جميع الفواتير للمستخدم والخطة المحددة إلى "مدفوع"
     const { error: updateAllInvoicesError } = await supabase
       .from('payment_invoices')
       .update({ status: 'مدفوع' })
       .eq('user_id', userId)
-      .eq('plan_name', plan)
-      .or(`status.eq.Pending,status.eq.قيد الانتظار,status.eq.pending`);
+      .eq('plan_name', plan);
       
     if (updateAllInvoicesError) {
       console.error("Error updating related invoices:", updateAllInvoicesError);
     } else {
-      console.log("Updated all pending invoices for user:", userId, "and plan:", plan);
+      console.log("Updated all invoices for user:", userId, "and plan:", plan, "to مدفوع");
     }
   } catch (error) {
     console.error("Error in updateAllPendingInvoices:", error);

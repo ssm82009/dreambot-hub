@@ -18,9 +18,10 @@ export const useTransactionManagement = () => {
   const fetchTransactions = async () => {
     setLoading(true);
     try {
+      // First, get all users with their subscription data
       const { data: usersData, error: usersError } = await supabase
         .from('users')
-        .select('id, email, full_name, subscription_expires_at')
+        .select('id, email, full_name, subscription_expires_at, subscription_type')
         .order('created_at', { ascending: false });
       
       if (usersError) throw usersError;
@@ -32,6 +33,7 @@ export const useTransactionManagement = () => {
       
       setUsers(usersMap);
       
+      // Then get all transactions
       const { data: transactionsData, error } = await supabase
         .from('payment_invoices')
         .select('*')
@@ -43,12 +45,21 @@ export const useTransactionManagement = () => {
       
       if (transactionsData && transactionsData.length > 0) {
         const formattedTransactions = transactionsData.map(transaction => {
-          const normalizedStatus = normalizePaymentStatus(transaction.status);
           const user = usersMap[transaction.user_id] || {};
+          
+          // إذا كان المستخدم مشترك بالفعل في نفس الخطة، فالمعاملة يجب أن تكون "مدفوع"
+          let status = transaction.status;
+          if (user.subscription_type === transaction.plan_name && 
+              user.subscription_type !== 'free') {
+            status = 'مدفوع';
+          } else {
+            // غير ذلك، استخدم دالة التطبيع
+            status = normalizePaymentStatus(transaction.status);
+          }
           
           return {
             ...transaction,
-            status: normalizedStatus, // استخدام الحالة المُنَمَّطة
+            status: status,
             expires_at: user.subscription_expires_at || null
           };
         });

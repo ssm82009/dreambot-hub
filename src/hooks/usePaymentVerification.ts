@@ -73,8 +73,14 @@ export const usePaymentVerification = () => {
               transaction_identifier: transactionIdentifier,
               payment_method: invoiceData.payment_method,
               created_at: invoiceData.created_at,
-              status: normalizePaymentStatus(invoiceData.status) // استخدام الوظيفة لتوحيد حالة الدفع
+              status: 'مدفوع' // دائماً تعيين الحالة كمدفوع في صفحة النجاح
             };
+            
+            // تحديث الفاتورة لتكون مدفوعة
+            await supabase
+              .from('payment_invoices')
+              .update({ status: 'مدفوع' })
+              .eq('id', invoiceData.id);
           } else {
             console.log("No payment record found by session_id, trying transaction ID");
           }
@@ -104,8 +110,14 @@ export const usePaymentVerification = () => {
               transaction_identifier: transactionIdentifier,
               payment_method: invoiceByTxData.payment_method,
               created_at: invoiceByTxData.created_at,
-              status: normalizePaymentStatus(invoiceByTxData.status) // استخدام الوظيفة لتوحيد حالة الدفع
+              status: 'مدفوع' // دائماً تعيين الحالة كمدفوع في صفحة النجاح
             };
+            
+            // تحديث الفاتورة لتكون مدفوعة
+            await supabase
+              .from('payment_invoices')
+              .update({ status: 'مدفوع' })
+              .eq('id', invoiceByTxData.id);
           } else {
             console.log("No payment record found by transaction_identifier");
           }
@@ -119,13 +131,12 @@ export const usePaymentVerification = () => {
             .from('payment_invoices')
             .select('*')
             .eq('user_id', userId)
-            .neq('status', 'مدفوع')
             .order('created_at', { ascending: false })
             .limit(1)
             .single();
             
           if (!latestInvoiceError && latestInvoiceData) {
-            console.log("Found latest pending payment record:", latestInvoiceData);
+            console.log("Found latest payment record:", latestInvoiceData);
             
             // تحويل سجل الفاتورة إلى صيغة جلسة الدفع
             foundPaymentSession = {
@@ -137,10 +148,16 @@ export const usePaymentVerification = () => {
               transaction_identifier: transactionIdentifier,
               payment_method: latestInvoiceData.payment_method,
               created_at: latestInvoiceData.created_at,
-              status: normalizePaymentStatus(latestInvoiceData.status) // استخدام الوظيفة لتوحيد حالة الدفع
+              status: 'مدفوع' // دائماً تعيين الحالة كمدفوع في صفحة النجاح
             };
+            
+            // تحديث الفاتورة لتكون مدفوعة
+            await supabase
+              .from('payment_invoices')
+              .update({ status: 'مدفوع' })
+              .eq('id', latestInvoiceData.id);
           } else {
-            console.log("No pending payment records found for user");
+            console.log("No payment records found for user");
           }
         }
         
@@ -152,27 +169,26 @@ export const usePaymentVerification = () => {
         
         setPaymentSession(foundPaymentSession);
         
-        // STEP 2: Update payment invoice with transaction details if available and set status to paid
-        if (foundPaymentSession) {
-          console.log("Updating payment record with transaction identifier:", transactionIdentifier);
-          
-          await supabase
-            .from('payment_invoices')
-            .update({ 
-              status: 'مدفوع'  // تحديث الحالة إلى "مدفوع" مباشرة
-            })
-            .eq('id', foundPaymentSession.id);
-            
-          console.log("Updated payment invoice status to مدفوع");
-        }
-        
-        // STEP 3: Update the user's subscription and verify payment
+        // STEP 2: Verify the payment and update user's subscription
         await verifyPayment(
           transactionIdentifier || (foundPaymentSession.session_id || ''),
           customId,
           txnId,
           foundPaymentSession.plan_type
         );
+        
+        // STEP 3: تحديث جميع المدفوعات المتعلقة بنفس المستخدم وخطة الاشتراك
+        const { error: updateError } = await supabase
+          .from('payment_invoices')
+          .update({ status: 'مدفوع' })
+          .eq('user_id', userId)
+          .eq('plan_name', foundPaymentSession.plan_type);
+          
+        if (updateError) {
+          console.error("خطأ في تحديث حالات الدفع:", updateError);
+        } else {
+          console.log("تم تحديث جميع حالات الدفع للمستخدم:", userId);
+        }
         
         // Display success message
         const planName = foundPaymentSession.plan_type.toLowerCase().includes('مميز') || 

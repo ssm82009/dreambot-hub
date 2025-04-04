@@ -7,16 +7,25 @@ export const normalizePaymentStatus = (status: string | null | undefined): strin
   
   const statusLower = status.toLowerCase();
   
+  // أولوية "مدفوع" أعلى من غيرها من الحالات
   if (statusLower === 'paid' || statusLower === 'مدفوع' || statusLower.includes('مدفوع') || 
       statusLower === 'success' || statusLower === 'sucsess' || statusLower.includes('نجاح')) {
     return 'مدفوع';
-  } else if (statusLower === 'pending' || statusLower === 'قيد الانتظار' || statusLower.includes('انتظار')) {
+  } 
+  // إذا كانت حالة من حالات الانتظار
+  else if (statusLower === 'pending' || statusLower === 'قيد الانتظار' || statusLower.includes('انتظار')) {
     return 'قيد الانتظار';
-  } else if (statusLower === 'failed' || statusLower === 'فشل' || statusLower.includes('فشل')) {
+  } 
+  // إذا كانت حالة فشل
+  else if (statusLower === 'failed' || statusLower === 'فشل' || statusLower.includes('فشل')) {
     return 'فشل';
-  } else if (statusLower === 'refunded' || statusLower === 'مسترجع' || statusLower.includes('استرجاع')) {
+  } 
+  // إذا كانت حالة استرجاع
+  else if (statusLower === 'refunded' || statusLower === 'مسترجع' || statusLower.includes('استرجاع')) {
     return 'مسترجع';
-  } else if (statusLower === 'cancelled' || statusLower === 'ملغي' || statusLower.includes('الغاء')) {
+  } 
+  // إذا كانت حالة إلغاء
+  else if (statusLower === 'cancelled' || statusLower === 'ملغي' || statusLower.includes('الغاء')) {
     return 'ملغي';
   }
   
@@ -25,7 +34,6 @@ export const normalizePaymentStatus = (status: string | null | undefined): strin
 
 /**
  * Basic normalization for plan types (used for internal matching, not display)
- * This preserves the original functionality while making it clear this is for internal use
  */
 export const normalizePlanType = (planName: string | null | undefined): string => {
   if (!planName) return 'free';
@@ -64,6 +72,5 @@ export const normalizePaymentMethod = (method: string | null | undefined): strin
 
 /**
  * Alias for normalizePlanType for backward compatibility
- * This ensures existing code continues to work
  */
 export const normalizePlanName = normalizePlanType;

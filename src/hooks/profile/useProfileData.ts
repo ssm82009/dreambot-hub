@@ -52,11 +52,22 @@ export const useProfileData = () => {
         } else {
           console.log("Refreshed payments:", paymentData);
           
-          // تطبيق دالة التطبيع على حالة المدفوعات
-          const normalizedPayments = paymentData?.map(payment => ({
-            ...payment,
-            status: normalizePaymentStatus(payment.status)
-          })) || [];
+          // عند استرجاع المدفوعات من صفحة النجاح، قم بتعيين جميع المدفوعات التي تم التحقق منها كـ "مدفوع"
+          const normalizedPayments = paymentData?.map(payment => {
+            // إذا كان المستخدم مشترك، ضع كل الدفعات المرتبطة بخطته الحالية كـ "مدفوع"
+            if (refreshedUserData.subscription_type === payment.plan_name && 
+                refreshedUserData.subscription_type !== 'free') {
+              return {
+                ...payment,
+                status: 'مدفوع'
+              };
+            }
+            
+            return {
+              ...payment,
+              status: normalizePaymentStatus(payment.status)
+            };
+          }) || [];
           
           setPayments(normalizedPayments);
         }
@@ -121,11 +132,21 @@ export const useProfileData = () => {
         } else {
           console.log("Fetched payments for user:", session.user.id, paymentData);
           
-          // تطبيق دالة التطبيع على حالة المدفوعات
-          const normalizedPayments = paymentData?.map(payment => ({
-            ...payment,
-            status: normalizePaymentStatus(payment.status)
-          })) || [];
+          // إذا كان المستخدم مشترك، ضع كل الدفعات المرتبطة بخطته الحالية كـ "مدفوع"
+          const normalizedPayments = paymentData?.map(payment => {
+            if (userData.subscription_type === payment.plan_name && 
+                userData.subscription_type !== 'free') {
+              return {
+                ...payment,
+                status: 'مدفوع'
+              };
+            }
+            
+            return {
+              ...payment,
+              status: normalizePaymentStatus(payment.status)
+            };
+          }) || [];
           
           setPayments(normalizedPayments);
         }
