@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -33,6 +32,7 @@ export const useTransactionManagement = () => {
   const fetchTransactions = async () => {
     setLoading(true);
     try {
+      console.log('Fetching transactions...');
       const isSuccessPage = window.location.href.includes('success');
       
       // Fetch users data
@@ -51,95 +51,54 @@ export const useTransactionManagement = () => {
       
       setUsers(usersMap);
       
-      // Try to fetch latest transactions using RPC function
-      const { data: latestTransactionsData, error: latestTransactionsError } = await supabase
-        .rpc('get_latest_payment_invoices') as { data: RPCTransactionResponse, error: any };
+      // Directly fetch transactions without RPC first
+      const { data: transactionsData, error: transactionsError } = await supabase
+        .from('payment_invoices')
+        .select('*')
+        .order('created_at', { ascending: false });
         
-      if (latestTransactionsError) {
-        console.error("Error fetching latest transactions:", latestTransactionsError);
+      if (transactionsError) {
+        console.error("Error fetching transactions:", transactionsError);
+        throw transactionsError;
+      }
+      
+      if (transactionsData && transactionsData.length > 0) {
+        console.log('Successfully fetched transactions:', transactionsData.length);
         
-        // If on success page, update pending invoices to paid
-        if (isSuccessPage) {
-          await supabase
-            .from('payment_invoices')
-            .update({ status: PAYMENT_STATUS.PAID })
-            .or('status.eq.Pending,status.eq.pending');
-        }
-        
-        // Fallback to direct query if RPC fails
-        const { data: transactionsData, error } = await supabase
-          .from('payment_invoices')
-          .select('*')
-          .order('created_at', { ascending: false });
-          
-        if (error) throw error;
-        
-        if (transactionsData && transactionsData.length > 0) {
-          // Group transactions by invoice_id and get the latest for each
-          const invoiceGroups = transactionsData.reduce((groups: Record<string, any[]>, transaction: any) => {
-            if (!groups[transaction.invoice_id]) {
-              groups[transaction.invoice_id] = [];
-            }
-            groups[transaction.invoice_id].push(transaction);
-            return groups;
-          }, {});
-          
-          const latestTransactions = Object.values(invoiceGroups).map((group: any[]) => {
-            return group.sort((a: any, b: any) => 
-              new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-            )[0];
-          });
-          
-          // Format transactions with user data
-          const formattedTransactions = latestTransactions.map((transaction: any) => {
-            const user = usersMap[transaction.user_id] || {};
-            
-            const status = isSuccessPage ? 
-              PAYMENT_STATUS.PAID : 
-              normalizePaymentStatus(transaction.status);
-            
-            return {
-              ...transaction,
-              status,
-              expires_at: transaction.expires_at || user.subscription_expires_at || null
-            };
-          });
-          
-          setTransactions(formattedTransactions);
-        } else {
-          setTransactions([]);
-        }
-      } else {
-        if (latestTransactionsData && latestTransactionsData.length > 0) {
-          // If on success page, update pending invoices to paid
-          if (isSuccessPage) {
-            for (const transaction of latestTransactionsData) {
-              await supabase
-                .from('payment_invoices')
-                .update({ status: PAYMENT_STATUS.PAID })
-                .eq('id', transaction.id);
-            }
+        // Group transactions by invoice_id and get the latest for each
+        const invoiceGroups = transactionsData.reduce((groups: Record<string, any[]>, transaction: any) => {
+          if (!groups[transaction.invoice_id]) {
+            groups[transaction.invoice_id] = [];
           }
+          groups[transaction.invoice_id].push(transaction);
+          return groups;
+        }, {});
+        
+        const latestTransactions = Object.values(invoiceGroups).map((group: any[]) => {
+          return group.sort((a: any, b: any) => 
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          )[0];
+        });
+        
+        // Format transactions with user data
+        const formattedTransactions = latestTransactions.map((transaction: any) => {
+          const user = usersMap[transaction.user_id] || {};
           
-          // Format transactions with user data
-          const formattedTransactions = latestTransactionsData.map((transaction: Transaction) => {
-            const user = usersMap[transaction.user_id] || {};
-            
-            const status = isSuccessPage ? 
-              PAYMENT_STATUS.PAID : 
-              normalizePaymentStatus(transaction.status);
-            
-            return {
-              ...transaction,
-              status,
-              expires_at: transaction.expires_at || user.subscription_expires_at || null
-            };
-          });
+          const status = isSuccessPage ? 
+            PAYMENT_STATUS.PAID : 
+            normalizePaymentStatus(transaction.status);
           
-          setTransactions(formattedTransactions);
-        } else {
-          setTransactions([]);
-        }
+          return {
+            ...transaction,
+            status,
+            expires_at: transaction.expires_at || user.subscription_expires_at || null
+          };
+        });
+        
+        setTransactions(formattedTransactions);
+      } else {
+        console.log('No transactions found');
+        setTransactions([]);
       }
     } catch (error) {
       console.error('Error fetching transactions:', error);
@@ -149,33 +108,28 @@ export const useTransactionManagement = () => {
     }
   };
 
-  // Fetch transactions on component mount
   useEffect(() => {
     fetchTransactions();
   }, []);
   
-  // Handle search input change
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
     setCurrentPage(1);
   };
   
-  // Handle editing a transaction
   const handleEditClick = (transaction: Transaction) => {
     setEditingTransaction(transaction);
   };
   
-  // Handle closing the edit form
   const handleEditClose = () => {
     setEditingTransaction(null);
   };
   
-  // Handle successful transaction edit
   const handleEditSuccess = () => {
+    console.log('Transaction edit was successful, refreshing data...');
     fetchTransactions();
   };
 
-  // Filter transactions based on search term
   const filteredTransactions = transactions.filter((transaction) => {
     const user = users[transaction.user_id] || {};
     const searchString = searchTerm.toLowerCase().trim();
@@ -218,7 +172,6 @@ export const useTransactionManagement = () => {
     return false;
   });
 
-  // Update pagination when filteredTransactions changes
   useEffect(() => {
     setTotalPages(Math.max(1, Math.ceil(filteredTransactions.length / rowsPerPage)));
     if (currentPage > Math.ceil(filteredTransactions.length / rowsPerPage)) {
@@ -226,13 +179,11 @@ export const useTransactionManagement = () => {
     }
   }, [filteredTransactions, rowsPerPage]);
 
-  // Get current page transactions
   const currentTransactions = filteredTransactions.slice(
     (currentPage - 1) * rowsPerPage,
     currentPage * rowsPerPage
   );
 
-  // Pagination functions
   const goToPage = (page: number) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);

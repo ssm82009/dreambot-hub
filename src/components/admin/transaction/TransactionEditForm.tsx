@@ -85,8 +85,16 @@ const TransactionEditForm: React.FC<TransactionEditFormProps> = ({
     setFormState(prev => ({ ...prev, isLoading: true }));
     
     try {
+      console.log('Updating transaction with data:', {
+        id: transaction.id,
+        plan_name: formState.plan_name,
+        payment_method: formState.payment_method,
+        status: normalizePaymentStatus(formState.status),
+        expires_at: formState.expires_at ? formState.expires_at.toISOString() : null
+      });
+
       // Update transaction in payment_invoices table
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('payment_invoices')
         .update({
           plan_name: formState.plan_name,
@@ -94,9 +102,15 @@ const TransactionEditForm: React.FC<TransactionEditFormProps> = ({
           status: normalizePaymentStatus(formState.status),
           expires_at: formState.expires_at ? formState.expires_at.toISOString() : null
         })
-        .eq('id', transaction.id);
+        .eq('id', transaction.id)
+        .select();
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error details:', error);
+        throw error;
+      }
+      
+      console.log('Update response:', data);
       
       // Check if we also need to update the user's subscription
       if (transaction.user_id && (
@@ -106,19 +120,20 @@ const TransactionEditForm: React.FC<TransactionEditFormProps> = ({
       )) {
         const expiryDate = formState.expires_at || new Date(Date.now() + (30 * 24 * 60 * 60 * 1000));
         
-        const { error: userError } = await supabase
+        const { data: userData, error: userError } = await supabase
           .from('users')
           .update({
             subscription_type: formState.plan_name,
             subscription_expires_at: expiryDate.toISOString()
           })
-          .eq('id', transaction.user_id);
+          .eq('id', transaction.user_id)
+          .select();
         
         if (userError) {
           console.error('Error updating user subscription:', userError);
           toast.error('تم تحديث المعاملة ولكن فشل تحديث بيانات اشتراك المستخدم');
         } else {
-          console.log('Updated user subscription successfully');
+          console.log('Updated user subscription successfully:', userData);
         }
       }
       
