@@ -66,19 +66,22 @@ export const usePaymentVerification = () => {
               transaction_identifier: transactionIdentifier,
               payment_method: invoiceData.payment_method,
               created_at: invoiceData.created_at,
-              status: isSuccessPage ? PAYMENT_STATUS.PAID : invoiceData.status
+              status: invoiceData.status
             };
             
-            const { error: updateError } = await supabase
-              .from('payment_invoices')
-              .update({ status: PAYMENT_STATUS.PAID })
-              .eq('id', invoiceData.id);
-              
-            if (!updateError) {
-              setPaymentUpdated(true);
-              console.log("Updated payment status for invoice with ID:", invoiceData.id);
-            } else {
-              console.error("Failed to update payment status:", updateError);
+            // Only update pending payments
+            if (invoiceData.status === PAYMENT_STATUS.PENDING || invoiceData.status === 'pending' || invoiceData.status === 'Pending') {
+              const { error: updateError } = await supabase
+                .from('payment_invoices')
+                .update({ status: PAYMENT_STATUS.PAID })
+                .eq('id', invoiceData.id);
+                
+              if (!updateError) {
+                setPaymentUpdated(true);
+                console.log("Updated payment status for invoice with ID:", invoiceData.id);
+              } else {
+                console.error("Failed to update payment status:", updateError);
+              }
             }
           } else {
             console.log("No payment record found by session_id, trying transaction ID");
@@ -107,19 +110,22 @@ export const usePaymentVerification = () => {
               transaction_identifier: transactionIdentifier,
               payment_method: invoiceByTxData.payment_method,
               created_at: invoiceByTxData.created_at,
-              status: isSuccessPage ? PAYMENT_STATUS.PAID : invoiceByTxData.status
+              status: invoiceByTxData.status
             };
             
-            const { error: updateError } = await supabase
-              .from('payment_invoices')
-              .update({ status: PAYMENT_STATUS.PAID })
-              .eq('id', invoiceByTxData.id);
-              
-            if (!updateError) {
-              setPaymentUpdated(true);
-              console.log("Updated payment status for invoice with ID:", invoiceByTxData.id);
-            } else {
-              console.error("Failed to update payment status:", updateError);
+            // Only update pending payments
+            if (invoiceByTxData.status === PAYMENT_STATUS.PENDING || invoiceByTxData.status === 'pending' || invoiceByTxData.status === 'Pending') {
+              const { error: updateError } = await supabase
+                .from('payment_invoices')
+                .update({ status: PAYMENT_STATUS.PAID })
+                .eq('id', invoiceByTxData.id);
+                
+              if (!updateError) {
+                setPaymentUpdated(true);
+                console.log("Updated payment status for invoice with ID:", invoiceByTxData.id);
+              } else {
+                console.error("Failed to update payment status:", updateError);
+              }
             }
           } else {
             console.log("No payment record found by transaction_identifier");
@@ -133,6 +139,7 @@ export const usePaymentVerification = () => {
             .from('payment_invoices')
             .select('*')
             .eq('user_id', userId)
+            .eq('status', PAYMENT_STATUS.PENDING)
             .order('created_at', { ascending: false })
             .limit(1)
             .single();
@@ -149,7 +156,7 @@ export const usePaymentVerification = () => {
               transaction_identifier: transactionIdentifier,
               payment_method: latestInvoiceData.payment_method,
               created_at: latestInvoiceData.created_at,
-              status: isSuccessPage ? PAYMENT_STATUS.PAID : latestInvoiceData.status
+              status: latestInvoiceData.status
             };
             
             const { error: updateError } = await supabase
@@ -183,22 +190,24 @@ export const usePaymentVerification = () => {
           foundPaymentSession.plan_type
         );
         
-        // تحديث جميع المدفوعات المعلقة
-        const { error: updatePendingError } = await supabase
-          .from('payment_invoices')
-          .update({ 
-            status: PAYMENT_STATUS.PAID,
-            expires_at: new Date(Date.now() + (30 * 24 * 60 * 60 * 1000)).toISOString() 
-          })
-          .eq('user_id', userId)
-          .eq('plan_name', foundPaymentSession.plan_type)
-          .or(`status.eq.${PAYMENT_STATUS.PENDING},status.eq.Pending,status.eq.pending`);
-          
-        if (updatePendingError) {
-          console.error("خطأ في تحديث حالات الدفع:", updatePendingError);
-        } else {
-          console.log("تم تحديث جميع حالات الدفع للمستخدم:", userId);
-          setPaymentUpdated(true);
+        // تحديث المدفوعات المعلقة فقط
+        if (isSuccessPage) {
+          const { error: updatePendingError } = await supabase
+            .from('payment_invoices')
+            .update({ 
+              status: PAYMENT_STATUS.PAID,
+              expires_at: new Date(Date.now() + (30 * 24 * 60 * 60 * 1000)).toISOString() 
+            })
+            .eq('user_id', userId)
+            .eq('plan_name', foundPaymentSession.plan_type)
+            .or(`status.eq.${PAYMENT_STATUS.PENDING},status.eq.Pending,status.eq.pending`);
+            
+          if (updatePendingError) {
+            console.error("خطأ في تحديث حالات الدفع:", updatePendingError);
+          } else {
+            console.log("تم تحديث حالات الدفع المعلقة للمستخدم:", userId);
+            setPaymentUpdated(true);
+          }
         }
         
         const planName = foundPaymentSession.plan_type.toLowerCase().includes('مميز') || 
@@ -215,7 +224,7 @@ export const usePaymentVerification = () => {
       }
     };
 
-    if (sessionId || transactionIdentifier || isSuccessPage) {
+    if ((sessionId || transactionIdentifier || isSuccessPage) && isSuccessPage) {
       handleVerification();
     } else {
       setIsVerifying(false);

@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -43,82 +42,77 @@ const PaymentSuccessContent = ({
         
         console.log("Updating payment status for user:", session.user.id);
         
-        // Approach 1: Update by paymentData.id if available
-        if (paymentData?.id) {
-          try {
-            const { data, error } = await supabase
-              .from('payment_invoices')
-              .update({ status: paidStatus })
-              .eq('id', paymentData.id);
-              
-            if (error) {
-              console.error("Error updating payment status by ID:", error);
-            } else {
-              console.log("Payment status updated to 'مدفوع' for ID:", paymentData.id);
-              setUpdateSuccess(true);
-            }
-          } catch (error) {
-            console.error("Exception updating payment status by ID:", error);
-          }
-        }
-        
-        // Approach 2: Update by invoice_id if available
-        if (paymentData?.invoice_id) {
-          try {
-            const { data, error } = await supabase
-              .from('payment_invoices')
-              .update({ status: paidStatus })
-              .eq('invoice_id', paymentData.invoice_id)
-              .eq('user_id', session.user.id);
-              
-            if (error) {
-              console.error("Error updating payment status by invoice_id:", error);
-            } else {
-              console.log("Updated records with invoice_id:", paymentData.invoice_id);
-              setUpdateSuccess(true);
-            }
-          } catch (error) {
-            console.error("Exception updating payment records by invoice_id:", error);
-          }
-        }
-        
-        // Approach 3: Update by transactionIdentifier if available
-        if (transactionIdentifier && !paymentData) {
-          try {
-            const { data, error } = await supabase
-              .from('payment_invoices')
-              .update({ status: paidStatus })
-              .eq('invoice_id', transactionIdentifier)
-              .eq('user_id', session.user.id);
-              
-            if (error) {
-              console.error("Error updating payment status by transactionIdentifier:", error);
-            } else {
-              console.log("Updated records with transactionIdentifier:", transactionIdentifier);
-              setUpdateSuccess(true);
-            }
-          } catch (error) {
-            console.error("Exception updating payment records by transactionIdentifier:", error);
-          }
-        }
-        
-        // Approach 4: Update all pending payments for current user if on success page
+        // Only update status for current payment on success page
         if (isSuccessPage) {
-          try {
-            const { data, error } = await supabase
-              .from('payment_invoices')
-              .update({ status: paidStatus })
-              .eq('user_id', session.user.id)
-              .or(`status.eq.${PAYMENT_STATUS.PENDING},status.eq.Pending,status.eq.pending`);
-              
-            if (error) {
-              console.error("Error updating pending payments for user:", error);
-            } else {
-              console.log("Updated all pending payments for current user");
-              setUpdateSuccess(true);
+          // Approach 1: Update by paymentData.id if available
+          if (paymentData?.id && (paymentData.status === PAYMENT_STATUS.PENDING || paymentData.status === 'pending' || paymentData.status === 'Pending')) {
+            try {
+              const { data, error } = await supabase
+                .from('payment_invoices')
+                .update({ status: paidStatus })
+                .eq('id', paymentData.id)
+                .eq('user_id', session.user.id);
+                
+              if (!error) {
+                console.log(`Updated payment status for ID ${paymentData.id} to مدفوع`);
+                setUpdateSuccess(true);
+              } else {
+                console.error("Error updating payment status by ID:", error);
+              }
+            } catch (error) {
+              console.error("Exception updating payment status by ID:", error);
             }
-          } catch (error) {
-            console.error("Exception updating pending payments for user:", error);
+          }
+          
+          // Approach 2: Update by invoice_id if available
+          if (paymentData?.invoice_id && (paymentData.status === PAYMENT_STATUS.PENDING || paymentData.status === 'pending' || paymentData.status === 'Pending')) {
+            try {
+              const { data, error } = await supabase
+                .from('payment_invoices')
+                .update({ status: paidStatus })
+                .eq('invoice_id', paymentData.invoice_id)
+                .eq('user_id', session.user.id)
+                .eq('status', PAYMENT_STATUS.PENDING);
+                
+              if (!error) {
+                console.log(`Updated all payment records with invoice_id ${paymentData.invoice_id} to مدفوع`);
+                setUpdateSuccess(true);
+              } else {
+                console.error(`Error updating by invoice_id ${paymentData.invoice_id}:`, error);
+              }
+            } catch (error) {
+              console.error(`Exception updating by invoice_id ${paymentData.invoice_id}:`, error);
+            }
+          }
+          
+          // Approach 3: Update by transactionIdentifier if available
+          if (transactionIdentifier && !paymentData) {
+            try {
+              const { data, error } = await supabase
+                .from('payment_invoices')
+                .select('*')
+                .eq('invoice_id', transactionIdentifier)
+                .eq('user_id', session.user.id)
+                .eq('status', PAYMENT_STATUS.PENDING);
+                
+              if (!error && data && data.length > 0) {
+                const { error: updateError } = await supabase
+                  .from('payment_invoices')
+                  .update({ status: paidStatus })
+                  .eq('invoice_id', transactionIdentifier)
+                  .eq('user_id', session.user.id)
+                  .eq('status', PAYMENT_STATUS.PENDING);
+                  
+                if (!updateError) {
+                  console.log(`Updated records with transactionIdentifier ${transactionIdentifier} to مدفوع`);
+                  setUpdateSuccess(true);
+                } else {
+                  console.error(`Error updating by transactionIdentifier ${transactionIdentifier}:`, updateError);
+                }
+              }
+            } catch (error) {
+              console.error(`Exception updating by transactionIdentifier ${transactionIdentifier}:`, error);
+            }
           }
         }
       } catch (error) {
@@ -170,8 +164,11 @@ const PaymentSuccessContent = ({
     fetchSubscriptionInfo();
   }, [paymentSession, paymentData]);
   
-  const normalizedStatus = PAYMENT_STATUS.PAID;
-  
+  // Define normalized status safely
+  const normalizedStatus = isSuccessPage && paymentData?.status === PAYMENT_STATUS.PENDING 
+    ? PAYMENT_STATUS.PAID 
+    : paymentData?.status || '';
+    
   const getDisplayPlan = () => {
     if (subscriptionName) {
       return subscriptionName;

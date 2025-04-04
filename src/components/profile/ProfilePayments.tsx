@@ -70,8 +70,7 @@ const ProfilePayments: React.FC<ProfilePaymentsProps> = ({ payments }) => {
             payments.some(p => p.user_id === payment.user_id)
           );
           
-          const shouldUpdateStatus = isSuccessPage || 
-            window.location.href.includes('profile') || 
+          const shouldUpdateStatus = isSuccessPage && 
             filteredLatestPayments.some(p => p.status === PAYMENT_STATUS.PENDING || p.status === 'pending' || p.status === 'Pending');
             
           if (shouldUpdateStatus) {
@@ -80,7 +79,10 @@ const ProfilePayments: React.FC<ProfilePaymentsProps> = ({ payments }) => {
           }
             
           const processedPayments = shouldUpdateStatus
-            ? filteredLatestPayments.map(payment => ({ ...payment, status: PAYMENT_STATUS.PAID }))
+            ? filteredLatestPayments.map(payment => ({ 
+                ...payment, 
+                status: payment.status === PAYMENT_STATUS.PENDING ? PAYMENT_STATUS.PAID : payment.status 
+              }))
             : filteredLatestPayments;
             
           setRefreshedPayments(processedPayments);
@@ -91,8 +93,7 @@ const ProfilePayments: React.FC<ProfilePaymentsProps> = ({ payments }) => {
               payments.some(p => p.invoice_id === invoice.invoice_id || p.user_id === invoice.user_id)
             );
             
-            const shouldUpdateStatus = isSuccessPage || 
-              window.location.href.includes('profile') || 
+            const shouldUpdateStatus = isSuccessPage && 
               userPayments.some(p => p.status === PAYMENT_STATUS.PENDING || p.status === 'pending' || p.status === 'Pending');
             
             if (shouldUpdateStatus) {
@@ -101,7 +102,10 @@ const ProfilePayments: React.FC<ProfilePaymentsProps> = ({ payments }) => {
             }
               
             const processedPayments = shouldUpdateStatus
-              ? userPayments.map(payment => ({ ...payment, status: PAYMENT_STATUS.PAID }))
+              ? userPayments.map(payment => ({ 
+                  ...payment, 
+                  status: payment.status === PAYMENT_STATUS.PENDING ? PAYMENT_STATUS.PAID : payment.status 
+                }))
               : userPayments;
               
             console.log("ProfilePayments - Latest filtered payments:", processedPayments);
@@ -125,7 +129,7 @@ const ProfilePayments: React.FC<ProfilePaymentsProps> = ({ payments }) => {
       let anyUpdateSucceeded = false;
       
       for (const payment of paymentsList) {
-        if (payment.status !== PAYMENT_STATUS.PAID) {
+        if (payment.status === PAYMENT_STATUS.PENDING || payment.status === 'pending' || payment.status === 'Pending') {
           try {
             const { error: paymentUpdateError } = await supabase
               .from('payment_invoices')
@@ -144,13 +148,14 @@ const ProfilePayments: React.FC<ProfilePaymentsProps> = ({ payments }) => {
           }
         }
         
-        if (payment.invoice_id) {
+        if (payment.invoice_id && (payment.status === PAYMENT_STATUS.PENDING || payment.status === 'pending' || payment.status === 'Pending')) {
           try {
             const { error: invoiceUpdateError } = await supabase
               .from('payment_invoices')
               .update({ status: PAYMENT_STATUS.PAID })
               .eq('invoice_id', payment.invoice_id)
-              .eq('user_id', userId);
+              .eq('user_id', userId)
+              .eq('status', PAYMENT_STATUS.PENDING);
               
             if (!invoiceUpdateError) {
               console.log(`Updated all payment records with invoice_id ${payment.invoice_id} to مدفوع`);
@@ -220,7 +225,11 @@ const ProfilePayments: React.FC<ProfilePaymentsProps> = ({ payments }) => {
                   <TableCell>{formatCurrency(payment.amount)}</TableCell>
                   <TableCell>{normalizePaymentMethod(payment.payment_method)}</TableCell>
                   <TableCell>
-                    <PaymentStatusBadge status={paymentUpdated ? PAYMENT_STATUS.PAID : payment.status} />
+                    <PaymentStatusBadge status={
+                      (paymentUpdated && payment.status === PAYMENT_STATUS.PENDING) 
+                        ? PAYMENT_STATUS.PAID 
+                        : payment.status
+                    } />
                   </TableCell>
                 </TableRow>
               ))}
