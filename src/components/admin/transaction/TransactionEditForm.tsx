@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { supabase } from '@/integrations/supabase/client';
-import { normalizePlanType, PAYMENT_STATUS } from '@/utils/payment/statusNormalizer';
+import { normalizePlanType, PAYMENT_STATUS, normalizePaymentStatus } from '@/utils/payment/statusNormalizer';
 
 interface TransactionEditFormProps {
   transaction: any;
@@ -89,7 +89,7 @@ const TransactionEditForm: React.FC<TransactionEditFormProps> = ({
         .update({
           plan_name: formState.plan_name,
           payment_method: formState.payment_method,
-          status: getDbPaymentStatus(formState.status),
+          status: normalizePaymentStatus(formState.status),
           expires_at: formState.expires_at ? formState.expires_at.toISOString() : null
         })
         .eq('id', transaction.id);
@@ -99,7 +99,7 @@ const TransactionEditForm: React.FC<TransactionEditFormProps> = ({
       if (transaction.user_id && (
         formState.plan_name !== transaction.plan_name || 
         formState.expires_at !== (transaction.expires_at ? new Date(transaction.expires_at) : undefined) ||
-        normalizePlanType(formState.status) === 'مدفوع'
+        normalizePaymentStatus(formState.status) === PAYMENT_STATUS.PAID
       )) {
         const expiryDate = formState.expires_at || new Date(Date.now() + (30 * 24 * 60 * 60 * 1000));
         
