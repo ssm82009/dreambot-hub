@@ -1,10 +1,9 @@
-
 import { useEffect, useState } from 'react';
 import { useSearchParams, useLocation } from 'react-router-dom';
 import { verifyPayment } from '@/utils/payment/verifyPayment';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { normalizePaymentStatus } from '@/utils/payment/statusNormalizer';
+import { normalizePaymentStatus, PAYMENT_STATUS } from '@/utils/payment/statusNormalizer';
 
 export const usePaymentVerification = () => {
   const [searchParams] = useSearchParams();
@@ -12,24 +11,17 @@ export const usePaymentVerification = () => {
   const [isVerifying, setIsVerifying] = useState(true);
   const [paymentSession, setPaymentSession] = useState<any>(null);
   
-  // Check if we're on the success page to force status to "مدفوع"
   const isSuccessPage = location.pathname.includes('success');
   
-  // SESSION PARAMS - أهم معرف يجب البحث عنه
   const sessionId = searchParams.get('session_id') || '';
-  
-  // PayLink params
   const transactionNo = searchParams.get('transactionNo') || '';
   const orderNumber = searchParams.get('order_number') || '';
-  
-  // PayPal params
   const paymentId = searchParams.get('paymentId') || '';
   const token = searchParams.get('token') || '';
   const customId = searchParams.get('custom') || '';
   const txnId = searchParams.get('tx') || '';
   const payerID = searchParams.get('PayerID') || '';
   
-  // Get any available transaction identifier
   const transactionIdentifier = transactionNo || orderNumber || paymentId || token || txnId || customId;
   
   useEffect(() => {
@@ -37,10 +29,8 @@ export const usePaymentVerification = () => {
       try {
         setIsVerifying(true);
         
-        // Log all search parameters for debugging
         console.log("Payment verification search params:", Object.fromEntries(searchParams.entries()));
         
-        // Get current user ID for more specific queries
         const { data: { session } } = await supabase.auth.getSession();
         const userId = session?.user?.id;
         
@@ -50,10 +40,8 @@ export const usePaymentVerification = () => {
           return;
         }
 
-        // STEP 1: Find the payment session by looking at the invoices in payment_invoices
         let foundPaymentSession = null;
         
-        // First try to find by session_id (most reliable method)
         if (sessionId) {
           console.log("Looking for payment record by session_id:", sessionId);
           
@@ -67,7 +55,6 @@ export const usePaymentVerification = () => {
           if (!invoiceError && invoiceData) {
             console.log("Found payment record by session_id:", invoiceData);
             
-            // تحويل سجل الفاتورة إلى صيغة جلسة الدفع (لغرض التوافق مع الكود الحالي)
             foundPaymentSession = {
               id: invoiceData.id,
               user_id: invoiceData.user_id,
@@ -77,20 +64,18 @@ export const usePaymentVerification = () => {
               transaction_identifier: transactionIdentifier,
               payment_method: invoiceData.payment_method,
               created_at: invoiceData.created_at,
-              status: isSuccessPage ? 'مدفوع' : invoiceData.status // Force status if on success page
+              status: isSuccessPage ? PAYMENT_STATUS.PAID : invoiceData.status
             };
             
-            // تحديث الفاتورة لتكون مدفوعة - CRITICAL FIX HERE
             await supabase
               .from('payment_invoices')
-              .update({ status: 'مدفوع' })
+              .update({ status: PAYMENT_STATUS.PAID })
               .eq('id', invoiceData.id);
           } else {
             console.log("No payment record found by session_id, trying transaction ID");
           }
         }
         
-        // If no session found by session_id, try transaction_identifier
         if (!foundPaymentSession && transactionIdentifier) {
           console.log("Looking for payment record by transaction_identifier:", transactionIdentifier);
           
@@ -104,7 +89,6 @@ export const usePaymentVerification = () => {
           if (!invoiceByTxError && invoiceByTxData) {
             console.log("Found payment record by transaction_identifier:", invoiceByTxData);
             
-            // تحويل سجل الفاتورة إلى صيغة جلسة الدفع
             foundPaymentSession = {
               id: invoiceByTxData.id,
               user_id: invoiceByTxData.user_id,
@@ -114,20 +98,18 @@ export const usePaymentVerification = () => {
               transaction_identifier: transactionIdentifier,
               payment_method: invoiceByTxData.payment_method,
               created_at: invoiceByTxData.created_at,
-              status: isSuccessPage ? 'مدفوع' : invoiceByTxData.status // Force status if on success page
+              status: isSuccessPage ? PAYMENT_STATUS.PAID : invoiceByTxData.status
             };
             
-            // تحديث الفاتورة لتكون مدفوعة - CRITICAL FIX HERE
             await supabase
               .from('payment_invoices')
-              .update({ status: 'مدفوع' })
+              .update({ status: PAYMENT_STATUS.PAID })
               .eq('id', invoiceByTxData.id);
           } else {
             console.log("No payment record found by transaction_identifier");
           }
         }
         
-        // If still no session found, try the latest pending session for the user
         if (!foundPaymentSession) {
           console.log("Looking for latest pending payment record for user:", userId);
           
@@ -142,7 +124,6 @@ export const usePaymentVerification = () => {
           if (!latestInvoiceError && latestInvoiceData) {
             console.log("Found latest payment record:", latestInvoiceData);
             
-            // تحويل سجل الفاتورة إلى صيغة جلسة الدفع
             foundPaymentSession = {
               id: latestInvoiceData.id,
               user_id: latestInvoiceData.user_id,
@@ -152,13 +133,12 @@ export const usePaymentVerification = () => {
               transaction_identifier: transactionIdentifier,
               payment_method: latestInvoiceData.payment_method,
               created_at: latestInvoiceData.created_at,
-              status: isSuccessPage ? 'مدفوع' : latestInvoiceData.status // Force status if on success page
+              status: isSuccessPage ? PAYMENT_STATUS.PAID : latestInvoiceData.status
             };
             
-            // تحديث الفاتورة لتكون مدفوعة - CRITICAL FIX HERE
             await supabase
               .from('payment_invoices')
-              .update({ status: 'مدفوع' })
+              .update({ status: PAYMENT_STATUS.PAID })
               .eq('id', latestInvoiceData.id);
           } else {
             console.log("No payment records found for user");
@@ -173,7 +153,6 @@ export const usePaymentVerification = () => {
         
         setPaymentSession(foundPaymentSession);
         
-        // STEP 2: Verify the payment and update user's subscription
         await verifyPayment(
           transactionIdentifier || (foundPaymentSession.session_id || ''),
           customId,
@@ -181,10 +160,9 @@ export const usePaymentVerification = () => {
           foundPaymentSession.plan_type
         );
         
-        // STEP 3: تحديث جميع المدفوعات المتعلقة بنفس المستخدم وخطة الاشتراك
         const { error: updateError } = await supabase
           .from('payment_invoices')
-          .update({ status: 'مدفوع' })
+          .update({ status: PAYMENT_STATUS.PAID })
           .eq('user_id', userId)
           .eq('plan_name', foundPaymentSession.plan_type);
           
@@ -194,7 +172,6 @@ export const usePaymentVerification = () => {
           console.log("تم تحديث جميع حالات الدفع للمستخدم:", userId);
         }
         
-        // Display success message
         const planName = foundPaymentSession.plan_type.toLowerCase().includes('مميز') || 
                          foundPaymentSession.plan_type === 'premium' 
           ? 'المميزة' 
@@ -209,7 +186,6 @@ export const usePaymentVerification = () => {
       }
     };
 
-    // Only proceed with verification if we have a user
     if (sessionId || transactionIdentifier || isSuccessPage) {
       handleVerification();
     } else {

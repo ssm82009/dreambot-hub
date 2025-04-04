@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { formatCurrency } from '@/utils/currency';
 import { formatDate } from '@/lib/utils';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { normalizePlanName, normalizePaymentMethod, getDbPaymentStatus } from '@/utils/payment/statusNormalizer';
+import { normalizePlanName, normalizePaymentMethod, PAYMENT_STATUS } from '@/utils/payment/statusNormalizer';
 import PaymentStatusBadge from '@/components/admin/transaction/PaymentStatusBadge';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -70,7 +70,7 @@ const ProfilePayments: React.FC<ProfilePaymentsProps> = ({ payments }) => {
           
           // Apply "مدفوع" status if on success page
           const processedPayments = isSuccessPage 
-            ? filteredLatestPayments.map(payment => ({ ...payment, status: getDbPaymentStatus('مدفوع') }))
+            ? filteredLatestPayments.map(payment => ({ ...payment, status: PAYMENT_STATUS.PAID }))
             : filteredLatestPayments;
             
           setRefreshedPayments(processedPayments);
@@ -89,7 +89,7 @@ const ProfilePayments: React.FC<ProfilePaymentsProps> = ({ payments }) => {
             
             // Apply "مدفوع" status if on success page
             const processedPayments = isSuccessPage 
-              ? userPayments.map(payment => ({ ...payment, status: getDbPaymentStatus('مدفوع') }))
+              ? userPayments.map(payment => ({ ...payment, status: PAYMENT_STATUS.PAID }))
               : userPayments;
               
             console.log("ProfilePayments - Latest filtered payments:", processedPayments);
@@ -121,7 +121,7 @@ const ProfilePayments: React.FC<ProfilePaymentsProps> = ({ payments }) => {
       for (const payment of paymentsList) {
         await supabase
           .from('payment_invoices')
-          .update({ status: getDbPaymentStatus('مدفوع') })
+          .update({ status: PAYMENT_STATUS.PAID })
           .eq('id', payment.id);
           
         console.log(`Updated payment status for ID ${payment.id} to مدفوع`);
@@ -130,7 +130,7 @@ const ProfilePayments: React.FC<ProfilePaymentsProps> = ({ payments }) => {
         if (payment.invoice_id) {
           await supabase
             .from('payment_invoices')
-            .update({ status: getDbPaymentStatus('مدفوع') })
+            .update({ status: PAYMENT_STATUS.PAID })
             .eq('invoice_id', payment.invoice_id)
             .eq('user_id', session.user.id);
             

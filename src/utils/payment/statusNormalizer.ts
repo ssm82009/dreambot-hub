@@ -47,23 +47,36 @@ export const normalizePaymentMethod = (paymentMethod: string): string => {
 };
 
 /**
+ * Payment status constants for consistency across the application
+ */
+export const PAYMENT_STATUS = {
+  PAID: 'مدفوع',
+  PENDING: 'قيد الانتظار',
+  FAILED: 'فشل',
+  REFUNDED: 'مسترجع',
+  CANCELLED: 'ملغي'
+};
+
+/**
  * Normalizes a payment status string
  */
 export const normalizePaymentStatus = (status: string): string => {
-  const statusLower = status?.toLowerCase() || '';
+  if (!status) return PAYMENT_STATUS.PENDING;
+  
+  const statusLower = status.toLowerCase();
   
   if (statusLower === 'مدفوع' || statusLower === 'paid' || statusLower === 'completed' || statusLower === 'success') {
-    return 'مدفوع';
+    return PAYMENT_STATUS.PAID;
   } else if (statusLower === 'قيد الانتظار' || statusLower === 'pending' || statusLower === 'waiting') {
-    return 'قيد الانتظار';
+    return PAYMENT_STATUS.PENDING;
   } else if (statusLower === 'فشل' || statusLower === 'failed') {
-    return 'فشل';
+    return PAYMENT_STATUS.FAILED;
   } else if (statusLower === 'مسترجع' || statusLower === 'refunded') {
-    return 'مسترجع';
+    return PAYMENT_STATUS.REFUNDED;
   } else if (statusLower === 'ملغي' || statusLower === 'cancelled' || statusLower === 'canceled') {
-    return 'ملغي';
+    return PAYMENT_STATUS.CANCELLED;
   } else {
-    return status || 'قيد الانتظار';
+    return status || PAYMENT_STATUS.PENDING;
   }
 };
 
@@ -72,20 +85,28 @@ export const normalizePaymentStatus = (status: string): string => {
  * This ensures that we always store the status in the correct format in the database
  */
 export const getDbPaymentStatus = (status: string): string => {
-  const normalizedStatus = normalizePaymentStatus(status);
-  
-  // Return status values that will be stored in the database
-  if (normalizedStatus === 'مدفوع') {
-    return 'مدفوع';
-  } else if (normalizedStatus === 'قيد الانتظار') {
-    return 'قيد الانتظار';
-  } else if (normalizedStatus === 'فشل') {
-    return 'فشل';
-  } else if (normalizedStatus === 'مسترجع') {
-    return 'مسترجع';
-  } else if (normalizedStatus === 'ملغي') {
-    return 'ملغي';
-  } else {
-    return 'قيد الانتظار';
-  }
+  return normalizePaymentStatus(status);
+};
+
+/**
+ * Check if a payment status is considered successful (paid)
+ */
+export const isSuccessfulPaymentStatus = (status: string): boolean => {
+  return normalizePaymentStatus(status) === PAYMENT_STATUS.PAID;
+};
+
+/**
+ * Check if a payment status is pending
+ */
+export const isPendingPaymentStatus = (status: string): boolean => {
+  return normalizePaymentStatus(status) === PAYMENT_STATUS.PENDING;
+};
+
+/**
+ * Check if a payment status is failed
+ */
+export const isFailedPaymentStatus = (status: string): boolean => {
+  const normalized = normalizePaymentStatus(status);
+  return normalized === PAYMENT_STATUS.FAILED || 
+         normalized === PAYMENT_STATUS.CANCELLED;
 };

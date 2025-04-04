@@ -5,7 +5,7 @@ import { CheckCircle, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { getSubscriptionName } from '@/utils/subscription';
 import PaymentStatusBadge from '@/components/admin/transaction/PaymentStatusBadge';
-import { getDbPaymentStatus } from '@/utils/payment/statusNormalizer';
+import { getDbPaymentStatus, PAYMENT_STATUS } from '@/utils/payment/statusNormalizer';
 
 interface PaymentSuccessContentProps {
   transactionIdentifier: string;
@@ -30,7 +30,7 @@ const PaymentSuccessContent = ({
   
   useEffect(() => {
     const updatePaymentStatus = async () => {
-      const paidStatus = getDbPaymentStatus('مدفوع');
+      const paidStatus = PAYMENT_STATUS.PAID;
       
       if (paymentData?.id) {
         try {
@@ -79,7 +79,7 @@ const PaymentSuccessContent = ({
               .from('payment_invoices')
               .update({ status: paidStatus })
               .eq('user_id', session.user.id)
-              .or(`status.eq.قيد الانتظار,status.eq.Pending,status.eq.pending`);
+              .or(`status.eq.${PAYMENT_STATUS.PENDING},status.eq.Pending,status.eq.pending`);
               
             console.log("Updated all pending payments for current user");
           }
@@ -133,7 +133,7 @@ const PaymentSuccessContent = ({
     fetchSubscriptionInfo();
   }, [paymentSession, paymentData]);
   
-  const normalizedStatus = getDbPaymentStatus('مدفوع');
+  const normalizedStatus = PAYMENT_STATUS.PAID;
   
   const getDisplayPlan = () => {
     if (subscriptionName) {

@@ -1,8 +1,7 @@
-
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { normalizePaymentStatus, getDbPaymentStatus } from '@/utils/payment/statusNormalizer';
+import { normalizePaymentStatus, PAYMENT_STATUS } from '@/utils/payment/statusNormalizer';
 
 interface Transaction {
   id: string;
@@ -17,7 +16,6 @@ interface Transaction {
   [key: string]: any;
 }
 
-// Define the expected return type from the RPC function
 type RPCTransactionResponse = Transaction[] | null;
 
 export const useTransactionManagement = () => {
@@ -34,10 +32,8 @@ export const useTransactionManagement = () => {
   const fetchTransactions = async () => {
     setLoading(true);
     try {
-      // Check if URL contains 'success' parameter to force status to "مدفوع"
       const isSuccessPage = window.location.href.includes('success');
       
-      // First, get all users with their subscription data
       const { data: usersData, error: usersError } = await supabase
         .from('users')
         .select('id, email, full_name, subscription_expires_at, subscription_type')
@@ -52,22 +48,19 @@ export const useTransactionManagement = () => {
       
       setUsers(usersMap);
       
-      // Call the database function to get the latest status for each invoice_id with proper typing
       const { data: latestTransactionsData, error: latestTransactionsError } = await supabase
         .rpc('get_latest_payment_invoices') as { data: RPCTransactionResponse, error: any };
         
       if (latestTransactionsError) {
         console.error("Error fetching latest transactions:", latestTransactionsError);
         
-        // Fallback: Fix status inconsistencies by running an update query
         if (isSuccessPage) {
           await supabase
             .from('payment_invoices')
-            .update({ status: getDbPaymentStatus('مدفوع') })
+            .update({ status: PAYMENT_STATUS.PAID })
             .or('status.eq.Pending,status.eq.pending');
         }
         
-        // Fallback to regular query if RPC fails
         const { data: transactionsData, error } = await supabase
           .from('payment_invoices')
           .select('*')
@@ -76,7 +69,6 @@ export const useTransactionManagement = () => {
         if (error) throw error;
         
         if (transactionsData && transactionsData.length > 0) {
-          // Group by invoice_id and get the latest record
           const invoiceGroups = transactionsData.reduce((groups: Record<string, any[]>, transaction: any) => {
             if (!groups[transaction.invoice_id]) {
               groups[transaction.invoice_id] = [];
@@ -85,7 +77,6 @@ export const useTransactionManagement = () => {
             return groups;
           }, {});
           
-          // Get the latest transaction for each invoice_id
           const latestTransactions = Object.values(invoiceGroups).map((group: any[]) => {
             return group.sort((a: any, b: any) => 
               new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
@@ -95,9 +86,8 @@ export const useTransactionManagement = () => {
           const formattedTransactions = latestTransactions.map((transaction: any) => {
             const user = usersMap[transaction.user_id] || {};
             
-            // Apply "مدفوع" status if on success page, otherwise normalize the status
             const status = isSuccessPage ? 
-              getDbPaymentStatus('مدفوع') : 
+              PAYMENT_STATUS.PAID : 
               normalizePaymentStatus(transaction.status);
             
             return {
@@ -112,14 +102,12 @@ export const useTransactionManagement = () => {
           setTransactions([]);
         }
       } else {
-        // Successfully got data from RPC
         if (latestTransactionsData && latestTransactionsData.length > 0) {
-          // Fix status inconsistencies by running an update query if on success page
           if (isSuccessPage) {
             for (const transaction of latestTransactionsData) {
               await supabase
                 .from('payment_invoices')
-                .update({ status: getDbPaymentStatus('مدفوع') })
+                .update({ status: PAYMENT_STATUS.PAID })
                 .eq('id', transaction.id);
             }
           }
@@ -127,9 +115,8 @@ export const useTransactionManagement = () => {
           const formattedTransactions = latestTransactionsData.map((transaction: Transaction) => {
             const user = usersMap[transaction.user_id] || {};
             
-            // Apply "مدفوع" status if on success page, otherwise normalize the status
             const status = isSuccessPage ? 
-              getDbPaymentStatus('مدفوع') : 
+              PAYMENT_STATUS.PAID : 
               normalizePaymentStatus(transaction.status);
             
             return {

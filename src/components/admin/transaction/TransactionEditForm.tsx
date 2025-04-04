@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { supabase } from '@/integrations/supabase/client';
-import { normalizePlanType, getDbPaymentStatus } from '@/utils/payment/statusNormalizer';
+import { normalizePlanType, PAYMENT_STATUS } from '@/utils/payment/statusNormalizer';
 
 interface TransactionEditFormProps {
   transaction: any;
@@ -188,10 +188,11 @@ const TransactionEditForm: React.FC<TransactionEditFormProps> = ({
                   <SelectValue placeholder="اختر حالة الدفع" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="مدفوع">مدفوع</SelectItem>
-                  <SelectItem value="قيد الانتظار">قيد الانتظار</SelectItem>
-                  <SelectItem value="فشل">فشل</SelectItem>
-                  <SelectItem value="مسترجع">مسترجع</SelectItem>
+                  <SelectItem value={PAYMENT_STATUS.PAID}>مدفوع</SelectItem>
+                  <SelectItem value={PAYMENT_STATUS.PENDING}>قيد الانتظار</SelectItem>
+                  <SelectItem value={PAYMENT_STATUS.FAILED}>فشل</SelectItem>
+                  <SelectItem value={PAYMENT_STATUS.REFUNDED}>مسترجع</SelectItem>
+                  <SelectItem value={PAYMENT_STATUS.CANCELLED}>ملغي</SelectItem>
                 </SelectContent>
               </Select>
             </div>

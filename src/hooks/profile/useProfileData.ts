@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
-import { normalizePaymentStatus, getDbPaymentStatus } from '@/utils/payment/statusNormalizer';
+import { normalizePaymentStatus, PAYMENT_STATUS, isPendingPaymentStatus } from '@/utils/payment/statusNormalizer';
 
 export const useProfileData = () => {
   const navigate = useNavigate();
@@ -53,14 +53,15 @@ export const useProfileData = () => {
               paymentData?.length > 0) {
             
             const pendingPayments = paymentData.filter(payment => 
-              ['pending', 'Pending', 'قيد الانتظار'].includes(payment.status)
+              isPendingPaymentStatus(payment.status) && 
+              (refreshedUserData.subscription_type === payment.plan_name)
             );
             
             if (pendingPayments.length > 0) {
               for (const payment of pendingPayments) {
                 await supabase
                   .from('payment_invoices')
-                  .update({ status: getDbPaymentStatus('مدفوع') })
+                  .update({ status: PAYMENT_STATUS.PAID })
                   .eq('id', payment.id);
                   
                 console.log(`Fixed inconsistent payment status for ID ${payment.id}`);
