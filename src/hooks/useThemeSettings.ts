@@ -37,11 +37,9 @@ export const useThemeSettings = () => {
             headerColor: data.header_color || initialThemeSettings.headerColor,
             footerColor: data.footer_color || initialThemeSettings.footerColor,
             footerText: data.footer_text || initialThemeSettings.footerText,
-            socialLinks: {
-              twitter: data.twitter_link || "",
-              facebook: data.facebook_link || "",
-              instagram: data.instagram_link || ""
-            },
+            twitterLink: data.twitter_link || "",
+            facebookLink: data.facebook_link || "",
+            instagramLink: data.instagram_link || "",
             slug: data.slug || initialThemeSettings.slug
           });
         }

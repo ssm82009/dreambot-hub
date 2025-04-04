@@ -57,11 +57,9 @@ export const initialThemeSettings = {
   logoText: 'تفسير الأحلام',
   logoFontSize: 24,
   footerText: 'جميع الحقوق محفوظة © 2024 تفسير الأحلام',
-  socialLinks: {
-    twitter: '',
-    facebook: '',
-    instagram: ''
-  },
+  twitterLink: '',
+  facebookLink: '',
+  instagramLink: '',
   slug: 'تفسير الأحلام عبر الذكاء الاصطناعي'
 };
 
@@ -75,7 +73,8 @@ export const initialSeoSettings = {
   enableOpenGraph: true,
   enableTwitterCards: true,
   googleAnalyticsId: '',
-  customHeadTags: ''
+  customHeadTags: '',
+  slug: ''
 };
 
 export const initialHomeSections = {

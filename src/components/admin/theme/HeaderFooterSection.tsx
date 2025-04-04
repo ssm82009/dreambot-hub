@@ -58,7 +58,7 @@ const HeaderFooterSection: React.FC<HeaderFooterSectionProps> = ({
               <Input 
                 placeholder="https://twitter.com/..." 
                 dir="ltr" 
-                {...register("socialLinks.twitter")}
+                {...register("twitterLink")}
               />
             </div>
             <div className="flex flex-col sm:flex-row sm:items-center gap-2">
@@ -66,7 +66,7 @@ const HeaderFooterSection: React.FC<HeaderFooterSectionProps> = ({
               <Input 
                 placeholder="https://facebook.com/..." 
                 dir="ltr" 
-                {...register("socialLinks.facebook")}
+                {...register("facebookLink")}
               />
             </div>
             <div className="flex flex-col sm:flex-row sm:items-center gap-2">
@@ -74,7 +74,7 @@ const HeaderFooterSection: React.FC<HeaderFooterSectionProps> = ({
               <Input 
                 placeholder="https://instagram.com/..." 
                 dir="ltr" 
-                {...register("socialLinks.instagram")}
+                {...register("instagramLink")}
               />
             </div>
           </div>

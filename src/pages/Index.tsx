@@ -18,8 +18,8 @@ const Index = () => {
     const fetchHomeSections = async () => {
       try {
         const { data, error } = await supabase
-          .from('site_settings' as any)
-          .select('home_sections')
+          .from('site_settings')
+          .select('*')
           .eq('id', 'home_sections')
           .single();
 

@@ -6,7 +6,7 @@ import { ThemeSettingsFormValues } from '@/contexts/admin/types';
 import ColorsSection from '@/components/admin/theme/ColorsSection';
 import LogoSection from '@/components/admin/theme/LogoSection';
 import HeaderFooterSection from '@/components/admin/theme/HeaderFooterSection';
-import { Loader2, Check } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 
 type ThemeSettingsFormProps = {
   initialData: ThemeSettingsFormValues;
@@ -22,6 +22,13 @@ const ThemeSettingsForm: React.FC<ThemeSettingsFormProps> = ({
   const form = useForm<ThemeSettingsFormValues>({
     defaultValues: initialData
   });
+
+  // Create a socialLinks object from individual link fields for the component
+  const socialLinks = {
+    twitter: form.watch("twitterLink"),
+    facebook: form.watch("facebookLink"),
+    instagram: form.watch("instagramLink")
+  };
 
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -45,7 +52,7 @@ const ThemeSettingsForm: React.FC<ThemeSettingsFormProps> = ({
         headerColor={form.watch("headerColor")}
         footerColor={form.watch("footerColor")}
         footerText={form.watch("footerText")}
-        socialLinks={form.watch("socialLinks")}
+        socialLinks={socialLinks}
         register={form.register}
         setValue={form.setValue}
       />

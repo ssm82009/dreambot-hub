@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { LayoutDashboard, EditIcon } from 'lucide-react';
 import AdminSection from '@/components/admin/AdminSection';
@@ -9,11 +8,8 @@ import { Card } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
-import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
-import { useForm } from "react-hook-form";
 
 const HomeSectionsSection = () => {
   const { homeSectionsForm, setHomeSectionsForm, activeSections, toggleSection, setDbLoading } = useAdmin();
@@ -26,17 +22,11 @@ const HomeSectionsSection = () => {
     const index = sectionsCopy.findIndex(section => section.id === id);
     
     if (direction === 'up' && index > 0) {
-      // Swap with previous item
       [sectionsCopy[index - 1], sectionsCopy[index]] = [sectionsCopy[index], sectionsCopy[index - 1]];
-      
-      // Update order numbers
       sectionsCopy[index].order = index + 1;
       sectionsCopy[index - 1].order = index;
     } else if (direction === 'down' && index < sectionsCopy.length - 1) {
-      // Swap with next item
       [sectionsCopy[index], sectionsCopy[index + 1]] = [sectionsCopy[index + 1], sectionsCopy[index]];
-      
-      // Update order numbers
       sectionsCopy[index].order = index + 1;
       sectionsCopy[index + 1].order = index + 2;
     }
@@ -56,13 +46,11 @@ const HomeSectionsSection = () => {
   const saveChanges = async () => {
     setDbLoading(true);
     try {
-      // أولاً، نحدث الحالة المحلية
       setHomeSectionsForm({ sections });
       
-      // ثم نحفظ البيانات في قاعدة البيانات
       const { error } = await supabase
-        .from('site_settings' as any)
-        .update({ home_sections: JSON.stringify(sections) })
+        .from('site_settings')
+        .update({ home_sections: sections })
         .eq('id', 'home_sections');
       
       if (error) throw error;

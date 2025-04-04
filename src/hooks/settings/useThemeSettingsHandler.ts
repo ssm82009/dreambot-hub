@@ -24,8 +24,7 @@ export const useThemeSettingsHandler = () => {
     
     try {
       // Update local state first for immediate UI feedback
-      // Fixed: Cast to Partial<ThemeSettingsFormValues> to match the updated type signature
-      setThemeSettingsForm(data as Partial<ThemeSettingsFormValues>);
+      setThemeSettingsForm(data);
       
       const { error } = await supabase
         .from('theme_settings')
@@ -39,9 +38,9 @@ export const useThemeSettingsHandler = () => {
           header_color: data.headerColor,
           footer_color: data.footerColor,
           footer_text: data.footerText,
-          twitter_link: data.socialLinks?.twitter,
-          facebook_link: data.socialLinks?.facebook,
-          instagram_link: data.socialLinks?.instagram,
+          twitter_link: data.twitterLink,
+          facebook_link: data.facebookLink,
+          instagram_link: data.instagramLink,
           slug: data.slug,
           updated_at: new Date().toISOString()
         })
