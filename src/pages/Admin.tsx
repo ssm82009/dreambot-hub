@@ -9,14 +9,13 @@ import AdminHeader from '@/components/admin/AdminHeader';
 import AdminContent from '@/components/admin/AdminContent';
 
 const AdminDashboard = () => {
-  const { isLoading, dbLoading } = useAdmin();
-  // استخدام useAdminData لضمان تحميل البيانات
-  const adminData = useAdminData();
+  const { isLoading } = useAdmin();
+  // استخدام useAdminData لضمان تحميل البيانات بدون استدعاء مباشر للوظائف
+  useAdminData();
   
   useEffect(() => {
     console.log("Admin dashboard mounted");
-    console.log("Loading states:", { isLoading, dbLoading });
-  }, [isLoading, dbLoading]);
+  }, []);
 
   if (isLoading) {
     return (

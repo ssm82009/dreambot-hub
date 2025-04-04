@@ -69,13 +69,10 @@ export const useAdminData = () => {
         
         // تعيين قيمة المرجع إلى true لمنع تكرار التهيئة
         initializedRef.current = true;
-        
-        // إنهاء حالة التحميل بعد اكتمال تحميل البيانات
-        setDbLoading(false);
-        setIsLoading(false);
       } catch (error) {
         console.error("Error initializing admin data:", error);
-        // إنهاء حالة التحميل حتى في حالة حدوث خطأ
+      } finally {
+        // إنهاء حالة التحميل في جميع الحالات
         setDbLoading(false);
         setIsLoading(false);
       }
