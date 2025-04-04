@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { FileText } from 'lucide-react';
 import AdminSection from '@/components/admin/AdminSection';
@@ -28,7 +27,6 @@ const PageManagementSection = () => {
         
         if (error) throw error;
         
-        // Fixed: Explicitly specify the types
         setPages((prev: CustomPage[]) => prev.map(p => p.id === page.id ? { ...p, ...page } as CustomPage : p));
         toast.success('تم تحديث الصفحة بنجاح');
       } else {
@@ -45,7 +43,6 @@ const PageManagementSection = () => {
         
         if (error) throw error;
         
-        // Fixed: Explicitly specify the types
         setPages((prev: CustomPage[]) => [...prev, data as CustomPage]);
         toast.success('تم إنشاء الصفحة بنجاح');
       }
@@ -67,7 +64,6 @@ const PageManagementSection = () => {
       
       if (error) throw error;
       
-      // Fixed: Explicitly specify the types
       setPages((prev: CustomPage[]) => prev.filter(p => p.id !== id));
       toast.success('تم حذف الصفحة بنجاح');
     } catch (error) {

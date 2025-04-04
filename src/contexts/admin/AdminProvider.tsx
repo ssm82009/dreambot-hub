@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { AdminContext } from './AdminContext';
 import { AdminProviderProps } from './types';
@@ -81,7 +80,9 @@ export const AdminProvider: React.FC<AdminProviderProps> = ({ children }) => {
         paymentSettingsForm,
         setPaymentSettingsForm,
         themeSettingsForm,
-        setThemeSettingsForm,
+        setThemeSettingsForm: (settings: Partial<ThemeSettingsFormValues>) => {
+          setThemeSettingsForm(prev => ({ ...prev, ...settings }));
+        },
         seoSettingsForm,
         setSeoSettingsForm,
         activeSections,
