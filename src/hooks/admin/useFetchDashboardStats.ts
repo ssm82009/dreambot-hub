@@ -1,7 +1,6 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-// Update the imports to reference the correct utility
 import { getSubscriptionStatus } from '@/utils/subscriptionStatus';
 
 export const useFetchDashboardStats = () => {

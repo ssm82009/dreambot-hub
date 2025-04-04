@@ -14,10 +14,24 @@ export const useAdminData = () => {
     activeSubscriptions, 
     totalDreams, 
     totalTickets, 
+    loading: statsLoading,
     fetchDashboardStats 
   } = useFetchDashboardStats();
   const { fetchAllSettings } = useFetchSettings();
   const navigate = useNavigate();
+
+  // Update context when stats change
+  useEffect(() => {
+    if (totalUsers !== undefined) setUserCount(totalUsers);
+    if (totalDreams !== undefined) setDreams(totalDreams);
+    if (activeSubscriptions !== undefined) setSubscriptions(activeSubscriptions);
+    
+    console.log("Dashboard stats updated in admin context:", {
+      users: totalUsers,
+      dreams: totalDreams,
+      subscriptions: activeSubscriptions
+    });
+  }, [totalUsers, totalDreams, activeSubscriptions, setUserCount, setDreams, setSubscriptions]);
 
   // تهيئة بيانات المشرف
   useEffect(() => {
@@ -40,12 +54,7 @@ export const useAdminData = () => {
           fetchDashboardStats(), 
           fetchAllSettings()
         ]);
-        
-        // تحديث البيانات في السياق
-        setUserCount(totalUsers);
-        setDreams(totalDreams);
-        setSubscriptions(activeSubscriptions);
-        
+                
         console.log("Admin data initialized successfully");
       } catch (error) {
         console.error("Error initializing admin data:", error);
@@ -57,18 +66,6 @@ export const useAdminData = () => {
     
     initializeData();
   }, []);
-
-  // مراقبة التغييرات في البيانات وتحديث السياق
-  useEffect(() => {
-    setUserCount(totalUsers);
-    setDreams(totalDreams);
-    setSubscriptions(activeSubscriptions);
-    console.log("Dashboard stats updated in admin context:", {
-      users: totalUsers,
-      dreams: totalDreams,
-      subscriptions: activeSubscriptions
-    });
-  }, [totalUsers, totalDreams, activeSubscriptions]);
 
   // Refresh admin data function with detailed logging
   const refreshAdminData = async () => {
@@ -84,11 +81,6 @@ export const useAdminData = () => {
       await fetchAllSettings();
       console.log("All settings fetched successfully");
       
-      // تحديث البيانات في السياق
-      setUserCount(totalUsers);
-      setDreams(totalDreams);
-      setSubscriptions(activeSubscriptions);
-      
       console.log("Admin data refreshed successfully");
     } catch (error) {
       console.error("Error refreshing admin data:", error);
@@ -97,8 +89,12 @@ export const useAdminData = () => {
     }
   };
 
-  // تصدير الدوال لإعادة تحميل البيانات عند الحاجة
   return {
+    totalUsers,
+    activeSubscriptions,
+    totalDreams,
+    totalTickets,
+    statsLoading,
     fetchDashboardStats,
     fetchAllSettings,
     refreshAdminData
