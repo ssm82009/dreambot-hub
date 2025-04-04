@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatCurrency } from '@/utils/currency';
@@ -23,13 +22,11 @@ interface ProfilePaymentsProps {
   payments: Payment[];
 }
 
-// Define the expected return type from the RPC function
 type RPCPaymentResponse = Payment[] | null;
 
 const ProfilePayments: React.FC<ProfilePaymentsProps> = ({ payments }) => {
   const [refreshedPayments, setRefreshedPayments] = useState<Payment[]>([]);
 
-  // Process payments to get the latest status for each invoice_id
   useEffect(() => {
     const processPayments = async () => {
       if (!payments || payments.length === 0) {
@@ -38,17 +35,15 @@ const ProfilePayments: React.FC<ProfilePaymentsProps> = ({ payments }) => {
       }
       
       try {
-        // Check if URL contains 'success' parameter to force status to "مدفوع"
         const isSuccessPage = window.location.href.includes('success');
+        console.log("Is success page:", isSuccessPage);
         
-        // Call the RPC function to get the latest payment invoices with proper typing
         const { data: latestInvoicesData, error: rpcError } = await supabase
           .rpc('get_latest_payment_invoices') as { data: RPCPaymentResponse, error: any };
         
         if (rpcError) {
           console.error("Error calling get_latest_payment_invoices:", rpcError);
           
-          // Fallback: Group payments by invoice_id and get the most recent
           const invoiceGroups = payments.reduce((groups: Record<string, Payment[]>, payment) => {
             if (!groups[payment.invoice_id]) {
               groups[payment.invoice_id] = [];
@@ -57,38 +52,32 @@ const ProfilePayments: React.FC<ProfilePaymentsProps> = ({ payments }) => {
             return groups;
           }, {});
           
-          // For each invoice_id, get the most recent payment record
           const latestPayments = Object.values(invoiceGroups).map(group => {
             return group.sort((a, b) => 
               new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
             )[0];
           });
           
-          // Filter to only include payments found in the original payments array
           const filteredLatestPayments = latestPayments.filter(payment => 
             payments.some(p => p.user_id === payment.user_id)
           );
           
-          // Apply "مدفوع" status if on success page
           const processedPayments = isSuccessPage 
             ? filteredLatestPayments.map(payment => ({ ...payment, status: PAYMENT_STATUS.PAID }))
             : filteredLatestPayments;
             
           setRefreshedPayments(processedPayments);
           
-          // Update payment status in the database if on success page
           if (isSuccessPage && filteredLatestPayments.length > 0) {
             await updatePaymentStatuses(filteredLatestPayments);
           }
         } else {
-          // Successfully got data from RPC
+          console.log("RPC function returned data:", latestInvoicesData);
           if (latestInvoicesData && latestInvoicesData.length > 0) {
-            // Filter to only include payments for the current user
             const userPayments = latestInvoicesData.filter((invoice: Payment) => 
               payments.some(p => p.invoice_id === invoice.invoice_id || p.user_id === invoice.user_id)
             );
             
-            // Apply "مدفوع" status if on success page
             const processedPayments = isSuccessPage 
               ? userPayments.map(payment => ({ ...payment, status: PAYMENT_STATUS.PAID }))
               : userPayments;
@@ -96,11 +85,11 @@ const ProfilePayments: React.FC<ProfilePaymentsProps> = ({ payments }) => {
             console.log("ProfilePayments - Latest filtered payments:", processedPayments);
             setRefreshedPayments(processedPayments);
             
-            // Update payment status in the database if on success page
             if (isSuccessPage && userPayments.length > 0) {
               await updatePaymentStatuses(userPayments);
             }
           } else {
+            console.log("No payments returned from RPC function");
             setRefreshedPayments([]);
           }
         }
@@ -113,7 +102,6 @@ const ProfilePayments: React.FC<ProfilePaymentsProps> = ({ payments }) => {
     processPayments();
   }, [payments]);
   
-  // Helper function to update payment statuses in the database
   const updatePaymentStatuses = async (paymentsList: Payment[]) => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -127,7 +115,6 @@ const ProfilePayments: React.FC<ProfilePaymentsProps> = ({ payments }) => {
           
         console.log(`Updated payment status for ID ${payment.id} to مدفوع`);
         
-        // Also update all records with the same invoice_id
         if (payment.invoice_id) {
           await supabase
             .from('payment_invoices')

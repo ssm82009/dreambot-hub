@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { Calendar as CalendarIcon } from 'lucide-react';
@@ -66,7 +65,6 @@ const TransactionEditForm: React.FC<TransactionEditFormProps> = ({
   }, []);
 
   useEffect(() => {
-    // Reset form state when transaction changes
     setFormState({
       plan_name: transaction.plan_name || '',
       payment_method: transaction.payment_method || '',
@@ -96,7 +94,6 @@ const TransactionEditForm: React.FC<TransactionEditFormProps> = ({
     setFormState(prev => ({ ...prev, isLoading: true }));
     
     try {
-      // Normalize status to ensure it's in the expected format
       const normalizedStatus = normalizePaymentStatus(formState.status);
       
       console.log('Updating transaction with data:', {
@@ -107,7 +104,6 @@ const TransactionEditForm: React.FC<TransactionEditFormProps> = ({
         expires_at: formState.expires_at ? formState.expires_at.toISOString() : null
       });
 
-      // Update transaction in payment_invoices table
       const { data, error } = await supabase
         .from('payment_invoices')
         .update({
@@ -125,7 +121,6 @@ const TransactionEditForm: React.FC<TransactionEditFormProps> = ({
       
       console.log('Update response:', data);
       
-      // Check if we also need to update the user's subscription
       if (transaction.user_id && (
         formState.plan_name !== transaction.plan_name || 
         formState.expires_at !== (transaction.expires_at ? new Date(transaction.expires_at) : undefined) ||
@@ -133,8 +128,8 @@ const TransactionEditForm: React.FC<TransactionEditFormProps> = ({
       )) {
         const expiryDate = formState.expires_at || new Date(Date.now() + (30 * 24 * 60 * 60 * 1000));
         
-        // Only update user subscription if status is PAID
         if (normalizedStatus === PAYMENT_STATUS.PAID) {
+          console.log('Updating user subscription for user:', transaction.user_id);
           const { data: userData, error: userError } = await supabase
             .from('users')
             .update({

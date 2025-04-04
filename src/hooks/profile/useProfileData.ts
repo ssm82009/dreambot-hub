@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
-import { normalizePaymentStatus, PAYMENT_STATUS, isPendingPaymentStatus } from '@/utils/payment/statusNormalizer';
+import { normalizePaymentStatus, isPendingPaymentStatus } from '@/utils/payment/statusNormalizer';
 
 export const useProfileData = () => {
   const navigate = useNavigate();
