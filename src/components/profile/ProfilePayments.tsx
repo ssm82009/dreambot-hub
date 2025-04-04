@@ -1,11 +1,11 @@
 
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { formatCurrency } from '@/utils/currency';
 import { formatDate } from '@/lib/utils';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { normalizePaymentStatus, normalizePlanName, normalizePaymentMethod } from '@/utils/payment/statusNormalizer';
+import { normalizePlanName, normalizePaymentMethod } from '@/utils/payment/statusNormalizer';
+import PaymentStatusBadge from '@/components/admin/transaction/PaymentStatusBadge';
 
 interface Payment {
   id: string;
@@ -32,26 +32,6 @@ const ProfilePayments: React.FC<ProfilePaymentsProps> = ({ payments }) => {
     // Log the payment data for debugging
     console.log("ProfilePayments - Received payments:", payments);
   }, [payments]);
-
-  const getStatusBadge = (status: string) => {
-    // Use our utility function for normalization
-    const normalizedStatus = normalizePaymentStatus(status);
-    
-    switch (normalizedStatus) {
-      case 'مدفوع':
-        return <Badge variant="default">مدفوع</Badge>;
-      case 'قيد الانتظار':
-        return <Badge variant="secondary">قيد الانتظار</Badge>;
-      case 'فشل':
-        return <Badge variant="destructive">فشل</Badge>;
-      case 'مسترجع':
-        return <Badge variant="outline">مسترجع</Badge>;
-      case 'ملغي':
-        return <Badge variant="destructive">ملغي</Badge>;
-      default:
-        return <Badge variant="outline">{normalizedStatus}</Badge>;
-    }
-  };
   
   if (refreshedPayments.length === 0) {
     return (
@@ -100,7 +80,9 @@ const ProfilePayments: React.FC<ProfilePaymentsProps> = ({ payments }) => {
                   <TableCell>{normalizePlanName(payment.plan_name)}</TableCell>
                   <TableCell>{formatCurrency(payment.amount)}</TableCell>
                   <TableCell>{normalizePaymentMethod(payment.payment_method)}</TableCell>
-                  <TableCell>{getStatusBadge(payment.status)}</TableCell>
+                  <TableCell>
+                    <PaymentStatusBadge status={payment.status} />
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>

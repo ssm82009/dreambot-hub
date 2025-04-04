@@ -5,7 +5,7 @@ import { Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import PaymentStatusBadge from './PaymentStatusBadge';
-import { normalizePaymentStatus, normalizePaymentMethod, normalizePlanType } from '@/utils/payment/statusNormalizer';
+import { normalizePaymentMethod, normalizePlanType } from '@/utils/payment/statusNormalizer';
 import { supabase } from '@/integrations/supabase/client';
 
 interface TransactionsTableProps {
@@ -76,7 +76,6 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({
         <TableBody>
           {transactions.map((transaction) => {
             const user = users[transaction.user_id] || {};
-            const normalizedStatus = normalizePaymentStatus(transaction.status);
             const displayPlanName = getPlanDisplayName(transaction.plan_name);
             const normalizedPaymentMethod = normalizePaymentMethod(transaction.payment_method);
             
@@ -96,7 +95,7 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({
                   {transaction.expires_at && format(new Date(transaction.expires_at), 'yyyy/MM/dd')}
                 </TableCell>
                 <TableCell>
-                  <PaymentStatusBadge status={normalizedStatus} />
+                  <PaymentStatusBadge status={transaction.status} />
                 </TableCell>
                 <TableCell>
                   <Button 
