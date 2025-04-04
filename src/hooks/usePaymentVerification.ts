@@ -151,16 +151,18 @@ export const usePaymentVerification = () => {
         
         setPaymentSession(foundPaymentSession);
         
-        // STEP 2: Update payment invoice with transaction details if available
-        if (transactionIdentifier && foundPaymentSession) {
+        // STEP 2: Update payment invoice with transaction details if available and set status to paid
+        if (foundPaymentSession) {
           console.log("Updating payment record with transaction identifier:", transactionIdentifier);
           
           await supabase
             .from('payment_invoices')
             .update({ 
-              status: 'مدفوع'
+              status: 'مدفوع'  // تحديث الحالة إلى "مدفوع" مباشرة
             })
             .eq('id', foundPaymentSession.id);
+            
+          console.log("Updated payment invoice status to مدفوع");
         }
         
         // STEP 3: Update the user's subscription and verify payment
