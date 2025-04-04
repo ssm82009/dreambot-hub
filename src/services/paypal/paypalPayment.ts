@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { sarToUsd } from '@/utils/currency';
 import { CustomerInfo } from '@/types/payment';
+import { UpdatePaymentSessionData } from '@/types/payment-sessions';
 
 /**
  * معالجة الدفع عبر PayPal باستخدام Checkout API v2
@@ -121,13 +122,13 @@ export const handlePaypalPayment = async (
     const orderData = await orderResponse.json();
     console.log("PayPal order created:", orderData);
 
-    // تحديث معرف المعاملة في جلسة الدفع
+    // تحديث معرف المعاملة في سجل الفاتورة
     if (orderData.id) {
-      await supabase.from('payment_sessions')
+      await supabase.from('payment_invoices')
         .update({
-          transaction_identifier: orderData.id
+          invoice_id: orderData.id
         })
-        .eq('session_id', sessionId);
+        .eq('invoice_id', sessionId);
     }
 
     // الحصول على رابط الدفع وإعادة توجيه المستخدم

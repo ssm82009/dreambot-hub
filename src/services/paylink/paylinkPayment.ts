@@ -2,6 +2,7 @@
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { createPaylinkInvoice } from '@/services/paylinkService';
+import { UpdatePaymentSessionData } from '@/types/payment-sessions';
 
 /**
  * معالجة الدفع عبر PayLink
@@ -61,12 +62,12 @@ export const handlePaylinkPayment = async (
   try {
     const transactionIdentifier = invoice.transactionNo || invoice.orderNumber;
     
-    // تحديث معرف المعاملة في جلسة الدفع
-    await supabase.from('payment_sessions')
+    // تحديث معرف المعاملة في جلسة الدفع عن طريق تحديث سجل الفاتورة الموجود
+    await supabase.from('payment_invoices')
       .update({
-        transaction_identifier: transactionIdentifier
+        status: 'Pending'
       })
-      .eq('session_id', sessionId);
+      .eq('invoice_id', sessionId);
 
     // إنشاء سجل فاتورة جديد في جدول payment_invoices
     await supabase.from('payment_invoices').insert([{

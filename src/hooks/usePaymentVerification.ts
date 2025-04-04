@@ -44,66 +44,102 @@ export const usePaymentVerification = () => {
           setIsVerifying(false);
           return;
         }
-        
-        // STEP 1: Find the payment session in the database
+
+        // STEP 1: Find the payment session by looking at the invoices in payment_invoices
         let foundPaymentSession = null;
         
         // First try to find by session_id (most reliable method)
         if (sessionId) {
-          console.log("Looking for payment session by session_id:", sessionId);
+          console.log("Looking for payment record by session_id:", sessionId);
           
-          const { data: sessionData, error: sessionError } = await supabase
-            .from('payment_sessions')
+          const { data: invoiceData, error: invoiceError } = await supabase
+            .from('payment_invoices')
             .select('*')
-            .eq('session_id', sessionId)
+            .eq('invoice_id', sessionId)
             .eq('user_id', userId)
             .single();
             
-          if (!sessionError && sessionData) {
-            console.log("Found payment session by session_id:", sessionData);
-            foundPaymentSession = sessionData;
+          if (!invoiceError && invoiceData) {
+            console.log("Found payment record by session_id:", invoiceData);
+            
+            // تحويل سجل الفاتورة إلى صيغة جلسة الدفع (لغرض التوافق مع الكود الحالي)
+            foundPaymentSession = {
+              id: invoiceData.id,
+              user_id: invoiceData.user_id,
+              plan_type: invoiceData.plan_name,
+              amount: invoiceData.amount,
+              session_id: invoiceData.invoice_id,
+              transaction_identifier: transactionIdentifier,
+              payment_method: invoiceData.payment_method,
+              created_at: invoiceData.created_at,
+              status: invoiceData.status
+            };
           } else {
-            console.log("No payment session found by session_id, trying transaction ID");
+            console.log("No payment record found by session_id, trying transaction ID");
           }
         }
         
         // If no session found by session_id, try transaction_identifier
         if (!foundPaymentSession && transactionIdentifier) {
-          console.log("Looking for payment session by transaction_identifier:", transactionIdentifier);
+          console.log("Looking for payment record by transaction_identifier:", transactionIdentifier);
           
-          const { data: sessionByTxData, error: sessionByTxError } = await supabase
-            .from('payment_sessions')
+          const { data: invoiceByTxData, error: invoiceByTxError } = await supabase
+            .from('payment_invoices')
             .select('*')
-            .eq('transaction_identifier', transactionIdentifier)
+            .eq('invoice_id', transactionIdentifier)
             .eq('user_id', userId)
             .single();
             
-          if (!sessionByTxError && sessionByTxData) {
-            console.log("Found payment session by transaction_identifier:", sessionByTxData);
-            foundPaymentSession = sessionByTxData;
+          if (!invoiceByTxError && invoiceByTxData) {
+            console.log("Found payment record by transaction_identifier:", invoiceByTxData);
+            
+            // تحويل سجل الفاتورة إلى صيغة جلسة الدفع
+            foundPaymentSession = {
+              id: invoiceByTxData.id,
+              user_id: invoiceByTxData.user_id,
+              plan_type: invoiceByTxData.plan_name,
+              amount: invoiceByTxData.amount,
+              session_id: invoiceByTxData.invoice_id,
+              transaction_identifier: transactionIdentifier,
+              payment_method: invoiceByTxData.payment_method,
+              created_at: invoiceByTxData.created_at,
+              status: invoiceByTxData.status
+            };
           } else {
-            console.log("No payment session found by transaction_identifier");
+            console.log("No payment record found by transaction_identifier");
           }
         }
         
         // If still no session found, try the latest pending session for the user
         if (!foundPaymentSession) {
-          console.log("Looking for latest pending payment session for user:", userId);
+          console.log("Looking for latest pending payment record for user:", userId);
           
-          const { data: latestSessionData, error: latestSessionError } = await supabase
-            .from('payment_sessions')
+          const { data: latestInvoiceData, error: latestInvoiceError } = await supabase
+            .from('payment_invoices')
             .select('*')
             .eq('user_id', userId)
-            .eq('completed', false)
+            .neq('status', 'مدفوع')
             .order('created_at', { ascending: false })
             .limit(1)
             .single();
             
-          if (!latestSessionError && latestSessionData) {
-            console.log("Found latest pending payment session:", latestSessionData);
-            foundPaymentSession = latestSessionData;
+          if (!latestInvoiceError && latestInvoiceData) {
+            console.log("Found latest pending payment record:", latestInvoiceData);
+            
+            // تحويل سجل الفاتورة إلى صيغة جلسة الدفع
+            foundPaymentSession = {
+              id: latestInvoiceData.id,
+              user_id: latestInvoiceData.user_id,
+              plan_type: latestInvoiceData.plan_name,
+              amount: latestInvoiceData.amount,
+              session_id: latestInvoiceData.invoice_id,
+              transaction_identifier: transactionIdentifier,
+              payment_method: latestInvoiceData.payment_method,
+              created_at: latestInvoiceData.created_at,
+              status: latestInvoiceData.status
+            };
           } else {
-            console.log("No pending payment sessions found for user");
+            console.log("No pending payment records found for user");
           }
         }
         
@@ -115,68 +151,21 @@ export const usePaymentVerification = () => {
         
         setPaymentSession(foundPaymentSession);
         
-        // STEP 2: Update payment session with transaction details
-        if (transactionIdentifier && !foundPaymentSession.transaction_identifier) {
-          console.log("Updating payment session with transaction identifier:", transactionIdentifier);
+        // STEP 2: Update payment invoice with transaction details if available
+        if (transactionIdentifier && foundPaymentSession) {
+          console.log("Updating payment record with transaction identifier:", transactionIdentifier);
           
           await supabase
-            .from('payment_sessions')
-            .update({ transaction_identifier: transactionIdentifier })
+            .from('payment_invoices')
+            .update({ 
+              status: 'مدفوع'
+            })
             .eq('id', foundPaymentSession.id);
         }
         
-        // STEP 3: Get invoice from payment_invoices
-        const { data: invoiceData, error: invoiceError } = await supabase
-          .from('payment_invoices')
-          .select('*')
-          .or(`invoice_id.eq.${foundPaymentSession.session_id},invoice_id.eq.${transactionIdentifier}`)
-          .eq('user_id', userId)
-          .eq('plan_name', foundPaymentSession.plan_type)
-          .order('created_at', { ascending: false })
-          .limit(1);
-        
-        if (invoiceError) {
-          console.error("Error fetching invoice:", invoiceError);
-        }
-        
-        const invoice = invoiceData && invoiceData.length > 0 ? invoiceData[0] : null;
-        
-        if (invoice) {
-          console.log("Found invoice for payment session:", invoice);
-          
-          // Update invoice status to paid
-          if (invoice.status !== 'مدفوع') {
-            await supabase
-              .from('payment_invoices')
-              .update({ status: 'مدفوع' })
-              .eq('id', invoice.id);
-          }
-        } else {
-          console.log("No invoice found, creating a new one");
-          
-          // Create a new invoice record
-          await supabase.from('payment_invoices').insert({
-            invoice_id: transactionIdentifier || foundPaymentSession.session_id,
-            user_id: userId,
-            plan_name: foundPaymentSession.plan_type,
-            amount: foundPaymentSession.amount,
-            status: 'مدفوع',
-            payment_method: foundPaymentSession.payment_method
-          });
-        }
-        
-        // STEP 4: Mark the payment session as completed
-        await supabase
-          .from('payment_sessions')
-          .update({ 
-            completed: true,
-            status: 'completed'
-          })
-          .eq('id', foundPaymentSession.id);
-          
-        // STEP 5: Update the user's subscription and verify payment
+        // STEP 3: Update the user's subscription and verify payment
         await verifyPayment(
-          transactionIdentifier || foundPaymentSession.transaction_identifier,
+          transactionIdentifier || (foundPaymentSession.session_id || ''),
           customId,
           txnId,
           foundPaymentSession.plan_type

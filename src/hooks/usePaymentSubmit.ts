@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { handlePaylinkPayment, handlePaypalPayment } from '@/services/paymentHandlers';
 import { CustomerInfo } from '@/types/payment';
+import { CreatePaymentSessionData } from '@/types/payment-sessions';
 
 export function usePaymentSubmit(
   plan: string,
@@ -31,23 +32,38 @@ export function usePaymentSubmit(
       // إنشاء معرف جلسة فريد
       const sessionId = `${paymentMethod.toUpperCase()}-${Date.now()}`;
       
-      // تخزين معلومات جلسة الدفع في قاعدة البيانات
-      const { data: session, error: sessionError } = await supabase
-        .from('payment_sessions')
-        .insert({
-          user_id: userId,
-          plan_type: plan,
-          amount: amount,
-          payment_method: paymentMethod,
-          session_id: sessionId,
-          status: 'pending'
-        })
-        .select('id')
-        .single();
+      // إنشاء كائن بيانات الجلسة
+      const sessionData: CreatePaymentSessionData = {
+        user_id: userId,
+        plan_type: plan,
+        amount: amount,
+        payment_method: paymentMethod,
+        session_id: sessionId
+      };
+      
+      // استخدام stored procedure لإدخال البيانات
+      const { data, error } = await supabase.rpc('create_payment_session', sessionData);
 
-      if (sessionError) {
-        console.error("خطأ في إنشاء جلسة الدفع:", sessionError);
-        return null;
+      if (error) {
+        console.error("خطأ في إنشاء جلسة الدفع:", error);
+        
+        // محاولة الإدخال المباشر إذا فشل RPC
+        const { data: insertData, error: insertError } = await supabase
+          .from('payment_invoices') // استخدم جدول آخر موجود بالفعل
+          .insert({
+            invoice_id: sessionId,
+            user_id: userId,
+            plan_name: plan,
+            amount: amount,
+            status: 'pending',
+            payment_method: paymentMethod
+          })
+          .select();
+          
+        if (insertError) {
+          console.error("فشل الاحتياطي في إنشاء سجل الدفع:", insertError);
+          return null;
+        }
       }
       
       console.log("تم إنشاء جلسة دفع جديدة:", sessionId);

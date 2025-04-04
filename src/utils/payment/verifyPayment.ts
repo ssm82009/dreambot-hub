@@ -104,16 +104,6 @@ export const verifyPayment = async (
     if (subscriptionUpdated) {
       // تحديث جميع الدفعات المرتبطة بهذا المستخدم والخطة إلى حالة "مدفوع"
       await updateAllPendingInvoices(userId, plan);
-      
-      // تحديث جلسات الدفع المعلقة إلى "completed"
-      await supabase.from('payment_sessions')
-        .update({
-          completed: true,
-          status: 'completed'
-        })
-        .eq('user_id', userId)
-        .eq('plan_type', plan)
-        .eq('completed', false);
     }
     
     return subscriptionUpdated;

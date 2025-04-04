@@ -24,31 +24,19 @@ const PaymentCancel = () => {
             return;
           }
           
-          // تحديث جلسة الدفع إلى "ملغي"
+          // تحديث حالة الفاتورة إلى "ملغي"
           const { error } = await supabase
-            .from('payment_sessions')
-            .update({
-              status: 'cancelled'
-            })
-            .eq('session_id', sessionId)
-            .eq('user_id', session.user.id);
-            
-          if (error) {
-            console.error("Error updating payment session:", error);
-          } else {
-            console.log("Updated payment session status to cancelled");
-          }
-          
-          // تحديث حالة الفاتورة المرتبطة بجلسة الدفع
-          const { error: invoiceError } = await supabase
             .from('payment_invoices')
             .update({
               status: 'ملغي'
             })
-            .eq('invoice_id', sessionId);
+            .eq('invoice_id', sessionId)
+            .eq('user_id', session.user.id);
             
-          if (invoiceError) {
-            console.error("Error updating invoice status:", invoiceError);
+          if (error) {
+            console.error("Error updating payment invoice:", error);
+          } else {
+            console.log("Updated payment invoice status to cancelled");
           }
         } catch (error) {
           console.error("Error in payment cancellation process:", error);
