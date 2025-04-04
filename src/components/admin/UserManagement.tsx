@@ -8,10 +8,13 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
 import RoleBadge from './user/RoleBadge';
-import SubscriptionBadge from './user/SubscriptionBadge';
+import EditableCell from './user/EditableCell';
+import EditableSubscriptionCell from './user/EditableSubscriptionCell';
+import EditableExpiryDateCell from './user/EditableExpiryDateCell';
 import ExpiryDate from './user/ExpiryDate';
 import UserActions from './user/UserActions';
 import RoleExplanation from './user/RoleExplanation';
+import { useAdmin } from '@/contexts/admin';
 
 type UserManagementProps = {
   users: User[];
@@ -21,6 +24,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users: initialUsers }) 
   const [users, setUsers] = useState<User[]>(initialUsers);
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const { setUsers: setAdminUsers } = useAdmin();
 
   // Refresh user data when the component mounts
   useEffect(() => {
@@ -37,6 +41,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users: initialUsers }) 
         } else {
           console.log('Fetched users in UserManagement:', data);
           setUsers(data || []);
+          setAdminUsers(data || []);
         }
       } catch (error) {
         console.error('Error in fetchUsers:', error);
@@ -49,7 +54,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users: initialUsers }) 
     if (initialUsers.length === 0) {
       fetchUsers();
     }
-  }, [initialUsers]);
+  }, [initialUsers, setAdminUsers]);
 
   const filteredUsers = searchTerm
     ? users.filter(user => 
@@ -71,11 +76,118 @@ const UserManagement: React.FC<UserManagementProps> = ({ users: initialUsers }) 
       setUsers(users.map(user => 
         user.id === userId ? { ...user, role: newRole } : user
       ));
+      setAdminUsers(users.map(user => 
+        user.id === userId ? { ...user, role: newRole } : user
+      ));
 
       toast.success(`تم تحديث دور المستخدم بنجاح إلى "${newRole}"`);
     } catch (error) {
       console.error('خطأ في تحديث دور المستخدم:', error);
       toast.error('حدث خطأ في تحديث دور المستخدم');
+    }
+  };
+
+  const handleNameChange = async (userId: string, newName: string) => {
+    try {
+      const { error } = await supabase
+        .from('users')
+        .update({ full_name: newName })
+        .eq('id', userId);
+
+      if (error) {
+        throw error;
+      }
+
+      setUsers(users.map(user => 
+        user.id === userId ? { ...user, full_name: newName } : user
+      ));
+      setAdminUsers(users.map(user => 
+        user.id === userId ? { ...user, full_name: newName } : user
+      ));
+
+      toast.success('تم تحديث اسم المستخدم بنجاح');
+    } catch (error) {
+      console.error('خطأ في تحديث اسم المستخدم:', error);
+      toast.error('حدث خطأ في تحديث اسم المستخدم');
+      throw error;
+    }
+  };
+
+  const handleEmailChange = async (userId: string, newEmail: string) => {
+    try {
+      const { error } = await supabase
+        .from('users')
+        .update({ email: newEmail })
+        .eq('id', userId);
+
+      if (error) {
+        throw error;
+      }
+
+      setUsers(users.map(user => 
+        user.id === userId ? { ...user, email: newEmail } : user
+      ));
+      setAdminUsers(users.map(user => 
+        user.id === userId ? { ...user, email: newEmail } : user
+      ));
+
+      toast.success('تم تحديث البريد الإلكتروني بنجاح');
+    } catch (error) {
+      console.error('خطأ في تحديث البريد الإلكتروني:', error);
+      toast.error('حدث خطأ في تحديث البريد الإلكتروني');
+      throw error;
+    }
+  };
+
+  const handleSubscriptionChange = async (userId: string, newSubscription: string) => {
+    try {
+      const { error } = await supabase
+        .from('users')
+        .update({ subscription_type: newSubscription })
+        .eq('id', userId);
+
+      if (error) {
+        throw error;
+      }
+
+      setUsers(users.map(user => 
+        user.id === userId ? { ...user, subscription_type: newSubscription } : user
+      ));
+      setAdminUsers(users.map(user => 
+        user.id === userId ? { ...user, subscription_type: newSubscription } : user
+      ));
+
+      toast.success('تم تحديث نوع الاشتراك بنجاح');
+    } catch (error) {
+      console.error('خطأ في تحديث نوع الاشتراك:', error);
+      toast.error('حدث خطأ في تحديث نوع الاشتراك');
+      throw error;
+    }
+  };
+
+  const handleExpiryDateChange = async (userId: string, newExpiryDate: string | null) => {
+    try {
+      const { error } = await supabase
+        .from('users')
+        .update({ subscription_expires_at: newExpiryDate })
+        .eq('id', userId);
+
+      if (error) {
+        throw error;
+      }
+
+      setUsers(users.map(user => 
+        user.id === userId ? { ...user, subscription_expires_at: newExpiryDate } : user
+      ));
+      setAdminUsers(users.map(user => 
+        user.id === userId ? { ...user, subscription_expires_at: newExpiryDate } : user
+      ));
+
+      toast.success('تم تحديث تاريخ انتهاء الاشتراك بنجاح');
+    } catch (error) {
+      console.error('خطأ في تحديث تاريخ انتهاء الاشتراك:', error);
+      toast.error('حدث خطأ في تحديث تاريخ انتهاء الاشتراك');
+      throw error;
     }
   };
 
@@ -116,16 +228,32 @@ const UserManagement: React.FC<UserManagementProps> = ({ users: initialUsers }) 
                 filteredUsers.map((user, index) => (
                   <TableRow key={user.id}>
                     <TableCell>{index + 1}</TableCell>
-                    <TableCell>{user.email}</TableCell>
-                    <TableCell>{user.full_name || '-'}</TableCell>
+                    <TableCell>
+                      <EditableCell 
+                        value={user.email} 
+                        onSave={(newValue) => handleEmailChange(user.id, newValue)}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <EditableCell 
+                        value={user.full_name || ''} 
+                        onSave={(newValue) => handleNameChange(user.id, newValue)}
+                      />
+                    </TableCell>
                     <TableCell>
                       <RoleBadge role={user.role} />
                     </TableCell>
                     <TableCell>
-                      <SubscriptionBadge user={user} />
+                      <EditableSubscriptionCell 
+                        value={user.subscription_type} 
+                        onSave={(newValue) => handleSubscriptionChange(user.id, newValue)}
+                      />
                     </TableCell>
                     <TableCell>
-                      <ExpiryDate expiryDate={user.subscription_expires_at} />
+                      <EditableExpiryDateCell 
+                        value={user.subscription_expires_at} 
+                        onSave={(newValue) => handleExpiryDateChange(user.id, newValue)}
+                      />
                     </TableCell>
                     <TableCell>
                       <UserActions 
