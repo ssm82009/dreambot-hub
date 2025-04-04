@@ -52,19 +52,28 @@ const Index = () => {
     return section ? section.visible : true;
   };
 
+  // الحصول على محتوى القسم إن وجد
+  const getSectionContent = (sectionId: string, field: string, defaultValue: string = '') => {
+    const section = sections.find(s => s.id === sectionId);
+    return section && section.content && section.content[field] ? section.content[field] : defaultValue;
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
       <main className="flex-1">
-        {isVisible('hero') && <Hero />}
+        {isVisible('hero') && <Hero 
+          title={getSectionContent('hero', 'title', 'تفسير الأحلام بالذكاء الاصطناعي')}
+          subtitle={getSectionContent('hero', 'subtitle', 'فسّر أحلامك بدقة عالية باستخدام أحدث تقنيات الذكاء الاصطناعي واستنادًا إلى مراجع التفسير الإسلامية الموثوقة.')}
+        />}
         
         {isVisible('tryIt') && (
           <section id="try-it" className="py-16 bg-muted">
             <div className="container mx-auto px-4 sm:px-6 lg:px-8">
               <div className="text-center mb-12 rtl">
-                <h2 className="text-3xl font-bold mb-4">جرب خدمة تفسير الأحلام</h2>
+                <h2 className="text-3xl font-bold mb-4">{getSectionContent('tryIt', 'title', 'جرب خدمة تفسير الأحلام')}</h2>
                 <p className="text-foreground/80 max-w-2xl mx-auto">
-                  أدخل تفاصيل حلمك واحصل على تفسير فوري من نظام الذكاء الاصطناعي الخاص بنا
+                  {getSectionContent('tryIt', 'subtitle', 'أدخل تفاصيل حلمك واحصل على تفسير فوري من نظام الذكاء الاصطناعي الخاص بنا')}
                 </p>
               </div>
               <DreamForm />
@@ -76,9 +85,9 @@ const Index = () => {
           <section className="py-20 rtl">
             <div className="container mx-auto px-4 sm:px-6 lg:px-8">
               <div className="text-center mb-16">
-                <h2 className="text-3xl font-bold mb-4">كيف يعمل تفسير الأحلام بالذكاء الاصطناعي؟</h2>
+                <h2 className="text-3xl font-bold mb-4">{getSectionContent('howItWorks', 'title', 'كيف يعمل تفسير الأحلام بالذكاء الاصطناعي؟')}</h2>
                 <p className="text-foreground/80 max-w-2xl mx-auto">
-                  نستخدم تقنيات الذكاء الاصطناعي المتقدمة مع مراجع التفسير الإسلامية الموثوقة
+                  {getSectionContent('howItWorks', 'subtitle', 'نستخدم تقنيات الذكاء الاصطناعي المتقدمة مع مراجع التفسير الإسلامية الموثوقة')}
                 </p>
               </div>
               
@@ -92,8 +101,8 @@ const Index = () => {
                       <path d="M7 15h10" />
                     </svg>
                   </div>
-                  <h3 className="text-xl font-semibold mb-2">1. أدخل تفاصيل حلمك</h3>
-                  <p className="text-foreground/70">قم بكتابة جميع تفاصيل حلمك، كلما كانت التفاصيل أكثر كان التفسير أدق.</p>
+                  <h3 className="text-xl font-semibold mb-2">{getSectionContent('howItWorks', 'step1_title', '1. أدخل تفاصيل حلمك')}</h3>
+                  <p className="text-foreground/70">{getSectionContent('howItWorks', 'step1_text', 'قم بكتابة جميع تفاصيل حلمك، كلما كانت التفاصيل أكثر كان التفسير أدق.')}</p>
                 </div>
                 
                 <div className="flex flex-col items-center text-center">
@@ -103,8 +112,8 @@ const Index = () => {
                       <rect width="8" height="3" x="8" y="12" rx="1" />
                     </svg>
                   </div>
-                  <h3 className="text-xl font-semibold mb-2">2. معالجة الذكاء الاصطناعي</h3>
-                  <p className="text-foreground/70">يقوم نظامنا بتحليل حلمك ومقارنته بآلاف التفسيرات من المراجع الموثوقة.</p>
+                  <h3 className="text-xl font-semibold mb-2">{getSectionContent('howItWorks', 'step2_title', '2. معالجة الذكاء الاصطناعي')}</h3>
+                  <p className="text-foreground/70">{getSectionContent('howItWorks', 'step2_text', 'يقوم نظامنا بتحليل حلمك ومقارنته بآلاف التفسيرات من المراجع الموثوقة.')}</p>
                 </div>
                 
                 <div className="flex flex-col items-center text-center">
@@ -113,16 +122,16 @@ const Index = () => {
                       <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
                     </svg>
                   </div>
-                  <h3 className="text-xl font-semibold mb-2">3. احصل على التفسير</h3>
-                  <p className="text-foreground/70">استلم تفسيراً دقيقاً لحلمك مع نصائح وتوجيهات مفيدة.</p>
+                  <h3 className="text-xl font-semibold mb-2">{getSectionContent('howItWorks', 'step3_title', '3. احصل على التفسير')}</h3>
+                  <p className="text-foreground/70">{getSectionContent('howItWorks', 'step3_text', 'استلم تفسيراً دقيقاً لحلمك مع نصائح وتوجيهات مفيدة.')}</p>
                 </div>
               </div>
               
               <div className="text-center mt-16">
                 <p className="text-foreground/80 italic max-w-3xl mx-auto">
-                  "الرؤيا الصالحة من الله، والحلم من الشيطان، فإذا حلم أحدكم حلماً يخافه فليتفل عن يساره، وليستعذ بالله من شره، فإنه لا يضره"
+                  {getSectionContent('howItWorks', 'quote', '"الرؤيا الصالحة من الله، والحلم من الشيطان، فإذا حلم أحدكم حلماً يخافه فليتفل عن يساره، وليستعذ بالله من شره، فإنه لا يضره"')}
                 </p>
-                <p className="mt-2 text-foreground/60">- حديث شريف</p>
+                <p className="mt-2 text-foreground/60">{getSectionContent('howItWorks', 'quote_author', '- حديث شريف')}</p>
               </div>
             </div>
           </section>

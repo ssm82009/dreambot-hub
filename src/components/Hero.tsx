@@ -3,7 +3,15 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 
-const Hero = () => {
+interface HeroProps {
+  title?: string;
+  subtitle?: string;
+}
+
+const Hero: React.FC<HeroProps> = ({
+  title = "تفسير الأحلام بالذكاء الاصطناعي",
+  subtitle = "فسّر أحلامك بدقة عالية باستخدام أحدث تقنيات الذكاء الاصطناعي واستنادًا إلى مراجع التفسير الإسلامية الموثوقة."
+}) => {
   return (
     <div className="relative overflow-hidden pt-24 pb-16 rtl">
       <div className="absolute inset-0 dream-pattern opacity-50 z-0"></div>
@@ -18,10 +26,10 @@ const Hero = () => {
             </svg>
           </div>
           
-          <h1 className="text-4xl md:text-6xl font-bold mb-6 gradient-text">تفسير الأحلام بالذكاء الاصطناعي</h1>
+          <h1 className="text-4xl md:text-6xl font-bold mb-6 gradient-text">{title}</h1>
           
           <p className="text-xl md:text-2xl text-foreground/80 max-w-3xl mb-10">
-            فسّر أحلامك بدقة عالية باستخدام أحدث تقنيات الذكاء الاصطناعي واستنادًا إلى مراجع التفسير الإسلامية الموثوقة.
+            {subtitle}
           </p>
           
           <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-6 rtl:space-x-reverse">
