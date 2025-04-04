@@ -14,12 +14,9 @@ const Hero: React.FC<HeroProps> = ({
 }) => {
   // وظيفة للتمرير إلى قسم كتابة الحلم
   const scrollToDreamForm = () => {
-    const dreamFormElement = document.getElementById('dream-form-textarea');
-    if (dreamFormElement) {
-      dreamFormElement.scrollIntoView({ behavior: 'smooth' });
-      setTimeout(() => {
-        dreamFormElement.focus();
-      }, 800);
+    const dreamSectionElement = document.getElementById('dream-form-section');
+    if (dreamSectionElement) {
+      dreamSectionElement.scrollIntoView({ behavior: 'smooth' });
     }
   };
 
