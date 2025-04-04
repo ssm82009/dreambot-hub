@@ -3,12 +3,25 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { normalizePaymentStatus } from '@/utils/payment/statusNormalizer';
 
+interface Transaction {
+  id: string;
+  invoice_id: string;
+  amount: number;
+  plan_name: string;
+  payment_method: string;
+  status: string;
+  created_at: string;
+  user_id: string;
+  expires_at?: string | null;
+  [key: string]: any;
+}
+
 export const useTransactionManagement = () => {
-  const [transactions, setTransactions] = useState<any[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [users, setUsers] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [editingTransaction, setEditingTransaction] = useState<any | null>(null);
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -34,7 +47,7 @@ export const useTransactionManagement = () => {
       
       // Call the database function to get the latest status for each invoice_id
       const { data: latestTransactions, error: latestTransactionsError } = await supabase
-        .rpc('get_latest_payment_invoices');
+        .rpc('get_latest_payment_invoices') as { data: Transaction[] | null, error: any };
         
       if (latestTransactionsError) {
         console.error("Error fetching latest transactions:", latestTransactionsError);
@@ -80,7 +93,7 @@ export const useTransactionManagement = () => {
       } else {
         // Successfully got data from RPC
         if (latestTransactions && latestTransactions.length > 0) {
-          const formattedTransactions = latestTransactions.map((transaction: any) => {
+          const formattedTransactions = latestTransactions.map((transaction: Transaction) => {
             const user = usersMap[transaction.user_id] || {};
             
             return {
@@ -111,7 +124,7 @@ export const useTransactionManagement = () => {
     setCurrentPage(1);
   };
   
-  const handleEditClick = (transaction: any) => {
+  const handleEditClick = (transaction: Transaction) => {
     setEditingTransaction(transaction);
   };
   

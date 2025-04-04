@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatCurrency } from '@/utils/currency';
@@ -35,12 +34,9 @@ const ProfilePayments: React.FC<ProfilePaymentsProps> = ({ payments }) => {
       }
       
       try {
-        // Get unique invoice_ids from the payments array
-        const invoiceIds = [...new Set(payments.map(payment => payment.invoice_id))];
-        
         // Call the RPC function to get the latest payment invoices
         const { data: latestInvoices, error: rpcError } = await supabase
-          .rpc('get_latest_payment_invoices');
+          .rpc('get_latest_payment_invoices') as { data: Payment[] | null, error: any };
         
         if (rpcError) {
           console.error("Error calling get_latest_payment_invoices:", rpcError);
@@ -69,9 +65,9 @@ const ProfilePayments: React.FC<ProfilePaymentsProps> = ({ payments }) => {
           setRefreshedPayments(filteredLatestPayments);
         } else {
           // Filter to only include payments for the current user
-          const userPayments = latestInvoices.filter((invoice: Payment) => 
+          const userPayments = latestInvoices ? latestInvoices.filter((invoice: Payment) => 
             payments.some(p => p.invoice_id === invoice.invoice_id)
-          );
+          ) : [];
           
           console.log("ProfilePayments - Latest filtered payments:", userPayments);
           setRefreshedPayments(userPayments);
