@@ -9,26 +9,13 @@ import AdminHeader from '@/components/admin/AdminHeader';
 import AdminContent from '@/components/admin/AdminContent';
 
 const AdminDashboard = () => {
-  const { isLoading, dbLoading, setIsLoading } = useAdmin();
+  const { isLoading, dbLoading } = useAdmin();
   const { refreshAdminData } = useAdminData();
 
-  // تحديث البيانات عند تحميل المكون
+  // تعديل useEffect لمنع حلقة التحميل اللانهائية
   useEffect(() => {
     console.log("Admin dashboard mounted - fetching fresh data");
-    
-    // تعيين حالة التحميل إلى true لضمان إعادة التحميل
-    setIsLoading(true);
-    
-    // استدعاء الدالة لتحديث البيانات
-    refreshAdminData()
-      .then(() => {
-        console.log("Admin data refresh completed");
-        setIsLoading(false);
-      })
-      .catch(error => {
-        console.error("Error refreshing admin data:", error);
-        setIsLoading(false);
-      });
+    // لم نعد نغير حالة isLoading هنا لتجنب التسبب بإعادة تحميل المكون
   }, []);
 
   if (isLoading || dbLoading) {

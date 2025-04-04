@@ -19,6 +19,9 @@ export const useAdminData = () => {
   } = useFetchDashboardStats();
   const { fetchAllSettings } = useFetchSettings();
   const navigate = useNavigate();
+  
+  // تجنب الاستدعاء المتكرر للبيانات عند كل تحميل
+  const [initialized, setInitialized] = useState(false);
 
   // Update context when stats change
   useEffect(() => {
@@ -35,6 +38,9 @@ export const useAdminData = () => {
 
   // تهيئة بيانات المشرف
   useEffect(() => {
+    // منع التهيئة المتكررة
+    if (initialized) return;
+    
     const isAuthenticated = checkAdminAuth();
     
     // إذا لم يكن المستخدم مشرفًا، قم بتوجيهه إلى صفحة تسجيل الدخول
@@ -54,8 +60,11 @@ export const useAdminData = () => {
           fetchDashboardStats(), 
           fetchAllSettings()
         ]);
-                
+        
         console.log("Admin data initialized successfully");
+        
+        // تعيين حالة التهيئة إلى true لمنع تكرار التهيئة
+        setInitialized(true);
       } catch (error) {
         console.error("Error initializing admin data:", error);
       } finally {
@@ -65,7 +74,7 @@ export const useAdminData = () => {
     };
     
     initializeData();
-  }, []);
+  }, [initialized]);
 
   // Refresh admin data function with detailed logging
   const refreshAdminData = async () => {
