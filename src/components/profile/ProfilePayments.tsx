@@ -1,9 +1,10 @@
+
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatCurrency } from '@/utils/currency';
 import { formatDate } from '@/lib/utils';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { normalizePlanType, normalizePaymentMethod, PAYMENT_STATUS } from '@/utils/payment/statusNormalizer';
+import { normalizePlanName, normalizePaymentMethod, PAYMENT_STATUS } from '@/utils/payment/statusNormalizer';
 import PaymentStatusBadge from '@/components/admin/transaction/PaymentStatusBadge';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -186,7 +187,7 @@ const ProfilePayments: React.FC<ProfilePaymentsProps> = ({ payments }) => {
                 <TableRow key={payment.id}>
                   <TableCell>{formatDate(payment.created_at)}</TableCell>
                   <TableCell>{payment.invoice_id}</TableCell>
-                  <TableCell>{payment.plan_name}</TableCell>
+                  <TableCell>{normalizePlanName(payment.plan_name)}</TableCell>
                   <TableCell>{formatCurrency(payment.amount)}</TableCell>
                   <TableCell>{normalizePaymentMethod(payment.payment_method)}</TableCell>
                   <TableCell>
