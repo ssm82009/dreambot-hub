@@ -11,6 +11,7 @@ export const useFetchDashboardStats = () => {
   const [totalTickets, setTotalTickets] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
 
   const fetchDashboardStats = async () => {
     setLoading(true);
@@ -65,6 +66,9 @@ export const useFetchDashboardStats = () => {
       console.log("Tickets data fetched:", ticketsCount, "tickets found");
       setTotalTickets(ticketsCount || 0);
 
+      // Update last updated timestamp
+      setLastUpdated(new Date());
+
     } catch (err: any) {
       setError(err);
       console.error("Error fetching dashboard stats:", err.message);
@@ -84,6 +88,7 @@ export const useFetchDashboardStats = () => {
     totalTickets,
     loading,
     error,
+    lastUpdated,
     fetchDashboardStats,
   };
 };

@@ -1,9 +1,9 @@
 
 import React from 'react';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Users, Rabbit, CreditCard, PenSquare } from 'lucide-react';
 import { useAdmin } from '@/contexts/admin';
-import { Users, Calendar, Clock, CreditCard, PenSquare } from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import StatsCard from './dashboard/StatsCard';
+import DashboardCharts from './dashboard/DashboardCharts';
 
 const DashboardStats: React.FC = () => {
   const { dreams, userCount, subscriptions } = useAdmin();
@@ -13,63 +13,45 @@ const DashboardStats: React.FC = () => {
     ? Math.round((subscriptions / userCount) * 100) 
     : 0;
   
-  console.log("Dashboard Stats Component - Data:", {
-    dreams,
-    userCount,
-    subscriptions,
-    subscriptionPercentage
-  });
-  
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 rtl mb-8">
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="flex items-center gap-2">
-            <PenSquare className="h-5 w-5 text-primary" />
-            <span>الأحلام المقدمة</span>
-          </CardTitle>
-          <CardDescription>إجمالي عدد الأحلام المقدمة للتفسير</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-4xl font-bold">{dreams}</p>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="flex items-center gap-2">
-            <Users className="h-5 w-5 text-primary" />
-            <span>المستخدمين</span>
-          </CardTitle>
-          <CardDescription>إجمالي عدد المستخدمين المسجلين</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-4xl font-bold">{userCount}</p>
-        </CardContent>
-      </Card>
-
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Card className="cursor-help">
-              <CardHeader className="pb-2">
-                <CardTitle className="flex items-center gap-2">
-                  <CreditCard className="h-5 w-5 text-primary" />
-                  <span>الاشتراكات النشطة</span>
-                </CardTitle>
-                <CardDescription>عدد الاشتراكات النشطة ({subscriptionPercentage}% من المستخدمين)</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-4xl font-bold">{subscriptions}</p>
-              </CardContent>
-            </Card>
-          </TooltipTrigger>
-          <TooltipContent className="max-w-sm">
-            <p>الاشتراكات النشطة هي الاشتراكات المدفوعة (المميز أو الاحترافي) التي لم تنتهِ صلاحيتها بعد.</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-    </div>
+    <>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 rtl mb-8">
+        <StatsCard 
+          title="الأحلام المقدمة"
+          description="إجمالي عدد الأحلام المقدمة للتفسير"
+          value={dreams}
+          icon={PenSquare}
+        />
+        
+        <StatsCard 
+          title="المستخدمين"
+          description="إجمالي عدد المستخدمين المسجلين"
+          value={userCount}
+          icon={Users}
+        />
+        
+        <StatsCard 
+          title="الاشتراكات النشطة"
+          description={`عدد الاشتراكات النشطة (${subscriptionPercentage}% من المستخدمين)`}
+          value={subscriptions}
+          icon={CreditCard}
+          tooltipText="الاشتراكات النشطة هي الاشتراكات المدفوعة (المميز أو الاحترافي) التي لم تنتهِ صلاحيتها بعد."
+        />
+        
+        <StatsCard 
+          title="سرعة الاستجابة"
+          description="متوسط وقت معالجة الحلم"
+          value="3.2 ثانية"
+          icon={Rabbit}
+          trend={{
+            value: 12,
+            isPositive: true
+          }}
+        />
+      </div>
+      
+      <DashboardCharts />
+    </>
   );
 };
 

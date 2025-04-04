@@ -13,7 +13,9 @@ export const useAdminData = () => {
     totalUsers, 
     activeSubscriptions, 
     totalDreams, 
-    totalTickets, 
+    totalTickets,
+    lastUpdated,
+    loading: statsLoading,
     fetchDashboardStats 
   } = useFetchDashboardStats();
   const { fetchAllSettings } = useFetchSettings();
@@ -41,11 +43,6 @@ export const useAdminData = () => {
           fetchAllSettings()
         ]);
         
-        // تحديث البيانات في السياق
-        setUserCount(totalUsers);
-        setDreams(totalDreams);
-        setSubscriptions(activeSubscriptions);
-        
         console.log("Admin data initialized successfully");
       } catch (error) {
         console.error("Error initializing admin data:", error);
@@ -60,15 +57,18 @@ export const useAdminData = () => {
 
   // مراقبة التغييرات في البيانات وتحديث السياق
   useEffect(() => {
-    setUserCount(totalUsers);
-    setDreams(totalDreams);
-    setSubscriptions(activeSubscriptions);
-    console.log("Dashboard stats updated in admin context:", {
-      users: totalUsers,
-      dreams: totalDreams,
-      subscriptions: activeSubscriptions
-    });
-  }, [totalUsers, totalDreams, activeSubscriptions]);
+    if (!statsLoading) { // Only update stats when not loading
+      setUserCount(totalUsers);
+      setDreams(totalDreams);
+      setSubscriptions(activeSubscriptions);
+      console.log("Dashboard stats updated in admin context:", {
+        users: totalUsers,
+        dreams: totalDreams,
+        subscriptions: activeSubscriptions,
+        lastUpdated: lastUpdated.toISOString()
+      });
+    }
+  }, [totalUsers, totalDreams, activeSubscriptions, statsLoading, lastUpdated]);
 
   // Refresh admin data function with detailed logging
   const refreshAdminData = async () => {
@@ -84,11 +84,6 @@ export const useAdminData = () => {
       await fetchAllSettings();
       console.log("All settings fetched successfully");
       
-      // تحديث البيانات في السياق
-      setUserCount(totalUsers);
-      setDreams(totalDreams);
-      setSubscriptions(activeSubscriptions);
-      
       console.log("Admin data refreshed successfully");
     } catch (error) {
       console.error("Error refreshing admin data:", error);
@@ -101,6 +96,8 @@ export const useAdminData = () => {
   return {
     fetchDashboardStats,
     fetchAllSettings,
-    refreshAdminData
+    refreshAdminData,
+    statsLoading,
+    lastUpdated
   };
 };
