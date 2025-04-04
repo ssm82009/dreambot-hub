@@ -20,8 +20,8 @@ export const useAdminData = () => {
   const { fetchAllSettings } = useFetchSettings();
   const navigate = useNavigate();
   
-  // تجنب الاستدعاء المتكرر للبيانات عند كل تحميل
-  const [initialized, setInitialized] = useState(false);
+  // استخدام ref بدلاً من state لتتبع حالة التهيئة لتجنب إعادة التحميل
+  const initializedRef = React.useRef(false);
 
   // Update context when stats change
   useEffect(() => {
@@ -36,10 +36,13 @@ export const useAdminData = () => {
     });
   }, [totalUsers, totalDreams, activeSubscriptions, setUserCount, setDreams, setSubscriptions]);
 
-  // تهيئة بيانات المشرف
+  // تهيئة بيانات المشرف - تعديل المنطق لمنع التحميل اللانهائي
   useEffect(() => {
-    // منع التهيئة المتكررة
-    if (initialized) return;
+    // استخدام ref بدلاً من state لمنع إعادة التحميل
+    if (initializedRef.current) {
+      console.log("Admin data already initialized, skipping");
+      return;
+    }
     
     const isAuthenticated = checkAdminAuth();
     
@@ -63,8 +66,8 @@ export const useAdminData = () => {
         
         console.log("Admin data initialized successfully");
         
-        // تعيين حالة التهيئة إلى true لمنع تكرار التهيئة
-        setInitialized(true);
+        // تعيين قيمة المرجع إلى true لمنع تكرار التهيئة
+        initializedRef.current = true;
       } catch (error) {
         console.error("Error initializing admin data:", error);
       } finally {
@@ -74,7 +77,7 @@ export const useAdminData = () => {
     };
     
     initializeData();
-  }, [initialized]);
+  }, []); // إزالة الاعتماد على الحالة لمنع إعادة التشغيل
 
   // Refresh admin data function with detailed logging
   const refreshAdminData = async () => {

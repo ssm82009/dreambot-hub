@@ -10,12 +10,12 @@ import AdminContent from '@/components/admin/AdminContent';
 
 const AdminDashboard = () => {
   const { isLoading, dbLoading } = useAdmin();
-  const { refreshAdminData } = useAdminData();
+  
+  // تمت إزالة استدعاء refreshAdminData لأن التحميل يتم تلقائيًا من خلال useAdminData
 
-  // تعديل useEffect لمنع حلقة التحميل اللانهائية
+  // نحتفظ بـ useEffect فقط للتسجيل دون استدعاء أي وظائف تحديث
   useEffect(() => {
-    console.log("Admin dashboard mounted - fetching fresh data");
-    // لم نعد نغير حالة isLoading هنا لتجنب التسبب بإعادة تحميل المكون
+    console.log("Admin dashboard mounted");
   }, []);
 
   if (isLoading || dbLoading) {
