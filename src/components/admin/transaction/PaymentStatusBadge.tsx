@@ -14,14 +14,16 @@ const PaymentStatusBadge: React.FC<PaymentStatusBadgeProps> = ({ status }) => {
   let variant: 'default' | 'secondary' | 'destructive' | 'outline' = 'outline';
   
   // Map the normalized status to a badge variant
-  if (normalizedStatus === 'مدفوع' || normalizedStatus.includes('paid')) {
+  if (normalizedStatus === 'مدفوع') {
     variant = 'default'; // Success
-  } else if (normalizedStatus === 'قيد الانتظار' || normalizedStatus.includes('pending')) {
+  } else if (normalizedStatus === 'قيد الانتظار') {
     variant = 'secondary'; // Pending
-  } else if (normalizedStatus === 'فشل' || normalizedStatus.includes('failed')) {
+  } else if (normalizedStatus === 'فشل') {
     variant = 'destructive'; // Failed
-  } else if (normalizedStatus === 'مسترجع' || normalizedStatus.includes('refunded')) {
+  } else if (normalizedStatus === 'مسترجع') {
     variant = 'outline'; // Refunded
+  } else if (normalizedStatus === 'ملغي') {
+    variant = 'destructive'; // Cancelled
   }
   
   return <Badge variant={variant}>{normalizedStatus}</Badge>;

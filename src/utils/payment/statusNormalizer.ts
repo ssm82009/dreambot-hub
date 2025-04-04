@@ -7,7 +7,8 @@ export const normalizePaymentStatus = (status: string | null | undefined): strin
   
   const statusLower = status.toLowerCase();
   
-  if (statusLower === 'paid' || statusLower === 'مدفوع' || statusLower.includes('مدفوع')) {
+  if (statusLower === 'paid' || statusLower === 'مدفوع' || statusLower.includes('مدفوع') || 
+      statusLower === 'success' || statusLower === 'sucsess' || statusLower.includes('نجاح')) {
     return 'مدفوع';
   } else if (statusLower === 'pending' || statusLower === 'قيد الانتظار' || statusLower.includes('انتظار')) {
     return 'قيد الانتظار';

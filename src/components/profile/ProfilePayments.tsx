@@ -46,8 +46,10 @@ const ProfilePayments: React.FC<ProfilePaymentsProps> = ({ payments }) => {
         return <Badge variant="destructive">فشل</Badge>;
       case 'مسترجع':
         return <Badge variant="outline">مسترجع</Badge>;
+      case 'ملغي':
+        return <Badge variant="destructive">ملغي</Badge>;
       default:
-        return <Badge variant="outline">{status}</Badge>;
+        return <Badge variant="outline">{normalizedStatus}</Badge>;
     }
   };
   
