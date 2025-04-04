@@ -1,54 +1,5 @@
 
-/**
- * Normalizes a plan type string
- */
-export const normalizePlanType = (planType: string): string => {
-  const planTypeLower = planType?.toLowerCase() || '';
-  
-  if (planTypeLower.includes('premium') || planTypeLower.includes('مميز')) {
-    return 'premium';
-  } else if (planTypeLower.includes('pro') || planTypeLower.includes('احترافي')) {
-    return 'pro';
-  } else {
-    return 'free';
-  }
-};
-
-/**
- * Normalizes a plan name string
- */
-export const normalizePlanName = (planName: string): string => {
-  const planNameLower = planName?.toLowerCase() || '';
-  
-  if (planNameLower.includes('premium') || planNameLower.includes('مميز')) {
-    return 'الباقة المميزة';
-  } else if (planNameLower.includes('pro') || planNameLower.includes('احترافي')) {
-    return 'الباقة الاحترافية';
-  } else {
-    return 'الباقة المجانية';
-  }
-};
-
-/**
- * Normalizes a payment method string
- */
-export const normalizePaymentMethod = (paymentMethod: string): string => {
-  const paymentMethodLower = paymentMethod?.toLowerCase() || '';
-  
-  if (paymentMethodLower === 'paylink') {
-    return 'باي لينك';
-  } else if (paymentMethodLower === 'paypal') {
-    return 'باي بال';
-  } else if (paymentMethodLower === 'manual') {
-    return 'يدوي';
-  } else {
-    return paymentMethod || 'غير محدد';
-  }
-};
-
-/**
- * Payment status constants for consistency across the application
- */
+// Status constants
 export const PAYMENT_STATUS = {
   PAID: 'مدفوع',
   PENDING: 'قيد الانتظار',
@@ -58,55 +9,101 @@ export const PAYMENT_STATUS = {
 };
 
 /**
- * Normalizes a payment status string
+ * Normalizes payment status to a consistent format
  */
 export const normalizePaymentStatus = (status: string): string => {
+  // Log the status that's being normalized for debugging
+  console.log('Normalizing payment status:', status);
+  
   if (!status) return PAYMENT_STATUS.PENDING;
   
-  const statusLower = status.toLowerCase();
+  // Convert to lowercase for consistent comparison
+  const normalizedStatus = status.toLowerCase();
   
-  if (statusLower === 'مدفوع' || statusLower === 'paid' || statusLower === 'completed' || statusLower === 'success') {
+  // Handle English status values
+  if (normalizedStatus.includes('paid') || normalizedStatus.includes('success')) {
     return PAYMENT_STATUS.PAID;
-  } else if (statusLower === 'قيد الانتظار' || statusLower === 'pending' || statusLower === 'waiting') {
-    return PAYMENT_STATUS.PENDING;
-  } else if (statusLower === 'فشل' || statusLower === 'failed') {
-    return PAYMENT_STATUS.FAILED;
-  } else if (statusLower === 'مسترجع' || statusLower === 'refunded') {
-    return PAYMENT_STATUS.REFUNDED;
-  } else if (statusLower === 'ملغي' || statusLower === 'cancelled' || statusLower === 'canceled') {
-    return PAYMENT_STATUS.CANCELLED;
-  } else {
-    return status || PAYMENT_STATUS.PENDING;
   }
+  
+  if (normalizedStatus.includes('pending')) {
+    return PAYMENT_STATUS.PENDING;
+  }
+  
+  if (normalizedStatus.includes('failed') || normalizedStatus.includes('failure')) {
+    return PAYMENT_STATUS.FAILED;
+  }
+  
+  if (normalizedStatus.includes('refund')) {
+    return PAYMENT_STATUS.REFUNDED;
+  }
+  
+  if (normalizedStatus.includes('cancel')) {
+    return PAYMENT_STATUS.CANCELLED;
+  }
+  
+  // Handle Arabic status values
+  if (normalizedStatus.includes('مدفوع') || normalizedStatus.includes('ناجح')) {
+    return PAYMENT_STATUS.PAID;
+  }
+  
+  if (normalizedStatus.includes('قيد') || normalizedStatus.includes('انتظار')) {
+    return PAYMENT_STATUS.PENDING;
+  }
+  
+  if (normalizedStatus.includes('فشل')) {
+    return PAYMENT_STATUS.FAILED;
+  }
+  
+  if (normalizedStatus.includes('مسترجع') || normalizedStatus.includes('استرجاع')) {
+    return PAYMENT_STATUS.REFUNDED;
+  }
+  
+  if (normalizedStatus.includes('ملغي') || normalizedStatus.includes('الغاء')) {
+    return PAYMENT_STATUS.CANCELLED;
+  }
+  
+  // If we can't determine the status, return the original value
+  return status;
 };
 
 /**
- * Get the database value for a payment status 
- * This ensures that we always store the status in the correct format in the database
+ * Normalizes plan type to a consistent format (free, premium, pro)
  */
-export const getDbPaymentStatus = (status: string): string => {
-  return normalizePaymentStatus(status);
+export const normalizePlanType = (planType: string): string => {
+  if (!planType) return 'free';
+  
+  const normalizedType = planType.toLowerCase();
+  
+  if (normalizedType.includes('premium') || normalizedType.includes('مميز') || normalizedType.includes('متميز')) {
+    return 'premium';
+  }
+  
+  if (normalizedType.includes('pro') || normalizedType.includes('احترافي') || normalizedType.includes('محترف')) {
+    return 'pro';
+  }
+  
+  return 'free';
 };
 
 /**
- * Check if a payment status is considered successful (paid)
+ * Normalizes payment method to display text
  */
-export const isSuccessfulPaymentStatus = (status: string): boolean => {
-  return normalizePaymentStatus(status) === PAYMENT_STATUS.PAID;
-};
-
-/**
- * Check if a payment status is pending
- */
-export const isPendingPaymentStatus = (status: string): boolean => {
-  return normalizePaymentStatus(status) === PAYMENT_STATUS.PENDING;
-};
-
-/**
- * Check if a payment status is failed
- */
-export const isFailedPaymentStatus = (status: string): boolean => {
-  const normalized = normalizePaymentStatus(status);
-  return normalized === PAYMENT_STATUS.FAILED || 
-         normalized === PAYMENT_STATUS.CANCELLED;
+export const normalizePaymentMethod = (method: string): string => {
+  if (!method) return 'غير معروف';
+  
+  const normalizedMethod = method.toLowerCase();
+  
+  if (normalizedMethod.includes('paypal')) {
+    return 'باي بال';
+  }
+  
+  if (normalizedMethod.includes('paylink')) {
+    return 'باي لينك';
+  }
+  
+  if (normalizedMethod.includes('manual')) {
+    return 'يدوي';
+  }
+  
+  return method;
 };

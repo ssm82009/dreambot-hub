@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -51,11 +52,32 @@ export const useTransactionManagement = () => {
       
       setUsers(usersMap);
       
-      // Directly fetch transactions without RPC first
-      const { data: transactionsData, error: transactionsError } = await supabase
-        .from('payment_invoices')
-        .select('*')
-        .order('created_at', { ascending: false });
+      // Directly fetch transactions
+      // Try using get_latest_payment_invoices function if available, otherwise direct query
+      let transactionsData: any[] = [];
+      let transactionsError: any = null;
+      
+      try {
+        // Try using the function first
+        const response = await supabase
+          .rpc('get_latest_payment_invoices');
+          
+        transactionsData = response.data || [];
+        transactionsError = response.error;
+        
+        console.log('Got transactions via RPC function:', response);
+      } catch (rpcError) {
+        console.log('RPC function failed, falling back to direct query', rpcError);
+        
+        // Fallback to direct query if function fails
+        const response = await supabase
+          .from('payment_invoices')
+          .select('*')
+          .order('created_at', { ascending: false });
+          
+        transactionsData = response.data || [];
+        transactionsError = response.error;
+      }
         
       if (transactionsError) {
         console.error("Error fetching transactions:", transactionsError);

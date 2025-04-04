@@ -4,7 +4,6 @@ import { format } from 'date-fns';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -66,12 +65,24 @@ const TransactionEditForm: React.FC<TransactionEditFormProps> = ({
     fetchPlanNames();
   }, []);
 
+  useEffect(() => {
+    // Reset form state when transaction changes
+    setFormState({
+      plan_name: transaction.plan_name || '',
+      payment_method: transaction.payment_method || '',
+      status: transaction.status || '',
+      expires_at: transaction.expires_at ? new Date(transaction.expires_at) : undefined,
+      isLoading: false
+    });
+  }, [transaction]);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormState(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSelectChange = (name: string, value: string) => {
+    console.log(`Changing ${name} to ${value}`);
     setFormState(prev => ({ ...prev, [name]: value }));
   };
 
@@ -85,11 +96,14 @@ const TransactionEditForm: React.FC<TransactionEditFormProps> = ({
     setFormState(prev => ({ ...prev, isLoading: true }));
     
     try {
+      // Normalize status to ensure it's in the expected format
+      const normalizedStatus = normalizePaymentStatus(formState.status);
+      
       console.log('Updating transaction with data:', {
         id: transaction.id,
         plan_name: formState.plan_name,
         payment_method: formState.payment_method,
-        status: normalizePaymentStatus(formState.status),
+        status: normalizedStatus,
         expires_at: formState.expires_at ? formState.expires_at.toISOString() : null
       });
 
@@ -99,11 +113,10 @@ const TransactionEditForm: React.FC<TransactionEditFormProps> = ({
         .update({
           plan_name: formState.plan_name,
           payment_method: formState.payment_method,
-          status: normalizePaymentStatus(formState.status),
+          status: normalizedStatus,
           expires_at: formState.expires_at ? formState.expires_at.toISOString() : null
         })
-        .eq('id', transaction.id)
-        .select();
+        .eq('id', transaction.id);
       
       if (error) {
         console.error('Error details:', error);
@@ -116,24 +129,27 @@ const TransactionEditForm: React.FC<TransactionEditFormProps> = ({
       if (transaction.user_id && (
         formState.plan_name !== transaction.plan_name || 
         formState.expires_at !== (transaction.expires_at ? new Date(transaction.expires_at) : undefined) ||
-        normalizePaymentStatus(formState.status) === PAYMENT_STATUS.PAID
+        normalizedStatus === PAYMENT_STATUS.PAID
       )) {
         const expiryDate = formState.expires_at || new Date(Date.now() + (30 * 24 * 60 * 60 * 1000));
         
-        const { data: userData, error: userError } = await supabase
-          .from('users')
-          .update({
-            subscription_type: formState.plan_name,
-            subscription_expires_at: expiryDate.toISOString()
-          })
-          .eq('id', transaction.user_id)
-          .select();
-        
-        if (userError) {
-          console.error('Error updating user subscription:', userError);
-          toast.error('تم تحديث المعاملة ولكن فشل تحديث بيانات اشتراك المستخدم');
-        } else {
-          console.log('Updated user subscription successfully:', userData);
+        // Only update user subscription if status is PAID
+        if (normalizedStatus === PAYMENT_STATUS.PAID) {
+          const { data: userData, error: userError } = await supabase
+            .from('users')
+            .update({
+              subscription_type: formState.plan_name,
+              subscription_expires_at: expiryDate.toISOString()
+            })
+            .eq('id', transaction.user_id)
+            .select();
+          
+          if (userError) {
+            console.error('Error updating user subscription:', userError);
+            toast.error('تم تحديث المعاملة ولكن فشل تحديث بيانات اشتراك المستخدم');
+          } else {
+            console.log('Updated user subscription successfully:', userData);
+          }
         }
       }
       
