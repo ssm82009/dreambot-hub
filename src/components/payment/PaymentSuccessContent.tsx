@@ -75,28 +75,16 @@ const PaymentSuccessContent = ({
     status: 'مدفوع' // Always show as paid on success page
   } : null;
   
-  // تحسين عرض اسم الباقة
-  const getPlanDisplay = (planName: string) => {
-    if (!planName) return '';
-    
-    const normalizedPlan = planName.toLowerCase();
-    
-    if (normalizedPlan.includes('premium') || normalizedPlan.includes('مميز')) {
-      return 'المميزة';
-    } else if (normalizedPlan.includes('pro') || normalizedPlan.includes('احترافي')) {
-      return 'الاحترافية';
-    } else {
-      return planName;
-    }
-  };
-  
-  const getDislayPlan = () => {
-    if (paymentSession?.plan_type) {
-      return getPlanDisplay(paymentSession.plan_type);
-    } else if (displayPaymentData?.plan_name) {
-      return getPlanDisplay(displayPaymentData.plan_name);
-    } else {
+  // الحصول على اسم الباقة الديناميكي
+  const getDisplayPlan = () => {
+    if (subscriptionName) {
       return subscriptionName;
+    } else if (paymentData?.plan_name) {
+      return paymentData.plan_name;
+    } else if (paymentSession?.plan_type) {
+      return paymentSession.plan_type;
+    } else {
+      return '';
     }
   };
   
@@ -116,7 +104,7 @@ const PaymentSuccessContent = ({
             <h1 className="text-2xl font-bold mb-4 text-green-600">تمت عملية الدفع بنجاح!</h1>
             <p className="mb-6 text-gray-600">
               شكراً لاشتراكك معنا. تم تفعيل حسابك بنجاح ويمكنك الآن الاستمتاع بجميع مميزات الباقة
-              {getDislayPlan() && ` "${getDislayPlan()}"`}.
+              {getDisplayPlan() && ` "${getDisplayPlan()}"`}.
             </p>
             
             {displayPaymentData && (
@@ -128,7 +116,7 @@ const PaymentSuccessContent = ({
                   </div>
                   <div className="flex justify-between my-1">
                     <span className="font-medium">الباقة:</span>
-                    <span>{getPlanDisplay(displayPaymentData.plan_name)}</span>
+                    <span>{getDisplayPlan()}</span>
                   </div>
                   <div className="flex justify-between my-1">
                     <span className="font-medium">المبلغ:</span>
