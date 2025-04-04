@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { User } from '@/types/database';
 import { normalizePlanType } from '@/utils/payment/statusNormalizer';
 import { supabase } from '@/integrations/supabase/client';
+import { getSubscriptionName } from '@/utils/subscription';
 
 type SubscriptionStatus = {
   name: string;
@@ -84,39 +85,50 @@ export const getSubscriptionStatus = (user: User): SubscriptionStatus => {
 
 const SubscriptionBadge: React.FC<SubscriptionBadgeProps> = ({ user }) => {
   const [planNames, setPlanNames] = useState<Record<string, string>>({});
+  const [displayName, setDisplayName] = useState('');
   const subscriptionStatus = getSubscriptionStatus(user);
   
   useEffect(() => {
-    // Fetch current plan names from pricing settings
-    const fetchPlanNames = async () => {
+    // Fetch subscription name
+    const loadSubscriptionName = async () => {
       try {
-        const { data, error } = await supabase
+        const { data: settings } = await supabase
           .from('pricing_settings')
           .select('free_plan_name, premium_plan_name, pro_plan_name')
           .limit(1)
           .single();
-          
-        if (error) throw error;
         
-        if (data) {
-          setPlanNames({
-            free: data.free_plan_name,
-            premium: data.premium_plan_name,
-            pro: data.pro_plan_name
-          });
-        }
+        if (!settings) return;
+        
+        setPlanNames({
+          free: settings.free_plan_name || 'الباقة المجانية',
+          premium: settings.premium_plan_name || 'الباقة المميزة',
+          pro: settings.pro_plan_name || 'الباقة الاحترافية'
+        });
+        
+        const name = await getSubscriptionName(user?.subscription_type, settings);
+        setDisplayName(name);
       } catch (error) {
-        console.error('Error fetching plan names:', error);
+        console.error('Error loading subscription name:', error);
+        
+        // Fallback
+        const normalizedType = normalizePlanType(user?.subscription_type || '');
+        if (normalizedType === 'premium') {
+          setDisplayName('الباقة المميزة');
+        } else if (normalizedType === 'pro') {
+          setDisplayName('الباقة الاحترافية');
+        } else {
+          setDisplayName('الباقة المجانية');
+        }
       }
     };
     
-    fetchPlanNames();
-  }, []);
+    loadSubscriptionName();
+  }, [user?.subscription_type]);
 
-  // For the badge, we continue using the simplified status names since they're better for UI
   return (
     <Badge variant={subscriptionStatus.color}>
-      {subscriptionStatus.name}
+      {displayName || subscriptionStatus.name}
     </Badge>
   );
 };

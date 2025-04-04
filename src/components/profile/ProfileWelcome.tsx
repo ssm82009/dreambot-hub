@@ -76,16 +76,6 @@ const ProfileWelcome: React.FC<ProfileWelcomeProps> = ({ userData }) => {
   // Get subscription status
   const subscriptionStatus = getSubscriptionStatus(userData);
 
-  // تسجيل البيانات لأغراض التصحيح
-  console.log("ProfileWelcome - User subscription data:", {
-    type: userData.subscription_type,
-    expires: userData.subscription_expires_at,
-    isActive: subscriptionStatus.isActive,
-    statusName: subscriptionStatus.name,
-    subscriptionName: subscriptionName,
-    userData: userData
-  });
-
   return (
     <Card className="bg-muted/50">
       <CardContent className="pt-6">
@@ -101,13 +91,13 @@ const ProfileWelcome: React.FC<ProfileWelcomeProps> = ({ userData }) => {
               </div>
               
               <div className="flex justify-between">
-                <span className="text-muted-foreground">حالة الاشتراك:</span>
+                <span className="text-muted-foreground">الباقة:</span>
                 <SubscriptionBadge user={userData} />
               </div>
               
               {userData.subscription_expires_at && (
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">تاريخ انتهاء الاشتراك:</span>
+                  <span className="text-muted-foreground">تاريخ انتهاء الباقة:</span>
                   <span className="font-medium">{formatDate(userData.subscription_expires_at)}</span>
                 </div>
               )}
@@ -130,7 +120,7 @@ const ProfileWelcome: React.FC<ProfileWelcomeProps> = ({ userData }) => {
                 <div className="mt-4 p-3 bg-primary/10 rounded-md">
                   <p className="font-medium text-primary">
                     {loading ? 
-                      'جاري تحميل معلومات الاشتراك...' : 
+                      'جاري تحميل معلومات الباقة...' : 
                       `أنت مشترك في ${subscriptionName}`
                     }
                   </p>
@@ -139,7 +129,7 @@ const ProfileWelcome: React.FC<ProfileWelcomeProps> = ({ userData }) => {
                 <div className="mt-4 p-3 bg-muted rounded-md">
                   <p className="font-medium">
                     {loading ? 
-                      'جاري تحميل معلومات الاشتراك...' : 
+                      'جاري تحميل معلومات الباقة...' : 
                       `أنت مشترك في ${subscriptionName}`
                     }
                   </p>

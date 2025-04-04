@@ -218,7 +218,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users: initialUsers }) 
                 <TableHead>البريد الإلكتروني</TableHead>
                 <TableHead>الاسم</TableHead>
                 <TableHead>الصلاحية</TableHead>
-                <TableHead>الاشتراك</TableHead>
+                <TableHead>الباقة</TableHead>
                 <TableHead>تاريخ الانتهاء</TableHead>
                 <TableHead>الإجراءات</TableHead>
               </TableRow>

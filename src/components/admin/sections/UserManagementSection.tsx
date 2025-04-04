@@ -39,7 +39,7 @@ const UserManagementSection = () => {
   return (
     <AdminSection 
       title="إدارة الأعضاء والصلاحيات" 
-      description="إدارة المستخدمين وتعيين الصلاحيات"
+      description="إدارة المستخدمين وتعيين الصلاحيات والباقات"
       icon={Users}
       isOpen={activeSections.userManagement}
       onToggle={() => toggleSection('userManagement')}

@@ -34,18 +34,18 @@ const SubscriptionDetails: React.FC<SubscriptionDetailsProps> = ({ userData, pri
   
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-medium">تفاصيل الاشتراك الحالي</h3>
+      <h3 className="text-lg font-medium">تفاصيل الباقة الحالية</h3>
       
       <div className="space-y-2">
         <div className="flex justify-between">
-          <span className="text-muted-foreground">نوع الاشتراك:</span>
+          <span className="text-muted-foreground">الباقة:</span>
           <span className="font-medium">
             {loading ? 'جاري التحميل...' : subscriptionName}
           </span>
         </div>
         
         <div className="flex justify-between">
-          <span className="text-muted-foreground">حالة الاشتراك:</span>
+          <span className="text-muted-foreground">حالة الباقة:</span>
           <span className="font-medium">
             {subscriptionStatus.isActive ? 'نشط' : 'غير نشط'}
           </span>
@@ -53,7 +53,7 @@ const SubscriptionDetails: React.FC<SubscriptionDetailsProps> = ({ userData, pri
         
         {userData?.subscription_expires_at && (
           <div className="flex justify-between">
-            <span className="text-muted-foreground">تاريخ انتهاء الاشتراك:</span>
+            <span className="text-muted-foreground">تاريخ انتهاء الباقة:</span>
             <span className="font-medium">{formatDate(userData.subscription_expires_at)}</span>
           </div>
         )}
