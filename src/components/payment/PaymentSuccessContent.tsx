@@ -6,7 +6,6 @@ import { CheckCircle, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { getSubscriptionName } from '@/utils/subscription';
 import PaymentStatusBadge from '@/components/admin/transaction/PaymentStatusBadge';
-import { normalizePaymentStatus } from '@/utils/payment/statusNormalizer';
 
 interface PaymentSuccessContentProps {
   transactionIdentifier: string;
@@ -25,6 +24,27 @@ const PaymentSuccessContent = ({
 }: PaymentSuccessContentProps) => {
   const navigate = useNavigate();
   const [subscriptionName, setSubscriptionName] = useState('');
+  
+  // Make sure to update the payment status to مدفوع on the success page
+  useEffect(() => {
+    const updatePaymentStatus = async () => {
+      if (paymentData?.id) {
+        try {
+          // Update payment record status to مدفوع
+          await supabase
+            .from('payment_invoices')
+            .update({ status: 'مدفوع' })
+            .eq('id', paymentData.id);
+            
+          console.log("Payment status updated to 'مدفوع' for ID:", paymentData.id);
+        } catch (error) {
+          console.error("Error updating payment status:", error);
+        }
+      }
+    };
+    
+    updatePaymentStatus();
+  }, [paymentData]);
   
   useEffect(() => {
     const fetchSubscriptionInfo = async () => {

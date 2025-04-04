@@ -76,7 +76,7 @@ export const usePaymentVerification = () => {
               status: 'مدفوع' // دائماً تعيين الحالة كمدفوع في صفحة النجاح
             };
             
-            // تحديث الفاتورة لتكون مدفوعة
+            // تحديث الفاتورة لتكون مدفوعة - CRITICAL FIX HERE
             await supabase
               .from('payment_invoices')
               .update({ status: 'مدفوع' })
@@ -113,7 +113,7 @@ export const usePaymentVerification = () => {
               status: 'مدفوع' // دائماً تعيين الحالة كمدفوع في صفحة النجاح
             };
             
-            // تحديث الفاتورة لتكون مدفوعة
+            // تحديث الفاتورة لتكون مدفوعة - CRITICAL FIX HERE
             await supabase
               .from('payment_invoices')
               .update({ status: 'مدفوع' })
@@ -151,7 +151,7 @@ export const usePaymentVerification = () => {
               status: 'مدفوع' // دائماً تعيين الحالة كمدفوع في صفحة النجاح
             };
             
-            // تحديث الفاتورة لتكون مدفوعة
+            // تحديث الفاتورة لتكون مدفوعة - CRITICAL FIX HERE
             await supabase
               .from('payment_invoices')
               .update({ status: 'مدفوع' })

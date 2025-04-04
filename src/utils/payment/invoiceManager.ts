@@ -62,7 +62,7 @@ export const findPendingInvoiceByUserPlan = async (
   console.log("Looking for invoices for user:", userId, "and plan:", plan);
   
   try {
-    // البحث عن جميع الفواتير للمستخدم والخطة المحددة (وليس فقط قيد الانتظار)
+    // البحث عن جميع الفواتير للمستخدم والخطة المحددة
     const { data: userInvoices, error: userInvoicesError } = await supabase
       .from('payment_invoices')
       .select('*')
@@ -79,7 +79,7 @@ export const findPendingInvoiceByUserPlan = async (
       console.log("Found invoices for user:", userInvoices);
       const invoiceId = userInvoices[0].id;
       
-      // تحديث حالة الفاتورة في قاعدة البيانات إلى "مدفوع" دائماً عند التحقق
+      // تحديث حالة الفاتورة في قاعدة البيانات إلى "مدفوع" عند التحقق
       const { error: updateInvoiceError } = await supabase
         .from('payment_invoices')
         .update({ status: 'مدفوع' })
