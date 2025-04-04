@@ -11,6 +11,7 @@ import TransactionManagementSection from '@/components/admin/sections/Transactio
 import TicketManagementSection from '@/components/admin/sections/TicketManagementSection';
 import ThemeSettingsSection from '@/components/admin/sections/ThemeSettingsSection';
 import SeoSettingsSection from '@/components/admin/sections/SeoSettingsSection';
+import HomeSectionsSection from '@/components/admin/sections/HomeSectionsSection';
 
 const AdminSections: React.FC = () => {
   return (
@@ -28,6 +29,7 @@ const AdminSections: React.FC = () => {
       <TicketManagementSection />
       <ThemeSettingsSection />
       <SeoSettingsSection />
+      <HomeSectionsSection />
     </div>
   );
 };

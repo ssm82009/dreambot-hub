@@ -1,3 +1,4 @@
+
 export const initialAiSettings = {
   provider: 'together',
   model: 'meta-llama/Llama-3-8b-chat-hf',
@@ -77,6 +78,14 @@ export const initialSeoSettings = {
   customHeadTags: ''
 };
 
+export const initialHomeSections = {
+  sections: [
+    { id: 'hero', title: 'قسم الترحيب (Hero)', order: 1, visible: true },
+    { id: 'tryIt', title: 'قسم تجربة الخدمة', order: 2, visible: true },
+    { id: 'howItWorks', title: 'قسم كيف يعمل', order: 3, visible: true }
+  ]
+};
+
 export const initialActiveSections = {
   aiSettings: false,
   interpretationSettings: false,
@@ -88,5 +97,6 @@ export const initialActiveSections = {
   ticketManagement: false,
   transactionManagement: false,
   themeSettings: false,
-  seoSettings: false
+  seoSettings: false,
+  homeSections: false
 };

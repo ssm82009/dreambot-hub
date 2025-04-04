@@ -36,6 +36,8 @@ export type AdminContextType = {
   setThemeSettingsForm: (settings: Partial<ThemeSettingsFormValues>) => void;
   seoSettingsForm: SeoSettingsFormValues;
   setSeoSettingsForm: (settings: SeoSettingsFormValues) => void;
+  homeSectionsForm: HomeSectionsFormValues;
+  setHomeSectionsForm: (settings: Partial<HomeSectionsFormValues>) => void;
   activeSections: ActiveSections;
   setActiveSections: (sections: ActiveSections) => void;
   toggleSection: (section: string) => void;
@@ -53,6 +55,7 @@ export type ActiveSections = {
   navbarManagement: boolean;
   ticketManagement: boolean;
   transactionManagement: boolean;
+  homeSections: boolean;
   [key: string]: boolean;
 };
 
@@ -138,4 +141,15 @@ export type SeoSettingsFormValues = {
   enableSitemap: boolean;
   googleAnalyticsId: string;
   customHeadTags: string;
+};
+
+export type HomeSectionItem = {
+  id: string;
+  title: string;
+  order: number;
+  visible: boolean;
+};
+
+export type HomeSectionsFormValues = {
+  sections: HomeSectionItem[];
 };
