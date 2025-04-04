@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import { toast } from 'sonner';
@@ -18,19 +18,24 @@ interface TransactionEditFormProps {
   onSuccess: () => void;
 }
 
-const TransactionEditForm: React.FC<TransactionEditFormProps> = ({ transaction, open, onClose, onSuccess }) => {
+const TransactionEditForm: React.FC<TransactionEditFormProps> = ({ 
+  transaction, 
+  open, 
+  onClose,
+  onSuccess 
+}) => {
   const [formState, setFormState] = useState({
-    plan_name: transaction?.plan_name || '',
-    payment_method: transaction?.payment_method || '',
-    status: transaction?.status || '',
-    expires_at: transaction?.expires_at ? new Date(transaction.expires_at) : undefined,
-    isLoading: false,
+    plan_name: transaction.plan_name || '',
+    payment_method: transaction.payment_method || '',
+    status: transaction.status || '',
+    expires_at: transaction.expires_at ? new Date(transaction.expires_at) : undefined,
+    isLoading: false
   });
-
-  const [planOptions, setPlanOptions] = useState<{ value: string; label: string }[]>([
+  
+  const [planOptions, setPlanOptions] = useState<{value: string, label: string}[]>([
     { value: 'free', label: 'المجانية' },
     { value: 'premium', label: 'المميزة' },
-    { value: 'pro', label: 'الاحترافية' },
+    { value: 'pro', label: 'الاحترافية' }
   ]);
 
   useEffect(() => {
@@ -41,54 +46,63 @@ const TransactionEditForm: React.FC<TransactionEditFormProps> = ({ transaction, 
           .select('free_plan_name, premium_plan_name, pro_plan_name')
           .limit(1)
           .single();
-
+          
         if (error) throw error;
-
+        
         if (data) {
           setPlanOptions([
             { value: 'free', label: data.free_plan_name || 'المجانية' },
             { value: 'premium', label: data.premium_plan_name || 'المميزة' },
-            { value: 'pro', label: data.pro_plan_name || 'الاحترافية' },
+            { value: 'pro', label: data.pro_plan_name || 'الاحترافية' }
           ]);
         }
       } catch (error) {
-        console.error('❌ Error fetching plan names:', error);
+        console.error('Error fetching plan names:', error);
       }
     };
-
+    
     fetchPlanNames();
   }, []);
 
   useEffect(() => {
     setFormState({
-      plan_name: transaction?.plan_name || '',
-      payment_method: transaction?.payment_method || '',
-      status: transaction?.status || '',
-      expires_at: transaction?.expires_at ? new Date(transaction.expires_at) : undefined,
-      isLoading: false,
+      plan_name: transaction.plan_name || '',
+      payment_method: transaction.payment_method || '',
+      status: transaction.status || '',
+      expires_at: transaction.expires_at ? new Date(transaction.expires_at) : undefined,
+      isLoading: false
     });
   }, [transaction]);
 
-  const handleSelectChange = useCallback((name: string, value: string) => {
-    setFormState((prev) => ({ ...prev, [name]: value }));
-  }, []);
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormState(prev => ({ ...prev, [name]: value }));
+  };
 
-  const handleDateChange = useCallback((date: Date | undefined) => {
-    setFormState((prev) => ({ ...prev, expires_at: date }));
-  }, []);
+  const handleSelectChange = (name: string, value: string) => {
+    console.log(Changing ${name} to ${value});
+    setFormState(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleDateChange = (date: Date | undefined) => {
+    setFormState(prev => ({ ...prev, expires_at: date }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setFormState((prev) => ({ ...prev, isLoading: true }));
-
-    if (!transaction?.id) {
-      toast.error('⚠ لا يوجد معرّف للمعاملة!');
-      return;
-    }
-
+    
+    setFormState(prev => ({ ...prev, isLoading: true }));
+    
     try {
       const normalizedStatus = normalizePaymentStatus(formState.status);
-      console.log('🚀 Updating transaction:', { ...formState, normalizedStatus });
+      
+      console.log('Updating transaction with data:', {
+        id: transaction.id,
+        plan_name: formState.plan_name,
+        payment_method: formState.payment_method,
+        status: normalizedStatus,
+        expires_at: formState.expires_at ? formState.expires_at.toISOString() : null
+      });
 
       const { data, error } = await supabase
         .from('payment_invoices')
@@ -96,43 +110,62 @@ const TransactionEditForm: React.FC<TransactionEditFormProps> = ({ transaction, 
           plan_name: formState.plan_name,
           payment_method: formState.payment_method,
           status: normalizedStatus,
-          expires_at: formState.expires_at ? formState.expires_at.toISOString() : null,
+          expires_at: formState.expires_at ? formState.expires_at.toISOString() : null
         })
         .eq('id', transaction.id);
-
-      if (error) throw error;
-
-      if (transaction.user_id && normalizedStatus === PAYMENT_STATUS.PAID) {
-        const expiryDate = formState.expires_at || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-        const { error: userError } = await supabase
-          .from('users')
-          .update({
-            subscription_type: formState.plan_name,
-            subscription_expires_at: expiryDate.toISOString(),
-          })
-          .eq('id', transaction.user_id);
-
-        if (userError) {
-          console.error('❌ Error updating user subscription:', userError);
-          toast.error('تم تحديث المعاملة ولكن فشل تحديث اشتراك المستخدم');
+      
+      if (error) {
+        console.error('Error details:', error);
+        throw error;
+      }
+      
+      console.log('Update response:', data);
+      
+      if (transaction.user_id && (
+        formState.plan_name !== transaction.plan_name || 
+        formState.expires_at !== (transaction.expires_at ? new Date(transaction.expires_at) : undefined) ||
+        normalizedStatus === PAYMENT_STATUS.PAID
+      )) {
+        const expiryDate = formState.expires_at || new Date(Date.now() + (30 * 24 * 60 * 60 * 1000));
+        
+        if (normalizedStatus === PAYMENT_STATUS.PAID) {
+          console.log('Updating user subscription for user:', transaction.user_id);
+          const { data: userData, error: userError } = await supabase
+            .from('users')
+            .update({
+              subscription_type: formState.plan_name,
+              subscription_expires_at: expiryDate.toISOString()
+            })
+            .eq('id', transaction.user_id)
+            .select();
+          
+          if (userError) {
+            console.error('Error updating user subscription:', userError);
+            toast.error('تم تحديث المعاملة ولكن فشل تحديث بيانات اشتراك المستخدم');
+          } else {
+            console.log('Updated user subscription successfully:', userData);
+          }
         }
       }
-
-      toast.success('✅ تم تحديث المعاملة بنجاح');
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      
+      toast.success('تم تحديث المعاملة بنجاح');
       onSuccess();
       onClose();
     } catch (error) {
-      console.error('❌ Error updating transaction:', error);
+      console.error('Error updating transaction:', error);
       toast.error('حدث خطأ أثناء تحديث المعاملة');
     } finally {
-      setFormState((prev) => ({ ...prev, isLoading: false }));
+      setFormState(prev => ({ ...prev, isLoading: false }));
     }
+  };
+
+  const getNormalizedPlanType = () => {
+    return normalizePlanType(transaction.plan_name);
   };
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent aria-describedby="dialog-description" className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>تعديل تفاصيل المعاملة</DialogTitle>
         </DialogHeader>
@@ -140,12 +173,15 @@ const TransactionEditForm: React.FC<TransactionEditFormProps> = ({ transaction, 
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label htmlFor="plan_name">الباقة</Label>
-              <Select value={formState.plan_name} onValueChange={(value) => handleSelectChange('plan_name', value)}>
+              <Select
+                value={formState.plan_name || getNormalizedPlanType()}
+                onValueChange={(value) => handleSelectChange('plan_name', value)}
+              >
                 <SelectTrigger id="plan_name">
                   <SelectValue placeholder="اختر نوع الباقة" />
                 </SelectTrigger>
                 <SelectContent>
-                  {planOptions.map((option) => (
+                  {planOptions.map(option => (
                     <SelectItem key={option.value} value={option.value}>
                       {option.label}
                     </SelectItem>
@@ -153,10 +189,13 @@ const TransactionEditForm: React.FC<TransactionEditFormProps> = ({ transaction, 
                 </SelectContent>
               </Select>
             </div>
-
+            
             <div className="grid gap-2">
               <Label htmlFor="payment_method">طريقة الدفع</Label>
-              <Select value={formState.payment_method} onValueChange={(value) => handleSelectChange('payment_method', value)}>
+              <Select
+                value={formState.payment_method}
+                onValueChange={(value) => handleSelectChange('payment_method', value)}
+              >
                 <SelectTrigger id="payment_method">
                   <SelectValue placeholder="اختر طريقة الدفع" />
                 </SelectTrigger>
@@ -167,18 +206,50 @@ const TransactionEditForm: React.FC<TransactionEditFormProps> = ({ transaction, 
                 </SelectContent>
               </Select>
             </div>
-
+            
+            <div className="grid gap-2">
+              <Label htmlFor="status">حالة الدفع</Label>
+              <Select
+                value={formState.status}
+                onValueChange={(value) => handleSelectChange('status', value)}
+              >
+                <SelectTrigger id="status">
+                  <SelectValue placeholder="اختر حالة الدفع" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={PAYMENT_STATUS.PAID}>مدفوع</SelectItem>
+                  <SelectItem value={PAYMENT_STATUS.PENDING}>قيد الانتظار</SelectItem>
+                  <SelectItem value={PAYMENT_STATUS.FAILED}>فشل</SelectItem>
+                  <SelectItem value={PAYMENT_STATUS.REFUNDED}>مسترجع</SelectItem>
+                  <SelectItem value={PAYMENT_STATUS.CANCELLED}>ملغي</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
             <div className="grid gap-2">
               <Label htmlFor="expires_at">تاريخ انتهاء الاشتراك</Label>
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" className="w-full justify-start text-right">
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start text-right"
+                    type="button"
+                  >
                     <CalendarIcon className="ml-2 h-4 w-4" />
-                    {formState.expires_at ? format(formState.expires_at, 'yyyy/MM/dd') : <span>اختر تاريخ</span>}
+                    {formState.expires_at ? (
+                      format(formState.expires_at, 'yyyy/MM/dd')
+                    ) : (
+                      <span>اختر تاريخ</span>
+                    )}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar mode="single" selected={formState.expires_at} onSelect={handleDateChange} initialFocus />
+                  <Calendar
+                    mode="single"
+                    selected={formState.expires_at}
+                    onSelect={handleDateChange}
+                    initialFocus
+                  />
                 </PopoverContent>
               </Popover>
             </div>
