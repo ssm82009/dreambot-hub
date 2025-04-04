@@ -28,12 +28,11 @@ const PageManagementSection = () => {
         
         if (error) throw error;
         
-        // Fixed: Use explicit CustomPage[] return type
-        setPages((prev: CustomPage[]): CustomPage[] => {
-          return prev.map(p => 
-            p.id === page.id ? { ...p, ...page } as CustomPage : p
-          );
-        });
+        // Fix: Create a new array instead of using a function parameter
+        const updatedPages = pages.map(p => 
+          p.id === page.id ? { ...p, ...page } as CustomPage : p
+        );
+        setPages(updatedPages);
         toast.success('تم تحديث الصفحة بنجاح');
       } else {
         const { data, error } = await supabase
@@ -49,13 +48,14 @@ const PageManagementSection = () => {
         
         if (error) throw error;
         
-        // Fixed: Use explicit CustomPage[] return type
-        setPages((prev: CustomPage[]): CustomPage[] => {
-          if (data) {
-            return [...prev, data as CustomPage];
-          }
-          return [...prev];
-        });
+        // Fix: Create a new array instead of using a function parameter
+        let newPages;
+        if (data) {
+          newPages = [...pages, data as CustomPage];
+        } else {
+          newPages = [...pages];
+        }
+        setPages(newPages);
         toast.success('تم إنشاء الصفحة بنجاح');
       }
     } catch (error) {
@@ -76,10 +76,9 @@ const PageManagementSection = () => {
       
       if (error) throw error;
       
-      // Fixed: Use explicit CustomPage[] return type
-      setPages((prev: CustomPage[]): CustomPage[] => {
-        return prev.filter(p => p.id !== id);
-      });
+      // Fix: Create a new array instead of using a function parameter
+      const filteredPages = pages.filter(p => p.id !== id);
+      setPages(filteredPages);
       toast.success('تم حذف الصفحة بنجاح');
     } catch (error) {
       console.error('Error deleting page:', error);
