@@ -55,7 +55,7 @@ const HomeSectionsSection = () => {
       
       // ثم نحفظ البيانات في قاعدة البيانات
       const { error } = await supabase
-        .from('site_settings')
+        .from('site_settings' as any)
         .update({ home_sections: JSON.stringify(sections) })
         .eq('id', 'home_sections');
       
