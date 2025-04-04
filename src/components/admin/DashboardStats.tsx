@@ -6,16 +6,19 @@ import { Users, Calendar, Clock, CreditCard, PenSquare } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const DashboardStats: React.FC = () => {
-  const { dreams, userCount, subscriptions, users } = useAdmin();
+  const { dreams, userCount, subscriptions } = useAdmin();
   
   // حساب نسبة الاشتراك من إجمالي المستخدمين
   const subscriptionPercentage = userCount > 0 
     ? Math.round((subscriptions / userCount) * 100) 
     : 0;
   
-  console.log("Dashboard Stats - Active Subscriptions:", subscriptions);
-  console.log("Dashboard Stats - Total Users:", userCount);
-  console.log("Dashboard Stats - Percentage:", subscriptionPercentage);
+  console.log("Dashboard Stats Component - Data:", {
+    dreams,
+    userCount,
+    subscriptions,
+    subscriptionPercentage
+  });
   
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 rtl mb-8">

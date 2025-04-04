@@ -7,9 +7,15 @@ import { useFetchDashboardStats } from './admin/useFetchDashboardStats';
 import { useFetchSettings } from './admin/useFetchSettings';
 
 export const useAdminData = () => {
-  const { setIsLoading, setDbLoading } = useAdmin();
+  const { setIsLoading, setDbLoading, setUserCount, setDreams, setSubscriptions } = useAdmin();
   const { checkAdminAuth } = useAdminAuth();
-  const dashboardStatsHook = useFetchDashboardStats(); // Proper naming for clarity
+  const { 
+    totalUsers, 
+    activeSubscriptions, 
+    totalDreams, 
+    totalTickets, 
+    fetchDashboardStats 
+  } = useFetchDashboardStats();
   const { fetchAllSettings } = useFetchSettings();
   const navigate = useNavigate();
 
@@ -30,23 +36,16 @@ export const useAdminData = () => {
         console.log("Initializing admin data...");
         setDbLoading(true);
         
-        // Create a custom fetchDashboardStats function
-        const fetchStats = async () => {
-          try {
-            // We use the hook result but manually execute the fetch logic
-            // This is a workaround since the hook returns data but we need a function
-            const fetchData = await fetch('/api/admin/stats');
-            const data = await fetchData.json();
-            return data;
-          } catch (error) {
-            console.error("Error fetching dashboard stats:", error);
-          }
-        };
-        
         await Promise.all([
-          fetchStats(), 
+          fetchDashboardStats(), 
           fetchAllSettings()
         ]);
+        
+        // تحديث البيانات في السياق
+        setUserCount(totalUsers);
+        setDreams(totalDreams);
+        setSubscriptions(activeSubscriptions);
+        
         console.log("Admin data initialized successfully");
       } catch (error) {
         console.error("Error initializing admin data:", error);
@@ -59,16 +58,17 @@ export const useAdminData = () => {
     initializeData();
   }, []);
 
-  // Define fetchStats function at the module level to avoid the undefined reference
-  const fetchStats = async () => {
-    try {
-      const fetchData = await fetch('/api/admin/stats');
-      const data = await fetchData.json();
-      return data;
-    } catch (error) {
-      console.error("Error fetching dashboard stats:", error);
-    }
-  };
+  // مراقبة التغييرات في البيانات وتحديث السياق
+  useEffect(() => {
+    setUserCount(totalUsers);
+    setDreams(totalDreams);
+    setSubscriptions(activeSubscriptions);
+    console.log("Dashboard stats updated in admin context:", {
+      users: totalUsers,
+      dreams: totalDreams,
+      subscriptions: activeSubscriptions
+    });
+  }, [totalUsers, totalDreams, activeSubscriptions]);
 
   // Refresh admin data function with detailed logging
   const refreshAdminData = async () => {
@@ -77,12 +77,17 @@ export const useAdminData = () => {
       setDbLoading(true);
       
       console.log("Fetching dashboard stats...");
-      await fetchStats();
+      await fetchDashboardStats();
       console.log("Dashboard stats fetched successfully");
       
       console.log("Fetching all settings...");
       await fetchAllSettings();
       console.log("All settings fetched successfully");
+      
+      // تحديث البيانات في السياق
+      setUserCount(totalUsers);
+      setDreams(totalDreams);
+      setSubscriptions(activeSubscriptions);
       
       console.log("Admin data refreshed successfully");
     } catch (error) {
@@ -94,7 +99,7 @@ export const useAdminData = () => {
 
   // تصدير الدوال لإعادة تحميل البيانات عند الحاجة
   return {
-    fetchDashboardStats: fetchStats,
+    fetchDashboardStats,
     fetchAllSettings,
     refreshAdminData
   };
