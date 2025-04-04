@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { findInvoiceByIdentifiers, findPendingInvoiceByUserPlan, createPayPalInvoiceRecord, updateAllPendingInvoices } from './invoiceManager';
 import { updateUserSubscription } from './subscriptionUpdater';
 import { verifyPaylinkPayment } from './paylinkVerifier';
-import { normalizePaymentStatus } from './statusNormalizer';
+import { normalizePaymentStatus, PAYMENT_STATUS } from './statusNormalizer';
 
 /**
  * Verifies a payment and updates the user's subscription status
@@ -112,7 +112,10 @@ export const verifyPayment = async (
           if (identifier) {
             const { error: updateError } = await supabase
               .from('payment_invoices')
-              .update({ status: 'مدفوع' })
+              .update({ 
+                status: PAYMENT_STATUS.PAID,
+                expires_at: new Date(Date.now() + (30 * 24 * 60 * 60 * 1000)).toISOString()
+              })
               .eq('invoice_id', identifier);
               
             if (updateError) {

@@ -57,6 +57,16 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({
     return planNames[normalizedType] || planName;
   };
 
+  const formatDate = (dateString: string | null | undefined) => {
+    if (!dateString) return '-';
+    try {
+      return format(new Date(dateString), 'yyyy/MM/dd');
+    } catch (error) {
+      console.error('Error formatting date:', error, dateString);
+      return '-';
+    }
+  };
+
   return (
     <div className="overflow-x-auto">
       <Table>
@@ -89,10 +99,10 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({
                 <TableCell>{normalizedPaymentMethod}</TableCell>
                 <TableCell>{transaction.amount}</TableCell>
                 <TableCell>
-                  {transaction.created_at && format(new Date(transaction.created_at), 'yyyy/MM/dd')}
+                  {formatDate(transaction.created_at)}
                 </TableCell>
                 <TableCell>
-                  {transaction.expires_at && format(new Date(transaction.expires_at), 'yyyy/MM/dd')}
+                  {formatDate(transaction.expires_at)}
                 </TableCell>
                 <TableCell>
                   <PaymentStatusBadge status={transaction.status} />

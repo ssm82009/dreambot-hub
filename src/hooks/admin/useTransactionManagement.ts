@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -34,6 +35,7 @@ export const useTransactionManagement = () => {
     try {
       const isSuccessPage = window.location.href.includes('success');
       
+      // Fetch users data
       const { data: usersData, error: usersError } = await supabase
         .from('users')
         .select('id, email, full_name, subscription_expires_at, subscription_type')
@@ -41,6 +43,7 @@ export const useTransactionManagement = () => {
       
       if (usersError) throw usersError;
       
+      // Create a map of users by their IDs
       const usersMap = (usersData || []).reduce((acc, user) => ({
         ...acc,
         [user.id]: user
@@ -48,12 +51,14 @@ export const useTransactionManagement = () => {
       
       setUsers(usersMap);
       
+      // Try to fetch latest transactions using RPC function
       const { data: latestTransactionsData, error: latestTransactionsError } = await supabase
         .rpc('get_latest_payment_invoices') as { data: RPCTransactionResponse, error: any };
         
       if (latestTransactionsError) {
         console.error("Error fetching latest transactions:", latestTransactionsError);
         
+        // If on success page, update pending invoices to paid
         if (isSuccessPage) {
           await supabase
             .from('payment_invoices')
@@ -61,6 +66,7 @@ export const useTransactionManagement = () => {
             .or('status.eq.Pending,status.eq.pending');
         }
         
+        // Fallback to direct query if RPC fails
         const { data: transactionsData, error } = await supabase
           .from('payment_invoices')
           .select('*')
@@ -69,6 +75,7 @@ export const useTransactionManagement = () => {
         if (error) throw error;
         
         if (transactionsData && transactionsData.length > 0) {
+          // Group transactions by invoice_id and get the latest for each
           const invoiceGroups = transactionsData.reduce((groups: Record<string, any[]>, transaction: any) => {
             if (!groups[transaction.invoice_id]) {
               groups[transaction.invoice_id] = [];
@@ -83,6 +90,7 @@ export const useTransactionManagement = () => {
             )[0];
           });
           
+          // Format transactions with user data
           const formattedTransactions = latestTransactions.map((transaction: any) => {
             const user = usersMap[transaction.user_id] || {};
             
@@ -93,7 +101,7 @@ export const useTransactionManagement = () => {
             return {
               ...transaction,
               status,
-              expires_at: user.subscription_expires_at || null
+              expires_at: transaction.expires_at || user.subscription_expires_at || null
             };
           });
           
@@ -103,6 +111,7 @@ export const useTransactionManagement = () => {
         }
       } else {
         if (latestTransactionsData && latestTransactionsData.length > 0) {
+          // If on success page, update pending invoices to paid
           if (isSuccessPage) {
             for (const transaction of latestTransactionsData) {
               await supabase
@@ -112,6 +121,7 @@ export const useTransactionManagement = () => {
             }
           }
           
+          // Format transactions with user data
           const formattedTransactions = latestTransactionsData.map((transaction: Transaction) => {
             const user = usersMap[transaction.user_id] || {};
             
@@ -122,7 +132,7 @@ export const useTransactionManagement = () => {
             return {
               ...transaction,
               status,
-              expires_at: user.subscription_expires_at || null
+              expires_at: transaction.expires_at || user.subscription_expires_at || null
             };
           });
           
@@ -139,27 +149,33 @@ export const useTransactionManagement = () => {
     }
   };
 
+  // Fetch transactions on component mount
   useEffect(() => {
     fetchTransactions();
   }, []);
   
+  // Handle search input change
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
     setCurrentPage(1);
   };
   
+  // Handle editing a transaction
   const handleEditClick = (transaction: Transaction) => {
     setEditingTransaction(transaction);
   };
   
+  // Handle closing the edit form
   const handleEditClose = () => {
     setEditingTransaction(null);
   };
   
+  // Handle successful transaction edit
   const handleEditSuccess = () => {
     fetchTransactions();
   };
 
+  // Filter transactions based on search term
   const filteredTransactions = transactions.filter((transaction) => {
     const user = users[transaction.user_id] || {};
     const searchString = searchTerm.toLowerCase().trim();
@@ -202,6 +218,7 @@ export const useTransactionManagement = () => {
     return false;
   });
 
+  // Update pagination when filteredTransactions changes
   useEffect(() => {
     setTotalPages(Math.max(1, Math.ceil(filteredTransactions.length / rowsPerPage)));
     if (currentPage > Math.ceil(filteredTransactions.length / rowsPerPage)) {
@@ -209,11 +226,13 @@ export const useTransactionManagement = () => {
     }
   }, [filteredTransactions, rowsPerPage]);
 
+  // Get current page transactions
   const currentTransactions = filteredTransactions.slice(
     (currentPage - 1) * rowsPerPage,
     currentPage * rowsPerPage
   );
 
+  // Pagination functions
   const goToPage = (page: number) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);

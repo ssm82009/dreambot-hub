@@ -178,6 +178,7 @@ export type Database = {
         Row: {
           amount: number
           created_at: string
+          expires_at: string | null
           id: string
           invoice_id: string
           payment_method: string
@@ -188,6 +189,7 @@ export type Database = {
         Insert: {
           amount: number
           created_at?: string
+          expires_at?: string | null
           id?: string
           invoice_id: string
           payment_method: string
@@ -198,6 +200,7 @@ export type Database = {
         Update: {
           amount?: number
           created_at?: string
+          expires_at?: string | null
           id?: string
           invoice_id?: string
           payment_method?: string
@@ -534,6 +537,7 @@ export type Database = {
         Returns: {
           amount: number
           created_at: string
+          expires_at: string | null
           id: string
           invoice_id: string
           payment_method: string

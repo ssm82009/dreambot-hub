@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { Calendar as CalendarIcon } from 'lucide-react';
@@ -84,6 +85,7 @@ const TransactionEditForm: React.FC<TransactionEditFormProps> = ({
     setFormState(prev => ({ ...prev, isLoading: true }));
     
     try {
+      // Update transaction in payment_invoices table
       const { error } = await supabase
         .from('payment_invoices')
         .update({
@@ -96,6 +98,7 @@ const TransactionEditForm: React.FC<TransactionEditFormProps> = ({
       
       if (error) throw error;
       
+      // Check if we also need to update the user's subscription
       if (transaction.user_id && (
         formState.plan_name !== transaction.plan_name || 
         formState.expires_at !== (transaction.expires_at ? new Date(transaction.expires_at) : undefined) ||
