@@ -16,6 +16,8 @@ export type AdminContextType = {
   setUserCount: (value: number) => void;
   subscriptions: number;
   setSubscriptions: (value: number) => void;
+  openTickets: number;
+  setOpenTickets: (value: number) => void;
   users: User[];
   setUsers: (users: User[]) => void;
   pages: CustomPage[];

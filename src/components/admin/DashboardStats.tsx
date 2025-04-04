@@ -1,12 +1,12 @@
 
 import React from 'react';
-import { Users, Rabbit, CreditCard, PenSquare } from 'lucide-react';
+import { Users, Rabbit, CreditCard, PenSquare, TicketCheck } from 'lucide-react';
 import { useAdmin } from '@/contexts/admin';
 import StatsCard from './dashboard/StatsCard';
 import DashboardCharts from './dashboard/DashboardCharts';
 
 const DashboardStats: React.FC = () => {
-  const { dreams, userCount, subscriptions } = useAdmin();
+  const { dreams, userCount, subscriptions, openTickets } = useAdmin();
   
   // حساب نسبة الاشتراك من إجمالي المستخدمين
   const subscriptionPercentage = userCount > 0 
@@ -15,7 +15,7 @@ const DashboardStats: React.FC = () => {
   
   return (
     <>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 rtl mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 rtl mb-8">
         <StatsCard 
           title="الأحلام المقدمة"
           description="إجمالي عدد الأحلام المقدمة للتفسير"
@@ -36,6 +36,14 @@ const DashboardStats: React.FC = () => {
           value={subscriptions}
           icon={CreditCard}
           tooltipText="الاشتراكات النشطة هي الاشتراكات المدفوعة (المميز أو الاحترافي) التي لم تنتهِ صلاحيتها بعد."
+        />
+        
+        <StatsCard 
+          title="التذاكر المفتوحة"
+          description="عدد تذاكر الدعم المفتوحة حالياً"
+          value={openTickets ?? 0}
+          icon={TicketCheck}
+          tooltipText="التذاكر المفتوحة هي تذاكر الدعم الفني التي لم يتم حلها بعد."
         />
         
         <StatsCard 

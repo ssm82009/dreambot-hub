@@ -9,6 +9,7 @@ export const useFetchDashboardStats = () => {
   const [activeSubscriptions, setActiveSubscriptions] = useState(0);
   const [totalDreams, setTotalDreams] = useState(0);
   const [totalTickets, setTotalTickets] = useState(0);
+  const [openTickets, setOpenTickets] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
@@ -66,6 +67,19 @@ export const useFetchDashboardStats = () => {
       console.log("Tickets data fetched:", ticketsCount, "tickets found");
       setTotalTickets(ticketsCount || 0);
 
+      // جلب عدد التذاكر المفتوحة
+      const { data: openTicketsData, error: openTicketsError, count: openTicketsCount } = await supabase
+        .from('tickets')
+        .select('*', { count: 'exact', head: false })
+        .eq('status', 'open');
+
+      if (openTicketsError) {
+        throw new Error(`Error fetching open tickets: ${openTicketsError.message}`);
+      }
+      
+      console.log("Open tickets data fetched:", openTicketsCount, "open tickets found");
+      setOpenTickets(openTicketsCount || 0);
+
       // Update last updated timestamp
       setLastUpdated(new Date());
 
@@ -86,6 +100,7 @@ export const useFetchDashboardStats = () => {
     activeSubscriptions,
     totalDreams,
     totalTickets,
+    openTickets,
     loading,
     error,
     lastUpdated,

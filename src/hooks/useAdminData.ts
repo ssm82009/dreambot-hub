@@ -7,13 +7,14 @@ import { useFetchDashboardStats } from './admin/useFetchDashboardStats';
 import { useFetchSettings } from './admin/useFetchSettings';
 
 export const useAdminData = () => {
-  const { setIsLoading, setDbLoading, setUserCount, setDreams, setSubscriptions } = useAdmin();
+  const { setIsLoading, setDbLoading, setUserCount, setDreams, setSubscriptions, setOpenTickets } = useAdmin();
   const { checkAdminAuth } = useAdminAuth();
   const { 
     totalUsers, 
     activeSubscriptions, 
-    totalDreams, 
+    totalDreams,
     totalTickets,
+    openTickets,
     lastUpdated,
     loading: statsLoading,
     fetchDashboardStats 
@@ -61,14 +62,16 @@ export const useAdminData = () => {
       setUserCount(totalUsers);
       setDreams(totalDreams);
       setSubscriptions(activeSubscriptions);
+      setOpenTickets(openTickets);
       console.log("Dashboard stats updated in admin context:", {
         users: totalUsers,
         dreams: totalDreams,
         subscriptions: activeSubscriptions,
+        openTickets: openTickets,
         lastUpdated: lastUpdated.toISOString()
       });
     }
-  }, [totalUsers, totalDreams, activeSubscriptions, statsLoading, lastUpdated]);
+  }, [totalUsers, totalDreams, activeSubscriptions, openTickets, statsLoading, lastUpdated]);
 
   // Refresh admin data function with detailed logging
   const refreshAdminData = async () => {

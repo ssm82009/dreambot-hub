@@ -25,6 +25,7 @@ export const AdminProvider: React.FC<AdminProviderProps> = ({ children }) => {
   const [dreams, setDreams] = useState<number>(0);
   const [userCount, setUserCount] = useState<number>(0);
   const [subscriptions, setSubscriptions] = useState<number>(0);
+  const [openTickets, setOpenTickets] = useState<number>(0);
   
   // Data collections
   const [users, setUsers] = useState<User[]>([]);
@@ -67,6 +68,8 @@ export const AdminProvider: React.FC<AdminProviderProps> = ({ children }) => {
         setUserCount,
         subscriptions,
         setSubscriptions,
+        openTickets,
+        setOpenTickets,
         users,
         setUsers,
         pages,
