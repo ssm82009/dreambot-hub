@@ -23,6 +23,8 @@ const PaymentSuccess = () => {
           const { data: { session } } = await supabase.auth.getSession();
           
           if (session?.user?.id) {
+            console.log("Checking subscription status for user:", session.user.id);
+            
             // Check user subscription status
             const { data: userData, error } = await supabase
               .from('users')
@@ -35,6 +37,8 @@ const PaymentSuccess = () => {
               return;
             }
             
+            console.log("Current user subscription data:", userData);
+            
             if (userData?.subscription_type && userData.subscription_type !== 'free') {
               // Validate that expiry date is in the future
               const expiryDate = new Date(userData.subscription_expires_at);
@@ -43,6 +47,33 @@ const PaymentSuccess = () => {
               if (expiryDate > now) {
                 setIsVerified(true);
                 console.log("Payment successfully verified. Subscription active until:", expiryDate);
+              } else {
+                console.error("Subscription expiry date is not valid:", expiryDate);
+              }
+            } else {
+              console.error("Subscription type is not valid:", userData?.subscription_type);
+              
+              // Force update subscription if we're on success page but subscription is not active
+              if (paymentSession?.plan_type) {
+                console.log("Forcing subscription update to:", paymentSession.plan_type);
+                
+                const expiryDate = new Date();
+                expiryDate.setDate(expiryDate.getDate() + 30);
+                
+                const { error: updateError } = await supabase
+                  .from('users')
+                  .update({ 
+                    subscription_type: paymentSession.plan_type,
+                    subscription_expires_at: expiryDate.toISOString()
+                  })
+                  .eq('id', session.user.id);
+                  
+                if (!updateError) {
+                  setIsVerified(true);
+                  console.log("Forced subscription update successful");
+                } else {
+                  console.error("Forced subscription update failed:", updateError);
+                }
               }
             }
             
@@ -61,6 +92,15 @@ const PaymentSuccess = () => {
                 const paymentRecord = invoiceData[0];
                 console.log("Found payment record by session ID:", paymentRecord);
                 setPaymentData(paymentRecord);
+                
+                // Update status to "مدفوع" if currently pending
+                if (paymentRecord.status === 'قيد الانتظار' || paymentRecord.status === 'pending' || paymentRecord.status === 'Pending') {
+                  await supabase
+                    .from('payment_invoices')
+                    .update({ status: 'مدفوع' })
+                    .eq('id', paymentRecord.id);
+                }
+                
                 return;
               }
             }
@@ -80,6 +120,15 @@ const PaymentSuccess = () => {
                 const paymentRecord = invoiceData[0];
                 console.log("Found payment record by transaction ID:", paymentRecord);
                 setPaymentData(paymentRecord);
+                
+                // Update status to "مدفوع" if currently pending
+                if (paymentRecord.status === 'قيد الانتظار' || paymentRecord.status === 'pending' || paymentRecord.status === 'Pending') {
+                  await supabase
+                    .from('payment_invoices')
+                    .update({ status: 'مدفوع' })
+                    .eq('id', paymentRecord.id);
+                }
+                
                 return;
               }
             }
@@ -98,6 +147,14 @@ const PaymentSuccess = () => {
               const paymentRecord = userPayments[0];
               console.log("Found user's most recent payment:", paymentRecord);
               setPaymentData(paymentRecord);
+              
+              // Update status to "مدفوع" if currently pending
+              if (paymentRecord.status === 'قيد الانتظار' || paymentRecord.status === 'pending' || paymentRecord.status === 'Pending') {
+                await supabase
+                  .from('payment_invoices')
+                  .update({ status: 'مدفوع' })
+                  .eq('id', paymentRecord.id);
+              }
             }
           }
         } catch (error) {

@@ -12,6 +12,8 @@ export const updateUserSubscription = async (userId: string, plan: string): Prom
   }
   
   try {
+    console.log("Updating subscription for user:", userId, "to plan:", plan);
+    
     // Set expiry date (30 days from now)
     const expiryDate = new Date();
     expiryDate.setDate(expiryDate.getDate() + 30);
@@ -31,7 +33,7 @@ export const updateUserSubscription = async (userId: string, plan: string): Prom
       return false;
     } 
     
-    console.log("Updated subscription successfully for user:", userId, "to plan:", plan);
+    console.log("Successfully updated subscription for user:", userId, "to plan:", plan, "until:", expiryDate.toISOString());
     return true;
   } catch (error) {
     console.error("Error in updateUserSubscription:", error);
