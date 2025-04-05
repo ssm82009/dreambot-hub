@@ -63,7 +63,7 @@ const Index = () => {
       <Navbar />
       <main className="flex-1">
         {isVisible('hero') && <Hero 
-          title={getSectionContent('hero', 'title', 'فَسِّرْ حُلْمَكَ الآنَ!')}
+          title={getSectionContent('hero', 'title', 'فَسِّرْ حُلْمَكَ الآنَ!')}
           subtitle={getSectionContent('hero', 'subtitle', '~')}
         />}
         
@@ -73,9 +73,7 @@ const Index = () => {
               <div className="text-center mb-12 rtl">
                 <h2 className="text-3xl font-bold mb-4">{getSectionContent('tryIt', 'title', '.  .  .')}</h2>
                 <p className="text-foreground/80 max-w-2xl mx-auto">
-                  {getSectionContent('tryIt', 'subtitle', 'أدخل تفاصيل حلمك بالعربية الفصحى، واحصل على تفسير فوري باستخدام نموذج الذكاء الاصطناعي الخاص بنا " تأويل "
-
-')}
+                  {getSectionContent('tryIt', 'subtitle', 'أدخل تفاصيل حلمك بالعربية الفصحى، واحصل على تفسير فوري باستخدام نموذج الذكاء الاصطناعي الخاص بنا "تأويل"')}
                 </p>
               </div>
               <DreamForm />
