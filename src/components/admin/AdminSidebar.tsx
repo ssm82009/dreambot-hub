@@ -29,87 +29,114 @@ import {
 } from 'lucide-react';
 
 const AdminSidebar: React.FC = () => {
-  const { activeSections, toggleSection } = useAdmin();
+  const { activeSections, setActiveSections, toggleSection } = useAdmin();
   const navigate = useNavigate();
+
+  // دالة للتبديل بين الأقسام
+  const handleSectionToggle = (sectionId: keyof typeof activeSections) => {
+    // تعيين جميع الأقسام إلى false أولاً
+    const resetSections: Record<string, boolean> = {};
+    Object.keys(activeSections).forEach(key => {
+      resetSections[key] = false;
+    });
+    
+    // تفعيل القسم المحدد فقط
+    setActiveSections({
+      ...resetSections,
+      [sectionId]: !activeSections[sectionId]
+    });
+  };
+
+  // دالة للعودة إلى لوحة القيادة الرئيسية
+  const handleDashboardClick = () => {
+    // تعيين جميع الأقسام إلى false
+    const resetSections: Record<string, boolean> = {};
+    Object.keys(activeSections).forEach(key => {
+      resetSections[key] = false;
+    });
+    
+    setActiveSections(resetSections);
+    navigate('/admin');
+  };
 
   const menuSections = [
     {
       id: 'dashboard',
       label: 'لوحة التحكم',
       icon: Home,
-      action: () => navigate('/admin')
+      action: handleDashboardClick
     },
     {
       id: 'aiSettings',
       label: 'إعدادات الذكاء الاصطناعي',
       icon: Settings,
-      action: () => toggleSection('aiSettings')
+      action: () => handleSectionToggle('aiSettings')
     },
     {
       id: 'interpretationSettings',
       label: 'إعدادات التفسير',
       icon: FileText,
-      action: () => toggleSection('interpretationSettings')
+      action: () => handleSectionToggle('interpretationSettings')
     },
     {
       id: 'pricingSettings',
       label: 'إعدادات الاشتراكات',
       icon: CreditCard,
-      action: () => toggleSection('pricingSettings')
+      action: () => handleSectionToggle('pricingSettings')
     },
     {
       id: 'paymentSettings',
       label: 'إعدادات الدفع',
       icon: CreditCard,
-      action: () => toggleSection('paymentSettings')
+      action: () => handleSectionToggle('paymentSettings')
     },
     {
       id: 'transactions',
       label: 'إدارة المعاملات',
       icon: TransactionIcon,
-      action: () => toggleSection('transactions')
+      action: () => handleSectionToggle('transactions')
     },
     {
       id: 'users',
       label: 'إدارة المستخدمين',
       icon: Users,
-      action: () => toggleSection('users')
+      action: () => handleSectionToggle('users')
     },
     {
       id: 'pages',
       label: 'إدارة الصفحات',
       icon: LayoutDashboard,
-      action: () => toggleSection('pages')
+      action: () => handleSectionToggle('pages')
     },
     {
       id: 'navbar',
       label: 'إدارة شريط التنقل',
       icon: Menu,
-      action: () => toggleSection('navbar')
+      action: () => handleSectionToggle('navbar')
     },
     {
       id: 'tickets',
       label: 'إدارة التذاكر',
       icon: TicketCheck,
-      action: () => toggleSection('tickets')
+      action: () => handleSectionToggle('tickets')
     },
     {
       id: 'theme',
       label: 'إعدادات المظهر',
       icon: PaintBucket,
-      action: () => toggleSection('theme')
+      action: () => handleSectionToggle('theme')
     },
     {
       id: 'seo',
       label: 'إعدادات تحسين محركات البحث',
       icon: Search,
-      action: () => toggleSection('seo')
+      action: () => handleSectionToggle('seo')
     },
     {
       id: 'homeSections',
       label: 'أقسام الصفحة الرئيسية',
       icon: LayoutDashboard,
-      action: () => toggleSection('homeSections')
+      action: () => handleSectionToggle('homeSections')
     }
   ];
 
@@ -129,7 +156,7 @@ const AdminSidebar: React.FC = () => {
                 <SidebarMenuItem key={section.id}>
                   <SidebarMenuButton 
                     onClick={section.action}
-                    isActive={section.id === 'dashboard' ? true : activeSections[section.id]}
+                    isActive={section.id === 'dashboard' ? !isAnySectionActive : activeSections[section.id as keyof typeof activeSections]}
                     tooltip={section.label}
                   >
                     <section.icon className="h-5 w-5" />

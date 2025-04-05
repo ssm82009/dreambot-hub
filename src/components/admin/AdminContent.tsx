@@ -38,7 +38,7 @@ const AdminContent: React.FC = () => {
           {/* الإحصائيات تظهر فقط إذا لم يكن هناك أي قسم آخر مفعل */}
           {!isAnySectionActive && <DashboardStats />}
           
-          {/* الأقسام الأخرى تظهر فقط عند تفعيلها */}
+          {/* عرض القسم المحدد فقط */}
           {activeSections.aiSettings && <AiSettingsSection />}
           {activeSections.interpretationSettings && <InterpretationSettingsSection />}
           {activeSections.pricingSettings && <PricingSettingsSection />}
