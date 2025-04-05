@@ -10,8 +10,8 @@ interface HeroProps {
 }
 
 const Hero: React.FC<HeroProps> = ({
-  title = "تفسير الأحلام بالذكاء الاصطناعي",
-  subtitle = "فسّر أحلامك بدقة عالية باستخدام أحدث تقنيات الذكاء الاصطناعي واستنادًا إلى مراجع التفسير الإسلامية الموثوقة."
+  title = "فَسِّرْ حُلْمَكَ الآنَ!",
+  subtitle = "~"
 }) => {
   const navigate = useNavigate();
   
@@ -80,7 +80,7 @@ const Hero: React.FC<HeroProps> = ({
                   <path d="M17 17h.01" />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold mb-2">تفسير دقيق</h3>
+              <h5 className="text-xl font-semibold mb-2">تفسير دقيق</h5>
               <p className="text-foreground/70">تفسيرات مبنية على أسس علمية وموثوقة من كتب التفسير المعتمدة.</p>
             </div>
             
@@ -94,7 +94,7 @@ const Hero: React.FC<HeroProps> = ({
                   <path d="M16 10v8" />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold mb-2">استجابة فورية</h3>
+              <h5 className="text-xl font-semibold mb-2">استجابة فورية</h5>
               <p className="text-foreground/70">احصل على تفسير حلمك في ثوانٍ معدودة دون انتظار.</p>
             </div>
             
@@ -105,7 +105,7 @@ const Hero: React.FC<HeroProps> = ({
                   <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold mb-2">سهولة الاستخدام</h3>
+              <h5 className="text-xl font-semibold mb-2">سهولة الاستخدام</h5>
               <p className="text-foreground/70">واجهة بسيطة وسهلة الاستخدام لجميع المستخدمين.</p>
             </div>
           </div>
