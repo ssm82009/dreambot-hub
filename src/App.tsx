@@ -26,16 +26,16 @@ import Privacy from './pages/Privacy';
 import { AdminProvider } from './contexts/admin/AdminProvider';
 import { usePageMeta } from './hooks/usePageMeta';
 
-// Setup query client with longer cache time for stability
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutes
-    },
-  },
-});
+// Setup query client
+const queryClient = new QueryClient();
 
-// Application Root with Providers
+// Admin routing with meta tags support
+const AdminRoutes = () => {
+  usePageMeta();
+  return <Admin />;
+};
+
+// Main App component
 const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
@@ -49,9 +49,8 @@ const App = () => {
   );
 };
 
-// Separated content component to use hooks that require router context
+// Separated for using usePageMeta hook which requires Router context
 const AppContent = () => {
-  // Apply the page meta hook at the root level
   usePageMeta();
   
   return (
@@ -61,7 +60,7 @@ const AppContent = () => {
       <Route path="/register" element={<Register />} />
       <Route path="/dream/:id" element={<DreamDetails />} />
       <Route path="/profile" element={<Profile />} />
-      <Route path="/admin" element={<Admin />} />
+      <Route path="/admin" element={<AdminRoutes />} />
       <Route path="/pricing" element={<Pricing />} />
       <Route path="/payment" element={<Payment />} />
       <Route path="/payment/success" element={<PaymentSuccess />} />

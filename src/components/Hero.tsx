@@ -1,10 +1,8 @@
-
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { useAdmin } from "@/contexts/admin";
 
 interface HeroProps {
   title?: string;
@@ -16,7 +14,6 @@ const Hero: React.FC<HeroProps> = ({
   subtitle = "فسّر أحلامك بدقة عالية باستخدام أحدث تقنيات الذكاء الاصطناعي واستنادًا إلى مراجع التفسير الإسلامية الموثوقة."
 }) => {
   const navigate = useNavigate();
-  const { seoSettingsForm } = useAdmin();
   
   // وظيفة للتمرير إلى قسم كتابة الحلم مع التحقق من تسجيل الدخول
   const handleStartNow = async () => {
@@ -40,9 +37,6 @@ const Hero: React.FC<HeroProps> = ({
     }
   };
 
-  // Use SEO title if available, fallback to the provided title prop
-  const displayTitle = seoSettingsForm?.metaTitle || title;
-
   return (
     <div className="relative overflow-hidden pt-24 pb-16 rtl">
       <div className="absolute inset-0 dream-pattern opacity-50 z-0"></div>
@@ -57,7 +51,7 @@ const Hero: React.FC<HeroProps> = ({
             </svg>
           </div>
           
-          <h1 className="text-4xl md:text-6xl font-bold mb-6 gradient-text">{displayTitle}</h1>
+          <h1 className="text-4xl md:text-6xl font-bold mb-6 gradient-text">{title}</h1>
           
           <p className="text-xl md:text-2xl text-foreground/80 max-w-3xl mb-10">
             {subtitle}

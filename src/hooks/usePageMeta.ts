@@ -11,17 +11,9 @@ export const usePageMeta = () => {
   const location = useLocation();
 
   useEffect(() => {
-    // Force update of the document title - this will override any previous title
+    // Update page title
     if (seoSettingsForm.metaTitle) {
-      // Clear any existing title
-      document.title = '';
-      
-      // Force title update with a higher priority
-      setTimeout(() => {
-        document.title = seoSettingsForm.metaTitle;
-        // Also set in localStorage to maintain consistency across page reloads
-        localStorage.setItem('page-title', seoSettingsForm.metaTitle);
-      }, 10);
+      document.title = seoSettingsForm.metaTitle;
     }
 
     // Update meta description
@@ -148,38 +140,7 @@ export const usePageMeta = () => {
         document.head.appendChild(element);
       });
     }
-
-    // Clear any locally stored or conflicting title when unmounting
-    return () => {
-      if (seoSettingsForm.metaTitle) {
-        // Make sure the title is consistent when the component is unmounted
-        document.title = seoSettingsForm.metaTitle;
-      }
-    };
   }, [seoSettingsForm, location.pathname]);
-
-  // Additional effect specifically to handle route changes
-  useEffect(() => {
-    // Force update title on location change with a higher priority to override any 
-    // potential changes from other components
-    const titleTimer = setTimeout(() => {
-      if (seoSettingsForm.metaTitle) {
-        document.title = seoSettingsForm.metaTitle;
-        // Ensure localStorage is in sync
-        localStorage.setItem('page-title', seoSettingsForm.metaTitle);
-      }
-    }, 100);
-
-    // Check if there's any conflicting title from localStorage that might be overriding our settings
-    const storedTitle = localStorage.getItem('page-title');
-    if (storedTitle !== seoSettingsForm.metaTitle && seoSettingsForm.metaTitle) {
-      localStorage.setItem('page-title', seoSettingsForm.metaTitle);
-    }
-
-    return () => {
-      clearTimeout(titleTimer);
-    };
-  }, [location.pathname, seoSettingsForm.metaTitle]);
 
   return null;
 };
