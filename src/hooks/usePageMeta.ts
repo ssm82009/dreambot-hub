@@ -11,7 +11,7 @@ export const usePageMeta = () => {
   const location = useLocation();
 
   useEffect(() => {
-    // Update page title - ensure it's applied immediately
+    // Update page title
     if (seoSettingsForm.metaTitle) {
       document.title = seoSettingsForm.metaTitle;
     }
@@ -140,12 +140,6 @@ export const usePageMeta = () => {
         document.head.appendChild(element);
       });
     }
-
-    // When unmounting, clean up any dynamically added elements
-    return () => {
-      // No cleanup needed for title since it's part of the document already
-      // For advanced cleanup, you would need to keep track of which elements were added dynamically
-    };
   }, [seoSettingsForm, location.pathname]);
 
   return null;
