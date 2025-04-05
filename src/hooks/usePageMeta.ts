@@ -1,5 +1,5 @@
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useAdmin } from '@/contexts/admin';
 import { useLocation } from 'react-router-dom';
 
@@ -9,11 +9,22 @@ import { useLocation } from 'react-router-dom';
 export const usePageMeta = () => {
   const { seoSettingsForm } = useAdmin();
   const location = useLocation();
+  const isInitialMount = useRef(true);
 
+  // تطبيق إعدادات ميتا (SEO) عند التحميل وعندما تتغير الإعدادات
   useEffect(() => {
-    // Update page title
+    // حل مشكلة العنوان بإعطائه أولوية عالية وإزالة أي عنوان مخزن محلياً
     if (seoSettingsForm.metaTitle) {
+      // إزالة أي عنوان مخزن محلياً قد يسبب مشاكل
+      localStorage.removeItem('page_title');
+      
+      // تطبيق العنوان فوراً وبأولوية عالية
       document.title = seoSettingsForm.metaTitle;
+      
+      // تطبيق العنوان مرة أخرى بعد فترة قصيرة للتأكد من عدم تغييره
+      setTimeout(() => {
+        document.title = seoSettingsForm.metaTitle;
+      }, 100);
     }
 
     // Update meta description
@@ -140,7 +151,25 @@ export const usePageMeta = () => {
         document.head.appendChild(element);
       });
     }
-  }, [seoSettingsForm, location.pathname]);
+
+    // تعيين العلم بعد التحميل الأولي
+    isInitialMount.current = false;
+  }, [seoSettingsForm]);
+
+  // تحديث العنوان عند تغيير المسار
+  useEffect(() => {
+    // تطبيق العنوان عند تغيير المسار إذا كان هناك عنوان محدد من السيو
+    if (!isInitialMount.current && seoSettingsForm.metaTitle) {
+      document.title = seoSettingsForm.metaTitle;
+    }
+  }, [location.pathname, seoSettingsForm.metaTitle]);
+
+  // دالة التنظيف عند إزالة المكون
+  useEffect(() => {
+    return () => {
+      // لا نريد إزالة العنوان عند إزالة المكون، لأنه قد يتسبب في مشاكل
+    };
+  }, []);
 
   return null;
 };
