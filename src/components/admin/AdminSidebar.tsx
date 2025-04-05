@@ -32,6 +32,11 @@ const AdminSidebar: React.FC = () => {
   const { activeSections, setActiveSections, toggleSection } = useAdmin();
   const navigate = useNavigate();
 
+  // تحقق ما إذا كان أي قسم مفعل باستثناء لوحة التحكم
+  const isAnySectionActive = Object.entries(activeSections).some(
+    ([key, value]) => key !== 'dashboard' && value === true
+  );
+
   // دالة للتبديل بين الأقسام
   const handleSectionToggle = (sectionId: keyof typeof activeSections) => {
     // تعيين جميع الأقسام إلى false أولاً
