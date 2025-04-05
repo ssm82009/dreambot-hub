@@ -15,8 +15,8 @@ const SeoSettingsSection = () => {
       title="تحسين محركات البحث (SEO)" 
       description="إدارة إعدادات السيو والكلمات المفتاحية وخريطة الموقع"
       icon={Search}
-      isOpen={activeSections.seoSettings}
-      onToggle={() => toggleSection('seoSettings')}
+      isOpen={activeSections.seo}
+      onToggle={() => toggleSection('seo')}
     >
       <SeoSettingsForm 
         initialData={seoSettingsForm}

@@ -12,7 +12,7 @@ const UserManagementSection = () => {
 
   // تحديث بيانات المستخدمين عند فتح القسم
   useEffect(() => {
-    if (activeSections.userManagement) {
+    if (activeSections.users) {
       const fetchUsers = async () => {
         try {
           const { data, error } = await supabase
@@ -34,15 +34,15 @@ const UserManagementSection = () => {
 
       fetchUsers();
     }
-  }, [activeSections.userManagement, setUsers]);
+  }, [activeSections.users, setUsers]);
 
   return (
     <AdminSection 
       title="إدارة الأعضاء والصلاحيات" 
       description="إدارة المستخدمين وتعيين الصلاحيات والباقات"
       icon={Users}
-      isOpen={activeSections.userManagement}
-      onToggle={() => toggleSection('userManagement')}
+      isOpen={activeSections.users}
+      onToggle={() => toggleSection('users')}
     >
       <UserManagement users={users} />
     </AdminSection>

@@ -13,8 +13,8 @@ const TicketManagementSection = () => {
       title="إدارة التذاكر" 
       description="إدارة تذاكر الدعم الفني والشكاوى"
       icon={TicketCheck}
-      isOpen={activeSections.ticketManagement}
-      onToggle={() => toggleSection('ticketManagement')}
+      isOpen={activeSections.tickets}
+      onToggle={() => toggleSection('tickets')}
     >
       <TicketManagement />
     </AdminSection>

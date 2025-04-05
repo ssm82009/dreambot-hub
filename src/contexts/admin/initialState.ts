@@ -61,7 +61,7 @@ export const initialThemeSettings: ThemeSettingsFormValues = {
   twitterLink: '',
   facebookLink: '',
   instagramLink: '',
-  slug: 'تفسير الأحلام عبر الذكاء الاصطناعي' // Added slug property
+  slug: 'تفسير الأحلام عبر الذكاء الاصطناعي'
 };
 
 export const initialSeoSettings: SeoSettingsFormValues = {
@@ -96,5 +96,13 @@ export const initialActiveSections: ActiveSections = {
   tickets: false,
   theme: false,
   seo: false,
-  homeSections: false
+  homeSections: false,
+  // Add the missing sections
+  navbarManagement: false,
+  pageManagement: false,
+  seoSettings: false,
+  themeSettings: false,
+  ticketManagement: false,
+  transactionManagement: false,
+  userManagement: false
 };

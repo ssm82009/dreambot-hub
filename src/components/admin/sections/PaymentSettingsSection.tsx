@@ -10,6 +10,21 @@ const PaymentSettingsSection = () => {
   const { paymentSettingsForm, activeSections, toggleSection } = useAdmin();
   const { handlePaymentSettingsSubmit } = usePaymentSettingsHandler();
 
+  // Transform the flat structure to the nested structure expected by PaymentSettingsForm
+  const transformedData = {
+    paylink: {
+      enabled: paymentSettingsForm.paylinkEnabled,
+      apiKey: paymentSettingsForm.paylinkApiKey,
+      secretKey: paymentSettingsForm.paylinkSecretKey
+    },
+    paypal: {
+      enabled: paymentSettingsForm.paypalEnabled,
+      clientId: paymentSettingsForm.paypalClientId,
+      secret: paymentSettingsForm.paypalSecret,
+      sandbox: paymentSettingsForm.paypalSandbox
+    }
+  };
+
   return (
     <AdminSection 
       title="إعدادات بوابات الدفع" 
@@ -19,7 +34,7 @@ const PaymentSettingsSection = () => {
       onToggle={() => toggleSection('paymentSettings')}
     >
       <PaymentSettingsForm 
-        initialData={paymentSettingsForm}
+        initialData={transformedData}
         onSubmit={handlePaymentSettingsSubmit}
       />
     </AdminSection>

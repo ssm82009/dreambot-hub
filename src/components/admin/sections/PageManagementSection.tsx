@@ -93,8 +93,8 @@ const PageManagementSection = () => {
       title="إدارة الصفحات" 
       description="إدارة محتوى صفحات الموقع"
       icon={FileText}
-      isOpen={activeSections.pageManagement}
-      onToggle={() => toggleSection('pageManagement')}
+      isOpen={activeSections.pages}
+      onToggle={() => toggleSection('pages')}
     >
       <PageManagement 
         pages={pages} 

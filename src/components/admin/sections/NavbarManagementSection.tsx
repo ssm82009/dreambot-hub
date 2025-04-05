@@ -13,8 +13,8 @@ const NavbarManagementSection = () => {
       title="إدارة شريط التنقل"
       description="تخصيص وترتيب روابط شريط التنقل في الموقع"
       icon={LayoutList}
-      isOpen={activeSections.navbarManagement}
-      onToggle={() => toggleSection('navbarManagement')}
+      isOpen={activeSections.navbar}
+      onToggle={() => toggleSection('navbar')}
     >
       <NavbarManagement />
     </AdminSection>

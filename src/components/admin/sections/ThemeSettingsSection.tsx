@@ -15,8 +15,8 @@ const ThemeSettingsSection = () => {
       title="إعدادات المظهر" 
       description="تخصيص ألوان الموقع واللوجو والهيدر والفوتر"
       icon={Palette}
-      isOpen={activeSections.themeSettings}
-      onToggle={() => toggleSection('themeSettings')}
+      isOpen={activeSections.theme}
+      onToggle={() => toggleSection('theme')}
     >
       <ThemeSettingsForm 
         initialData={themeSettingsForm}

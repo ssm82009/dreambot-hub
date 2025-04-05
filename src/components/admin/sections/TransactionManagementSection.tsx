@@ -13,8 +13,8 @@ const TransactionManagementSection = () => {
       title="إدارة المعاملات والمدفوعات"
       description="عرض وتحديث سجلات المعاملات والاشتراكات"
       icon={Receipt}
-      isOpen={activeSections.transactionManagement}
-      onToggle={() => toggleSection('transactionManagement')}
+      isOpen={activeSections.transactions}
+      onToggle={() => toggleSection('transactions')}
     >
       <TransactionManagement />
     </AdminSection>

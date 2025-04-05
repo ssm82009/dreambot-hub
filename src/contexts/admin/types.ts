@@ -22,7 +22,7 @@ export type ThemeSettingsFormValues = {
   twitterLink?: string;
   facebookLink?: string;
   instagramLink?: string;
-  slug: string; // Added the missing slug property
+  slug: string;
 };
 
 export type AiSettingsFormValues = {
@@ -90,13 +90,21 @@ export type ActiveSections = {
   theme: boolean;
   seo: boolean;
   homeSections: boolean;
+  // Add missing sections
+  navbarManagement: boolean;
+  pageManagement: boolean;
+  seoSettings: boolean;
+  themeSettings: boolean;
+  ticketManagement: boolean;
+  transactionManagement: boolean;
+  userManagement: boolean;
 };
 
 export type AdminProviderProps = {
   children: React.ReactNode;
 };
 
-// Add the AdminContextType definition that was missing
+// AdminContextType definition
 export type AdminContextType = {
   isAdmin: boolean;
   setIsAdmin: React.Dispatch<React.SetStateAction<boolean>>;

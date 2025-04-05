@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { LayoutDashboard, EditIcon } from 'lucide-react';
 import AdminSection from '@/components/admin/AdminSection';
@@ -14,7 +13,7 @@ import { Input } from '@/components/ui/input';
 
 const HomeSectionsSection = () => {
   const { homeSectionsForm, setHomeSectionsForm, activeSections, toggleSection, setDbLoading } = useAdmin();
-  const [sections, setSections] = useState<HomeSectionItem[]>(homeSectionsForm.sections);
+  const [sections, setSections] = useState<HomeSectionItem[]>(homeSectionsForm);
   const [editingSection, setEditingSection] = useState<string | null>(null);
 
   // Handle section order change
@@ -47,7 +46,7 @@ const HomeSectionsSection = () => {
   const saveChanges = async () => {
     setDbLoading(true);
     try {
-      setHomeSectionsForm({ sections });
+      setHomeSectionsForm(sections);
       
       const { error } = await supabase
         .from('site_settings')
@@ -171,7 +170,7 @@ const HomeSectionsSection = () => {
             <div className="space-y-2">
               <label className="text-sm font-medium">وصف الخطوة الأولى</label>
               <Textarea 
-                value={content.step1_text || 'قم بكتابة جميع تفاصيل حلمك، كلما كانت التفاصيل أكثر كان التفسير أدق.'} 
+                value={content.step1_text || 'قم بكتابة جميع تفاصيل حلمك، كلما كانت التفاصيل أ��ثر كان التفسير أدق.'} 
                 onChange={(e) => updateSectionContent(section.id, 'step1_text', e.target.value)}
                 className="rtl"
               />
@@ -241,7 +240,7 @@ const HomeSectionsSection = () => {
   return (
     <AdminSection 
       title="أقسام الصفحة الرئيسية" 
-      description="ترتيب وإظهار/إخفاء وتعديل محتوى أقسام الصفحة الرئيسية"
+      description="ترتيب وإظهار/إخفاء ��تعديل محتوى أقسام الصفحة الرئيسية"
       icon={LayoutDashboard}
       isOpen={activeSections.homeSections}
       onToggle={() => toggleSection('homeSections')}
