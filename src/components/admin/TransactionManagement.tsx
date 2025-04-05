@@ -24,7 +24,7 @@ const TransactionManagement: React.FC = () => {
   } = useTransactionManagement();
 
   return (
-    <Card className="w-full">
+    <Card className="w-full max-w-[calc(100vw-18rem)]">
       <CardHeader>
         <CardTitle>إدارة المعاملات والمدفوعات</CardTitle>
         <CardDescription>عرض وتحديث سجلات المعاملات والمدفوعات</CardDescription>
@@ -33,7 +33,7 @@ const TransactionManagement: React.FC = () => {
           onSearchChange={handleSearch} 
         />
       </CardHeader>
-      <CardContent className="px-2 md:px-6">
+      <CardContent className="px-1 md:px-4">
         <TransactionStateDisplay 
           loading={loading} 
           isEmpty={isEmpty} 

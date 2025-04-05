@@ -68,19 +68,19 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({
   };
 
   return (
-    <div className="w-full overflow-auto">
+    <div className="w-full overflow-auto rounded-md border border-border">
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="whitespace-nowrap">البريد الإلكتروني</TableHead>
-            <TableHead className="whitespace-nowrap">رقم الفاتورة</TableHead>
-            <TableHead className="whitespace-nowrap">الباقة</TableHead>
-            <TableHead className="whitespace-nowrap">طريقة الدفع</TableHead>
-            <TableHead className="whitespace-nowrap">المبلغ</TableHead>
-            <TableHead className="whitespace-nowrap">تاريخ الشراء</TableHead>
-            <TableHead className="whitespace-nowrap">تاريخ الانتهاء</TableHead>
-            <TableHead className="whitespace-nowrap">الحالة</TableHead>
-            <TableHead className="text-left whitespace-nowrap">الإجراءات</TableHead>
+            <TableHead className="whitespace-nowrap px-2">البريد الإلكتروني</TableHead>
+            <TableHead className="whitespace-nowrap px-2">رقم الفاتورة</TableHead>
+            <TableHead className="whitespace-nowrap px-2">الباقة</TableHead>
+            <TableHead className="whitespace-nowrap px-2">طريقة الدفع</TableHead>
+            <TableHead className="whitespace-nowrap px-2">المبلغ</TableHead>
+            <TableHead className="whitespace-nowrap px-2">تاريخ الشراء</TableHead>
+            <TableHead className="whitespace-nowrap px-2">تاريخ الانتهاء</TableHead>
+            <TableHead className="whitespace-nowrap px-2">الحالة</TableHead>
+            <TableHead className="text-left whitespace-nowrap px-2">الإجراءات</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -91,23 +91,23 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({
             
             return (
               <TableRow key={transaction.id}>
-                <TableCell className="font-medium whitespace-nowrap">
+                <TableCell className="font-medium whitespace-nowrap px-2">
                   {user.email || 'غير مسجل'}
                 </TableCell>
-                <TableCell className="whitespace-nowrap">{transaction.invoice_id}</TableCell>
-                <TableCell className="whitespace-nowrap">{displayPlanName}</TableCell>
-                <TableCell className="whitespace-nowrap">{normalizedPaymentMethod}</TableCell>
-                <TableCell className="whitespace-nowrap">{transaction.amount}</TableCell>
-                <TableCell className="whitespace-nowrap">
+                <TableCell className="whitespace-nowrap px-2">{transaction.invoice_id}</TableCell>
+                <TableCell className="whitespace-nowrap px-2">{displayPlanName}</TableCell>
+                <TableCell className="whitespace-nowrap px-2">{normalizedPaymentMethod}</TableCell>
+                <TableCell className="whitespace-nowrap px-2">{transaction.amount}</TableCell>
+                <TableCell className="whitespace-nowrap px-2">
                   {formatDate(transaction.created_at)}
                 </TableCell>
-                <TableCell className="whitespace-nowrap">
+                <TableCell className="whitespace-nowrap px-2">
                   {formatDate(transaction.expires_at)}
                 </TableCell>
-                <TableCell className="whitespace-nowrap">
+                <TableCell className="whitespace-nowrap px-2">
                   <PaymentStatusBadge status={transaction.status} />
                 </TableCell>
-                <TableCell className="whitespace-nowrap">
+                <TableCell className="whitespace-nowrap px-2">
                   <Button 
                     size="sm" 
                     variant="ghost" 
