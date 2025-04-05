@@ -11,12 +11,17 @@ export const usePageMeta = () => {
   const location = useLocation();
 
   useEffect(() => {
-    // Immediately update the document title with higher priority
+    // Force update of the document title - this will override any previous title
     if (seoSettingsForm.metaTitle) {
-      // Force title update with a small delay to ensure it takes precedence
+      // Clear any existing title
+      document.title = '';
+      
+      // Force title update with a higher priority
       setTimeout(() => {
         document.title = seoSettingsForm.metaTitle;
-      }, 0);
+        // Also set in localStorage to maintain consistency across page reloads
+        localStorage.setItem('page-title', seoSettingsForm.metaTitle);
+      }, 10);
     }
 
     // Update meta description
@@ -144,23 +149,32 @@ export const usePageMeta = () => {
       });
     }
 
-    // When component unmounts, ensure title consistency
+    // Clear any locally stored or conflicting title when unmounting
     return () => {
-      // Re-apply title on cleanup to maintain consistency
       if (seoSettingsForm.metaTitle) {
+        // Make sure the title is consistent when the component is unmounted
         document.title = seoSettingsForm.metaTitle;
       }
     };
   }, [seoSettingsForm, location.pathname]);
 
-  // Second effect specifically to force title update on route changes
+  // Additional effect specifically to handle route changes
   useEffect(() => {
-    // Force update title on location change with a small delay
+    // Force update title on location change with a higher priority to override any 
+    // potential changes from other components
     const titleTimer = setTimeout(() => {
       if (seoSettingsForm.metaTitle) {
         document.title = seoSettingsForm.metaTitle;
+        // Ensure localStorage is in sync
+        localStorage.setItem('page-title', seoSettingsForm.metaTitle);
       }
-    }, 50);
+    }, 100);
+
+    // Check if there's any conflicting title from localStorage that might be overriding our settings
+    const storedTitle = localStorage.getItem('page-title');
+    if (storedTitle !== seoSettingsForm.metaTitle && seoSettingsForm.metaTitle) {
+      localStorage.setItem('page-title', seoSettingsForm.metaTitle);
+    }
 
     return () => {
       clearTimeout(titleTimer);
