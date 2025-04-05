@@ -208,7 +208,7 @@ const DreamForm = () => {
           <CardHeader>
             <CardTitle className="text-2xl">فسّر حلمك الآن</CardTitle>
             <CardDescription>
-              اكتب تفاصيل حلمك بدقة للحصول على تفسير أكثر دقة
+              اكتب حلمك بلغة عربية فصيحة وباختصار لكي تحصل على تفسير دقيق
             </CardDescription>
             {renderAuthenticationStatus()}
           </CardHeader>
