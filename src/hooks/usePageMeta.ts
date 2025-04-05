@@ -1,4 +1,3 @@
-
 import { useEffect } from 'react';
 import { useAdmin } from '@/contexts/admin';
 import { useLocation } from 'react-router-dom';
@@ -140,6 +139,12 @@ export const usePageMeta = () => {
         document.head.appendChild(element);
       });
     }
+
+    // When unmounting, clean up any dynamically added elements
+    return () => {
+      // No cleanup needed for title since it's part of the document already
+      // For advanced cleanup, you would need to keep track of which elements were added dynamically
+    };
   }, [seoSettingsForm, location.pathname]);
 
   return null;
