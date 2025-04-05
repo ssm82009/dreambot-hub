@@ -71,16 +71,16 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({
     <div className="w-full overflow-auto rounded-md border border-border">
       <Table>
         <TableHeader>
-          <TableRow>
-            <TableHead className="whitespace-nowrap px-2">البريد الإلكتروني</TableHead>
-            <TableHead className="whitespace-nowrap px-2">رقم الفاتورة</TableHead>
-            <TableHead className="whitespace-nowrap px-2">الباقة</TableHead>
-            <TableHead className="whitespace-nowrap px-2">طريقة الدفع</TableHead>
-            <TableHead className="whitespace-nowrap px-2">المبلغ</TableHead>
-            <TableHead className="whitespace-nowrap px-2">تاريخ الشراء</TableHead>
-            <TableHead className="whitespace-nowrap px-2">تاريخ الانتهاء</TableHead>
-            <TableHead className="whitespace-nowrap px-2">الحالة</TableHead>
-            <TableHead className="text-left whitespace-nowrap px-2">الإجراءات</TableHead>
+          <TableRow className="h-8 text-xs">
+            <TableHead className="whitespace-nowrap px-1 py-1">البريد الإلكتروني</TableHead>
+            <TableHead className="whitespace-nowrap px-1 py-1">رقم الفاتورة</TableHead>
+            <TableHead className="whitespace-nowrap px-1 py-1">الباقة</TableHead>
+            <TableHead className="whitespace-nowrap px-1 py-1">طريقة الدفع</TableHead>
+            <TableHead className="whitespace-nowrap px-1 py-1">المبلغ</TableHead>
+            <TableHead className="whitespace-nowrap px-1 py-1">تاريخ الشراء</TableHead>
+            <TableHead className="whitespace-nowrap px-1 py-1">تاريخ الانتهاء</TableHead>
+            <TableHead className="whitespace-nowrap px-1 py-1">الحالة</TableHead>
+            <TableHead className="text-left whitespace-nowrap px-1 py-1">الإجراءات</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -90,30 +90,31 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({
             const normalizedPaymentMethod = normalizePaymentMethod(transaction.payment_method);
             
             return (
-              <TableRow key={transaction.id}>
-                <TableCell className="font-medium whitespace-nowrap px-2">
+              <TableRow key={transaction.id} className="h-8 text-xs">
+                <TableCell className="font-medium whitespace-nowrap px-1 py-1">
                   {user.email || 'غير مسجل'}
                 </TableCell>
-                <TableCell className="whitespace-nowrap px-2">{transaction.invoice_id}</TableCell>
-                <TableCell className="whitespace-nowrap px-2">{displayPlanName}</TableCell>
-                <TableCell className="whitespace-nowrap px-2">{normalizedPaymentMethod}</TableCell>
-                <TableCell className="whitespace-nowrap px-2">{transaction.amount}</TableCell>
-                <TableCell className="whitespace-nowrap px-2">
+                <TableCell className="whitespace-nowrap px-1 py-1">{transaction.invoice_id}</TableCell>
+                <TableCell className="whitespace-nowrap px-1 py-1">{displayPlanName}</TableCell>
+                <TableCell className="whitespace-nowrap px-1 py-1">{normalizedPaymentMethod}</TableCell>
+                <TableCell className="whitespace-nowrap px-1 py-1">{transaction.amount}</TableCell>
+                <TableCell className="whitespace-nowrap px-1 py-1">
                   {formatDate(transaction.created_at)}
                 </TableCell>
-                <TableCell className="whitespace-nowrap px-2">
+                <TableCell className="whitespace-nowrap px-1 py-1">
                   {formatDate(transaction.expires_at)}
                 </TableCell>
-                <TableCell className="whitespace-nowrap px-2">
+                <TableCell className="whitespace-nowrap px-1 py-1">
                   <PaymentStatusBadge status={transaction.status} />
                 </TableCell>
-                <TableCell className="whitespace-nowrap px-2">
+                <TableCell className="whitespace-nowrap px-1 py-1">
                   <Button 
                     size="sm" 
                     variant="ghost" 
                     onClick={() => onEditClick(transaction)}
+                    className="h-6 px-2 py-0 text-xs"
                   >
-                    <Pencil className="h-4 w-4 ml-1" />
+                    <Pencil className="h-3 w-3 ml-1" />
                     تعديل
                   </Button>
                 </TableCell>
