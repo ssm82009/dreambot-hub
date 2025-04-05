@@ -68,19 +68,19 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({
   };
 
   return (
-    <div className="overflow-x-auto">
+    <div className="w-full overflow-auto">
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>البريد الإلكتروني</TableHead>
-            <TableHead>رقم الفاتورة</TableHead>
-            <TableHead>الباقة</TableHead>
-            <TableHead>طريقة الدفع</TableHead>
-            <TableHead>المبلغ</TableHead>
-            <TableHead>تاريخ الشراء</TableHead>
-            <TableHead>تاريخ الانتهاء</TableHead>
-            <TableHead>الحالة</TableHead>
-            <TableHead className="text-left">الإجراءات</TableHead>
+            <TableHead className="whitespace-nowrap">البريد الإلكتروني</TableHead>
+            <TableHead className="whitespace-nowrap">رقم الفاتورة</TableHead>
+            <TableHead className="whitespace-nowrap">الباقة</TableHead>
+            <TableHead className="whitespace-nowrap">طريقة الدفع</TableHead>
+            <TableHead className="whitespace-nowrap">المبلغ</TableHead>
+            <TableHead className="whitespace-nowrap">تاريخ الشراء</TableHead>
+            <TableHead className="whitespace-nowrap">تاريخ الانتهاء</TableHead>
+            <TableHead className="whitespace-nowrap">الحالة</TableHead>
+            <TableHead className="text-left whitespace-nowrap">الإجراءات</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -91,23 +91,23 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({
             
             return (
               <TableRow key={transaction.id}>
-                <TableCell className="font-medium">
+                <TableCell className="font-medium whitespace-nowrap">
                   {user.email || 'غير مسجل'}
                 </TableCell>
-                <TableCell>{transaction.invoice_id}</TableCell>
-                <TableCell>{displayPlanName}</TableCell>
-                <TableCell>{normalizedPaymentMethod}</TableCell>
-                <TableCell>{transaction.amount}</TableCell>
-                <TableCell>
+                <TableCell className="whitespace-nowrap">{transaction.invoice_id}</TableCell>
+                <TableCell className="whitespace-nowrap">{displayPlanName}</TableCell>
+                <TableCell className="whitespace-nowrap">{normalizedPaymentMethod}</TableCell>
+                <TableCell className="whitespace-nowrap">{transaction.amount}</TableCell>
+                <TableCell className="whitespace-nowrap">
                   {formatDate(transaction.created_at)}
                 </TableCell>
-                <TableCell>
+                <TableCell className="whitespace-nowrap">
                   {formatDate(transaction.expires_at)}
                 </TableCell>
-                <TableCell>
+                <TableCell className="whitespace-nowrap">
                   <PaymentStatusBadge status={transaction.status} />
                 </TableCell>
-                <TableCell>
+                <TableCell className="whitespace-nowrap">
                   <Button 
                     size="sm" 
                     variant="ghost" 

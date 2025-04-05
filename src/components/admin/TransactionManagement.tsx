@@ -24,7 +24,7 @@ const TransactionManagement: React.FC = () => {
   } = useTransactionManagement();
 
   return (
-    <Card>
+    <Card className="w-full">
       <CardHeader>
         <CardTitle>إدارة المعاملات والمدفوعات</CardTitle>
         <CardDescription>عرض وتحديث سجلات المعاملات والمدفوعات</CardDescription>
@@ -33,7 +33,7 @@ const TransactionManagement: React.FC = () => {
           onSearchChange={handleSearch} 
         />
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-2 md:px-6">
         <TransactionStateDisplay 
           loading={loading} 
           isEmpty={isEmpty} 
@@ -42,11 +42,13 @@ const TransactionManagement: React.FC = () => {
         
         {!loading && !isEmpty && (
           <>
-            <TransactionsTable 
-              transactions={transactions} 
-              users={users} 
-              onEditClick={handleEditClick} 
-            />
+            <div className="w-full overflow-auto">
+              <TransactionsTable 
+                transactions={transactions} 
+                users={users} 
+                onEditClick={handleEditClick} 
+              />
+            </div>
             <div className="mt-4">
               <TransactionPagination 
                 currentPage={pagination.currentPage}
