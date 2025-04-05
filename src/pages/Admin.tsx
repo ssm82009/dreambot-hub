@@ -55,7 +55,7 @@ const AdminDashboard = () => {
         <div className="min-h-screen flex flex-row-reverse w-full pt-16 dream-pattern" dir="rtl">
           <AdminSidebar />
           <main className="flex-1 p-4 mr-[16rem]">
-            <div className="container mx-auto pr-0 pl-4">
+            <div className="w-full pr-0">
               <AdminHeader />
               <AdminContent />
             </div>
