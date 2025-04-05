@@ -114,13 +114,13 @@ const AdminSidebar: React.FC = () => {
   ];
 
   return (
-    <Sidebar className="border-l" variant="inset">
+    <Sidebar className="border-r" variant="inset" dir="rtl">
       <SidebarHeader>
         <div className="flex items-center px-4 py-2">
           <span className="text-lg font-semibold">لوحة التحكم</span>
         </div>
       </SidebarHeader>
-      <SidebarContent className="rtl">
+      <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>الأقسام</SidebarGroupLabel>
           <SidebarGroupContent>

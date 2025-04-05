@@ -18,6 +18,11 @@ import HomeSectionsSection from '@/components/admin/sections/HomeSectionsSection
 
 const AdminContent: React.FC = () => {
   const { dbLoading, activeSections } = useAdmin();
+  
+  // تحقق ما إذا كان أي قسم مفعل باستثناء لوحة التحكم
+  const isAnySectionActive = Object.entries(activeSections).some(
+    ([key, value]) => key !== 'dashboard' && value === true
+  );
 
   return (
     <div className="mt-4">
@@ -30,18 +35,18 @@ const AdminContent: React.FC = () => {
         </div>
       ) : (
         <div className="space-y-8">
-          {/* الإحصائيات تظهر دائماً كصفحة رئيسية */}
-          <DashboardStats />
+          {/* الإحصائيات تظهر فقط إذا لم يكن هناك أي قسم آخر مفعل */}
+          {!isAnySectionActive && <DashboardStats />}
           
           {/* الأقسام الأخرى تظهر فقط عند تفعيلها */}
           {activeSections.aiSettings && <AiSettingsSection />}
           {activeSections.interpretationSettings && <InterpretationSettingsSection />}
           {activeSections.pricingSettings && <PricingSettingsSection />}
           {activeSections.paymentSettings && <PaymentSettingsSection />}
-          {activeSections.transactions && <TransactionManagementSection />}
           {activeSections.users && <UserManagementSection />}
           {activeSections.pages && <PageManagementSection />}
           {activeSections.navbar && <NavbarManagementSection />}
+          {activeSections.transactions && <TransactionManagementSection />}
           {activeSections.tickets && <TicketManagementSection />}
           {activeSections.theme && <ThemeSettingsSection />}
           {activeSections.seo && <SeoSettingsSection />}
