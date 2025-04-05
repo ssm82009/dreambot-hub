@@ -1,5 +1,5 @@
 
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { useAdmin } from '@/contexts/admin';
 import { useLocation } from 'react-router-dom';
 
@@ -9,22 +9,14 @@ import { useLocation } from 'react-router-dom';
 export const usePageMeta = () => {
   const { seoSettingsForm } = useAdmin();
   const location = useLocation();
-  const isInitialMount = useRef(true);
 
-  // تطبيق إعدادات ميتا (SEO) عند التحميل وعندما تتغير الإعدادات
   useEffect(() => {
-    // حل مشكلة العنوان بإعطائه أولوية عالية وإزالة أي عنوان مخزن محلياً
+    // Immediately update the document title with higher priority
     if (seoSettingsForm.metaTitle) {
-      // إزالة أي عنوان مخزن محلياً قد يسبب مشاكل
-      localStorage.removeItem('page_title');
-      
-      // تطبيق العنوان فوراً وبأولوية عالية
-      document.title = seoSettingsForm.metaTitle;
-      
-      // تطبيق العنوان مرة أخرى بعد فترة قصيرة للتأكد من عدم تغييره
+      // Force title update with a small delay to ensure it takes precedence
       setTimeout(() => {
         document.title = seoSettingsForm.metaTitle;
-      }, 100);
+      }, 0);
     }
 
     // Update meta description
@@ -152,24 +144,28 @@ export const usePageMeta = () => {
       });
     }
 
-    // تعيين العلم بعد التحميل الأولي
-    isInitialMount.current = false;
-  }, [seoSettingsForm]);
-
-  // تحديث العنوان عند تغيير المسار
-  useEffect(() => {
-    // تطبيق العنوان عند تغيير المسار إذا كان هناك عنوان محدد من السيو
-    if (!isInitialMount.current && seoSettingsForm.metaTitle) {
-      document.title = seoSettingsForm.metaTitle;
-    }
-  }, [location.pathname, seoSettingsForm.metaTitle]);
-
-  // دالة التنظيف عند إزالة المكون
-  useEffect(() => {
+    // When component unmounts, ensure title consistency
     return () => {
-      // لا نريد إزالة العنوان عند إزالة المكون، لأنه قد يتسبب في مشاكل
+      // Re-apply title on cleanup to maintain consistency
+      if (seoSettingsForm.metaTitle) {
+        document.title = seoSettingsForm.metaTitle;
+      }
     };
-  }, []);
+  }, [seoSettingsForm, location.pathname]);
+
+  // Second effect specifically to force title update on route changes
+  useEffect(() => {
+    // Force update title on location change with a small delay
+    const titleTimer = setTimeout(() => {
+      if (seoSettingsForm.metaTitle) {
+        document.title = seoSettingsForm.metaTitle;
+      }
+    }, 50);
+
+    return () => {
+      clearTimeout(titleTimer);
+    };
+  }, [location.pathname, seoSettingsForm.metaTitle]);
 
   return null;
 };
