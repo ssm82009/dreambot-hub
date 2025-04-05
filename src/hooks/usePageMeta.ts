@@ -1,4 +1,5 @@
-import { useEffect } from 'react';
+
+import { useEffect, useLayoutEffect } from 'react';
 import { useAdmin } from '@/contexts/admin';
 import { useLocation } from 'react-router-dom';
 
@@ -9,12 +10,15 @@ export const usePageMeta = () => {
   const { seoSettingsForm } = useAdmin();
   const location = useLocation();
 
-  useEffect(() => {
+  // Use useLayoutEffect to update title as early as possible to prevent flickering
+  useLayoutEffect(() => {
     // Update page title
     if (seoSettingsForm.metaTitle) {
       document.title = seoSettingsForm.metaTitle;
     }
+  }, [seoSettingsForm.metaTitle]);
 
+  useEffect(() => {
     // Update meta description
     let metaDescription = document.querySelector('meta[name="description"]');
     if (!metaDescription) {
