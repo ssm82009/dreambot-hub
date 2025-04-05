@@ -147,7 +147,7 @@ const AdminSidebar: React.FC = () => {
 
   return (
     <Sidebar 
-      className="border-l bg-white" 
+      className="border-l bg-white w-64 fixed" 
       variant="inset" 
       side="right" 
       dir="rtl"
