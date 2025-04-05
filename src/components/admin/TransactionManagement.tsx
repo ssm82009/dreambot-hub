@@ -2,11 +2,13 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useTransactionManagement } from '@/hooks/admin/useTransactionManagement';
+import { useRevenueStats } from '@/hooks/admin/useRevenueStats';
 import TransactionSearch from './transaction/TransactionSearch';
 import TransactionsTable from './transaction/TransactionsTable';
 import TransactionStateDisplay from './transaction/TransactionStateDisplay';
 import TransactionEditForm from './transaction/TransactionEditForm';
 import TransactionPagination from './transaction/TransactionPagination';
+import RevenueStats from './transaction/RevenueStats';
 
 const TransactionManagement: React.FC = () => {
   const {
@@ -23,6 +25,15 @@ const TransactionManagement: React.FC = () => {
     handleEditSuccess
   } = useTransactionManagement();
 
+  const {
+    dailyRevenue,
+    monthlyRevenue,
+    yearlyRevenue,
+    totalRevenue,
+    revenueByPlan,
+    loading: revenueLoading
+  } = useRevenueStats();
+
   return (
     <Card className="w-full max-w-[calc(100vw-18rem)]">
       <CardHeader>
@@ -34,6 +45,16 @@ const TransactionManagement: React.FC = () => {
         />
       </CardHeader>
       <CardContent className="px-1 md:px-4">
+        {!revenueLoading && (
+          <RevenueStats 
+            dailyRevenue={dailyRevenue}
+            monthlyRevenue={monthlyRevenue}
+            yearlyRevenue={yearlyRevenue}
+            totalRevenue={totalRevenue}
+            revenueByPlan={revenueByPlan}
+          />
+        )}
+        
         <TransactionStateDisplay 
           loading={loading} 
           isEmpty={isEmpty} 

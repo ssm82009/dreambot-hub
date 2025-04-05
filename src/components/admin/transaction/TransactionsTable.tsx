@@ -68,10 +68,10 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({
   };
 
   return (
-    <div className="w-full overflow-auto rounded-md border border-border">
+    <div className="w-full overflow-auto rounded-md border border-border/50">
       <Table>
         <TableHeader>
-          <TableRow className="h-8 text-xs">
+          <TableRow className="h-7 text-xs">
             <TableHead className="whitespace-nowrap px-1 py-1">البريد الإلكتروني</TableHead>
             <TableHead className="whitespace-nowrap px-1 py-1">رقم الفاتورة</TableHead>
             <TableHead className="whitespace-nowrap px-1 py-1">الباقة</TableHead>
@@ -90,29 +90,29 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({
             const normalizedPaymentMethod = normalizePaymentMethod(transaction.payment_method);
             
             return (
-              <TableRow key={transaction.id} className="h-8 text-xs">
-                <TableCell className="font-medium whitespace-nowrap px-1 py-1">
+              <TableRow key={transaction.id} className="h-7 text-xs">
+                <TableCell className="font-medium whitespace-nowrap px-1 py-0.5">
                   {user.email || 'غير مسجل'}
                 </TableCell>
-                <TableCell className="whitespace-nowrap px-1 py-1">{transaction.invoice_id}</TableCell>
-                <TableCell className="whitespace-nowrap px-1 py-1">{displayPlanName}</TableCell>
-                <TableCell className="whitespace-nowrap px-1 py-1">{normalizedPaymentMethod}</TableCell>
-                <TableCell className="whitespace-nowrap px-1 py-1">{transaction.amount}</TableCell>
-                <TableCell className="whitespace-nowrap px-1 py-1">
+                <TableCell className="whitespace-nowrap px-1 py-0.5">{transaction.invoice_id}</TableCell>
+                <TableCell className="whitespace-nowrap px-1 py-0.5">{displayPlanName}</TableCell>
+                <TableCell className="whitespace-nowrap px-1 py-0.5">{normalizedPaymentMethod}</TableCell>
+                <TableCell className="whitespace-nowrap px-1 py-0.5">{transaction.amount}</TableCell>
+                <TableCell className="whitespace-nowrap px-1 py-0.5">
                   {formatDate(transaction.created_at)}
                 </TableCell>
-                <TableCell className="whitespace-nowrap px-1 py-1">
+                <TableCell className="whitespace-nowrap px-1 py-0.5">
                   {formatDate(transaction.expires_at)}
                 </TableCell>
-                <TableCell className="whitespace-nowrap px-1 py-1">
+                <TableCell className="whitespace-nowrap px-1 py-0.5">
                   <PaymentStatusBadge status={transaction.status} />
                 </TableCell>
-                <TableCell className="whitespace-nowrap px-1 py-1">
+                <TableCell className="whitespace-nowrap px-1 py-0.5">
                   <Button 
                     size="sm" 
                     variant="ghost" 
                     onClick={() => onEditClick(transaction)}
-                    className="h-6 px-2 py-0 text-xs"
+                    className="h-5 px-1 py-0 text-xs"
                   >
                     <Pencil className="h-3 w-3 ml-1" />
                     تعديل
