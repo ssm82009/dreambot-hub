@@ -1,24 +1,12 @@
 
-import { ReactNode } from 'react';
-
-export type AdminProviderProps = {
-  children: ReactNode;
-};
-
-export type HomeSectionContentItem = {
-  [key: string]: string;
-};
+import { User, CustomPage, NavLink } from '@/types/database';
 
 export type HomeSectionItem = {
   id: string;
   title: string;
   order: number;
   visible: boolean;
-  content?: HomeSectionContentItem;
-};
-
-export type HomeSectionsForm = {
-  sections: HomeSectionItem[];
+  content?: Record<string, string>;
 };
 
 export type ThemeSettingsFormValues = {
@@ -31,50 +19,61 @@ export type ThemeSettingsFormValues = {
   logoText: string;
   logoFontSize: number;
   footerText: string;
-  twitterLink: string;
-  facebookLink: string;
-  instagramLink: string;
-  slug: string;
-  socialLinks?: {
-    twitter: string;
-    facebook: string;
-    instagram: string;
-  };
+  twitterLink?: string;
+  facebookLink?: string;
+  instagramLink?: string;
+};
+
+export type AiSettingsFormValues = {
+  model: string;
+  provider: string;
+  apiKey: string;
+};
+
+export type InterpretationSettingsFormValues = {
+  maxInputWords: number;
+  minOutputWords: number;
+  maxOutputWords: number;
+  systemInstructions: string;
+};
+
+export type PricingSettingsFormValues = {
+  freePlanName: string;
+  freePlanPrice: number;
+  freePlanInterpretations: number;
+  freePlanFeatures: string;
+  premiumPlanName: string;
+  premiumPlanPrice: number;
+  premiumPlanInterpretations: number;
+  premiumPlanFeatures: string;
+  proPlanName: string;
+  proPlanPrice: number;
+  proPlanInterpretations: number;
+  proPlanFeatures: string;
+};
+
+export type PaymentSettingsFormValues = {
+  paylinkEnabled: boolean;
+  paylinkApiKey: string;
+  paylinkSecretKey: string;
+  paypalEnabled: boolean;
+  paypalSandbox: boolean;
+  paypalClientId: string;
+  paypalSecret: string;
 };
 
 export type SeoSettingsFormValues = {
   metaTitle: string;
   metaDescription: string;
-  keywords: string;
   slug: string;
+  keywords: string;
   googleAnalyticsId: string;
+  customHeadTags: string;
   enableOpenGraph: boolean;
   enableTwitterCards: boolean;
   enableCanonicalUrls: boolean;
   enableRobotsTxt: boolean;
   enableSitemap: boolean;
-  customHeadTags: string;
-};
-
-export type PricingSettingsFormValues = {
-  freePlan: {
-    name: string;
-    price: number;
-    interpretationsPerMonth: number;
-    features: string;
-  };
-  premiumPlan: {
-    name: string;
-    price: number;
-    interpretationsPerMonth: number;
-    features: string;
-  };
-  proPlan: {
-    name: string;
-    price: number;
-    interpretationsPerMonth: number;
-    features: string;
-  };
 };
 
 export type ActiveSections = {
@@ -82,54 +81,16 @@ export type ActiveSections = {
   interpretationSettings: boolean;
   pricingSettings: boolean;
   paymentSettings: boolean;
-  transactionManagement: boolean;
-  userManagement: boolean;
-  pageManagement: boolean;
-  navbarManagement: boolean;
-  ticketManagement: boolean;
-  themeSettings: boolean;
-  seoSettings: boolean;
+  transactions: boolean;
+  users: boolean;
+  pages: boolean;
+  navbar: boolean;
+  tickets: boolean;
+  theme: boolean;
+  seo: boolean;
   homeSections: boolean;
 };
 
-export type AdminContextType = {
-  isAdmin: boolean;
-  setIsAdmin: (value: boolean) => void;
-  adminEmail: string;
-  setAdminEmail: (email: string) => void;
-  isLoading: boolean;
-  setIsLoading: (value: boolean) => void;
-  dbLoading: boolean;
-  setDbLoading: (value: boolean) => void;
-  dreams: number;
-  setDreams: (value: number) => void;
-  userCount: number;
-  setUserCount: (value: number) => void;
-  subscriptions: number;
-  setSubscriptions: (value: number) => void;
-  openTickets: number;
-  setOpenTickets: (value: number) => void;
-  users: any[];
-  setUsers: (users: any[]) => void;
-  pages: any[];
-  setPages: (pages: any[]) => void;
-  navLinks: any[];
-  setNavLinks: (links: any[]) => void;
-  aiSettingsForm: any;
-  setAiSettingsForm: (settings: any) => void;
-  interpretationSettingsForm: any;
-  setInterpretationSettingsForm: (settings: any) => void;
-  pricingSettingsForm: any;
-  setPricingSettingsForm: (settings: any) => void;
-  paymentSettingsForm: any;
-  setPaymentSettingsForm: (settings: any) => void;
-  themeSettingsForm: ThemeSettingsFormValues;
-  setThemeSettingsForm: (settings: Partial<ThemeSettingsFormValues>) => void;
-  seoSettingsForm: SeoSettingsFormValues;
-  setSeoSettingsForm: (settings: SeoSettingsFormValues) => void;
-  homeSectionsForm: HomeSectionsForm;
-  setHomeSectionsForm: (settings: Partial<HomeSectionsForm>) => void;
-  activeSections: ActiveSections;
-  setActiveSections: (sections: Partial<ActiveSections>) => void;
-  toggleSection: (section: keyof ActiveSections) => void;
+export type AdminProviderProps = {
+  children: React.ReactNode;
 };

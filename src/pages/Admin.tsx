@@ -7,6 +7,8 @@ import { AdminProvider, useAdmin } from '@/contexts/admin';
 import { useAdminData } from '@/hooks/useAdminData';
 import AdminHeader from '@/components/admin/AdminHeader';
 import AdminContent from '@/components/admin/AdminContent';
+import AdminSidebar from '@/components/admin/AdminSidebar';
+import { SidebarProvider } from '@/components/ui/sidebar';
 
 const AdminDashboard = () => {
   const { isLoading, dbLoading, setIsLoading } = useAdmin();
@@ -49,12 +51,17 @@ const AdminDashboard = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      <main className="flex-1 pt-20 pb-16 px-4 dream-pattern">
-        <div className="container mx-auto">
-          <AdminHeader />
-          <AdminContent />
+      <SidebarProvider>
+        <div className="min-h-screen flex w-full pt-16 dream-pattern">
+          <AdminSidebar />
+          <main className="flex-1 p-4">
+            <div className="container mx-auto">
+              <AdminHeader />
+              <AdminContent />
+            </div>
+          </main>
         </div>
-      </main>
+      </SidebarProvider>
       <Footer />
     </div>
   );
