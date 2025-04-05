@@ -51,16 +51,16 @@ const RevenueStats: React.FC<RevenueStatsProps> = ({
         <CardHeader className="pb-2">
           <CardTitle className="text-sm flex items-center justify-between">
             <span>إحصائيات الإيرادات</span>
-            <TabsList className="h-8">
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Tabs defaultValue="daily" className="h-[250px]">
+            <TabsList className="h-8 mb-4">
               <TabsTrigger value="daily" className="text-xs px-2 py-0.5">يومي</TabsTrigger>
               <TabsTrigger value="monthly" className="text-xs px-2 py-0.5">شهري</TabsTrigger>
               <TabsTrigger value="yearly" className="text-xs px-2 py-0.5">سنوي</TabsTrigger>
               <TabsTrigger value="plans" className="text-xs px-2 py-0.5">حسب الباقة</TabsTrigger>
             </TabsList>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Tabs defaultValue="daily" className="h-[250px]">
             <TabsContent value="daily" className="h-full">
               <ChartContainer config={{
                 revenue: { label: 'الإيرادات اليومية', color: '#9b87f5' },

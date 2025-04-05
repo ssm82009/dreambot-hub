@@ -1,178 +1,156 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { format, subDays, subMonths, subYears, startOfMonth, endOfMonth } from 'date-fns';
-import { arSA } from 'date-fns/locale';
+import { format, subDays, startOfMonth, endOfMonth, startOfYear, endOfYear } from 'date-fns';
+
+interface RevenueData {
+  name: string;
+  amount: number;
+}
+
+interface PlanRevenueData {
+  name: string;
+  value: number;
+}
 
 export const useRevenueStats = () => {
-  const [dailyRevenue, setDailyRevenue] = useState<any[]>([]);
-  const [monthlyRevenue, setMonthlyRevenue] = useState<any[]>([]);
-  const [yearlyRevenue, setYearlyRevenue] = useState<any[]>([]);
-  const [totalRevenue, setTotalRevenue] = useState(0);
-  const [revenueByPlan, setRevenueByPlan] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  const fetchRevenueData = async () => {
-    setLoading(true);
-    try {
-      // Fetch all successful payment transactions
-      const { data: transactions, error } = await supabase
-        .from('payment_invoices')
-        .select('*')
-        .eq('status', 'paid')
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        throw error;
-      }
-
-      if (!transactions || transactions.length === 0) {
-        setLoading(false);
-        return;
-      }
-
-      // Calculate daily revenue (last 7 days)
-      const dailyData = calculateDailyRevenue(transactions);
-      setDailyRevenue(dailyData);
-
-      // Calculate monthly revenue (last 12 months)
-      const monthlyData = calculateMonthlyRevenue(transactions);
-      setMonthlyRevenue(monthlyData);
-
-      // Calculate yearly revenue
-      const yearlyData = calculateYearlyRevenue(transactions);
-      setYearlyRevenue(yearlyData);
-
-      // Calculate total revenue
-      const total = transactions.reduce((sum, transaction) => sum + (parseFloat(transaction.amount) || 0), 0);
-      setTotalRevenue(total);
-
-      // Calculate revenue by plan
-      const planRevenue = calculateRevenueByPlan(transactions);
-      setRevenueByPlan(planRevenue);
-
-    } catch (error) {
-      console.error('Error fetching revenue data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const calculateDailyRevenue = (transactions: any[]) => {
-    // Create a map for the last 7 days
-    const last7Days = Array.from({ length: 7 }, (_, i) => {
-      const date = subDays(new Date(), i);
-      const formattedDate = format(date, 'yyyy-MM-dd');
-      return {
-        date: formattedDate,
-        name: format(date, 'dd MMM', { locale: arSA }),
-        amount: 0
-      };
-    }).reverse();
-
-    // Fill in the amounts
-    transactions.forEach(transaction => {
-      const transactionDate = transaction.created_at ? 
-        format(new Date(transaction.created_at), 'yyyy-MM-dd') : null;
-      
-      if (transactionDate) {
-        const dayEntry = last7Days.find(day => day.date === transactionDate);
-        if (dayEntry) {
-          dayEntry.amount += parseFloat(transaction.amount) || 0;
-        }
-      }
-    });
-
-    return last7Days;
-  };
-
-  const calculateMonthlyRevenue = (transactions: any[]) => {
-    // Create a map for the last 12 months
-    const last12Months = Array.from({ length: 12 }, (_, i) => {
-      const date = subMonths(new Date(), i);
-      const monthStart = startOfMonth(date);
-      const monthEnd = endOfMonth(date);
-      const monthYear = format(date, 'yyyy-MM');
-      
-      return {
-        monthYear,
-        start: format(monthStart, 'yyyy-MM-dd'),
-        end: format(monthEnd, 'yyyy-MM-dd'),
-        name: format(date, 'MMM yyyy', { locale: arSA }),
-        amount: 0
-      };
-    }).reverse();
-
-    // Fill in the amounts
-    transactions.forEach(transaction => {
-      if (!transaction.created_at) return;
-      
-      const transactionDate = new Date(transaction.created_at);
-      const transactionMonthYear = format(transactionDate, 'yyyy-MM');
-      
-      const monthEntry = last12Months.find(month => month.monthYear === transactionMonthYear);
-      if (monthEntry) {
-        monthEntry.amount += parseFloat(transaction.amount) || 0;
-      }
-    });
-
-    return last12Months;
-  };
-
-  const calculateYearlyRevenue = (transactions: any[]) => {
-    // Get the last 5 years
-    const currentYear = new Date().getFullYear();
-    const last5Years = Array.from({ length: 5 }, (_, i) => {
-      const year = currentYear - i;
-      return {
-        year: year.toString(),
-        name: year.toString(),
-        amount: 0
-      };
-    }).reverse();
-
-    // Fill in the amounts
-    transactions.forEach(transaction => {
-      if (!transaction.created_at) return;
-      
-      const transactionYear = format(new Date(transaction.created_at), 'yyyy');
-      
-      const yearEntry = last5Years.find(year => year.year === transactionYear);
-      if (yearEntry) {
-        yearEntry.amount += parseFloat(transaction.amount) || 0;
-      }
-    });
-
-    return last5Years;
-  };
-
-  const calculateRevenueByPlan = (transactions: any[]) => {
-    const planRevenue: Record<string, number> = {
-      premium: 0,
-      pro: 0,
-      free: 0
-    };
-
-    transactions.forEach(transaction => {
-      const plan = transaction.plan_name?.toLowerCase() || 'unknown';
-      if (plan.includes('premium') || plan.includes('مميز')) {
-        planRevenue.premium += parseFloat(transaction.amount) || 0;
-      } else if (plan.includes('pro') || plan.includes('احتراف')) {
-        planRevenue.pro += parseFloat(transaction.amount) || 0;
-      } else {
-        planRevenue.free += parseFloat(transaction.amount) || 0;
-      }
-    });
-
-    return [
-      { name: 'الباقة المميزة', value: planRevenue.premium },
-      { name: 'الباقة الاحترافية', value: planRevenue.pro },
-      { name: 'أخرى', value: planRevenue.free }
-    ].filter(item => item.value > 0);
-  };
+  const [dailyRevenue, setDailyRevenue] = useState<RevenueData[]>([]);
+  const [monthlyRevenue, setMonthlyRevenue] = useState<RevenueData[]>([]);
+  const [yearlyRevenue, setYearlyRevenue] = useState<RevenueData[]>([]);
+  const [totalRevenue, setTotalRevenue] = useState<number>(0);
+  const [revenueByPlan, setRevenueByPlan] = useState<PlanRevenueData[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    fetchRevenueData();
+    const fetchRevenueStats = async () => {
+      setLoading(true);
+      try {
+        // Fetch all successful transactions
+        const { data: transactions, error } = await supabase
+          .from('payment_invoices')
+          .select('*')
+          .eq('status', 'paid');
+
+        if (error) throw error;
+
+        if (!transactions || transactions.length === 0) {
+          setLoading(false);
+          return;
+        }
+
+        // Calculate daily revenue for last 7 days
+        const last7Days = Array.from({ length: 7 }, (_, i) => {
+          const date = subDays(new Date(), i);
+          return {
+            name: format(date, 'yyyy-MM-dd'),
+            displayName: format(date, 'MM/dd'),
+            amount: 0
+          };
+        }).reverse();
+
+        // Calculate monthly revenue for last 6 months
+        const last6Months = Array.from({ length: 6 }, (_, i) => {
+          const date = new Date();
+          date.setMonth(date.getMonth() - i);
+          return {
+            name: format(date, 'yyyy-MM'),
+            displayName: format(date, 'MMM yyyy'),
+            amount: 0
+          };
+        }).reverse();
+
+        // Calculate yearly revenue for last 3 years
+        const last3Years = Array.from({ length: 3 }, (_, i) => {
+          const date = new Date();
+          date.setFullYear(date.getFullYear() - i);
+          return {
+            name: format(date, 'yyyy'),
+            displayName: format(date, 'yyyy'),
+            amount: 0
+          };
+        }).reverse();
+
+        // Initialize plan revenue counters
+        const planRevenue = {
+          free: 0,
+          premium: 0,
+          pro: 0
+        };
+
+        let total = 0;
+
+        // Process transactions
+        transactions.forEach(transaction => {
+          const amount = Number(transaction.amount) || 0;
+          const date = new Date(transaction.created_at);
+          const formattedDate = format(date, 'yyyy-MM-dd');
+          const formattedMonth = format(date, 'yyyy-MM');
+          const formattedYear = format(date, 'yyyy');
+
+          // Add to total revenue
+          total += amount;
+
+          // Add to daily revenue
+          const dayData = last7Days.find(day => day.name === formattedDate);
+          if (dayData) {
+            dayData.amount += amount;
+          }
+
+          // Add to monthly revenue
+          const monthData = last6Months.find(month => month.name === formattedMonth);
+          if (monthData) {
+            monthData.amount += amount;
+          }
+
+          // Add to yearly revenue
+          const yearData = last3Years.find(year => year.name === formattedYear);
+          if (yearData) {
+            yearData.amount += amount;
+          }
+
+          // Add to plan revenue
+          const planType = (transaction.plan_name || '').toLowerCase();
+          if (planType.includes('premium')) {
+            planRevenue.premium += amount;
+          } else if (planType.includes('pro')) {
+            planRevenue.pro += amount;
+          } else {
+            planRevenue.free += amount;
+          }
+        });
+
+        // Update state with calculated revenue data
+        setDailyRevenue(last7Days.map(day => ({
+          name: day.displayName,
+          amount: day.amount
+        })));
+
+        setMonthlyRevenue(last6Months.map(month => ({
+          name: month.displayName,
+          amount: month.amount
+        })));
+
+        setYearlyRevenue(last3Years.map(year => ({
+          name: year.displayName,
+          amount: year.amount
+        })));
+
+        setTotalRevenue(total);
+
+        setRevenueByPlan([
+          { name: 'مميز', value: planRevenue.premium },
+          { name: 'احترافي', value: planRevenue.pro },
+          { name: 'مجاني', value: planRevenue.free }
+        ]);
+
+      } catch (error) {
+        console.error('Error fetching revenue stats:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRevenueStats();
   }, []);
 
   return {
@@ -181,7 +159,6 @@ export const useRevenueStats = () => {
     yearlyRevenue,
     totalRevenue,
     revenueByPlan,
-    loading,
-    refreshRevenueData: fetchRevenueData
+    loading
   };
 };
