@@ -5,28 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useForm } from 'react-hook-form';
-import { PricingSettings } from '@/types/database';
-
-type PricingSettingsFormValues = {
-  freePlan: {
-    name: string;
-    price: number;
-    interpretationsPerMonth: number;
-    features: string;
-  };
-  premiumPlan: {
-    name: string;
-    price: number;
-    interpretationsPerMonth: number;
-    features: string;
-  };
-  proPlan: {
-    name: string;
-    price: number;
-    interpretationsPerMonth: number;
-    features: string;
-  };
-};
+import { PricingSettingsFormValues } from '@/contexts/admin/types';
 
 type PricingSettingsFormProps = {
   initialData: PricingSettingsFormValues;
@@ -47,7 +26,7 @@ const PricingSettingsForm: React.FC<PricingSettingsFormProps> = ({ initialData, 
             <Label>اسم الخطة</Label>
             <Input 
               placeholder="اسم الخطة المجانية"
-              {...form.register("freePlan.name")}
+              {...form.register("freePlanName")}
             />
           </div>
           <div className="space-y-2">
@@ -56,14 +35,14 @@ const PricingSettingsForm: React.FC<PricingSettingsFormProps> = ({ initialData, 
               type="number" 
               value="0" 
               readOnly 
-              {...form.register("freePlan.price", { valueAsNumber: true })}
+              {...form.register("freePlanPrice", { valueAsNumber: true })}
             />
           </div>
           <div className="space-y-2">
             <Label>عدد التفسيرات الشهرية</Label>
             <Input 
               type="number" 
-              {...form.register("freePlan.interpretationsPerMonth", { valueAsNumber: true })}
+              {...form.register("freePlanInterpretations", { valueAsNumber: true })}
             />
           </div>
           <div className="space-y-2">
@@ -71,7 +50,7 @@ const PricingSettingsForm: React.FC<PricingSettingsFormProps> = ({ initialData, 
             <Textarea 
               placeholder="أدخل المميزات هنا..."
               rows={3}
-              {...form.register("freePlan.features")}
+              {...form.register("freePlanFeatures")}
             />
             <p className="text-sm text-muted-foreground">أدخل كل ميزة في سطر منفصل</p>
           </div>
@@ -85,21 +64,21 @@ const PricingSettingsForm: React.FC<PricingSettingsFormProps> = ({ initialData, 
             <Label>اسم الخطة</Label>
             <Input 
               placeholder="اسم الخطة المميزة"
-              {...form.register("premiumPlan.name")}
+              {...form.register("premiumPlanName")}
             />
           </div>
           <div className="space-y-2">
             <Label>السعر (ريال)</Label>
             <Input 
               type="number" 
-              {...form.register("premiumPlan.price", { valueAsNumber: true })}
+              {...form.register("premiumPlanPrice", { valueAsNumber: true })}
             />
           </div>
           <div className="space-y-2">
             <Label>عدد التفسيرات الشهرية</Label>
             <Input 
               type="number" 
-              {...form.register("premiumPlan.interpretationsPerMonth", { valueAsNumber: true })}
+              {...form.register("premiumPlanInterpretations", { valueAsNumber: true })}
             />
             <p className="text-sm text-muted-foreground">استخدم -1 لعدد غير محدود</p>
           </div>
@@ -108,7 +87,7 @@ const PricingSettingsForm: React.FC<PricingSettingsFormProps> = ({ initialData, 
             <Textarea 
               placeholder="أدخل المميزات هنا..."
               rows={5}
-              {...form.register("premiumPlan.features")}
+              {...form.register("premiumPlanFeatures")}
             />
           </div>
         </div>
@@ -121,21 +100,21 @@ const PricingSettingsForm: React.FC<PricingSettingsFormProps> = ({ initialData, 
             <Label>اسم الخطة</Label>
             <Input 
               placeholder="اسم الخطة الاحترافية"
-              {...form.register("proPlan.name")}
+              {...form.register("proPlanName")}
             />
           </div>
           <div className="space-y-2">
             <Label>السعر (ريال)</Label>
             <Input 
               type="number" 
-              {...form.register("proPlan.price", { valueAsNumber: true })}
+              {...form.register("proPlanPrice", { valueAsNumber: true })}
             />
           </div>
           <div className="space-y-2">
             <Label>عدد التفسيرات الشهرية</Label>
             <Input 
               type="number" 
-              {...form.register("proPlan.interpretationsPerMonth", { valueAsNumber: true })}
+              {...form.register("proPlanInterpretations", { valueAsNumber: true })}
             />
           </div>
           <div className="space-y-2">
@@ -143,7 +122,7 @@ const PricingSettingsForm: React.FC<PricingSettingsFormProps> = ({ initialData, 
             <Textarea 
               placeholder="أدخل المميزات هنا..."
               rows={5}
-              {...form.register("proPlan.features")}
+              {...form.register("proPlanFeatures")}
             />
           </div>
         </div>

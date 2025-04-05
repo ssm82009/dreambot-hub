@@ -1,8 +1,9 @@
+
 import React, { useState } from 'react';
 import { LayoutDashboard, EditIcon } from 'lucide-react';
 import AdminSection from '@/components/admin/AdminSection';
 import { useAdmin } from '@/contexts/admin';
-import { HomeSectionItem, HomeSectionContentItem } from '@/contexts/admin/types';
+import { HomeSectionItem } from '@/contexts/admin/types';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';

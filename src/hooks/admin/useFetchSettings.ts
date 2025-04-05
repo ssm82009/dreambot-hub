@@ -63,24 +63,18 @@ export const useFetchSettings = () => {
         console.error("خطأ في جلب إعدادات الخطط والأسعار:", pricingError);
       } else if (pricingData) {
         setPricingSettingsForm({
-          freePlan: {
-            name: pricingData.free_plan_name || 'المجاني',
-            price: Number(pricingData.free_plan_price),
-            interpretationsPerMonth: pricingData.free_plan_interpretations,
-            features: pricingData.free_plan_features
-          },
-          premiumPlan: {
-            name: pricingData.premium_plan_name || 'المميز',
-            price: Number(pricingData.premium_plan_price),
-            interpretationsPerMonth: pricingData.premium_plan_interpretations,
-            features: pricingData.premium_plan_features
-          },
-          proPlan: {
-            name: pricingData.pro_plan_name || 'الاحترافي',
-            price: Number(pricingData.pro_plan_price),
-            interpretationsPerMonth: pricingData.pro_plan_interpretations,
-            features: pricingData.pro_plan_features
-          }
+          freePlanName: pricingData.free_plan_name || 'المجاني',
+          freePlanPrice: Number(pricingData.free_plan_price),
+          freePlanInterpretations: pricingData.free_plan_interpretations,
+          freePlanFeatures: pricingData.free_plan_features,
+          premiumPlanName: pricingData.premium_plan_name || 'المميز',
+          premiumPlanPrice: Number(pricingData.premium_plan_price),
+          premiumPlanInterpretations: pricingData.premium_plan_interpretations,
+          premiumPlanFeatures: pricingData.premium_plan_features,
+          proPlanName: pricingData.pro_plan_name || 'الاحترافي',
+          proPlanPrice: Number(pricingData.pro_plan_price),
+          proPlanInterpretations: pricingData.pro_plan_interpretations,
+          proPlanFeatures: pricingData.pro_plan_features
         });
       }
 
@@ -95,17 +89,13 @@ export const useFetchSettings = () => {
         console.error("خطأ في جلب إعدادات بوابات الدفع:", paymentError);
       } else if (paymentData) {
         setPaymentSettingsForm({
-          paylink: {
-            enabled: paymentData.paylink_enabled,
-            apiKey: paymentData.paylink_api_key || "",
-            secretKey: paymentData.paylink_secret_key || ""
-          },
-          paypal: {
-            enabled: paymentData.paypal_enabled,
-            clientId: paymentData.paypal_client_id || "",
-            secret: paymentData.paypal_secret || "",
-            sandbox: paymentData.paypal_sandbox
-          }
+          paylinkEnabled: paymentData.paylink_enabled,
+          paylinkApiKey: paymentData.paylink_api_key || "",
+          paylinkSecretKey: paymentData.paylink_secret_key || "",
+          paypalEnabled: paymentData.paypal_enabled,
+          paypalClientId: paymentData.paypal_client_id || "",
+          paypalSecret: paymentData.paypal_secret || "",
+          paypalSandbox: paymentData.paypal_sandbox
         });
       }
 

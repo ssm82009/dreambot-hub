@@ -60,7 +60,8 @@ export const initialThemeSettings: ThemeSettingsFormValues = {
   footerText: 'جميع الحقوق محفوظة © 2024 تفسير الأحلام',
   twitterLink: '',
   facebookLink: '',
-  instagramLink: ''
+  instagramLink: '',
+  slug: 'تفسير الأحلام عبر الذكاء الاصطناعي' // Added slug property
 };
 
 export const initialSeoSettings: SeoSettingsFormValues = {
