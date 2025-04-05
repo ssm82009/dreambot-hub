@@ -7,7 +7,6 @@ import PaymentCard from '@/components/payment/PaymentCard';
 import { usePaymentData } from '@/hooks/usePaymentData';
 import { usePaymentProcess } from '@/hooks/usePaymentProcess';
 import { usePaymentSubmit } from '@/hooks/usePaymentSubmit';
-import SeoManager from '@/components/SeoManager';
 
 const Payment = () => {
   // استخدام Hooks المخصصة للدفع
@@ -35,7 +34,6 @@ const Payment = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <SeoManager />
       <Navbar />
       <main className="flex-1 py-20 rtl">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">

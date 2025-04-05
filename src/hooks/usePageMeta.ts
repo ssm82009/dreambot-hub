@@ -1,46 +1,20 @@
-
-import { useEffect, useLayoutEffect } from 'react';
+import { useEffect } from 'react';
+import { useAdmin } from '@/contexts/admin';
 import { useLocation } from 'react-router-dom';
-
-// Safely try to access the admin context without throwing an error
-const safeUseAdmin = () => {
-  try {
-    // Using require to prevent import hoisting which could cause circular dependencies
-    const { useAdmin } = require('@/contexts/admin');
-    return useAdmin();
-  } catch (error) {
-    // Return default values if not in an AdminProvider context
-    return {
-      seoSettingsForm: {
-        metaTitle: 'تأويل | تفسير فوري لـ الرؤى والأحلام',
-        metaDescription: '',
-        keywords: '',
-        enableOpenGraph: false,
-        enableTwitterCards: false,
-        enableCanonicalUrls: false,
-        googleAnalyticsId: '',
-        customHeadTags: ''
-      }
-    };
-  }
-};
 
 /**
  * Hook to manage page meta tags including title, description, and other SEO elements
  */
 export const usePageMeta = () => {
-  const { seoSettingsForm } = safeUseAdmin();
+  const { seoSettingsForm } = useAdmin();
   const location = useLocation();
 
-  // Use useLayoutEffect to update title as early as possible to prevent flickering
-  useLayoutEffect(() => {
+  useEffect(() => {
     // Update page title
     if (seoSettingsForm.metaTitle) {
       document.title = seoSettingsForm.metaTitle;
     }
-  }, [seoSettingsForm.metaTitle]);
 
-  useEffect(() => {
     // Update meta description
     let metaDescription = document.querySelector('meta[name="description"]');
     if (!metaDescription) {
