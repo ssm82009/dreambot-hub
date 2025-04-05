@@ -54,7 +54,7 @@ const AdminDashboard = () => {
       <SidebarProvider>
         <div className="min-h-screen flex flex-row-reverse w-full pt-16 dream-pattern" dir="rtl">
           <AdminSidebar />
-          <main className="flex-1 p-4 ml-64">
+          <main className="flex-1 p-4">
             <div className="container mx-auto">
               <AdminHeader />
               <AdminContent />
