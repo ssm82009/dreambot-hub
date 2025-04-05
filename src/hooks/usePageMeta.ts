@@ -11,12 +11,9 @@ export const usePageMeta = () => {
   const location = useLocation();
 
   useEffect(() => {
-    // Immediately update the document title with higher priority
+    // Update page title - ensure it's applied immediately
     if (seoSettingsForm.metaTitle) {
-      // Force title update with a small delay to ensure it takes precedence
-      setTimeout(() => {
-        document.title = seoSettingsForm.metaTitle;
-      }, 0);
+      document.title = seoSettingsForm.metaTitle;
     }
 
     // Update meta description
@@ -144,28 +141,12 @@ export const usePageMeta = () => {
       });
     }
 
-    // When component unmounts, ensure title consistency
+    // When unmounting, clean up any dynamically added elements
     return () => {
-      // Re-apply title on cleanup to maintain consistency
-      if (seoSettingsForm.metaTitle) {
-        document.title = seoSettingsForm.metaTitle;
-      }
+      // No cleanup needed for title since it's part of the document already
+      // For advanced cleanup, you would need to keep track of which elements were added dynamically
     };
   }, [seoSettingsForm, location.pathname]);
-
-  // Second effect specifically to force title update on route changes
-  useEffect(() => {
-    // Force update title on location change with a small delay
-    const titleTimer = setTimeout(() => {
-      if (seoSettingsForm.metaTitle) {
-        document.title = seoSettingsForm.metaTitle;
-      }
-    }, 50);
-
-    return () => {
-      clearTimeout(titleTimer);
-    };
-  }, [location.pathname, seoSettingsForm.metaTitle]);
 
   return null;
 };
