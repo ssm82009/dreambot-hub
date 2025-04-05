@@ -12,7 +12,7 @@ const safeUseAdmin = () => {
     // Return default values if not in an AdminProvider context
     return {
       seoSettingsForm: {
-        metaTitle: 'تفسير الأحلام',
+        metaTitle: 'تأويل | تفسير فوري لـ الرؤى والأحلام',
         metaDescription: '',
         keywords: '',
         enableOpenGraph: false,

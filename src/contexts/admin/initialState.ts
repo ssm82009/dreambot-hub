@@ -65,7 +65,7 @@ export const initialThemeSettings: ThemeSettingsFormValues = {
 };
 
 export const initialSeoSettings: SeoSettingsFormValues = {
-  metaTitle: 'تفسير الأحلام - موقع تفسير الرؤى والأحلام',
+  metaTitle: 'تأويل | تفسير فوري لـ الرؤى والأحلام',
   metaDescription: 'موقع متخصص في تفسير الأحلام والرؤى وفق المراجع الإسلامية والعلمية. احصل على تفسير حلمك الآن.',
   slug: 'تفسير الأحلام عبر الذكاء الاصطناعي',
   keywords: 'تفسير الأحلام, تفسير الرؤى, تفسير حلم, تفسير منام, رؤيا في المنام',
