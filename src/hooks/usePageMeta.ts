@@ -6,16 +6,29 @@ import { useLocation } from 'react-router-dom';
  * Hook to manage page meta tags including title, description, and other SEO elements
  */
 export const usePageMeta = () => {
-  const { seoSettingsForm } = useAdmin();
   const location = useLocation();
+  
+  // محاولة استخدام سياق الإدارة، ولكن بطريقة تجنب الأخطاء إذا لم يكن موجوداً
+  let adminContext;
+  try {
+    adminContext = useAdmin();
+  } catch (error) {
+    // إذا لم يكن السياق متاحاً، تابع التنفيذ دون أخطاء
+    console.log('Admin context not available, using default SEO settings');
+  }
+
+  // الحصول على إعدادات السيو من سياق الإدارة إذا كان متاحاً
+  const seoSettings = adminContext?.seoSettingsForm;
 
   useEffect(() => {
-    // Update page title
-    if (seoSettingsForm.metaTitle) {
-      document.title = seoSettingsForm.metaTitle;
-    }
+    // تعيين عنوان الصفحة الافتراضي إذا لم يكن سياق الإدارة متاحاً
+    const defaultTitle = 'تأويل | تفسير فوري لـ الرؤى والأحلام';
+    const defaultDescription = 'موقع متخصص في تفسير الأحلام والرؤى وفق المراجع الإسلامية والعلمية.';
+    
+    // تحديث عنوان الصفحة
+    document.title = seoSettings?.metaTitle || defaultTitle;
 
-    // Update meta description
+    // تحديث وصف الصفحة
     let metaDescription = document.querySelector('meta[name="description"]');
     if (!metaDescription) {
       metaDescription = document.createElement('meta');
@@ -23,42 +36,40 @@ export const usePageMeta = () => {
       document.head.appendChild(metaDescription);
     }
     
-    if (seoSettingsForm.metaDescription) {
-      metaDescription.setAttribute('content', seoSettingsForm.metaDescription);
-    }
+    metaDescription.setAttribute('content', seoSettings?.metaDescription || defaultDescription);
 
-    // Update keywords
-    if (seoSettingsForm.keywords) {
+    // تحديث الكلمات المفتاحية
+    if (seoSettings?.keywords) {
       let metaKeywords = document.querySelector('meta[name="keywords"]');
       if (!metaKeywords) {
         metaKeywords = document.createElement('meta');
         metaKeywords.setAttribute('name', 'keywords');
         document.head.appendChild(metaKeywords);
       }
-      metaKeywords.setAttribute('content', seoSettingsForm.keywords);
+      metaKeywords.setAttribute('content', seoSettings.keywords);
     }
 
-    // Update Open Graph tags if enabled
-    if (seoSettingsForm.enableOpenGraph) {
-      // Update OG title
+    // تحديث علامات Open Graph إذا كانت مفعلة
+    if (seoSettings?.enableOpenGraph) {
+      // تحديث عنوان OG
       let ogTitle = document.querySelector('meta[property="og:title"]');
       if (!ogTitle) {
         ogTitle = document.createElement('meta');
         ogTitle.setAttribute('property', 'og:title');
         document.head.appendChild(ogTitle);
       }
-      ogTitle.setAttribute('content', seoSettingsForm.metaTitle || 'تفسير الأحلام');
+      ogTitle.setAttribute('content', seoSettings.metaTitle || defaultTitle);
 
-      // Update OG description
+      // تحديث وصف OG
       let ogDescription = document.querySelector('meta[property="og:description"]');
       if (!ogDescription) {
         ogDescription = document.createElement('meta');
         ogDescription.setAttribute('property', 'og:description');
         document.head.appendChild(ogDescription);
       }
-      ogDescription.setAttribute('content', seoSettingsForm.metaDescription || '');
+      ogDescription.setAttribute('content', seoSettings.metaDescription || defaultDescription);
 
-      // Set OG URL to current URL
+      // تعيين رابط OG للصفحة الحالية
       let ogUrl = document.querySelector('meta[property="og:url"]');
       if (!ogUrl) {
         ogUrl = document.createElement('meta');
@@ -68,8 +79,8 @@ export const usePageMeta = () => {
       ogUrl.setAttribute('content', window.location.href);
     }
 
-    // Twitter cards
-    if (seoSettingsForm.enableTwitterCards) {
+    // تحديث إعدادات بطاقات Twitter
+    if (seoSettings?.enableTwitterCards) {
       // Set Twitter card type
       let twitterCard = document.querySelector('meta[name="twitter:card"]');
       if (!twitterCard) {
@@ -86,7 +97,7 @@ export const usePageMeta = () => {
         twitterTitle.setAttribute('name', 'twitter:title');
         document.head.appendChild(twitterTitle);
       }
-      twitterTitle.setAttribute('content', seoSettingsForm.metaTitle || 'تفسير الأحلام');
+      twitterTitle.setAttribute('content', seoSettings.metaTitle || 'تفسير الأحلام');
 
       // Twitter description
       let twitterDesc = document.querySelector('meta[name="twitter:description"]');
@@ -95,11 +106,11 @@ export const usePageMeta = () => {
         twitterDesc.setAttribute('name', 'twitter:description');
         document.head.appendChild(twitterDesc);
       }
-      twitterDesc.setAttribute('content', seoSettingsForm.metaDescription || '');
+      twitterDesc.setAttribute('content', seoSettings.metaDescription || '');
     }
 
-    // Add canonical URL if enabled
-    if (seoSettingsForm.enableCanonicalUrls) {
+    // إضافة رابط الصفحة الحالي (canonical) إذا كان مفعلاً
+    if (seoSettings?.enableCanonicalUrls) {
       let canonical = document.querySelector('link[rel="canonical"]');
       if (!canonical) {
         canonical = document.createElement('link');
@@ -109,11 +120,11 @@ export const usePageMeta = () => {
       canonical.setAttribute('href', window.location.href);
     }
 
-    // Add Google Analytics if provided
-    if (seoSettingsForm.googleAnalyticsId && !document.querySelector(`script[src*="googletagmanager.com"]`)) {
+    // إضافة Google Analytics إذا تم توفير معرف
+    if (seoSettings?.googleAnalyticsId && !document.querySelector(`script[src*="googletagmanager.com"]`)) {
       const gaScript = document.createElement('script');
       gaScript.async = true;
-      gaScript.src = `https://www.googletagmanager.com/gtag/js?id=${seoSettingsForm.googleAnalyticsId}`;
+      gaScript.src = `https://www.googletagmanager.com/gtag/js?id=${seoSettings.googleAnalyticsId}`;
       document.head.appendChild(gaScript);
 
       const gaConfig = document.createElement('script');
@@ -121,16 +132,16 @@ export const usePageMeta = () => {
         window.dataLayer = window.dataLayer || [];
         function gtag(){dataLayer.push(arguments);}
         gtag('js', new Date());
-        gtag('config', '${seoSettingsForm.googleAnalyticsId}');
+        gtag('config', '${seoSettings.googleAnalyticsId}');
       `;
       document.head.appendChild(gaConfig);
     }
 
-    // Add custom head tags if provided
-    if (seoSettingsForm.customHeadTags) {
+    // إضافة علامات HTML مخصصة إذا تم توفيرها
+    if (seoSettings?.customHeadTags) {
       // Create a temporary div to parse the HTML
       const tempDiv = document.createElement('div');
-      tempDiv.innerHTML = seoSettingsForm.customHeadTags;
+      tempDiv.innerHTML = seoSettings.customHeadTags;
       
       // Get all elements from the parsed HTML
       Array.from(tempDiv.children).forEach(element => {
@@ -140,12 +151,12 @@ export const usePageMeta = () => {
       });
     }
 
-    // When unmounting, clean up any dynamically added elements
+    // عند إلغاء تركيب المكون، نظف أي عناصر أُضيفت ديناميكياً
     return () => {
       // No cleanup needed for title since it's part of the document already
       // For advanced cleanup, you would need to keep track of which elements were added dynamically
     };
-  }, [seoSettingsForm, location.pathname]);
+  }, [seoSettings, location.pathname]);
 
   return null;
 };
