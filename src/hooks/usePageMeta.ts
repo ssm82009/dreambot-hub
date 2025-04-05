@@ -1,3 +1,4 @@
+
 import { useEffect } from 'react';
 import { useAdmin } from '@/contexts/admin';
 import { useLocation } from 'react-router-dom';
@@ -10,7 +11,7 @@ export const usePageMeta = () => {
   const location = useLocation();
 
   useEffect(() => {
-    // Update page title
+    // Update page title - ensure it's applied immediately
     if (seoSettingsForm.metaTitle) {
       document.title = seoSettingsForm.metaTitle;
     }
