@@ -63,17 +63,19 @@ const Index = () => {
       <Navbar />
       <main className="flex-1">
         {isVisible('hero') && <Hero 
-          title={getSectionContent('hero', 'title', 'تفسير الأحلام بالذكاء الاصطناعي')}
-          subtitle={getSectionContent('hero', 'subtitle', 'فسّر أحلامك بدقة عالية باستخدام أحدث تقنيات الذكاء الاصطناعي واستنادًا إلى مراجع التفسير الإسلامية الموثوقة.')}
+          title={getSectionContent('hero', 'title', 'فَسِّرْ حُلْمَكَ الآنَ!')}
+          subtitle={getSectionContent('hero', 'subtitle', '~')}
         />}
         
         {isVisible('tryIt') && (
           <section id="try-it" className="py-16 bg-muted">
             <div className="container mx-auto px-4 sm:px-6 lg:px-8">
               <div className="text-center mb-12 rtl">
-                <h2 className="text-3xl font-bold mb-4">{getSectionContent('tryIt', 'title', 'جرب خدمة تفسير الأحلام')}</h2>
+                <h2 className="text-3xl font-bold mb-4">{getSectionContent('tryIt', 'title', '.  .  .')}</h2>
                 <p className="text-foreground/80 max-w-2xl mx-auto">
-                  {getSectionContent('tryIt', 'subtitle', 'أدخل تفاصيل حلمك واحصل على تفسير فوري من نظام الذكاء الاصطناعي الخاص بنا')}
+                  {getSectionContent('tryIt', 'subtitle', 'أدخل تفاصيل حلمك بالعربية الفصحى، واحصل على تفسير فوري باستخدام نموذج الذكاء الاصطناعي الخاص بنا " تأويل "
+
+')}
                 </p>
               </div>
               <DreamForm />
