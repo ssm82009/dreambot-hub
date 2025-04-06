@@ -1,8 +1,9 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { isUsingMySQL } from '@/integrations/database';
-import { testConnection } from '@/integrations/mysql/client';
+import { getActiveDatabaseType, setActiveDatabase, DatabaseType } from '@/integrations/database';
+import { testConnection as testMysqlConnection } from '@/integrations/mysql/client';
+import { testConnection as testPgsqlConnection } from '@/integrations/pgsql/client';
 
 type DatabaseStatus = {
   success: boolean;
@@ -10,16 +11,20 @@ type DatabaseStatus = {
   details?: Record<string, any>;
 };
 
-type SyncDirection = 'mysql-to-supabase' | 'supabase-to-mysql';
+type SyncDirection = 'secondary-to-supabase' | 'supabase-to-secondary';
 
 export const useDatabaseSettings = () => {
-  const [useMySQL, setUseMySQLState] = useState<boolean>(() => {
+  const [activeDatabase, setActiveDatabaseState] = useState<DatabaseType>(() => {
     // قراءة القيمة من localStorage أو التخزين المحلي
-    const savedValue = localStorage.getItem('useMySQL');
-    return savedValue !== null ? savedValue === 'true' : false;
+    return getActiveDatabaseType();
   });
   
   const [mysqlStatus, setMySQLStatus] = useState<DatabaseStatus>({
+    success: false,
+    message: 'لم يتم الاختبار بعد'
+  });
+  
+  const [pgsqlStatus, setPgSQLStatus] = useState<DatabaseStatus>({
     success: false,
     message: 'لم يتم الاختبار بعد'
   });
@@ -34,14 +39,14 @@ export const useDatabaseSettings = () => {
   const [syncProgress, setSyncProgress] = useState<number>(0);
 
   // تطبيق التغييرات عند تغيير قاعدة البيانات المستخدمة
-  const setUseMySQL = async (value: boolean) => {
+  const setDatabaseType = async (type: DatabaseType) => {
     setIsLoading(true);
     try {
-      // تحديث القيمة في localStorage
-      localStorage.setItem('useMySQL', value.toString());
+      // تحديث القيمة في الخدمة
+      setActiveDatabase(type);
       
       // تحديث القيمة في الحالة (state)
-      setUseMySQLState(value);
+      setActiveDatabaseState(type);
       
       // إعادة اختبار الاتصال
       await testConnections();
@@ -62,7 +67,7 @@ export const useDatabaseSettings = () => {
       // اختبار الاتصال بـ MySQL
       console.log('بدء اختبار اتصال MySQL...');
       try {
-        const mysqlResult = await testConnection();
+        const mysqlResult = await testMysqlConnection();
         console.log('نتيجة اختبار MySQL:', mysqlResult);
         setMySQLStatus(mysqlResult);
       } catch (mysqlError) {
@@ -70,6 +75,20 @@ export const useDatabaseSettings = () => {
         setMySQLStatus({
           success: false,
           message: mysqlError instanceof Error ? mysqlError.message : 'حدث خطأ أثناء اختبار اتصال MySQL'
+        });
+      }
+      
+      // اختبار الاتصال بـ PostgreSQL
+      console.log('بدء اختبار اتصال PostgreSQL...');
+      try {
+        const pgsqlResult = await testPgsqlConnection();
+        console.log('نتيجة اختبار PostgreSQL:', pgsqlResult);
+        setPgSQLStatus(pgsqlResult);
+      } catch (pgsqlError) {
+        console.error('خطأ في اختبار PostgreSQL:', pgsqlError);
+        setPgSQLStatus({
+          success: false,
+          message: pgsqlError instanceof Error ? pgsqlError.message : 'حدث خطأ أثناء اختبار اتصال PostgreSQL'
         });
       }
       
@@ -114,16 +133,31 @@ export const useDatabaseSettings = () => {
       // قائمة الجداول التي سيتم مزامنتها
       const tables = ['users', 'dreams', 'dream_symbols', 'settings'];
       
+      // تحديد نوع قاعدة البيانات الثانوية
+      const secondaryDbType = activeDatabase === 'supabase' ? 
+        (pgsqlStatus.success ? 'pgsql' : 'mysql') : 
+        activeDatabase;
+      
       // استدعاء API للمزامنة
       try {
-        console.log(`بدء مزامنة البيانات: ${direction}`);
-        const response = await fetch('/api/db/sync-databases', {
+        console.log(`بدء مزامنة البيانات: ${direction}, من ${secondaryDbType}`);
+        const endpoint = secondaryDbType === 'pgsql' ? '/api/db/sync-pg-databases' : '/api/db/sync-databases';
+        
+        const response = await fetch(endpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
             direction, 
             tables,
-            config: {
+            dbType: secondaryDbType,
+            config: secondaryDbType === 'pgsql' ? {
+              host: localStorage.getItem('PGSQL_HOST') || "127.0.0.1",
+              port: parseInt(localStorage.getItem('PGSQL_PORT') || "5432"),
+              user: localStorage.getItem('PGSQL_USER') || "taweel_1",
+              password: localStorage.getItem('PGSQL_PASSWORD') || "S_140Saiz",
+              database: localStorage.getItem('PGSQL_NAME') || "taweel_1",
+              ssl: localStorage.getItem('PGSQL_SSL') === 'true'
+            } : {
               host: localStorage.getItem('DB_HOST') || "173.249.0.2",
               port: parseInt(localStorage.getItem('DB_PORT') || "3306"),
               user: localStorage.getItem('DB_USER') || "taweel_1",
@@ -172,9 +206,10 @@ export const useDatabaseSettings = () => {
   }, []);
 
   return {
-    useMySQL,
-    setUseMySQL,
+    activeDatabase,
+    setDatabaseType,
     mysqlStatus,
+    pgsqlStatus,
     supabaseStatus,
     isLoading,
     isSyncing,
