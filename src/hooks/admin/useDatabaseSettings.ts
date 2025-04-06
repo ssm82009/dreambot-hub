@@ -141,7 +141,10 @@ export const useDatabaseSettings = () => {
       // استدعاء API للمزامنة
       try {
         console.log(`بدء مزامنة البيانات: ${direction}, من ${secondaryDbType}`);
-        const endpoint = secondaryDbType === 'pgsql' ? '/api/db/sync-pg-databases' : '/api/db/sync-databases';
+        // هنا نحدد الإندبوينت بناءً على نوع قاعدة البيانات
+        const endpoint = secondaryDbType === 'pgsql' ? 
+          '/api/db/sync-pg-databases' : 
+          '/api/db/sync-databases';
         
         const response = await fetch(endpoint, {
           method: 'POST',
