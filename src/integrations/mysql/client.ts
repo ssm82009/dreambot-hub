@@ -1,9 +1,5 @@
 import { mysqlConfig } from './config';
 
-// في بيئة المتصفح، لا نستورد mysql2 مباشرة
-// بل نستخدم واجهة وكيلة للوصول إلى خدمات قاعدة البيانات
-// عبر واجهة برمجة التطبيقات (API)
-
 // دالة للتحقق من الاتصال
 export const testConnection = async () => {
   try {
@@ -26,7 +22,7 @@ export const testConnection = async () => {
       database: config.database
     });
     
-    // بما أن نقطة النهاية API غير متاحة، سنقوم بمحاكاة استجابة ناجحة
+    // محاكاة استجابة ناجحة لتجنب الأخطاء 404
     // في النسخة الإنتاجية، يجب استبدال هذا بطلب API حقيقي
     
     // تحقق من تعبئة بيانات الاتصال الأساسية
@@ -262,10 +258,8 @@ export const settingsService = {
   }
 };
 
-// صدّر المجمع وخدمات قاعدة البيانات
-export const mysqlDB = {
-  // مجمع الاتصالات غير متاح مباشرة في المتصفح
-  // سيتم استبداله بواجهة لاستدعاء API
+// صدّر المجمع وخدمات قاعدة البيانات با اسم مختلف لتجنب التعارض
+export const mysqlDBClient = {
   testConnection,
   checkRequiredTables,
   executeQuery,
