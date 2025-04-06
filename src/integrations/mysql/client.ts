@@ -63,23 +63,91 @@ export const usersService = {
       'INSERT INTO users (email, full_name, password_hash) VALUES (?, ?, ?)',
       [email, full_name, password_hash]
     );
+  },
+  
+  // التحقق من تسجيل الدخول
+  async verifyLogin(email: string, passwordHash: string) {
+    const users = await executeQuery(
+      'SELECT * FROM users WHERE email = ? AND password_hash = ?',
+      [email, passwordHash]
+    );
+    return users.length > 0 ? users[0] : null;
   }
 };
 
-// مثال لدالات للتعامل مع الأحلام (يمكن توسيعها حسب الحاجة)
+// دالات للتعامل مع الأحلام
 export const dreamsService = {
   // جلب جميع الأحلام لمستخدم معين
   async getUserDreams(userId: string) {
-    return executeQuery('SELECT * FROM dreams WHERE user_id = ?', [userId]);
+    return executeQuery('SELECT * FROM dreams WHERE user_id = ? ORDER BY created_at DESC', [userId]);
+  },
+  
+  // جلب حلم واحد بواسطة المعرف
+  async getDreamById(id: string) {
+    return executeQuery('SELECT * FROM dreams WHERE id = ?', [id]);
   },
   
   // إنشاء حلم جديد
   async createDream(dreamData: any) {
-    const { user_id, dream_text, interpretation } = dreamData;
+    const { user_id, dream_text, interpretation, tags } = dreamData;
     return executeQuery(
-      'INSERT INTO dreams (user_id, dream_text, interpretation) VALUES (?, ?, ?)',
-      [user_id, dream_text, interpretation]
+      'INSERT INTO dreams (user_id, dream_text, interpretation, tags) VALUES (?, ?, ?, ?)',
+      [user_id, dream_text, interpretation, JSON.stringify(tags || [])]
     );
+  }
+};
+
+// دالات للتعامل مع رموز الأحلام
+export const dreamSymbolsService = {
+  // جلب جميع الرموز
+  async getAllSymbols() {
+    return executeQuery('SELECT * FROM dream_symbols');
+  },
+  
+  // جلب رمز واحد بواسطة المعرف
+  async getSymbolById(id: string) {
+    return executeQuery('SELECT * FROM dream_symbols WHERE id = ?', [id]);
+  },
+  
+  // إنشاء رمز جديد
+  async createSymbol(symbolData: any) {
+    const { symbol, interpretation, category } = symbolData;
+    return executeQuery(
+      'INSERT INTO dream_symbols (symbol, interpretation, category) VALUES (?, ?, ?)',
+      [symbol, interpretation, category]
+    );
+  }
+};
+
+// دالات للتعامل مع إعدادات الموقع
+export const settingsService = {
+  // جلب إعدادات الموقع
+  async getSettings(settingType: string) {
+    const settings = await executeQuery(
+      'SELECT * FROM settings WHERE setting_type = ?',
+      [settingType]
+    );
+    return settings.length > 0 ? JSON.parse(settings[0].value) : null;
+  },
+  
+  // تحديث إعدادات الموقع
+  async updateSettings(settingType: string, value: any) {
+    const settings = await executeQuery(
+      'SELECT * FROM settings WHERE setting_type = ?',
+      [settingType]
+    );
+    
+    if (settings.length > 0) {
+      return executeQuery(
+        'UPDATE settings SET value = ? WHERE setting_type = ?',
+        [JSON.stringify(value), settingType]
+      );
+    } else {
+      return executeQuery(
+        'INSERT INTO settings (setting_type, value) VALUES (?, ?)',
+        [settingType, JSON.stringify(value)]
+      );
+    }
   }
 };
 
@@ -89,5 +157,7 @@ export const mysqlDB = {
   testConnection,
   executeQuery,
   users: usersService,
-  dreams: dreamsService
+  dreams: dreamsService,
+  dreamSymbols: dreamSymbolsService,
+  settings: settingsService
 };
