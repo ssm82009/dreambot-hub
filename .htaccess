@@ -1,0 +1,55 @@
+
+# تمكين إعادة الكتابة
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+  
+  # إذا كان الطلب ليس لملف أو مجلد موجود، قم بتوجيهه إلى index.html
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule ^ index.html [QSA,L]
+</IfModule>
+
+# ضبط رؤوس HTTP للأمان
+<IfModule mod_headers.c>
+  # تمكين CORS
+  Header set Access-Control-Allow-Origin "*"
+  
+  # تمكين CSP
+  Header set Content-Security-Policy "default-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.gpteng.co; img-src 'self' data: blob:; connect-src 'self' wss: https://*.supabase.co https://*.supabase.in; style-src 'self' 'unsafe-inline'; font-src 'self' data:"
+  
+  # تعيين Cache-Control
+  <FilesMatch "\.(html|htm)$">
+    Header set Cache-Control "max-age=0, no-cache, no-store, must-revalidate"
+  </FilesMatch>
+  
+  <FilesMatch "\.(js|css|json)$">
+    Header set Cache-Control "max-age=604800"
+  </FilesMatch>
+  
+  <FilesMatch "\.(ico|gif|jpg|jpeg|png|svg|webp)$">
+    Header set Cache-Control "max-age=2592000"
+  </FilesMatch>
+</IfModule>
+
+# ضبط تنسيقات MIME
+<IfModule mod_mime.c>
+  AddType application/javascript .js
+  AddType text/css .css
+  AddType application/json .json
+  AddType image/svg+xml .svg
+  AddType application/x-font-ttf .ttf
+  AddType application/x-font-woff .woff
+  AddType application/font-woff2 .woff2
+  
+  # محتوى PWA
+  AddType application/manifest+json .webmanifest
+</IfModule>
+
+# ضغط الملفات
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css application/javascript application/json application/manifest+json
+</IfModule>
+
+# التعامل مع الأخطاء
+ErrorDocument 404 /index.html
