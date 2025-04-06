@@ -26,10 +26,56 @@ export const testConnection = async () => {
     const connection = await pool.getConnection();
     console.log('تم الاتصال بقاعدة البيانات MySQL بنجاح!');
     connection.release();
-    return true;
+    return {
+      success: true,
+      message: 'تم الاتصال بقاعدة البيانات MySQL بنجاح!',
+      details: {
+        host: DB_HOST,
+        port: DB_PORT,
+        user: DB_USER,
+        database: DB_NAME
+      }
+    };
   } catch (error) {
     console.error('فشل الاتصال بقاعدة البيانات MySQL:', error);
-    return false;
+    return {
+      success: false,
+      message: 'فشل الاتصال بقاعدة البيانات MySQL',
+      error: error instanceof Error ? error.message : String(error),
+      details: {
+        host: DB_HOST,
+        port: DB_PORT,
+        user: DB_USER,
+        database: DB_NAME
+      }
+    };
+  }
+};
+
+// دالة للتحقق من وجود الجداول المطلوبة
+export const checkRequiredTables = async () => {
+  const requiredTables = ['users', 'dreams', 'dream_symbols', 'settings'];
+  const results = {};
+  
+  try {
+    for (const table of requiredTables) {
+      try {
+        const [rows] = await pool.execute(`SHOW TABLES LIKE '${table}'`);
+        results[table] = (rows as any[]).length > 0;
+      } catch (err) {
+        results[table] = false;
+      }
+    }
+    return {
+      success: true,
+      tablesExist: results
+    };
+  } catch (error) {
+    console.error('خطأ في التحقق من الجداول:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : String(error)
+    };
   }
 };
 
@@ -164,6 +210,7 @@ export const settingsService = {
 export const mysqlDB = {
   pool,
   testConnection,
+  checkRequiredTables,
   executeQuery,
   users: usersService,
   dreams: dreamsService,
