@@ -119,11 +119,20 @@ export const dreamSymbolsService = {
   }
 };
 
+// تعريف نوع لتحديد هيكل بيانات الإعدادات
+type SettingRecord = {
+  id: string;
+  setting_type: string;
+  value: string;
+  created_at?: string;
+  updated_at?: string;
+};
+
 // دالات للتعامل مع إعدادات الموقع
 export const settingsService = {
   // جلب إعدادات الموقع
   async getSettings(settingType: string) {
-    const settings = await executeQuery(
+    const settings = await executeQuery<SettingRecord>(
       'SELECT * FROM settings WHERE setting_type = ?',
       [settingType]
     );
@@ -132,7 +141,7 @@ export const settingsService = {
   
   // تحديث إعدادات الموقع
   async updateSettings(settingType: string, value: any) {
-    const settings = await executeQuery(
+    const settings = await executeQuery<SettingRecord>(
       'SELECT * FROM settings WHERE setting_type = ?',
       [settingType]
     );
