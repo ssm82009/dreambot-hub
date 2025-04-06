@@ -1,108 +1,86 @@
-
-import { 
-  AiSettingsFormValues, 
+import {
+  AiSettingsFormValues,
   InterpretationSettingsFormValues,
-  PricingSettingsFormValues, 
+  PricingSettingsFormValues,
   PaymentSettingsFormValues,
-  ThemeSettingsFormValues, 
+  ThemeSettingsFormValues,
   SeoSettingsFormValues,
-  HomeSectionItem,
+  HomeSectionsFormValues,
   ActiveSections
 } from './types';
 
 export const initialAiSettings: AiSettingsFormValues = {
-  model: 'meta-llama/Llama-3-8b-chat-hf',
-  provider: 'together',
-  apiKey: ''
+  apiKey: '',
+  model: 'gpt-3.5-turbo',
+  temperature: 0.7,
+  maxTokens: 200,
+  presencePenalty: 0.0,
+  frequencyPenalty: 0.0,
 };
 
 export const initialInterpretationSettings: InterpretationSettingsFormValues = {
-  maxInputWords: 500,
-  minOutputWords: 300,
-  maxOutputWords: 1000,
-  systemInstructions: 'أنت مفسر أحلام خبير. يجب أن تقدم تفسيرات دقيقة وشاملة استناداً إلى المراجع الإسلامية والعلمية.'
+  introText: '',
+  outroText: '',
+  symbolIntroText: '',
+  symbolOutroText: '',
 };
 
 export const initialPricingSettings: PricingSettingsFormValues = {
-  freePlanName: 'المجاني',
-  freePlanPrice: 0,
-  freePlanInterpretations: 3,
-  freePlanFeatures: 'تفسير أساسي للأحلام\nدعم عبر البريد الإلكتروني',
-  premiumPlanName: 'المميز',
-  premiumPlanPrice: 49,
-  premiumPlanInterpretations: -1,
-  premiumPlanFeatures: 'تفسيرات أحلام غير محدودة\nتفسيرات مفصلة ومعمقة\nأرشيف لتفسيرات أحلامك السابقة\nنصائح وتوجيهات شخصية\nدعم فني على مدار الساعة',
-  proPlanName: 'الاحترافي',
-  proPlanPrice: 99,
-  proPlanInterpretations: -1,
-  proPlanFeatures: 'كل مميزات الخطة المميزة\nاستشارات شخصية مع خبراء تفسير الأحلام\nتقارير تحليلية شهرية\nإمكانية إضافة 5 حسابات فرعية\nواجهة برمجة التطبيقات API'
+  freeCredits: 5,
+  monthlySubscriptionPrice: 20,
+  monthlyCredits: 100,
+  yearlySubscriptionPrice: 180,
+  yearlyCredits: 1200,
 };
 
 export const initialPaymentSettings: PaymentSettingsFormValues = {
-  paylinkEnabled: true,
-  paylinkApiKey: '',
-  paylinkSecretKey: '',
-  paypalEnabled: false,
-  paypalSandbox: true,
-  paypalClientId: '',
-  paypalSecret: ''
+  stripeSecretKey: '',
+  stripePublishableKey: '',
+  currency: 'USD',
 };
 
 export const initialThemeSettings: ThemeSettingsFormValues = {
-  primaryColor: '#9b87f5',
-  buttonColor: '#9b87f5',
-  textColor: '#1A1F2C',
-  backgroundColor: '#F9F9F9',
-  headerColor: '#FFFFFF',
-  footerColor: '#1A1F2C',
-  logoText: 'تفسير الأحلام',
-  logoFontSize: 24,
-  footerText: 'جميع الحقوق محفوظة © 2024 تفسير الأحلام',
-  twitterLink: '',
-  facebookLink: '',
-  instagramLink: '',
-  slug: 'تفسير الأحلام عبر الذكاء الاصطناعي'
+  primaryColor: '#22c55e',
+  secondaryColor: '#f43f5e',
+  accentColor: '#bae6ff',
+  backgroundColor: '#f8fafc',
+  textColor: '#0f172a',
+  fontFamily: 'Arial, sans-serif',
+  borderRadius: 0.5,
+  borderWidth: 1,
 };
 
 export const initialSeoSettings: SeoSettingsFormValues = {
-  metaTitle: 'تأويل | تفسير فوري لـ الرؤى والأحلام',
-  metaDescription: 'موقع متخصص في تفسير الأحلام والرؤى وفق المراجع الإسلامية والعلمية. احصل على تفسير حلمك الآن.',
-  slug: 'تفسير الأحلام عبر الذكاء الاصطناعي',
-  keywords: 'تفسير الأحلام, تفسير الرؤى, تفسير حلم, تفسير منام, رؤيا في المنام',
-  googleAnalyticsId: '',
-  customHeadTags: '',
-  enableOpenGraph: true,
-  enableTwitterCards: true,
-  enableCanonicalUrls: true,
-  enableRobotsTxt: true,
-  enableSitemap: true
+  siteTitle: 'Taweel',
+  siteDescription: 'تطبيق تفسير الأحلام بالذكاء الاصطناعي',
+  keywords: 'تفسير الأحلام, الذكاء الاصطناعي, رؤى',
+  author: 'Taweel Team',
 };
 
-export const initialHomeSections: HomeSectionItem[] = [
-  { id: 'hero', title: 'قسم الترحيب (Hero)', order: 1, visible: true },
-  { id: 'tryIt', title: 'قسم تجربة الخدمة', order: 2, visible: true },
-  { id: 'howItWorks', title: 'قسم كيف يعمل', order: 3, visible: true }
-];
+export const initialHomeSections: HomeSectionsFormValues = {
+  heroTitle: 'استكشف عالم الأحلام',
+  heroDescription: 'اكتشف المعاني الخفية وراء أحلامك مع تأويل',
+  featuresTitle: 'مميزات التطبيق',
+  featuresDescription: 'تعرف على المميزات التي تجعل تأويل الخيار الأمثل لتفسير الأحلام',
+  testimonialsTitle: 'آراء المستخدمين',
+  testimonialsDescription: 'اطلع على تجارب المستخدمين الآخرين مع تأويل',
+  ctaTitle: 'ابدأ رحلتك الآن',
+  ctaDescription: 'انضم إلى مجتمع تأويل وابدأ في فهم أحلامك بشكل أفضل',
+};
 
 export const initialActiveSections: ActiveSections = {
+  dashboard: true,
   aiSettings: false,
   interpretationSettings: false,
   pricingSettings: false,
   paymentSettings: false,
-  transactions: false,
   users: false,
   pages: false,
   navbar: false,
+  transactions: false,
   tickets: false,
   theme: false,
   seo: false,
   homeSections: false,
-  // Add the missing sections
-  navbarManagement: false,
-  pageManagement: false,
-  seoSettings: false,
-  themeSettings: false,
-  ticketManagement: false,
-  transactionManagement: false,
-  userManagement: false
+  database: false
 };
