@@ -25,8 +25,7 @@ import {
   Search,
   LayoutDashboard,
   TicketCheck,
-  CreditCard as TransactionIcon,
-  Database
+  CreditCard as TransactionIcon
 } from 'lucide-react';
 
 const AdminSidebar: React.FC = () => {
@@ -143,12 +142,6 @@ const AdminSidebar: React.FC = () => {
       label: 'أقسام الصفحة الرئيسية',
       icon: LayoutDashboard,
       action: () => handleSectionToggle('homeSections')
-    },
-    {
-      id: 'database',
-      label: 'إعدادات قاعدة البيانات',
-      icon: Database,
-      action: () => handleSectionToggle('database')
     }
   ];
 
