@@ -76,8 +76,8 @@ export const useDatabaseSettings = () => {
       // اختبار الاتصال بـ Supabase
       console.log('بدء اختبار اتصال Supabase...');
       try {
-        // استخدام جدول users للاختبار، أو أي جدول آخر موجود في Supabase
-        const { data, error } = await supabase.from('settings').select('count', { count: 'exact', head: true });
+        // استخدام جدول site_settings للاختبار، أو أي جدول آخر موجود في Supabase
+        const { data, error } = await supabase.from('site_settings').select('count', { count: 'exact', head: true });
         
         if (error) {
           throw error;

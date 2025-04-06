@@ -1,6 +1,6 @@
 
 import { supabase } from './supabase/client';
-import { mysqlDB } from './mysql/client';
+// No need to import mysqlDB here since we're defining it in this file
 
 // تحديد ما إذا كان الكود يعمل في المتصفح أم على الخادم
 const isBrowser = typeof window !== 'undefined';
@@ -17,7 +17,7 @@ const getUseMySQL = (): boolean => {
 };
 
 // صدّر كائن قاعدة البيانات المناسب
-export const db = isBrowser ? { supabase, mysqlDB } : { supabase };
+export const db = isBrowser ? { supabase } : { supabase };
 
 // تحديد نوع قاعدة البيانات المستخدمة حالياً
 export const isUsingMySQL = (): boolean => {
@@ -32,7 +32,8 @@ export const isUsingMySQL = (): boolean => {
 export const checkDatabaseConnection = async () => {
   try {
     // في المتصفح، نختبر فقط اتصال Supabase
-    const { data, error } = await supabase.from('settings').select('count', { count: 'exact', head: true });
+    // تغيير استدعاء الجدول من "settings" إلى "site_settings" الموجود فعلاً في قاعدة البيانات
+    const { data, error } = await supabase.from('site_settings').select('count', { count: 'exact', head: true });
     if (error) throw error;
     console.log('تم الاتصال بـ Supabase بنجاح!');
     return {
