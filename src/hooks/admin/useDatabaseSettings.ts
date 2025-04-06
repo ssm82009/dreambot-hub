@@ -1,7 +1,8 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { isUsingMySQL, mysqlDB } from '@/integrations/database';
+import { isUsingMySQL } from '@/integrations/database';
+import { testConnection } from '@/integrations/mysql/client';
 
 type DatabaseStatus = {
   success: boolean;
@@ -61,14 +62,14 @@ export const useDatabaseSettings = () => {
       // اختبار الاتصال بـ MySQL
       console.log('بدء اختبار اتصال MySQL...');
       try {
-        const mysqlResult = await mysqlDB.testConnection();
+        const mysqlResult = await testConnection();
         console.log('نتيجة اختبار MySQL:', mysqlResult);
         setMySQLStatus(mysqlResult);
       } catch (mysqlError) {
         console.error('خطأ في اختبار MySQL:', mysqlError);
         setMySQLStatus({
           success: false,
-          message: mysqlError.message || 'حدث خطأ أثناء اختبار اتصال MySQL'
+          message: mysqlError instanceof Error ? mysqlError.message : 'حدث خطأ أثناء اختبار اتصال MySQL'
         });
       }
       
@@ -93,7 +94,7 @@ export const useDatabaseSettings = () => {
         console.error('خطأ في اختبار Supabase:', supabaseError);
         setSupabaseStatus({
           success: false,
-          message: supabaseError.message || 'حدث خطأ أثناء اختبار اتصال Supabase'
+          message: supabaseError instanceof Error ? supabaseError.message : 'حدث خطأ أثناء اختبار اتصال Supabase'
         });
       }
     } catch (error) {
@@ -118,7 +119,17 @@ export const useDatabaseSettings = () => {
         const response = await fetch('/api/db/sync-databases', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ direction, tables })
+          body: JSON.stringify({ 
+            direction, 
+            tables,
+            config: {
+              host: localStorage.getItem('DB_HOST') || "173.249.0.2",
+              port: parseInt(localStorage.getItem('DB_PORT') || "3306"),
+              user: localStorage.getItem('DB_USER') || "taweel_1",
+              password: localStorage.getItem('DB_PASSWORD') || "TLtyrBxFn3F4Hb4y",
+              database: localStorage.getItem('DB_NAME') || "taweel_1"
+            }
+          })
         });
 
         if (!response.ok) {

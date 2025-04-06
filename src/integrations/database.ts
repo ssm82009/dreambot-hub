@@ -55,21 +55,32 @@ export const checkDatabaseConnection = async () => {
 export const mysqlDB = {
   testConnection: async () => {
     try {
+      // نحتاج إلى إرسال بيانات الاتصال من LocalStorage عند استدعاء API
+      const config = {
+        host: localStorage.getItem('DB_HOST') || "173.249.0.2",
+        port: parseInt(localStorage.getItem('DB_PORT') || "3306"),
+        user: localStorage.getItem('DB_USER') || "taweel_1",
+        password: localStorage.getItem('DB_PASSWORD') || "TLtyrBxFn3F4Hb4y",
+        database: localStorage.getItem('DB_NAME') || "taweel_1"
+      };
+      
       // بدلاً من الاتصال المباشر بـ MySQL، سنستخدم API وسيطة
-      const response = await fetch('/api/db/test-connection');
+      const response = await fetch('/api/db/test-connection', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(config)
+      });
       
       if (!response.ok) {
         throw new Error(`خطأ في استجابة الخادم: ${response.status}`);
       }
       
-      // لا نستخدم response.text() و response.json() معًا على نفس الاستجابة
-      // لأن هذا يسبب خطأ "body stream already read"
       return await response.json();
     } catch (error) {
       console.error('خطأ في اختبار اتصال MySQL:', error);
       return {
         success: false,
-        message: `فشل الاتصال بقاعدة بيانات MySQL: ${error.message}`,
+        message: `فشل الاتصال بقاعدة بيانات MySQL: ${error instanceof Error ? error.message : String(error)}`,
         error: error instanceof Error ? error.message : String(error)
       };
     }
@@ -77,7 +88,19 @@ export const mysqlDB = {
   checkRequiredTables: async () => {
     try {
       // استدعاء API للتحقق من الجداول
-      const response = await fetch('/api/db/check-tables');
+      const config = {
+        host: localStorage.getItem('DB_HOST') || "173.249.0.2",
+        port: parseInt(localStorage.getItem('DB_PORT') || "3306"),
+        user: localStorage.getItem('DB_USER') || "taweel_1",
+        password: localStorage.getItem('DB_PASSWORD') || "TLtyrBxFn3F4Hb4y",
+        database: localStorage.getItem('DB_NAME') || "taweel_1"
+      };
+      
+      const response = await fetch('/api/db/check-tables', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ config })
+      });
       
       if (!response.ok) {
         throw new Error(`خطأ في استجابة الخادم: ${response.status}`);
@@ -95,10 +118,18 @@ export const mysqlDB = {
   executeQuery: async (query, params = []) => {
     try {
       // استدعاء API لتنفيذ استعلام
+      const config = {
+        host: localStorage.getItem('DB_HOST') || "173.249.0.2",
+        port: parseInt(localStorage.getItem('DB_PORT') || "3306"),
+        user: localStorage.getItem('DB_USER') || "taweel_1",
+        password: localStorage.getItem('DB_PASSWORD') || "TLtyrBxFn3F4Hb4y",
+        database: localStorage.getItem('DB_NAME') || "taweel_1"
+      };
+      
       const response = await fetch('/api/db/execute-query', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query, params })
+        body: JSON.stringify({ query, params, config })
       });
       
       if (!response.ok) {

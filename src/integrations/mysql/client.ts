@@ -1,34 +1,41 @@
-import mysql from 'mysql2/promise';
+
 import { mysqlConfig } from './config';
 
-// إنشاء مجمع اتصالات (connection pool) لزيادة الأداء
-const pool = mysql.createPool({
-  host: mysqlConfig.host,
-  port: mysqlConfig.port,
-  user: mysqlConfig.user,
-  password: mysqlConfig.password,
-  database: mysqlConfig.database,
-  waitForConnections: mysqlConfig.pool.waitForConnections,
-  connectionLimit: mysqlConfig.pool.connectionLimit,
-  queueLimit: mysqlConfig.pool.queueLimit
-});
+// في بيئة المتصفح، لا نستورد mysql2 مباشرة
+// بل نستخدم واجهة وكيلة للوصول إلى خدمات قاعدة البيانات
+// عبر واجهة برمجة التطبيقات (API)
 
 // دالة للتحقق من الاتصال
 export const testConnection = async () => {
   try {
-    const connection = await pool.getConnection();
-    console.log('تم الاتصال بقاعدة البيانات MySQL بنجاح!');
-    connection.release();
-    return {
-      success: true,
-      message: 'تم الاتصال بقاعدة البيانات MySQL بنجاح!',
-      details: {
+    // في بيئة المتصفح، نستخدم API وسيطة لاختبار الاتصال
+    const response = await fetch('/api/db/test-connection', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
         host: mysqlConfig.host,
         port: mysqlConfig.port,
         user: mysqlConfig.user,
+        password: mysqlConfig.password,
         database: mysqlConfig.database
-      }
-    };
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`فشل اختبار الاتصال: ${response.status}`);
+    }
+
+    const result = await response.json();
+    
+    if (result.success) {
+      console.log('تم الاتصال بقاعدة البيانات MySQL بنجاح!');
+    } else {
+      console.error('فشل الاتصال بقاعدة البيانات MySQL:', result.error);
+    }
+    
+    return result;
   } catch (error) {
     console.error('فشل الاتصال بقاعدة البيانات MySQL:', error);
     return {
@@ -47,22 +54,28 @@ export const testConnection = async () => {
 
 // دالة للتحقق من وجود الجداول المطلوبة
 export const checkRequiredTables = async () => {
-  const requiredTables = ['users', 'dreams', 'dream_symbols', 'settings'];
-  const results = {};
-  
   try {
-    for (const table of requiredTables) {
-      try {
-        const [rows] = await pool.execute(`SHOW TABLES LIKE '${table}'`);
-        results[table] = (rows as any[]).length > 0;
-      } catch (err) {
-        results[table] = false;
-      }
+    const response = await fetch('/api/db/check-tables', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        config: {
+          host: mysqlConfig.host,
+          port: mysqlConfig.port,
+          user: mysqlConfig.user,
+          password: mysqlConfig.password,
+          database: mysqlConfig.database
+        }
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`فشل التحقق من الجداول: ${response.status}`);
     }
-    return {
-      success: true,
-      tablesExist: results
-    };
+
+    return await response.json();
   } catch (error) {
     console.error('خطأ في التحقق من الجداول:', error);
     return {
@@ -75,24 +88,54 @@ export const checkRequiredTables = async () => {
 // دالة لتنفيذ استعلامات SQL
 export const executeQuery = async <T>(query: string, params: any[] = []): Promise<T[]> => {
   try {
-    const [rows] = await pool.execute(query, params);
-    return rows as T[];
+    const response = await fetch('/api/db/execute-query', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        query,
+        params,
+        config: {
+          host: mysqlConfig.host,
+          port: mysqlConfig.port,
+          user: mysqlConfig.user,
+          password: mysqlConfig.password,
+          database: mysqlConfig.database
+        }
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`فشل تنفيذ الاستعلام: ${response.status}`);
+    }
+
+    const result = await response.json();
+    return result.data;
   } catch (error) {
     console.error('خطأ في تنفيذ الاستعلام:', error);
     throw error;
   }
 };
 
+// تعريف نوع لتحديد هيكل بيانات المستخدمين
+type User = {
+  id: string;
+  email: string;
+  full_name: string;
+  password_hash: string;
+};
+
 // مثال لدالات للتعامل مع المستخدمين (يمكن توسيعها حسب الحاجة)
 export const usersService = {
   // جلب جميع المستخدمين
   async getAllUsers() {
-    return executeQuery('SELECT * FROM users');
+    return executeQuery<User>('SELECT * FROM users');
   },
   
   // جلب مستخدم واحد بواسطة المعرف
   async getUserById(id: string) {
-    return executeQuery('SELECT * FROM users WHERE id = ?', [id]);
+    return executeQuery<User>('SELECT * FROM users WHERE id = ?', [id]);
   },
   
   // إنشاء مستخدم جديد
@@ -106,7 +149,7 @@ export const usersService = {
   
   // التحقق من تسجيل الدخول
   async verifyLogin(email: string, passwordHash: string) {
-    const users = await executeQuery(
+    const users = await executeQuery<User>(
       'SELECT * FROM users WHERE email = ? AND password_hash = ?',
       [email, passwordHash]
     );
@@ -201,7 +244,8 @@ export const settingsService = {
 
 // صدّر المجمع وخدمات قاعدة البيانات
 export const mysqlDB = {
-  pool,
+  // مجمع الاتصالات غير متاح مباشرة في المتصفح
+  // سيتم استبداله بواجهة لاستدعاء API
   testConnection,
   checkRequiredTables,
   executeQuery,
