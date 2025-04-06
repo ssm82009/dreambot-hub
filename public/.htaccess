@@ -46,3 +46,25 @@ RewriteRule ^ index.html [QSA,L]
   AddOutputFilterByType DEFLATE font/woff
   AddOutputFilterByType DEFLATE font/woff2
 </IfModule>
+
+# تعيين أنواع MIME الصحيحة للملفات JavaScript
+<IfModule mod_mime.c>
+  # تعيين نوع MIME لملفات JavaScript
+  AddType application/javascript .js
+  # تعيين نوع MIME لوحدات JavaScript
+  AddType application/javascript .mjs
+  # تعيين نوع MIME لملفات TypeScript
+  AddType application/javascript .ts .tsx
+  # تعيين نوع MIME لملفات JSON
+  AddType application/json .json
+</IfModule>
+
+# ضمان تقديم ملفات JavaScript كوحدات ES
+<IfModule mod_headers.c>
+  <FilesMatch "\.(js|mjs|ts|tsx)$">
+    Header set Content-Type "application/javascript; charset=utf-8"
+  </FilesMatch>
+  <FilesMatch "\.json$">
+    Header set Content-Type "application/json; charset=utf-8"
+  </FilesMatch>
+</IfModule>
