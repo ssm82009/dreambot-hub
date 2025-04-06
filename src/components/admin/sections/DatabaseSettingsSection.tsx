@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Database } from 'lucide-react';
 import { useDatabaseSettings } from '@/hooks/admin/useDatabaseSettings';
 import AdminSection from '@/components/admin/AdminSection';
@@ -9,7 +9,10 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Progress } from '@/components/ui/progress';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
+import { getDatabaseConfig, updateDatabaseConfig } from '@/integrations/mysql/config';
 
 const DatabaseSettingsSection = () => {
   const { activeSections, toggleSection } = useAdmin();
@@ -26,6 +29,31 @@ const DatabaseSettingsSection = () => {
   } = useDatabaseSettings();
 
   const [syncDirection, setSyncDirection] = useState<'mysql-to-supabase' | 'supabase-to-mysql'>('mysql-to-supabase');
+  const [mysqlConfig, setMysqlConfig] = useState({
+    host: '',
+    port: 3306,
+    user: '',
+    password: '',
+    database: '',
+    connectionLimit: 10
+  });
+
+  // جلب إعدادات قاعدة البيانات عند تحميل المكون
+  useEffect(() => {
+    try {
+      const config = getDatabaseConfig();
+      setMysqlConfig({
+        host: config.host,
+        port: config.port,
+        user: config.user,
+        password: config.password,
+        database: config.database,
+        connectionLimit: config.connectionLimit
+      });
+    } catch (error) {
+      console.error('خطأ في جلب إعدادات قاعدة البيانات:', error);
+    }
+  }, []);
 
   // التبديل بين قواعد البيانات
   const handleDatabaseToggle = async (checked: boolean) => {
@@ -53,6 +81,25 @@ const DatabaseSettingsSection = () => {
       toast.error('فشلت عملية المزامنة');
       console.error('خطأ في المزامنة:', error);
     }
+  };
+
+  // تحديث إعدادات MySQL
+  const handleConfigUpdate = () => {
+    try {
+      // تحديث الإعدادات
+      updateDatabaseConfig(mysqlConfig);
+      toast.success('تم تحديث إعدادات قاعدة البيانات بنجاح');
+    } catch (error) {
+      toast.error('حدث خطأ أثناء تحديث إعدادات قاعدة البيانات');
+      console.error('خطأ في تحديث إعدادات قاعدة البيانات:', error);
+    }
+  };
+
+  const handleInputChange = (field: string, value: string | number) => {
+    setMysqlConfig(prev => ({
+      ...prev,
+      [field]: value
+    }));
   };
 
   return (
@@ -89,6 +136,85 @@ const DatabaseSettingsSection = () => {
           </CardContent>
         </Card>
 
+        {/* قسم إعدادات MySQL */}
+        <Card>
+          <CardHeader>
+            <CardTitle>إعدادات اتصال MySQL</CardTitle>
+            <CardDescription>
+              تعديل إعدادات الاتصال بقاعدة بيانات MySQL
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="mysql-host">عنوان الخادم (Host)</Label>
+                <Input 
+                  id="mysql-host" 
+                  value={mysqlConfig.host}
+                  onChange={(e) => handleInputChange('host', e.target.value)}
+                  placeholder="مثال: localhost أو 173.249.0.2"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="mysql-port">رقم المنفذ (Port)</Label>
+                <Input 
+                  id="mysql-port" 
+                  type="number"
+                  value={mysqlConfig.port}
+                  onChange={(e) => handleInputChange('port', parseInt(e.target.value) || 3306)}
+                  placeholder="3306"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="mysql-user">اسم المستخدم</Label>
+                <Input 
+                  id="mysql-user" 
+                  value={mysqlConfig.user}
+                  onChange={(e) => handleInputChange('user', e.target.value)}
+                  placeholder="اسم المستخدم"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="mysql-password">كلمة المرور</Label>
+                <Input 
+                  id="mysql-password" 
+                  type="password"
+                  value={mysqlConfig.password}
+                  onChange={(e) => handleInputChange('password', e.target.value)}
+                  placeholder="كلمة المرور"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="mysql-database">اسم قاعدة البيانات</Label>
+                <Input 
+                  id="mysql-database" 
+                  value={mysqlConfig.database}
+                  onChange={(e) => handleInputChange('database', e.target.value)}
+                  placeholder="اسم قاعدة البيانات"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="mysql-connection-limit">حد الاتصالات</Label>
+                <Input 
+                  id="mysql-connection-limit" 
+                  type="number"
+                  value={mysqlConfig.connectionLimit}
+                  onChange={(e) => handleInputChange('connectionLimit', parseInt(e.target.value) || 10)}
+                  placeholder="10"
+                />
+              </div>
+            </div>
+          </CardContent>
+          <CardFooter>
+            <Button 
+              onClick={handleConfigUpdate} 
+              className="w-full"
+            >
+              حفظ إعدادات الاتصال
+            </Button>
+          </CardFooter>
+        </Card>
+
         {/* قسم حالة الاتصال */}
         <Card>
           <CardHeader>
@@ -112,6 +238,13 @@ const DatabaseSettingsSection = () => {
                     {mysqlStatus.message}
                   </AlertDescription>
                 </Alert>
+              )}
+              {mysqlStatus.details && (
+                <div className="bg-muted p-2 rounded-md text-xs">
+                  <pre className="whitespace-pre-wrap overflow-x-auto">
+                    {JSON.stringify(mysqlStatus.details, null, 2)}
+                  </pre>
+                </div>
               )}
             </div>
 

@@ -1,23 +1,16 @@
-
 import mysql from 'mysql2/promise';
-
-// معلومات الاتصال بقاعدة البيانات MySQL
-const DB_HOST = process.env.DB_HOST || "173.249.0.2";
-const DB_USER = process.env.DB_USER || "taweel_1";
-const DB_PASSWORD = process.env.DB_PASSWORD || "TLtyrBxFn3F4Hb4y";
-const DB_NAME = process.env.DB_NAME || "taweel_1";
-const DB_PORT = process.env.DB_PORT ? parseInt(process.env.DB_PORT) : 3306;
+import { mysqlConfig } from './config';
 
 // إنشاء مجمع اتصالات (connection pool) لزيادة الأداء
 const pool = mysql.createPool({
-  host: DB_HOST,
-  port: DB_PORT,
-  user: DB_USER,
-  password: DB_PASSWORD,
-  database: DB_NAME,
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0
+  host: mysqlConfig.host,
+  port: mysqlConfig.port,
+  user: mysqlConfig.user,
+  password: mysqlConfig.password,
+  database: mysqlConfig.database,
+  waitForConnections: mysqlConfig.pool.waitForConnections,
+  connectionLimit: mysqlConfig.pool.connectionLimit,
+  queueLimit: mysqlConfig.pool.queueLimit
 });
 
 // دالة للتحقق من الاتصال
@@ -30,10 +23,10 @@ export const testConnection = async () => {
       success: true,
       message: 'تم الاتصال بقاعدة البيانات MySQL بنجاح!',
       details: {
-        host: DB_HOST,
-        port: DB_PORT,
-        user: DB_USER,
-        database: DB_NAME
+        host: mysqlConfig.host,
+        port: mysqlConfig.port,
+        user: mysqlConfig.user,
+        database: mysqlConfig.database
       }
     };
   } catch (error) {
@@ -43,10 +36,10 @@ export const testConnection = async () => {
       message: 'فشل الاتصال بقاعدة البيانات MySQL',
       error: error instanceof Error ? error.message : String(error),
       details: {
-        host: DB_HOST,
-        port: DB_PORT,
-        user: DB_USER,
-        database: DB_NAME
+        host: mysqlConfig.host,
+        port: mysqlConfig.port,
+        user: mysqlConfig.user,
+        database: mysqlConfig.database
       }
     };
   }
