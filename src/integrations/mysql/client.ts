@@ -2,7 +2,7 @@
 import mysql from 'mysql2/promise';
 
 // معلومات الاتصال بقاعدة البيانات MySQL
-const DB_HOST = process.env.DB_HOST || "localhost";
+const DB_HOST = process.env.DB_HOST || "173.249.0.2";
 const DB_USER = process.env.DB_USER || "taweel_1";
 const DB_PASSWORD = process.env.DB_PASSWORD || "TLtyrBxFn3F4Hb4y";
 const DB_NAME = process.env.DB_NAME || "taweel_1";
