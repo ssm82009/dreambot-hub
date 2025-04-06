@@ -57,12 +57,25 @@ export const mysqlDB = {
     try {
       // بدلاً من الاتصال المباشر بـ MySQL، سنستخدم API وسيطة
       const response = await fetch('/api/db/test-connection');
-      return await response.json();
+      
+      // تحقق من استجابة الخادم
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`خطأ في استجابة الخادم: ${response.status} - ${errorText}`);
+      }
+      
+      // حاول تحليل البيانات كـ JSON
+      try {
+        return await response.json();
+      } catch (jsonError) {
+        const responseText = await response.text();
+        throw new Error(`فشل في تحليل استجابة JSON: ${responseText}`);
+      }
     } catch (error) {
       console.error('خطأ في اختبار اتصال MySQL:', error);
       return {
         success: false,
-        message: 'فشل الاتصال بقاعدة بيانات MySQL',
+        message: `فشل الاتصال بقاعدة بيانات MySQL: ${error.message}`,
         error: error instanceof Error ? error.message : String(error)
       };
     }
@@ -71,6 +84,12 @@ export const mysqlDB = {
     try {
       // استدعاء API للتحقق من الجداول
       const response = await fetch('/api/db/check-tables');
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`خطأ في استجابة الخادم: ${response.status} - ${errorText}`);
+      }
+      
       return await response.json();
     } catch (error) {
       console.error('خطأ في التحقق من الجداول:', error);
@@ -88,6 +107,12 @@ export const mysqlDB = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query, params })
       });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`خطأ في استجابة الخادم: ${response.status} - ${errorText}`);
+      }
+      
       return await response.json();
     } catch (error) {
       console.error('خطأ في تنفيذ الاستعلام:', error);

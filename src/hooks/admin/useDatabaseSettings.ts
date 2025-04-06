@@ -59,10 +59,21 @@ export const useDatabaseSettings = () => {
     setIsLoading(true);
     try {
       // اختبار الاتصال بـ MySQL
-      const mysqlResult = await mysqlDB.testConnection();
-      setMySQLStatus(mysqlResult);
+      console.log('بدء اختبار اتصال MySQL...');
+      try {
+        const mysqlResult = await mysqlDB.testConnection();
+        console.log('نتيجة اختبار MySQL:', mysqlResult);
+        setMySQLStatus(mysqlResult);
+      } catch (mysqlError) {
+        console.error('خطأ في اختبار MySQL:', mysqlError);
+        setMySQLStatus({
+          success: false,
+          message: mysqlError.message || 'حدث خطأ أثناء اختبار اتصال MySQL'
+        });
+      }
       
       // اختبار الاتصال بـ Supabase
+      console.log('بدء اختبار اتصال Supabase...');
       try {
         const { data, error } = await supabase.from('users').select('count', { count: 'exact', head: true });
         
@@ -70,6 +81,7 @@ export const useDatabaseSettings = () => {
           throw error;
         }
         
+        console.log('نتيجة اختبار Supabase:', data);
         setSupabaseStatus({
           success: true,
           message: 'تم الاتصال بـ Supabase بنجاح',
@@ -77,11 +89,11 @@ export const useDatabaseSettings = () => {
             count: data
           }
         });
-      } catch (error) {
-        console.error('خطأ في اختبار Supabase:', error);
+      } catch (supabaseError) {
+        console.error('خطأ في اختبار Supabase:', supabaseError);
         setSupabaseStatus({
           success: false,
-          message: error instanceof Error ? error.message : String(error)
+          message: supabaseError.message || 'حدث خطأ أثناء اختبار اتصال Supabase'
         });
       }
     } catch (error) {
@@ -99,10 +111,10 @@ export const useDatabaseSettings = () => {
     try {
       // قائمة الجداول التي سيتم مزامنتها
       const tables = ['users', 'dreams', 'dream_symbols', 'settings'];
-      const totalTables = tables.length;
       
       // استدعاء API للمزامنة
       try {
+        console.log(`بدء مزامنة البيانات: ${direction}`);
         const response = await fetch('/api/db/sync-databases', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -110,7 +122,8 @@ export const useDatabaseSettings = () => {
         });
 
         if (!response.ok) {
-          throw new Error(`فشل في المزامنة: ${response.statusText}`);
+          const errorText = await response.text();
+          throw new Error(`فشل في المزامنة: ${response.status} - ${errorText}`);
         }
 
         // محاكاة التقدم خلال الانتظار
