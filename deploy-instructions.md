@@ -47,26 +47,67 @@ sudo systemctl restart apache2
 
 تم تضمين ملف `.htaccess` في مجلد `public` ضمن المشروع. تأكد من أنه تم نقله إلى المجلد الجذر لموقعك على السيرفر.
 
-### 5. تكوين الاتصال بقاعدة البيانات MySQL
+### 5. إعداد متغيرات البيئة (اختياري)
 
-تأكد من أن قاعدة البيانات MySQL متاحة وأن معلومات الاتصال في ملف `src/integrations/mysql/client.ts` صحيحة:
+يمكنك ضبط متغيرات البيئة لتكوين الاتصال بقاعدة البيانات. 
 
-```javascript
-const DB_HOST = "localhost"; // تأكد من تغييره إلى عنوان قاعدة البيانات الخاصة بك
-const DB_USER = "taweel_1";
-const DB_PASSWORD = "TLtyrBxFn3F4Hb4y";
-const DB_NAME = "taweel_1";
+#### طريقة 1: إنشاء ملف .env.local (للبيئة المحلية)
+
+```bash
+DB_HOST=localhost
+DB_USER=taweel_1
+DB_PASSWORD=TLtyrBxFn3F4Hb4y
+DB_NAME=taweel_1
+DB_PORT=3306
 ```
 
-### 6. التأكد من استخدام MySQL بدلاً من Supabase
+#### طريقة 2: ضبط المتغيرات في ملف PHP (للإنتاج)
+
+يمكنك إنشاء ملف PHP في المجلد الجذر يحتوي على تعريف متغيرات البيئة:
+
+```php
+<?php
+// env.php
+putenv("DB_HOST=localhost");
+putenv("DB_USER=taweel_1");
+putenv("DB_PASSWORD=TLtyrBxFn3F4Hb4y");
+putenv("DB_NAME=taweel_1");
+putenv("DB_PORT=3306");
+?>
+```
+
+ثم قم بتضمين هذا الملف في بداية index.php:
+
+```php
+<?php
+include 'env.php';
+?>
+<!DOCTYPE html>
+<html>
+...
+```
+
+### 6. تكوين الاتصال بقاعدة البيانات MySQL
+
+تأكد من أن قاعدة البيانات MySQL متاحة وأن معلومات الاتصال في ملف `src/integrations/mysql/client.ts` صحيحة. الإعدادات الافتراضية هي:
+
+```javascript
+const DB_HOST = process.env.DB_HOST || "localhost";
+const DB_USER = process.env.DB_USER || "taweel_1";
+const DB_PASSWORD = process.env.DB_PASSWORD || "TLtyrBxFn3F4Hb4y";
+const DB_NAME = process.env.DB_NAME || "taweel_1";
+const DB_PORT = process.env.DB_PORT ? parseInt(process.env.DB_PORT) : 3306;
+```
+
+### 7. التأكد من استخدام MySQL بدلاً من Supabase
 
 افتح ملف `src/integrations/database.ts` وتأكد من أن `USE_MYSQL` مضبوط على `true`.
 
-### 7. إنشاء جداول قاعدة البيانات المطلوبة
+### 8. إنشاء جداول قاعدة البيانات المطلوبة
 
 قم بإنشاء جداول قاعدة البيانات الضرورية باستخدام SQL. يمكنك استخدام phpMyAdmin أو أي أداة أخرى لإدارة قاعدة البيانات MySQL.
 
-### 8. اختبار التطبيق
+### 9. اختبار التطبيق
 
 بعد الانتهاء من جميع الخطوات السابقة، قم بفتح موقعك على المتصفح وتأكد من أنه يعمل بشكل صحيح.
 
@@ -96,3 +137,8 @@ const DB_NAME = "taweel_1";
    - تأكد من أن أباتشي يقدم ملفات JavaScript مع نوع MIME الصحيح
    - إذا استمرت المشكلة، يمكنك إضافة تكوينات إضافية إلى ملف ".htaccess" المذكور أعلاه
    - يمكنك التحقق من أنواع MIME التي يستخدمها الخادم عن طريق أدوات المطور في المتصفح
+
+5. مشكلات الاتصال بقاعدة البيانات:
+   - تأكد من أن خادم MySQL يعمل: `sudo systemctl status mysql`
+   - تحقق من صحة بيانات الاتصال
+   - تأكد من أن المستخدم لديه صلاحيات الوصول من عنوان IP الخادم

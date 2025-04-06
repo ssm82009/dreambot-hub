@@ -2,14 +2,16 @@
 import mysql from 'mysql2/promise';
 
 // معلومات الاتصال بقاعدة البيانات MySQL
-const DB_HOST = "localhost"; // قم بتغييرها إلى عنوان السيرفر الخاص بك
-const DB_USER = "taweel_1";
-const DB_PASSWORD = "TLtyrBxFn3F4Hb4y";
-const DB_NAME = "taweel_1";
+const DB_HOST = process.env.DB_HOST || "localhost";
+const DB_USER = process.env.DB_USER || "taweel_1";
+const DB_PASSWORD = process.env.DB_PASSWORD || "TLtyrBxFn3F4Hb4y";
+const DB_NAME = process.env.DB_NAME || "taweel_1";
+const DB_PORT = process.env.DB_PORT ? parseInt(process.env.DB_PORT) : 3306;
 
 // إنشاء مجمع اتصالات (connection pool) لزيادة الأداء
 const pool = mysql.createPool({
   host: DB_HOST,
+  port: DB_PORT,
   user: DB_USER,
   password: DB_PASSWORD,
   database: DB_NAME,
