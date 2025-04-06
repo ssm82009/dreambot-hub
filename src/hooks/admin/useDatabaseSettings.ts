@@ -122,8 +122,7 @@ export const useDatabaseSettings = () => {
         });
 
         if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`فشل في المزامنة: ${response.status} - ${errorText}`);
+          throw new Error(`فشل في المزامنة: ${response.status}`);
         }
 
         // محاكاة التقدم خلال الانتظار

@@ -1,9 +1,10 @@
 
-// هذا مجرد نموذج بسيط يعيد حالة الاتصال
-// هذا الملف سيعمل فقط في بيئة Next.js أو بيئة مماثلة
 export default async function handler(req, res) {
-  // في بيئة حقيقية، سنختبر الاتصال بقاعدة بيانات MySQL
+  // في بيئة حقيقية، سنختبر الاتصال بقاعدة البيانات MySQL
   // لكن هنا نعيد استجابة وهمية للاختبار
+  
+  // محاكاة تأخير الاتصال بالخادم
+  await new Promise(resolve => setTimeout(resolve, 500));
   
   res.status(200).json({
     success: true,

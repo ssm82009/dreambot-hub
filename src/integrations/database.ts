@@ -58,19 +58,13 @@ export const mysqlDB = {
       // بدلاً من الاتصال المباشر بـ MySQL، سنستخدم API وسيطة
       const response = await fetch('/api/db/test-connection');
       
-      // تحقق من استجابة الخادم
       if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`خطأ في استجابة الخادم: ${response.status} - ${errorText}`);
+        throw new Error(`خطأ في استجابة الخادم: ${response.status}`);
       }
       
-      // حاول تحليل البيانات كـ JSON
-      try {
-        return await response.json();
-      } catch (jsonError) {
-        const responseText = await response.text();
-        throw new Error(`فشل في تحليل استجابة JSON: ${responseText}`);
-      }
+      // لا نستخدم response.text() و response.json() معًا على نفس الاستجابة
+      // لأن هذا يسبب خطأ "body stream already read"
+      return await response.json();
     } catch (error) {
       console.error('خطأ في اختبار اتصال MySQL:', error);
       return {
@@ -86,8 +80,7 @@ export const mysqlDB = {
       const response = await fetch('/api/db/check-tables');
       
       if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`خطأ في استجابة الخادم: ${response.status} - ${errorText}`);
+        throw new Error(`خطأ في استجابة الخادم: ${response.status}`);
       }
       
       return await response.json();
@@ -109,8 +102,7 @@ export const mysqlDB = {
       });
       
       if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`خطأ في استجابة الخادم: ${response.status} - ${errorText}`);
+        throw new Error(`خطأ في استجابة الخادم: ${response.status}`);
       }
       
       return await response.json();
