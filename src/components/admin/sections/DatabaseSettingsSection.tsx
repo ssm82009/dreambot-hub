@@ -8,7 +8,6 @@ import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { toast } from 'sonner';
 import { useDatabaseSettings } from '@/hooks/admin/useDatabaseSettings';
-import { db, checkDatabaseConnection } from '@/integrations/database';
 
 const DatabaseSettingsSection: React.FC = () => {
   const { 
@@ -188,6 +187,14 @@ const DatabaseSettingsSection: React.FC = () => {
           </div>
         </CardContent>
       </Card>
+      
+      <Alert variant="warning" className="mt-6">
+        <AlertTitle className="text-amber-600">ملاحظة مهمة</AlertTitle>
+        <AlertDescription className="text-amber-700">
+          <p>عمليات MySQL تعمل فقط على الخادم وليس في المتصفح. الإعدادات هنا تحدد ماذا ستستخدم تطبيقات الخادم.</p>
+          <p className="mt-2">في بيئة التطوير، سيتم استخدام Supabase دائمًا نظرًا لعدم وجود خادم MySQL متاح في المتصفح.</p>
+        </AlertDescription>
+      </Alert>
     </div>
   );
 };

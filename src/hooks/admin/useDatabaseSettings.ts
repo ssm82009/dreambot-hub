@@ -1,8 +1,7 @@
 
 import { useState, useEffect } from 'react';
-import { mysqlDB } from '@/integrations/mysql/client';
 import { supabase } from '@/integrations/supabase/client';
-import { db, checkDatabaseConnection } from '@/integrations/database';
+import { isUsingMySQL, mysqlDB } from '@/integrations/database';
 
 type DatabaseStatus = {
   success: boolean;
@@ -16,7 +15,7 @@ export const useDatabaseSettings = () => {
   const [useMySQL, setUseMySQLState] = useState<boolean>(() => {
     // قراءة القيمة من localStorage أو التخزين المحلي
     const savedValue = localStorage.getItem('useMySQL');
-    return savedValue !== null ? savedValue === 'true' : true;
+    return savedValue !== null ? savedValue === 'true' : false;
   });
   
   const [mysqlStatus, setMySQLStatus] = useState<DatabaseStatus>({
@@ -45,9 +44,6 @@ export const useDatabaseSettings = () => {
       
       // إعادة اختبار الاتصال
       await testConnections();
-      
-      // إعادة تحميل الصفحة لتطبيق التغييرات
-      // window.location.reload();
       
       return true;
     } catch (error) {
@@ -105,67 +101,51 @@ export const useDatabaseSettings = () => {
       const tables = ['users', 'dreams', 'dream_symbols', 'settings'];
       const totalTables = tables.length;
       
-      for (let i = 0; i < tables.length; i++) {
-        const table = tables[i];
-        setSyncProgress(Math.round((i / totalTables) * 50)); // الوصول للنصف في مرحلة القراءة
-        
-        // جلب البيانات من المصدر
-        let sourceData;
-        if (direction === 'mysql-to-supabase') {
-          const query = `SELECT * FROM ${table}`;
-          sourceData = await mysqlDB.executeQuery(query);
-        } else {
-          const { data, error } = await supabase.from(table).select('*');
-          if (error) throw error;
-          sourceData = data;
+      // استدعاء API للمزامنة
+      try {
+        const response = await fetch('/api/db/sync-databases', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ direction, tables })
+        });
+
+        if (!response.ok) {
+          throw new Error(`فشل في المزامنة: ${response.statusText}`);
         }
-        
-        setSyncProgress(Math.round(50 + (i / totalTables) * 30)); // الوصول للثمانين في مرحلة المعالجة
-        
-        // كتابة البيانات إلى الوجهة
-        if (direction === 'mysql-to-supabase') {
-          // حذف البيانات الحالية من الوجهة (Supabase) أولاً
-          const { error: deleteError } = await supabase.from(table).delete().neq('id', '00000000-0000-0000-0000-000000000000');
-          if (deleteError) throw deleteError;
-          
-          // إدخال البيانات الجديدة إلى Supabase
-          if (sourceData && sourceData.length > 0) {
-            const { error: insertError } = await supabase.from(table).insert(sourceData);
-            if (insertError) throw insertError;
+
+        // محاكاة التقدم خلال الانتظار
+        let progress = 0;
+        const interval = setInterval(() => {
+          progress += 5;
+          if (progress > 95) {
+            clearInterval(interval);
+          } else {
+            setSyncProgress(progress);
           }
-        } else {
-          // مزامنة البيانات إلى MySQL
-          // حذف البيانات الحالية من الوجهة (MySQL) أولاً
-          const deleteQuery = `DELETE FROM ${table}`;
-          await mysqlDB.executeQuery(deleteQuery);
-          
-          // إدخال البيانات الجديدة إلى MySQL
-          if (sourceData && sourceData.length > 0) {
-            for (const item of sourceData) {
-              const columns = Object.keys(item).join(', ');
-              const placeholders = Object.keys(item).map(() => '?').join(', ');
-              const values = Object.values(item);
-              
-              const insertQuery = `INSERT INTO ${table} (${columns}) VALUES (${placeholders})`;
-              await mysqlDB.executeQuery(insertQuery, values);
-            }
-          }
-        }
+        }, 300);
+
+        const result = await response.json();
         
-        setSyncProgress(Math.round(80 + (i / totalTables) * 20)); // الوصول للمئة بعد الانتهاء
+        // إلغاء الفاصل الزمني وضبط التقدم على 100٪
+        clearInterval(interval);
+        setSyncProgress(100);
+        
+        return result;
+      } catch (error) {
+        console.error('خطأ في مزامنة البيانات:', error);
+        throw error;
       }
-      
-      setSyncProgress(100);
-      return true;
-    } catch (error) {
-      console.error('خطأ في مزامنة البيانات:', error);
-      throw error;
     } finally {
       setTimeout(() => {
         setIsSyncing(false);
       }, 1000); // إظهار 100% لثانية واحدة قبل إغلاق المؤشر
     }
   };
+
+  // اختبار الاتصال عند تحميل المكون
+  useEffect(() => {
+    testConnections();
+  }, []);
 
   return {
     useMySQL,

@@ -1,3 +1,4 @@
+
 import {
   AiSettingsFormValues,
   InterpretationSettingsFormValues,
@@ -5,67 +6,75 @@ import {
   PaymentSettingsFormValues,
   ThemeSettingsFormValues,
   SeoSettingsFormValues,
-  HomeSectionsFormValues,
   ActiveSections
 } from './types';
 
 export const initialAiSettings: AiSettingsFormValues = {
   apiKey: '',
-  model: 'gpt-3.5-turbo',
-  temperature: 0.7,
-  maxTokens: 200,
-  presencePenalty: 0.0,
-  frequencyPenalty: 0.0,
+  model: 'meta-llama/Llama-3-8b-chat-hf',
+  provider: 'together'
 };
 
 export const initialInterpretationSettings: InterpretationSettingsFormValues = {
-  introText: '',
-  outroText: '',
-  symbolIntroText: '',
-  symbolOutroText: '',
+  maxInputWords: 500,
+  minOutputWords: 300,
+  maxOutputWords: 1000,
+  systemInstructions: 'أنت مفسر أحلام خبير. يجب أن تقدم تفسيرات دقيقة وشاملة استناداً إلى المراجع الإسلامية والعلمية.'
 };
 
 export const initialPricingSettings: PricingSettingsFormValues = {
-  freeCredits: 5,
-  monthlySubscriptionPrice: 20,
-  monthlyCredits: 100,
-  yearlySubscriptionPrice: 180,
-  yearlyCredits: 1200,
+  freePlanName: 'المجاني',
+  freePlanPrice: 0,
+  freePlanInterpretations: 3,
+  freePlanFeatures: 'تفسير أساسي للأحلام\nدعم عبر البريد الإلكتروني',
+  premiumPlanName: 'المميز',
+  premiumPlanPrice: 49,
+  premiumPlanInterpretations: -1,
+  premiumPlanFeatures: 'تفسيرات أحلام غير محدودة\nتفسيرات مفصلة ومعمقة',
+  proPlanName: 'الاحترافي',
+  proPlanPrice: 99,
+  proPlanInterpretations: -1,
+  proPlanFeatures: 'كل مميزات الخطة المميزة\nاستشارات شخصية مع خبراء'
 };
 
 export const initialPaymentSettings: PaymentSettingsFormValues = {
-  stripeSecretKey: '',
-  stripePublishableKey: '',
-  currency: 'USD',
+  paylinkEnabled: true,
+  paylinkApiKey: '',
+  paylinkSecretKey: '',
+  paypalEnabled: false,
+  paypalSandbox: true,
+  paypalClientId: '',
+  paypalSecret: ''
 };
 
 export const initialThemeSettings: ThemeSettingsFormValues = {
-  primaryColor: '#22c55e',
-  secondaryColor: '#f43f5e',
-  accentColor: '#bae6ff',
-  backgroundColor: '#f8fafc',
-  textColor: '#0f172a',
-  fontFamily: 'Arial, sans-serif',
-  borderRadius: 0.5,
-  borderWidth: 1,
+  primaryColor: '#9b87f5',
+  buttonColor: '#9b87f5',
+  textColor: '#1A1F2C',
+  backgroundColor: '#F9F9F9',
+  headerColor: '#FFFFFF',
+  footerColor: '#1A1F2C',
+  logoText: 'تفسير الأحلام',
+  logoFontSize: 24,
+  footerText: 'جميع الحقوق محفوظة © 2024 تفسير الأحلام',
+  twitterLink: '',
+  facebookLink: '',
+  instagramLink: '',
+  slug: 'تفسير الأحلام عبر الذكاء الاصطناعي'
 };
 
 export const initialSeoSettings: SeoSettingsFormValues = {
-  siteTitle: 'Taweel',
-  siteDescription: 'تطبيق تفسير الأحلام بالذكاء الاصطناعي',
-  keywords: 'تفسير الأحلام, الذكاء الاصطناعي, رؤى',
-  author: 'Taweel Team',
-};
-
-export const initialHomeSections: HomeSectionsFormValues = {
-  heroTitle: 'استكشف عالم الأحلام',
-  heroDescription: 'اكتشف المعاني الخفية وراء أحلامك مع تأويل',
-  featuresTitle: 'مميزات التطبيق',
-  featuresDescription: 'تعرف على المميزات التي تجعل تأويل الخيار الأمثل لتفسير الأحلام',
-  testimonialsTitle: 'آراء المستخدمين',
-  testimonialsDescription: 'اطلع على تجارب المستخدمين الآخرين مع تأويل',
-  ctaTitle: 'ابدأ رحلتك الآن',
-  ctaDescription: 'انضم إلى مجتمع تأويل وابدأ في فهم أحلامك بشكل أفضل',
+  metaTitle: 'تفسير الأحلام - موقع تفسير الرؤى والأحلام',
+  metaDescription: 'موقع متخصص في تفسير الأحلام والرؤى وفق المراجع الإسلامية والعلمية. احصل على تفسير حلمك الآن.',
+  slug: 'تفسير-الاحلام',
+  keywords: 'تفسير الأحلام, تفسير الرؤى, تفسير حلم, تفسير منام, رؤيا في المنام',
+  googleAnalyticsId: '',
+  customHeadTags: '',
+  enableOpenGraph: true,
+  enableTwitterCards: true,
+  enableCanonicalUrls: true,
+  enableRobotsTxt: true,
+  enableSitemap: true
 };
 
 export const initialActiveSections: ActiveSections = {
