@@ -1,4 +1,5 @@
-# تمكين  إعادة الكتابة
+
+# تمكين إعادة الكتابة
 <IfModule mod_rewrite.c>
   RewriteEngine On
   RewriteBase /
@@ -33,7 +34,9 @@
 
 # ضبط تنسيقات MIME
 <IfModule mod_mime.c>
+  # تحديد أنواع MIME بشكل صريح
   AddType application/javascript .js
+  AddType application/javascript .mjs
   AddType text/css .css
   AddType application/json .json
   AddType image/svg+xml .svg
@@ -52,3 +55,13 @@
 
 # التعامل مع الأخطاء
 ErrorDocument 404 /index.html
+
+# ضبط نوع MIME للملف sw.js
+<Files "sw.js">
+  ForceType application/javascript
+</Files>
+
+# ضبط نوع MIME للملف main.tsx
+<Files "main.tsx">
+  ForceType application/javascript
+</Files>
