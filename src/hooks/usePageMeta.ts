@@ -1,5 +1,4 @@
 import { useEffect } from 'react';
-import { useAdmin } from '@/contexts/admin';
 import { useLocation } from 'react-router-dom';
 
 /**
@@ -9,16 +8,16 @@ export const usePageMeta = () => {
   const location = useLocation();
   
   // محاولة استخدام سياق الإدارة، ولكن بطريقة تجنب الأخطاء إذا لم يكن موجوداً
-  let adminContext;
+  let seoSettings;
   try {
-    adminContext = useAdmin();
+    // Import the admin context dynamically to prevent errors
+    const { useAdmin } = require('@/contexts/admin');
+    const adminContext = useAdmin();
+    seoSettings = adminContext?.seoSettingsForm;
   } catch (error) {
     // إذا لم يكن السياق متاحاً، تابع التنفيذ دون أخطاء
     console.log('Admin context not available, using default SEO settings');
   }
-
-  // الحصول على إعدادات السيو من سياق الإدارة إذا كان متاحاً
-  const seoSettings = adminContext?.seoSettingsForm;
 
   useEffect(() => {
     // تعيين عنوان الصفحة الافتراضي إذا لم يكن سياق الإدارة متاحاً
@@ -50,7 +49,7 @@ export const usePageMeta = () => {
     }
 
     // تحديث علامات Open Graph إذا كانت مفعلة
-    if (seoSettings?.enableOpenGraph) {
+    if (!seoSettings || seoSettings.enableOpenGraph) {
       // تحديث عنوان OG
       let ogTitle = document.querySelector('meta[property="og:title"]');
       if (!ogTitle) {
@@ -58,7 +57,7 @@ export const usePageMeta = () => {
         ogTitle.setAttribute('property', 'og:title');
         document.head.appendChild(ogTitle);
       }
-      ogTitle.setAttribute('content', seoSettings.metaTitle || defaultTitle);
+      ogTitle.setAttribute('content', seoSettings?.metaTitle || defaultTitle);
 
       // تحديث وصف OG
       let ogDescription = document.querySelector('meta[property="og:description"]');
@@ -67,7 +66,7 @@ export const usePageMeta = () => {
         ogDescription.setAttribute('property', 'og:description');
         document.head.appendChild(ogDescription);
       }
-      ogDescription.setAttribute('content', seoSettings.metaDescription || defaultDescription);
+      ogDescription.setAttribute('content', seoSettings?.metaDescription || defaultDescription);
 
       // تعيين رابط OG للصفحة الحالية
       let ogUrl = document.querySelector('meta[property="og:url"]');
