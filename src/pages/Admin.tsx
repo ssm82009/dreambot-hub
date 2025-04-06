@@ -9,30 +9,27 @@ import AdminHeader from '@/components/admin/AdminHeader';
 import AdminContent from '@/components/admin/AdminContent';
 import AdminSidebar from '@/components/admin/AdminSidebar';
 import { SidebarProvider } from '@/components/ui/sidebar';
-import { toast } from 'sonner';
 
 const AdminDashboard = () => {
   const { isLoading, dbLoading, setIsLoading } = useAdmin();
   const { refreshAdminData } = useAdminData();
 
-  // تحديث البيانات عند تحميل المكون مع تحسين التسجيل
+  // تحديث البيانات عند تحميل المكون
   useEffect(() => {
     console.log("Admin dashboard mounted - fetching fresh data");
     
     // تعيين حالة التحميل إلى true لضمان إعادة التحميل
     setIsLoading(true);
     
-    // استدعاء الدالة لتحديث البيانات مع إدارة الأخطاء المحسنة
+    // استدعاء الدالة لتحديث البيانات
     refreshAdminData()
       .then(() => {
-        console.log("Admin data refresh completed successfully");
+        console.log("Admin data refresh completed");
         setIsLoading(false);
-        toast.success("تم تحديث البيانات بنجاح");
       })
       .catch(error => {
         console.error("Error refreshing admin data:", error);
         setIsLoading(false);
-        toast.error("حدث خطأ أثناء تحديث البيانات");
       });
   }, []);
 

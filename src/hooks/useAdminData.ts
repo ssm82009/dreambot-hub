@@ -68,17 +68,17 @@ export const useAdminData = () => {
         dreams: totalDreams,
         subscriptions: activeSubscriptions,
         openTickets: openTickets,
-        lastUpdated: lastUpdated ? lastUpdated.toISOString() : 'N/A'
+        lastUpdated: lastUpdated.toISOString()
       });
     }
   }, [totalUsers, totalDreams, activeSubscriptions, openTickets, statsLoading, lastUpdated]);
 
   // Refresh admin data function with detailed logging
   const refreshAdminData = async () => {
-    console.log("Manual refresh of admin data started");
-    setDbLoading(true);
-    
     try {
+      console.log("Manual refresh of admin data started");
+      setDbLoading(true);
+      
       console.log("Fetching dashboard stats...");
       await fetchDashboardStats();
       console.log("Dashboard stats fetched successfully");
@@ -88,10 +88,8 @@ export const useAdminData = () => {
       console.log("All settings fetched successfully");
       
       console.log("Admin data refreshed successfully");
-      return Promise.resolve();
     } catch (error) {
       console.error("Error refreshing admin data:", error);
-      return Promise.reject(error);
     } finally {
       setDbLoading(false);
     }
