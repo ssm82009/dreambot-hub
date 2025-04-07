@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -110,6 +111,12 @@ serve(async (req) => {
       totalAllowed = pricingSettings.premium_plan_interpretations;
     } else if (userData.subscription_type === 'pro') {
       totalAllowed = pricingSettings.pro_plan_interpretations;
+    } else if (userData.subscription_type === 'المميز') {
+      totalAllowed = pricingSettings.premium_plan_interpretations;
+    } else if (userData.subscription_type === 'المفسر المتميز') {
+      totalAllowed = pricingSettings.premium_plan_interpretations;
+    } else if (userData.subscription_type === 'المفسر الخبير') {
+      totalAllowed = pricingSettings.pro_plan_interpretations;
     } else {
       totalAllowed = pricingSettings.free_plan_interpretations;
     }
@@ -187,6 +194,7 @@ serve(async (req) => {
     const providers = [
       { name: provider, key: apiKey, model: model }, // المزود الأساسي من الإعدادات
       { name: 'together', key: apiKey, model: 'meta-llama/Llama-3-8b-chat-hf' }, // احتياطي أول - Together.ai
+      { name: 'openai', key: apiKey, model: 'gpt-4o-mini' }, // احتياطي ثاني - OpenAI
       { name: 'symbols', key: '', model: '' } // استخدام رموز الأحلام فقط كحل أخير
     ];
 
