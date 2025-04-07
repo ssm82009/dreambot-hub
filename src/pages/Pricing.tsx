@@ -34,7 +34,7 @@ const Pricing = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      <main className="flex-1 pt-28 rtl">
+      <main className="flex-1 py-20 rtl">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <PricingHeader />
           <PricingPlans onSubscribe={handleSubscription} />

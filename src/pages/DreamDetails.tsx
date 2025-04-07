@@ -11,7 +11,7 @@ const DreamDetails = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      <main className="flex-1 pt-28 px-4 rtl">
+      <main className="flex-1 py-20 px-4 rtl">
         <div className="container mx-auto">
           <DreamDetailsContent dreamId={id} />
         </div>
