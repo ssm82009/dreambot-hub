@@ -73,3 +73,8 @@
 .fade-in {
   animation: fadeIn 0.3s ease-in-out;
 }
+
+/* إضافة فئة جديدة للمحتوى الرئيسي بعد النافبار */
+.main-content-after-navbar {
+  padding-top: 80px; /* نفس ارتفاع النافبار */
+}

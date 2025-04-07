@@ -14,6 +14,9 @@ import MobileMenu from './navbar/MobileMenu';
 
 import { CSSProperties } from 'react';
 
+// إضافة متغير لارتفاع النافبار
+export const NAVBAR_HEIGHT = 80; // ارتفاع النافبار 80 بكسل
+
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
   const [isDarkMode, setIsDarkMode] = React.useState(false);
@@ -58,7 +61,8 @@ const Navbar = () => {
         borderBottomWidth: '1px',
         borderBottomStyle: 'solid' as 'solid',
         borderBottomColor: themeSettings.navbarBorderColor || '#e5e7eb',
-        transition: 'opacity 0.3s ease-in-out, background-color 0.3s ease-in-out'
+        transition: 'opacity 0.3s ease-in-out, background-color 0.3s ease-in-out',
+        height: `${NAVBAR_HEIGHT}px`
       };
 
   return (
@@ -66,8 +70,8 @@ const Navbar = () => {
       className={`backdrop-blur-md fixed w-full top-0 z-50 shadow-sm rtl navbar-transition ${loading ? 'navbar-loading' : 'navbar-loaded'}`}
       style={headerStyle}
     >
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-20 items-center">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 h-full">
+        <div className="flex justify-between h-full items-center">
           <div className="flex items-center">
             <NavLogo 
               logoText={themeSettings.logoText} 

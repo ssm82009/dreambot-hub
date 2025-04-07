@@ -1,6 +1,6 @@
 
 import React, { useEffect } from 'react';
-import Navbar from '@/components/Navbar';
+import Navbar, { NAVBAR_HEIGHT } from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Loader2 } from 'lucide-react';
 import { AdminProvider, useAdmin } from '@/contexts/admin';
@@ -37,7 +37,7 @@ const AdminDashboard = () => {
     return (
       <div className="min-h-screen flex flex-col">
         <Navbar />
-        <main className="flex-1 flex items-center justify-center">
+        <main className="flex-1 flex items-center justify-center" style={{ paddingTop: `${NAVBAR_HEIGHT}px` }}>
           <div className="flex flex-col items-center">
             <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
             <p className="text-muted-foreground">جاري تحميل بيانات لوحة التحكم...</p>
@@ -52,7 +52,7 @@ const AdminDashboard = () => {
     <div className="min-h-screen flex flex-col">
       <Navbar />
       <SidebarProvider>
-        <div className="min-h-screen flex flex-row-reverse w-full pt-16 dream-pattern" dir="rtl">
+        <div className="min-h-screen flex flex-row-reverse w-full dream-pattern" dir="rtl" style={{ paddingTop: `${NAVBAR_HEIGHT}px` }}>
           <AdminSidebar />
           <main className="flex-1 p-4 mr-[16rem]">
             <div className="w-full pr-0">

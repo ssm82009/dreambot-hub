@@ -1,6 +1,6 @@
 
 import React from 'react';
-import Navbar from '@/components/Navbar';
+import Navbar, { NAVBAR_HEIGHT } from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import PaymentHeader from '@/components/payment/PaymentHeader';
 import PaymentCard from '@/components/payment/PaymentCard';
@@ -35,8 +35,8 @@ const Payment = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      <main className="flex-1 py-20 rtl">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+      <main className="flex-1 rtl" style={{ paddingTop: `${NAVBAR_HEIGHT}px` }}>
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <PaymentHeader plan={plan} />
           <PaymentCard 
             plan={plan} 

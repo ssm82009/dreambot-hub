@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Navbar from '@/components/Navbar';
+import Navbar, { NAVBAR_HEIGHT } from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import PricingHeader from '@/components/pricing/PricingHeader';
 import PricingPlans from '@/components/pricing/PricingPlans';
@@ -34,8 +34,8 @@ const Pricing = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      <main className="flex-1 py-20 rtl">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+      <main className="flex-1 rtl" style={{ paddingTop: `${NAVBAR_HEIGHT}px` }}>
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <PricingHeader />
           <PricingPlans onSubscribe={handleSubscription} />
           <PricingFAQ />

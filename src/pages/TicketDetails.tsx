@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { useParams } from 'react-router-dom';
-import Navbar from '@/components/Navbar';
+import Navbar, { NAVBAR_HEIGHT } from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
@@ -25,7 +25,7 @@ const TicketDetails = () => {
     return (
       <div className="min-h-screen flex flex-col">
         <Navbar />
-        <main className="flex-1 flex items-center justify-center">
+        <main className="flex-1 flex items-center justify-center" style={{ paddingTop: `${NAVBAR_HEIGHT}px` }}>
           <Loader2 className="h-10 w-10 animate-spin text-primary" />
         </main>
         <Footer />
@@ -37,8 +37,8 @@ const TicketDetails = () => {
     return (
       <div className="min-h-screen flex flex-col">
         <Navbar />
-        <main className="flex-1 py-20 px-4 rtl">
-          <div className="container mx-auto text-center">
+        <main className="flex-1 px-4 rtl" style={{ paddingTop: `${NAVBAR_HEIGHT}px` }}>
+          <div className="container mx-auto text-center py-6">
             <p className="text-xl text-muted-foreground mb-4">التذكرة غير موجودة</p>
           </div>
         </main>
@@ -50,8 +50,8 @@ const TicketDetails = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      <main className="flex-1 py-20 px-4 rtl">
-        <div className="container mx-auto max-w-4xl">
+      <main className="flex-1 px-4 rtl" style={{ paddingTop: `${NAVBAR_HEIGHT}px` }}>
+        <div className="container mx-auto max-w-4xl py-6">
           <Card className="mb-6">
             <CardHeader>
               <TicketHeader

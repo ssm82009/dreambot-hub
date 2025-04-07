@@ -1,6 +1,6 @@
 
 import React, { useEffect } from 'react';
-import Navbar from '@/components/Navbar';
+import Navbar, { NAVBAR_HEIGHT } from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import ProfileWelcome from '@/components/profile/ProfileWelcome';
@@ -33,8 +33,8 @@ const Profile = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      <main className="flex-1 py-20 px-4 rtl">
-        <div className="container mx-auto">
+      <main className="flex-1 px-4 rtl" style={{ paddingTop: `${NAVBAR_HEIGHT}px` }}>
+        <div className="container mx-auto py-6">
           <Card className="mb-6">
             <CardHeader>
               <CardTitle className="text-2xl">الملف الشخصي</CardTitle>
