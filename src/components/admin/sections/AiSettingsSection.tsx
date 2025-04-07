@@ -4,7 +4,7 @@ import { Brain } from 'lucide-react';
 import AdminSection from '@/components/admin/AdminSection';
 import AiSettingsForm from '@/components/admin/AiSettingsForm';
 import { useAdmin } from '@/contexts/admin';
-import { useAiSettingsHandler } from '@/hooks/useSettingsHandlers';
+import { useAiSettingsHandler } from '@/hooks/settings';
 
 const AiSettingsSection = () => {
   const { aiSettingsForm, activeSections, toggleSection } = useAdmin();

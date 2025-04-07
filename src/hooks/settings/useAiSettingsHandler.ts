@@ -1,9 +1,14 @@
 
+import { useState } from 'react';
 import { toast } from 'sonner';
 import { supabase } from "@/integrations/supabase/client";
+import { useAdmin } from '@/contexts/admin';
 
 // AiSettings form handler
 export const useAiSettingsHandler = () => {
+  const [isUpdating, setIsUpdating] = useState(false);
+  const { setAiSettingsForm } = useAdmin();
+
   const getAiSettingsId = async (): Promise<string> => {
     const { data } = await supabase
       .from('ai_settings')
@@ -19,6 +24,11 @@ export const useAiSettingsHandler = () => {
     model: string;
   }) => {
     try {
+      setIsUpdating(true);
+      
+      // Update local state immediately for UI feedback
+      setAiSettingsForm(data);
+      
       const { error } = await supabase
         .from('ai_settings')
         .update({
@@ -38,8 +48,10 @@ export const useAiSettingsHandler = () => {
     } catch (error) {
       console.error("خطأ:", error);
       toast.error("حدث خطأ غير متوقع");
+    } finally {
+      setIsUpdating(false);
     }
   };
 
-  return { handleAiSettingsSubmit };
+  return { handleAiSettingsSubmit, isUpdating };
 };

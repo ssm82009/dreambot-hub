@@ -104,16 +104,50 @@ const AiSettingsForm: React.FC<AiSettingsFormProps> = ({ initialData, onSubmit, 
                 <FormLabel>مفتاح API</FormLabel>
                 <FormControl>
                   <Input 
-                    placeholder={field.value === "together" ? "tok_..." : field.value === "openai" ? "sk-..." : ""}
+                    placeholder={
+                      field.value === "together" ? "tok_..." : 
+                      field.value === "openai" ? "sk-..." : 
+                      field.value === "anthropic" ? "sk-ant-..." : 
+                      field.value === "gemini" ? "API_KEY..." : 
+                      ""
+                    }
                     dir="ltr" 
                     {...field}
                   />
                 </FormControl>
                 <FormDescription>
-                  يمكنك الحصول على مفتاح Together.ai من لوحة التحكم الخاصة بك على{" "}
-                  <a href="https://api.together.xyz/settings/api-keys" className="text-primary underline" target="_blank" rel="noopener noreferrer">
-                    together.xyz
-                  </a>
+                  {field.value === "together" && (
+                    <>
+                      يمكنك الحصول على مفتاح Together.ai من لوحة التحكم الخاصة بك على{" "}
+                      <a href="https://api.together.xyz/settings/api-keys" className="text-primary underline" target="_blank" rel="noopener noreferrer">
+                        together.xyz
+                      </a>
+                    </>
+                  )}
+                  {field.value === "openai" && (
+                    <>
+                      يمكنك الحصول على مفتاح OpenAI من لوحة التحكم الخاصة بك على{" "}
+                      <a href="https://platform.openai.com/api-keys" className="text-primary underline" target="_blank" rel="noopener noreferrer">
+                        platform.openai.com
+                      </a>
+                    </>
+                  )}
+                  {field.value === "anthropic" && (
+                    <>
+                      يمكنك الحصول على مفتاح Anthropic من لوحة التحكم الخاصة بك على{" "}
+                      <a href="https://console.anthropic.com/settings/keys" className="text-primary underline" target="_blank" rel="noopener noreferrer">
+                        console.anthropic.com
+                      </a>
+                    </>
+                  )}
+                  {field.value === "gemini" && (
+                    <>
+                      يمكنك الحصول على مفتاح Gemini من لوحة التحكم الخاصة بك على{" "}
+                      <a href="https://ai.google.dev/" className="text-primary underline" target="_blank" rel="noopener noreferrer">
+                        ai.google.dev
+                      </a>
+                    </>
+                  )}
                 </FormDescription>
               </FormItem>
             )}
@@ -170,6 +204,14 @@ const AiSettingsForm: React.FC<AiSettingsFormProps> = ({ initialData, onSubmit, 
                   <div className="flex flex-wrap items-center gap-4">
                     <div className="flex items-center space-x-2 rtl:space-x-reverse">
                       <Checkbox 
+                        id="gpt-4o-mini" 
+                        checked={field.value === "gpt-4o-mini"}
+                        onCheckedChange={() => field.onChange("gpt-4o-mini")}
+                      />
+                      <label htmlFor="gpt-4o-mini" className="text-sm">GPT-4o-mini</label>
+                    </div>
+                    <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                      <Checkbox 
                         id="gpt-4o" 
                         checked={field.value === "gpt-4o"}
                         onCheckedChange={() => field.onChange("gpt-4o")}
@@ -191,6 +233,77 @@ const AiSettingsForm: React.FC<AiSettingsFormProps> = ({ initialData, onSubmit, 
                         onCheckedChange={() => field.onChange("gpt-3.5")}
                       />
                       <label htmlFor="gpt-3.5" className="text-sm">GPT-3.5</label>
+                    </div>
+                  </div>
+                  <FormDescription>
+                    نموذج GPT-4o-mini هو نموذج سريع واقتصادي مع قدرات جيدة لتفسير الأحلام
+                  </FormDescription>
+                </FormItem>
+              )}
+            />
+          )}
+
+          {form.watch("provider") === "anthropic" && (
+            <FormField
+              control={form.control}
+              name="model"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>نموذج Anthropic</FormLabel>
+                  <div className="flex flex-wrap items-center gap-4">
+                    <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                      <Checkbox 
+                        id="claude-3-opus" 
+                        checked={field.value === "claude-3-opus"}
+                        onCheckedChange={() => field.onChange("claude-3-opus")}
+                      />
+                      <label htmlFor="claude-3-opus" className="text-sm">Claude 3 Opus</label>
+                    </div>
+                    <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                      <Checkbox 
+                        id="claude-3-sonnet" 
+                        checked={field.value === "claude-3-sonnet"}
+                        onCheckedChange={() => field.onChange("claude-3-sonnet")}
+                      />
+                      <label htmlFor="claude-3-sonnet" className="text-sm">Claude 3 Sonnet</label>
+                    </div>
+                    <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                      <Checkbox 
+                        id="claude-3-haiku" 
+                        checked={field.value === "claude-3-haiku"}
+                        onCheckedChange={() => field.onChange("claude-3-haiku")}
+                      />
+                      <label htmlFor="claude-3-haiku" className="text-sm">Claude 3 Haiku</label>
+                    </div>
+                  </div>
+                </FormItem>
+              )}
+            />
+          )}
+
+          {form.watch("provider") === "gemini" && (
+            <FormField
+              control={form.control}
+              name="model"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>نموذج Gemini</FormLabel>
+                  <div className="flex flex-wrap items-center gap-4">
+                    <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                      <Checkbox 
+                        id="gemini-pro" 
+                        checked={field.value === "gemini-pro"}
+                        onCheckedChange={() => field.onChange("gemini-pro")}
+                      />
+                      <label htmlFor="gemini-pro" className="text-sm">Gemini Pro</label>
+                    </div>
+                    <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                      <Checkbox 
+                        id="gemini-ultra" 
+                        checked={field.value === "gemini-ultra"}
+                        onCheckedChange={() => field.onChange("gemini-ultra")}
+                      />
+                      <label htmlFor="gemini-ultra" className="text-sm">Gemini Ultra</label>
                     </div>
                   </div>
                 </FormItem>
