@@ -389,6 +389,7 @@ export type Database = {
           logo_text: string
           meta_description: string | null
           meta_title: string | null
+          navbar_border_color: string | null
           primary_color: string
           slug: string | null
           text_color: string
@@ -417,6 +418,7 @@ export type Database = {
           logo_text?: string
           meta_description?: string | null
           meta_title?: string | null
+          navbar_border_color?: string | null
           primary_color?: string
           slug?: string | null
           text_color?: string
@@ -445,6 +447,7 @@ export type Database = {
           logo_text?: string
           meta_description?: string | null
           meta_title?: string | null
+          navbar_border_color?: string | null
           primary_color?: string
           slug?: string | null
           text_color?: string

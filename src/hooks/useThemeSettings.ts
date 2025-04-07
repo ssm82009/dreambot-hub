@@ -27,7 +27,8 @@ export const useThemeSettings = () => {
           // Use default settings if there's an error
           setThemeSettings(initialThemeSettings);
         } else if (data) {
-          setThemeSettings({
+          // Type guard to ensure data is not null
+          const settings = {
             primaryColor: data.primary_color || initialThemeSettings.primaryColor,
             buttonColor: data.button_color || initialThemeSettings.buttonColor,
             textColor: data.text_color || initialThemeSettings.textColor,
@@ -41,8 +42,10 @@ export const useThemeSettings = () => {
             facebookLink: data.facebook_link || "",
             instagramLink: data.instagram_link || "",
             slug: data.slug || initialThemeSettings.slug,
-            navbarBorderColor: data.navbar_border_color || initialThemeSettings.navbarBorderColor // إضافة لون حدود النافبار
-          });
+            navbarBorderColor: data.navbar_border_color || initialThemeSettings.navbarBorderColor
+          };
+          
+          setThemeSettings(settings);
         }
       } catch (error) {
         console.error("خطأ في جلب إعدادات المظهر:", error);

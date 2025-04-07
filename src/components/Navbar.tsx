@@ -12,6 +12,8 @@ import AuthButtons from './navbar/AuthButtons';
 import MobileMenuToggle from './navbar/MobileMenuToggle';
 import MobileMenu from './navbar/MobileMenu';
 
+import { CSSProperties } from 'react';
+
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
   const [isDarkMode, setIsDarkMode] = React.useState(false);
@@ -49,11 +51,11 @@ const Navbar = () => {
   };
 
   // تطبيق لون الهيدر من الإعدادات
-  const headerStyle = {
+  const headerStyle: CSSProperties = {
     backgroundColor: themeSettings.headerColor || 'bg-background/80',
     borderBottomWidth: '1px',
-    borderBottomStyle: 'solid',
-    borderBottomColor: themeSettings.navbarBorderColor || '#e5e7eb', // استخدام لون الحدود من الإعدادات
+    borderBottomStyle: 'solid' as 'solid',
+    borderBottomColor: themeSettings.navbarBorderColor || '#e5e7eb'
   };
 
   return (
@@ -62,7 +64,7 @@ const Navbar = () => {
       style={headerStyle}
     >
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-20 items-center"> {/* زيادة الارتفاع من h-16 إلى h-20 */}
+        <div className="flex justify-between h-20 items-center">
           <div className="flex items-center">
             <NavLogo 
               logoText={themeSettings.logoText} 
