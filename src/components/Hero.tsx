@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -15,16 +16,16 @@ const Hero: React.FC<HeroProps> = ({
 }) => {
   const navigate = useNavigate();
   
-  // وظيفة للتمرير إلى قسم كتابة الحلم مع التحقق من تسجيل الدخول
+  // وظيفة للتمرير إلى قسم "جرب" مباشرة
   const handleStartNow = async () => {
     try {
       const { data } = await supabase.auth.getSession();
       
       if (data.session?.user) {
-        // المستخدم مسجل الدخول، يمكن التمرير إلى قسم كتابة الحلم
-        const dreamSectionElement = document.getElementById('dream-form-section');
-        if (dreamSectionElement) {
-          dreamSectionElement.scrollIntoView({ behavior: 'smooth' });
+        // المستخدم مسجل الدخول، يمكن التمرير إلى قسم "جرب"
+        const tryItSectionElement = document.getElementById('try-it');
+        if (tryItSectionElement) {
+          tryItSectionElement.scrollIntoView({ behavior: 'smooth' });
         }
       } else {
         // المستخدم غير مسجل، توجيه إلى صفحة تسجيل الدخول
