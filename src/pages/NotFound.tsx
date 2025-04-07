@@ -1,6 +1,5 @@
 
-import { useLocation } from "react-router-dom";
-import { useEffect } from "react";
+import { useLocation, useEffect } from "react-router-dom";
 import Navbar, { NAVBAR_HEIGHT } from '@/components/Navbar';
 import Footer from '@/components/Footer';
 
@@ -12,6 +11,11 @@ const NotFound = () => {
       "404 Error: User attempted to access non-existent route:",
       location.pathname
     );
+  }, [location.pathname]);
+
+  // إعادة تعيين موضع التمرير للأعلى عند تغيير المسار
+  useEffect(() => {
+    window.scrollTo(0, 0);
   }, [location.pathname]);
 
   return (

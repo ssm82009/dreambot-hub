@@ -1,5 +1,6 @@
 
 import React, { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import Navbar, { NAVBAR_HEIGHT } from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,6 +11,7 @@ import { useProfileData } from '@/hooks/profile/useProfileData';
 
 const Profile = () => {
   const { isLoading, userData, payments, refreshUserData } = useProfileData();
+  const location = useLocation();
   
   // تحديث البيانات عند تغيير علامة التبويب
   const handleTabChange = (value: string) => {
@@ -17,6 +19,11 @@ const Profile = () => {
       refreshUserData(userData.id);
     }
   };
+  
+  // إعادة تعيين موضع التمرير للأعلى عند تغيير المسار
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
   
   // تحديث البيانات عند تحميل الصفحة
   useEffect(() => {

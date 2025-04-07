@@ -1,6 +1,6 @@
 
 import React from 'react';
-import Navbar from '@/components/Navbar';
+import Navbar, { NAVBAR_HEIGHT } from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
@@ -10,7 +10,7 @@ const Terms = () => {
   return (
     <div className="flex min-h-screen flex-col">
       <Navbar />
-      <main className="flex-1 container mx-auto px-4 py-16">
+      <main className="flex-1 container mx-auto px-4 py-16" style={{ paddingTop: `${NAVBAR_HEIGHT + 64}px` }}>
         <Card className="shadow-lg rtl">
           <CardHeader className="border-b pb-4">
             <div className="flex items-center space-x-2 rtl:space-x-reverse">

@@ -1,6 +1,6 @@
 
-import React from 'react';
-import { useParams } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { useParams, useLocation } from 'react-router-dom';
 import Navbar, { NAVBAR_HEIGHT } from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -12,6 +12,7 @@ import TicketReplyForm from '@/components/tickets/TicketReplyForm';
 
 const TicketDetails = () => {
   const { id } = useParams<{ id: string }>();
+  const location = useLocation();
   const {
     ticket,
     isLoading,
@@ -20,6 +21,11 @@ const TicketDetails = () => {
     handleAddReply,
     handleToggleStatus
   } = useTicketDetails(id);
+
+  // إعادة تعيين موضع التمرير للأعلى عند تغيير المسار
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
 
   if (isLoading) {
     return (

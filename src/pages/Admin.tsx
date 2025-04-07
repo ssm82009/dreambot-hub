@@ -1,5 +1,6 @@
 
 import React, { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import Navbar, { NAVBAR_HEIGHT } from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Loader2 } from 'lucide-react';
@@ -13,6 +14,12 @@ import { SidebarProvider } from '@/components/ui/sidebar';
 const AdminDashboard = () => {
   const { isLoading, dbLoading, setIsLoading } = useAdmin();
   const { refreshAdminData } = useAdminData();
+  const location = useLocation();
+
+  // إعادة تعيين موضع التمرير للأعلى عند تغيير المسار
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
 
   // تحديث البيانات عند تحميل المكون
   useEffect(() => {

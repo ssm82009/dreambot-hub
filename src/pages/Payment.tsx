@@ -1,5 +1,6 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import Navbar, { NAVBAR_HEIGHT } from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import PaymentHeader from '@/components/payment/PaymentHeader';
@@ -9,6 +10,8 @@ import { usePaymentProcess } from '@/hooks/usePaymentProcess';
 import { usePaymentSubmit } from '@/hooks/usePaymentSubmit';
 
 const Payment = () => {
+  const location = useLocation();
+  
   // استخدام Hooks المخصصة للدفع
   const { plan, amount } = usePaymentData();
   const { 
@@ -31,6 +34,11 @@ const Payment = () => {
     paypalSecret,
     setIsProcessing
   );
+  
+  // إعادة تعيين موضع التمرير للأعلى عند تغيير المسار
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
 
   return (
     <div className="min-h-screen flex flex-col">

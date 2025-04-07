@@ -78,3 +78,13 @@
 .main-content-after-navbar {
   padding-top: 80px; /* نفس ارتفاع النافبار */
 }
+
+/* استعادة موضع التمرير عند تحميل الصفحة */
+html {
+  scroll-behavior: smooth;
+}
+
+/* إعادة تعيين موضع التمرير للأعلى عند تحميل الصفحة */
+body {
+  scroll-behavior: smooth;
+}

@@ -25,6 +25,7 @@ import Privacy from './pages/Privacy';
 // Context Providers
 import { AdminProvider } from './contexts/admin/AdminProvider';
 import { usePageMeta } from './hooks/usePageMeta';
+import { useScrollToTop } from './hooks/useScrollToTop';
 
 // Setup query client
 const queryClient = new QueryClient();
@@ -32,6 +33,7 @@ const queryClient = new QueryClient();
 // Admin routing with meta tags support
 const AdminRoutes = () => {
   usePageMeta();
+  useScrollToTop();
   return <Admin />;
 };
 
@@ -52,6 +54,7 @@ const App = () => {
 // Separated for using usePageMeta hook which requires Router context
 const AppContent = () => {
   usePageMeta();
+  useScrollToTop();
   
   return (
     <Routes>

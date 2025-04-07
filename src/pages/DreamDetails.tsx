@@ -1,12 +1,18 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import Navbar, { NAVBAR_HEIGHT } from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { useParams } from 'react-router-dom';
+import { useParams, useLocation } from 'react-router-dom';
 import DreamDetailsContent from '@/components/dreams/DreamDetailsContent';
 
 const DreamDetails = () => {
   const { id } = useParams<{ id: string }>();
+  const location = useLocation();
+  
+  // إعادة تعيين موضع التمرير للأعلى عند تغيير المسار
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
   
   return (
     <div className="min-h-screen flex flex-col">

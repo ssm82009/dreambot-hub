@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import Navbar, { NAVBAR_HEIGHT } from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import PricingHeader from '@/components/pricing/PricingHeader';
@@ -10,6 +10,7 @@ import { toast } from "sonner";
 
 const Pricing = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   
   useEffect(() => {
@@ -18,6 +19,11 @@ const Pricing = () => {
                         localStorage.getItem('isAdminLoggedIn') === 'true';
     setIsLoggedIn(loginStatus);
   }, []);
+
+  // إعادة تعيين موضع التمرير للأعلى عند تغيير المسار
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
 
   const handleSubscription = (plan: string, price: number) => {
     if (!isLoggedIn) {
