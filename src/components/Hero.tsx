@@ -1,8 +1,10 @@
+
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { Moon, Stars, SunMoon } from 'lucide-react';
 
 interface HeroProps {
   title?: string;
@@ -10,7 +12,7 @@ interface HeroProps {
 }
 
 const Hero: React.FC<HeroProps> = ({
-  title = "فَسِّرْ حُلْمَكَ الآنَ!",
+  title = "فَسِّرْ حُلْمَكَ الآنَ!",
   subtitle = "~"
 }) => {
   const navigate = useNavigate();
@@ -38,34 +40,45 @@ const Hero: React.FC<HeroProps> = ({
   };
 
   return (
-    <div className="relative overflow-hidden pt-24 pb-16 rtl">
+    <div className="relative overflow-hidden pt-24 pb-16 rtl min-h-[85vh] flex items-center">
       <div className="absolute inset-0 dream-pattern opacity-50 z-0"></div>
+      
+      {/* تأثيرات الخلفية المتحركة */}
+      <div className="absolute top-20 left-10 text-primary/20 animate-float" style={{animationDelay: '0.5s'}}>
+        <Moon size={120} strokeWidth={1} />
+      </div>
+      <div className="absolute bottom-20 right-12 text-primary/30 animate-float" style={{animationDelay: '1.5s'}}>
+        <Stars size={80} strokeWidth={1} />
+      </div>
+      <div className="absolute top-40 right-20 text-accent/20 animate-float" style={{animationDelay: '2s'}}>
+        <SunMoon size={100} strokeWidth={1} />
+      </div>
+      
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="flex flex-col items-center text-center">
           <div className="animate-float mb-8">
-            <svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="text-primary">
-              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-              <circle cx="12" cy="8" r="1" fill="currentColor" />
-              <circle cx="8" cy="14" r="1" fill="currentColor" />
-              <circle cx="16" cy="14" r="1" fill="currentColor" />
-            </svg>
+            <SunMoon className="text-primary h-28 w-28 animate-pulse-glow" strokeWidth={1} />
           </div>
           
-          <h1 className="text-4xl md:text-6xl font-bold mb-6 gradient-text">{title}</h1>
+          <h1 className="title-font text-5xl md:text-7xl font-bold mb-6 gradient-text">{title}</h1>
           
-          <p className="text-xl md:text-2xl text-foreground/80 max-w-3xl mb-10">
+          <p className="text-xl md:text-2xl text-foreground/80 max-w-3xl mb-10 font-tajawal">
             {subtitle}
           </p>
           
           <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-6 rtl:space-x-reverse">
-            <Button size="lg" className="text-lg px-8" onClick={handleStartNow}>ابدأ الآن</Button>
+            <Button size="lg" className="text-lg px-8 btn-shine shadow-glow" onClick={handleStartNow}>
+              ابدأ الآن
+            </Button>
             <Link to="/about">
-              <Button size="lg" variant="outline" className="text-lg px-8">اعرف المزيد</Button>
+              <Button size="lg" variant="outline" className="text-lg px-8 hover:shadow-glow-lg transition-shadow">
+                اعرف المزيد
+              </Button>
             </Link>
           </div>
           
           <div className="mt-20 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl">
-            <div className="bg-background/80 backdrop-blur-sm p-6 rounded-lg shadow-md border border-border">
+            <div className="glass-card p-6 rounded-lg shadow-subtle card-hover">
               <div className="mb-4 text-primary">
                 <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <rect width="18" height="18" x="3" y="3" rx="2" />
@@ -84,7 +97,7 @@ const Hero: React.FC<HeroProps> = ({
               <p className="text-foreground/70">تفسيرات مبنية على أسس علمية وموثوقة من كتب التفسير المعتمدة.</p>
             </div>
             
-            <div className="bg-background/80 backdrop-blur-sm p-6 rounded-lg shadow-md border border-border">
+            <div className="glass-card p-6 rounded-lg shadow-subtle card-hover">
               <div className="mb-4 text-primary">
                 <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
@@ -98,7 +111,7 @@ const Hero: React.FC<HeroProps> = ({
               <p className="text-foreground/70">احصل على تفسير حلمك في ثوانٍ معدودة دون انتظار.</p>
             </div>
             
-            <div className="bg-background/80 backdrop-blur-sm p-6 rounded-lg shadow-md border border-border">
+            <div className="glass-card p-6 rounded-lg shadow-subtle card-hover">
               <div className="mb-4 text-primary">
                 <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
