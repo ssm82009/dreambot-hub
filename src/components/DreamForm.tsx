@@ -3,7 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { Loader2, Lock } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Loader2, Lock, AlertTriangle } from 'lucide-react';
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { DreamSymbol, InterpretationSettings } from '@/types/database';
@@ -336,7 +337,17 @@ const DreamForm = () => {
           {interpretation && (
             <CardFooter className="flex flex-col items-start border-t border-border/50 pt-6">
               <h3 className="text-lg font-semibold mb-2">تفسير الحلم:</h3>
-              <p className="text-foreground/80 leading-relaxed whitespace-pre-line">{interpretation}</p>
+              <p className="text-foreground/80 leading-relaxed whitespace-pre-line mb-6">{interpretation}</p>
+              
+              <Alert className="w-full border border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-800">
+                <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-500" />
+                <AlertDescription className="text-amber-800 dark:text-amber-400 mt-2 text-sm">
+                  <strong>تنبيه مهم:</strong> هذا التفسير ناتج عن الذكاء الاصطناعي ويقدم لأغراض الترفيه والمعلومات فقط. 
+                  لا ينبغي اتخاذ أي قرارات أو إجراءات في الحياة الواقعية بناءً على هذا التفسير. 
+                  تطبيق "تاويل" والقائمين عليه يخلون مسؤوليتهم بشكل كامل عن محتوى التفسير وأي نتائج قد تترتب على الاعتماد عليه. 
+                  يرجى استشارة المختصين المؤهلين قبل اتخاذ أي قرارات مهمة.
+                </AlertDescription>
+              </Alert>
             </CardFooter>
           )}
         </Card>

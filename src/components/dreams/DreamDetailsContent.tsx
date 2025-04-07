@@ -11,7 +11,8 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Loader2, ArrowRight, Calendar, Tag } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Loader2, ArrowRight, Calendar, Tag, AlertTriangle } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -175,6 +176,16 @@ const DreamDetailsContent: React.FC<DreamDetailsContentProps> = ({ dreamId }) =>
             </div>
           </div>
         )}
+        
+        <Alert className="border border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-800">
+          <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-500" />
+          <AlertDescription className="text-amber-800 dark:text-amber-400 mt-2 text-sm">
+            <strong>تنبيه مهم:</strong> هذا التفسير ناتج عن الذكاء الاصطناعي ويقدم لأغراض الترفيه والمعلومات فقط. 
+            لا ينبغي اتخاذ أي قرارات أو إجراءات في الحياة الواقعية بناءً على هذا التفسير. 
+            تطبيق "تاويل" والقائمين عليه يخلون مسؤوليتهم بشكل كامل عن محتوى التفسير وأي نتائج قد تترتب على الاعتماد عليه. 
+            يرجى استشارة المختصين المؤهلين قبل اتخاذ أي قرارات مهمة.
+          </AlertDescription>
+        </Alert>
       </CardContent>
       
       <CardFooter className="border-t p-6">
