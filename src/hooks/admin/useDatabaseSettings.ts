@@ -76,7 +76,7 @@ export const useDatabaseSettings = () => {
       // اختبار الاتصال بـ Supabase
       console.log('بدء اختبار اتصال Supabase...');
       try {
-        // استخدام جدول site_settings للاختبار، أو أي جدول آخر موجود في Supabase
+        // استخدام جدول site_settings بدلاً من settings
         const { data, error } = await supabase.from('site_settings').select('count', { count: 'exact', head: true });
         
         if (error) {
@@ -112,7 +112,23 @@ export const useDatabaseSettings = () => {
     
     try {
       // قائمة الجداول التي سيتم مزامنتها
-      const tables = ['users', 'dreams', 'dream_symbols', 'settings'];
+      const tables = [
+        'ai_settings',
+        'custom_pages',
+        'dream_symbols',
+        'dreams',
+        'interpretation_settings',
+        'navbar_links',
+        'payment_invoices',
+        'payment_sessions',
+        'payment_settings',
+        'pricing_settings',
+        'site_settings', 
+        'theme_settings',
+        'ticket_replies',
+        'tickets',
+        'users'
+      ];
       
       // استدعاء API للمزامنة
       try {
