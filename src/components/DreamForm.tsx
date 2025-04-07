@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -10,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { DreamSymbol, InterpretationSettings } from '@/types/database';
 import { Progress } from "@/components/ui/progress";
 import { useNavigate } from 'react-router-dom';
+import { getTotalInterpretations } from '@/utils/subscription';
 
 const DreamForm = () => {
   const [dreamText, setDreamText] = useState('');
@@ -24,6 +24,11 @@ const DreamForm = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+  
+  const [pricingSettings, setPricingSettings] = useState<any>(null);
+  const [userSubscription, setUserSubscription] = useState<any>(null);
+  const [usedInterpretations, setUsedInterpretations] = useState(0);
+  const [hasReachedLimit, setHasReachedLimit] = useState(false);
 
   useEffect(() => {
     fetchDreamSymbols();
@@ -35,6 +40,21 @@ const DreamForm = () => {
     setCharCount(dreamText.length);
     setWordCount(dreamText.trim() ? dreamText.trim().split(/\s+/).length : 0);
   }, [dreamText]);
+
+  useEffect(() => {
+    if (userId) {
+      fetchUserSubscription();
+      fetchUsedInterpretations();
+      fetchPricingSettings();
+    }
+  }, [userId]);
+  
+  useEffect(() => {
+    if (userSubscription && pricingSettings && usedInterpretations >= 0) {
+      const totalAllowed = getTotalInterpretations(userSubscription, pricingSettings);
+      setHasReachedLimit(totalAllowed !== -1 && usedInterpretations >= totalAllowed);
+    }
+  }, [userSubscription, pricingSettings, usedInterpretations]);
 
   const checkAuth = async () => {
     try {
@@ -51,6 +71,62 @@ const DreamForm = () => {
     } catch (error) {
       console.error("Error checking auth:", error);
       setIsAuthenticated(false);
+    }
+  };
+
+  const fetchUserSubscription = async () => {
+    try {
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', userId)
+        .single();
+        
+      if (userError) {
+        console.error("Error fetching user subscription:", userError);
+        return;
+      }
+      
+      setUserSubscription(userData);
+    } catch (error) {
+      console.error("Error fetching user subscription:", error);
+    }
+  };
+  
+  const fetchUsedInterpretations = async () => {
+    try {
+      const { count, error } = await supabase
+        .from('dreams')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId);
+        
+      if (error) {
+        console.error("Error fetching dreams count:", error);
+        return;
+      }
+      
+      setUsedInterpretations(count || 0);
+    } catch (error) {
+      console.error("Error counting dreams:", error);
+    }
+  };
+  
+  const fetchPricingSettings = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('pricing_settings')
+        .select('*')
+        .limit(1)
+        .single();
+        
+      if (error) {
+        console.error("Error fetching pricing settings:", error);
+        return;
+      }
+      
+      setPricingSettings(data);
+    } catch (error) {
+      console.error("Error fetching pricing settings:", error);
     }
   };
 
@@ -187,10 +263,15 @@ const DreamForm = () => {
       return;
     }
     
+    if (hasReachedLimit) {
+      toast.error("لقد استنفدت الحد المسموح به من التفسيرات. يرجى ترقية اشتراكك.");
+      navigate('/pricing');
+      return;
+    }
+    
     if (dreamText.trim()) {
       const currentWordCount = dreamText.trim().split(/\s+/).length;
       
-      // Add minimum word count validation
       if (currentWordCount < 10) {
         toast.error("يجب أن يحتوي وصف الحلم على 10 كلمات على الأقل للحصول على تفسير دقيق");
         return;
@@ -253,6 +334,18 @@ const DreamForm = () => {
     return null;
   };
 
+  const renderInterpretationLimitStatus = () => {
+    if (hasReachedLimit) {
+      return (
+        <div className="flex items-center justify-center gap-2 text-red-500 mb-2">
+          <AlertTriangle className="h-4 w-4" />
+          <span className="text-sm font-medium">لقد استنفدت الحد المسموح به من التفسيرات. يرجى ترقية اشتراكك.</span>
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
     <div className="container mx-auto px-4 py-12 rtl" id="dream-form-section">
       <div className="max-w-3xl mx-auto">
@@ -263,6 +356,7 @@ const DreamForm = () => {
               اكتب حلمك بلغة عربية فصيحة وباختصار (10 كلمات على الأقل) لكي تحصل على تفسير دقيق
             </CardDescription>
             {renderAuthenticationStatus()}
+            {renderInterpretationLimitStatus()}
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit}>
@@ -274,6 +368,7 @@ const DreamForm = () => {
                   value={dreamText}
                   onChange={(e) => setDreamText(e.target.value)}
                   required
+                  disabled={hasReachedLimit}
                 />
                 <div className="space-y-2">
                   {interpretationSettings && (
@@ -305,7 +400,7 @@ const DreamForm = () => {
                 <Button
                   type="submit"
                   className="w-full"
-                  disabled={isLoading || !dreamText.trim() || wordCount < 10 || (interpretationSettings && wordCount > interpretationSettings.max_input_words)}
+                  disabled={isLoading || !dreamText.trim() || wordCount < 10 || (interpretationSettings && wordCount > interpretationSettings.max_input_words) || hasReachedLimit}
                 >
                   {isLoading ? (
                     <>
@@ -313,7 +408,7 @@ const DreamForm = () => {
                       جاري التفسير...
                     </>
                   ) : (
-                    'فسّر الحلم'
+                    hasReachedLimit ? 'قم بترقية اشتراكك للمتابعة' : 'فسّر الحلم'
                   )}
                 </Button>
                 {renderAiSettingsStatus()}

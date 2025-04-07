@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -34,6 +33,94 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // التحقق من المستخدم الحالي
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'يجب توفير رمز المصادقة' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // التحقق من صحة الجلسة
+    const { data: { user }, error: userError } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''));
+    
+    if (userError || !user) {
+      console.error('خطأ في التحقق من المستخدم:', userError);
+      return new Response(
+        JSON.stringify({ error: 'جلسة غير صالحة، يرجى إعادة تسجيل الدخول' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // التحقق من حدود الاستخدام
+    const userId = user.id;
+
+    // 1. الحصول على بيانات المستخدم واشتراكه
+    const { data: userData, error: userDataError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', userId)
+      .single();
+
+    if (userDataError) {
+      console.error('خطأ في استرجاع بيانات المستخدم:', userDataError);
+      return new Response(
+        JSON.stringify({ error: 'خطأ في استرجاع بيانات المستخدم' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // 2. الحصول على إعدادات التسعير
+    const { data: pricingSettings, error: pricingError } = await supabase
+      .from('pricing_settings')
+      .select('*')
+      .limit(1)
+      .single();
+
+    if (pricingError) {
+      console.error('خطأ في استرجاع إعدادات التسعير:', pricingError);
+      return new Response(
+        JSON.stringify({ error: 'خطأ في استرجاع إعدادات التسعير' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // 3. الحصول على عدد التفسيرات المستخدمة
+    const { count: usedInterpretations, error: countError } = await supabase
+      .from('dreams')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId);
+
+    if (countError) {
+      console.error('خطأ في حساب عدد التفسيرات:', countError);
+      return new Response(
+        JSON.stringify({ error: 'خطأ في حساب عدد التفسيرات' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // 4. التحقق من تجاوز الحد
+    let totalAllowed: number;
+
+    if (!userData.subscription_type || userData.subscription_type === 'free') {
+      totalAllowed = pricingSettings.free_plan_interpretations;
+    } else if (userData.subscription_type === 'premium') {
+      totalAllowed = pricingSettings.premium_plan_interpretations;
+    } else if (userData.subscription_type === 'pro') {
+      totalAllowed = pricingSettings.pro_plan_interpretations;
+    } else {
+      totalAllowed = pricingSettings.free_plan_interpretations;
+    }
+
+    // إذا كانت القيمة -1 فهذا يعني غير محدود
+    if (totalAllowed !== -1 && usedInterpretations && usedInterpretations >= totalAllowed) {
+      return new Response(
+        JSON.stringify({ error: 'لقد استنفدت الحد المسموح به من التفسيرات. يرجى ترقية اشتراكك للحصول على المزيد.' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     // الحصول على إعدادات الذكاء الاصطناعي
     const { data: aiSettings, error: aiError } = await supabase
