@@ -9,25 +9,24 @@ interface NavLogoProps {
 }
 
 const NavLogo: React.FC<NavLogoProps> = ({ 
-  logoText = "تأويل", 
+  logoText = "تفسير", 
   fontSize = 24,
-  slug = "تفسير الأحلام"
+  slug = "تفسير الأحلام عبر الذكاء الاصطناعي"
 }) => {
+  const textStyle = {
+    fontSize: `${fontSize}px`,
+  };
+
   return (
-    <Link to="/" className="flex items-center">
-      <div className="flex flex-col">
-        <h1 
-          className="title-font font-bold gradient-text"
-          style={{ fontSize: `${fontSize}px` }}
-        >
-          {logoText}
-        </h1>
-        {slug && (
-          <span className="text-xs text-foreground/70 -mt-1 font-tajawal">
-            {slug}
-          </span>
-        )}
-      </div>
+    <Link to="/" className="flex-shrink-0 flex flex-col items-center">
+      <span className="font-bold text-primary" style={textStyle}>
+        {logoText}
+      </span>
+      {slug && (
+        <span className="text-muted-foreground text-xs mt-1">
+          {slug}
+        </span>
+      )}
     </Link>
   );
 };

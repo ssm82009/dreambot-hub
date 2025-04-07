@@ -1,5 +1,5 @@
 
-@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&family=Aref+Ruqaa:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -16,7 +16,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 262 47% 55%;
+    --primary: 262 47% 42%;
     --primary-foreground: 210 40% 98%;
 
     --secondary: 221 39% 11%;
@@ -33,9 +33,9 @@
 
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 262 47% 55%;
+    --ring: 262 47% 42%;
 
-    --radius: 0.75rem;
+    --radius: 0.5rem;
   }
 
   .dark {
@@ -48,7 +48,7 @@
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 262 47% 65%;
+    --primary: 262 47% 52%;
     --primary-foreground: 222.2 47.4% 11.2%;
 
     --secondary: 217.2 32.6% 17.5%;
@@ -65,7 +65,7 @@
 
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 262 47% 65%;
+    --ring: 262 47% 52%;
   }
 }
 
@@ -83,87 +83,11 @@
   direction: rtl;
 }
 
-/* تحسين نمط الخلفية */
 .dream-pattern {
   background-color: #f9f9f9;
   background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%239C92AC' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
 }
 
-/* تأثيرات النص */
 .gradient-text {
   @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary;
-}
-
-.title-font {
-  @apply font-aref;
-}
-
-/* تأثيرات الحركة */
-@keyframes float {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
-}
-
-.animate-float {
-  animation: float 6s ease-in-out infinite;
-}
-
-/* تأثيرات البطاقات */
-.card-hover {
-  @apply transition-all duration-300 hover:shadow-lg hover:scale-105;
-}
-
-.glass-card {
-  @apply backdrop-blur-md bg-white/70 dark:bg-black/30 border border-white/20 shadow-md;
-}
-
-/* تأثيرات الأزرار */
-.btn-shine {
-  position: relative;
-  overflow: hidden;
-}
-
-.btn-shine::after {
-  content: '';
-  position: absolute;
-  top: -50%;
-  right: -50%;
-  bottom: -50%;
-  left: -50%;
-  background: linear-gradient(to bottom, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.13) 100%);
-  transform: rotate(35deg);
-  transition: all 0.5s;
-}
-
-.btn-shine:hover::after {
-  transform: rotate(35deg) translate(-350%, 0);
-}
-
-/* تأثير للظل تحت العناصر */
-.shadow-subtle {
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.07);
-}
-
-/* تحسين شكل التمرير */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.05);
-  border-radius: 10px;
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgba(155, 135, 245, 0.5);
-  border-radius: 10px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(155, 135, 245, 0.8);
 }

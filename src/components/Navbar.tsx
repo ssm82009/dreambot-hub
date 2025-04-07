@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useLogoutHandler } from '@/hooks/settings/useLogoutHandler';
 import { useThemeSettings } from '@/hooks/useThemeSettings';
@@ -13,18 +13,17 @@ import MobileMenuToggle from './navbar/MobileMenuToggle';
 import MobileMenu from './navbar/MobileMenu';
 
 const Navbar = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userEmail, setUserEmail] = useState('');
-  const [isScrolled, setIsScrolled] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = React.useState(false);
+  const [isDarkMode, setIsDarkMode] = React.useState(false);
+  const [isAdmin, setIsAdmin] = React.useState(false);
+  const [isLoggedIn, setIsLoggedIn] = React.useState(false);
+  const [userEmail, setUserEmail] = React.useState('');
   const isMobile = useIsMobile();
   const { handleLogout } = useLogoutHandler();
   const { themeSettings } = useThemeSettings();
 
   useEffect(() => {
-    // التحقق من حالة تسجيل الدخول
+    // Check if user is logged in
     const loginStatus = localStorage.getItem('isLoggedIn') === 'true' || 
                         localStorage.getItem('isAdminLoggedIn') === 'true';
     const adminStatus = localStorage.getItem('isAdminLoggedIn') === 'true';
@@ -33,34 +32,11 @@ const Navbar = () => {
     setIsLoggedIn(loginStatus);
     setIsAdmin(adminStatus);
     setUserEmail(email);
-
-    // التحقق من وضع الظلام
-    const darkModeStatus = localStorage.getItem('darkMode') === 'true';
-    setIsDarkMode(darkModeStatus);
-    if (darkModeStatus) {
-      document.documentElement.classList.add('dark');
-    }
-
-    // إضافة مراقب التمرير
-    const handleScroll = () => {
-      if (window.scrollY > 20) {
-        setIsScrolled(true);
-      } else {
-        setIsScrolled(false);
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-    };
   }, []);
 
   const toggleDarkMode = () => {
     const newMode = !isDarkMode;
     setIsDarkMode(newMode);
-    localStorage.setItem('darkMode', String(newMode));
-    
     if (newMode) {
       document.documentElement.classList.add('dark');
     } else {
@@ -72,16 +48,14 @@ const Navbar = () => {
     setIsMenuOpen(!isMenuOpen);
   };
 
-  // تطبيق لون وستايل الهيدر من الإعدادات
+  // تطبيق لون الهيدر من الإعدادات
   const headerStyle = {
-    backgroundColor: isScrolled ? themeSettings.headerColor : 'transparent',
-    boxShadow: isScrolled ? '0 4px 20px rgba(0, 0, 0, 0.1)' : 'none',
-    transition: 'all 0.3s ease-in-out'
+    backgroundColor: themeSettings.headerColor || 'bg-background/80',
   };
 
   return (
     <nav 
-      className={`backdrop-blur-md fixed w-full top-0 z-50 rtl ${isScrolled ? 'shadow-subtle backdrop-blur-md bg-white/90 dark:bg-black/80' : 'bg-transparent'}`}
+      className="backdrop-blur-md fixed w-full top-0 z-50 shadow-sm rtl"
       style={headerStyle}
     >
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -94,7 +68,7 @@ const Navbar = () => {
             />
           </div>
 
-          {/* قائمة سطح المكتب */}
+          {/* Desktop Menu */}
           {!isMobile && (
             <div className="hidden md:flex items-center space-x-6 rtl:space-x-reverse">
               <NavLinks isAdmin={isAdmin} />
@@ -115,7 +89,7 @@ const Navbar = () => {
             </div>
           )}
 
-          {/* زر القائمة للموبايل */}
+          {/* Mobile Menu Button */}
           {isMobile && (
             <div className="flex items-center">
               <ThemeToggle isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
@@ -130,7 +104,7 @@ const Navbar = () => {
         </div>
       </div>
 
-      {/* قائمة الموبايل */}
+      {/* Mobile Menu */}
       {isMobile && (
         <MobileMenu 
           isOpen={isMenuOpen}
