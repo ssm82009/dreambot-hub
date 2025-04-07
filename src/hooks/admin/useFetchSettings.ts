@@ -101,57 +101,64 @@ export const useFetchSettings = () => {
       }
 
       // Fetch theme settings and SEO settings (from the same table)
-      const { data: themeData, error: themeError } = await supabase
-        .from('theme_settings')
-        .select(`
-          id, primary_color, button_color, text_color, background_color, 
-          logo_text, logo_font_size, header_color, footer_color, footer_text, 
-          twitter_link, facebook_link, instagram_link, slug, created_at, updated_at,
-          meta_title, meta_description, keywords, enable_sitemap, enable_robots_txt,
-          enable_canonical_urls, enable_open_graph, enable_twitter_cards,
-          google_analytics_id, custom_head_tags, navbar_border_color
-        `)
-        .limit(1)
-        .single();
+      try {
+        const { data: themeData, error: themeError } = await supabase
+          .from('theme_settings')
+          .select(`
+            id, primary_color, button_color, text_color, background_color, 
+            logo_text, logo_font_size, header_color, footer_color, footer_text, 
+            twitter_link, facebook_link, instagram_link, slug, created_at, updated_at,
+            meta_title, meta_description, keywords, enable_sitemap, enable_robots_txt,
+            enable_canonical_urls, enable_open_graph, enable_twitter_cards,
+            google_analytics_id, custom_head_tags, navbar_border_color
+          `)
+          .limit(1)
+          .single();
       
-      if (themeError) {
-        console.error("خطأ في جلب إعدادات المظهر:", themeError);
-        // Use default theme settings if there's an error
+        if (themeError) {
+          console.error("خطأ في جلب إعدادات المظهر:", themeError);
+          // Use default theme settings if there's an error
+          setThemeSettingsForm(initialThemeSettings);
+          setSeoSettingsForm(initialSeoSettings);
+        } else if (themeData) {
+          // Update theme settings
+          setThemeSettingsForm({
+            primaryColor: themeData.primary_color || initialThemeSettings.primaryColor,
+            buttonColor: themeData.button_color || initialThemeSettings.buttonColor,
+            textColor: themeData.text_color || initialThemeSettings.textColor,
+            backgroundColor: themeData.background_color || initialThemeSettings.backgroundColor,
+            logoText: themeData.logo_text || initialThemeSettings.logoText,
+            logoFontSize: themeData.logo_font_size || initialThemeSettings.logoFontSize,
+            headerColor: themeData.header_color || initialThemeSettings.headerColor,
+            footerColor: themeData.footer_color || initialThemeSettings.footerColor,
+            footerText: themeData.footer_text || initialThemeSettings.footerText,
+            twitterLink: themeData.twitter_link || "",
+            facebookLink: themeData.facebook_link || "",
+            instagramLink: themeData.instagram_link || "",
+            slug: themeData.slug || initialThemeSettings.slug,
+            navbarBorderColor: themeData.navbar_border_color || initialThemeSettings.navbarBorderColor
+          });
+          
+          // Update SEO settings from the same theme_settings table
+          setSeoSettingsForm({
+            metaTitle: themeData.meta_title || initialSeoSettings.metaTitle,
+            metaDescription: themeData.meta_description || initialSeoSettings.metaDescription,
+            keywords: themeData.keywords || initialSeoSettings.keywords,
+            slug: themeData.slug || initialSeoSettings.slug,
+            enableSitemap: themeData.enable_sitemap ?? initialSeoSettings.enableSitemap,
+            enableRobotsTxt: themeData.enable_robots_txt ?? initialSeoSettings.enableRobotsTxt,
+            enableCanonicalUrls: themeData.enable_canonical_urls ?? initialSeoSettings.enableCanonicalUrls,
+            enableOpenGraph: themeData.enable_open_graph ?? initialSeoSettings.enableOpenGraph,
+            enableTwitterCards: themeData.enable_twitter_cards ?? initialSeoSettings.enableTwitterCards,
+            googleAnalyticsId: themeData.google_analytics_id || initialSeoSettings.googleAnalyticsId,
+            customHeadTags: themeData.custom_head_tags || initialSeoSettings.customHeadTags
+          });
+        }
+      } catch (error) {
+        console.error("خطأ في جلب إعدادات المظهر:", error);
+        // Use default settings if there's an error
         setThemeSettingsForm(initialThemeSettings);
         setSeoSettingsForm(initialSeoSettings);
-      } else if (themeData) {
-        // Update theme settings
-        setThemeSettingsForm({
-          primaryColor: themeData.primary_color || initialThemeSettings.primaryColor,
-          buttonColor: themeData.button_color || initialThemeSettings.buttonColor,
-          textColor: themeData.text_color || initialThemeSettings.textColor,
-          backgroundColor: themeData.background_color || initialThemeSettings.backgroundColor,
-          logoText: themeData.logo_text || initialThemeSettings.logoText,
-          logoFontSize: themeData.logo_font_size || initialThemeSettings.logoFontSize,
-          headerColor: themeData.header_color || initialThemeSettings.headerColor,
-          footerColor: themeData.footer_color || initialThemeSettings.footerColor,
-          footerText: themeData.footer_text || initialThemeSettings.footerText,
-          twitterLink: themeData.twitter_link || "",
-          facebookLink: themeData.facebook_link || "",
-          instagramLink: themeData.instagram_link || "",
-          slug: themeData.slug || initialThemeSettings.slug,
-          navbarBorderColor: themeData.navbar_border_color || initialThemeSettings.navbarBorderColor
-        });
-        
-        // Update SEO settings from the same theme_settings table
-        setSeoSettingsForm({
-          metaTitle: themeData.meta_title || initialSeoSettings.metaTitle,
-          metaDescription: themeData.meta_description || initialSeoSettings.metaDescription,
-          keywords: themeData.keywords || initialSeoSettings.keywords,
-          slug: themeData.slug || initialSeoSettings.slug,
-          enableSitemap: themeData.enable_sitemap ?? initialSeoSettings.enableSitemap,
-          enableRobotsTxt: themeData.enable_robots_txt ?? initialSeoSettings.enableRobotsTxt,
-          enableCanonicalUrls: themeData.enable_canonical_urls ?? initialSeoSettings.enableCanonicalUrls,
-          enableOpenGraph: themeData.enable_open_graph ?? initialSeoSettings.enableOpenGraph,
-          enableTwitterCards: themeData.enable_twitter_cards ?? initialSeoSettings.enableTwitterCards,
-          googleAnalyticsId: themeData.google_analytics_id || initialSeoSettings.googleAnalyticsId,
-          customHeadTags: themeData.custom_head_tags || initialSeoSettings.customHeadTags
-        });
       }
 
       // Fetch navbar links
