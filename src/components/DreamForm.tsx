@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -253,7 +252,7 @@ const DreamForm = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-12 rtl" id="dream-form-section">
+    <div className="container mx-auto px-4 py-28 rtl" id="dream-form-section">
       <div className="max-w-3xl mx-auto">
         <Card className="shadow-lg border-border/50">
           <CardHeader>
