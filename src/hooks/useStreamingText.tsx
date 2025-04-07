@@ -12,21 +12,30 @@ export function useStreamingText(fullText: string, options: StreamingTextOptions
   const [index, setIndex] = useState(0);
   const [isDone, setIsDone] = useState(false);
 
+  // Reset when text changes
   useEffect(() => {
-    // Reset state when fullText changes
     setText('');
     setIndex(0);
     setIsDone(false);
   }, [fullText]);
 
   useEffect(() => {
-    // If disabled or we've already streamed all text, return early
-    if (!enabled || !fullText || index >= fullText.length) {
+    // If streaming is disabled, show full text immediately
+    if (!enabled) {
+      setText(fullText || '');
+      setIsDone(true);
+      return;
+    }
+
+    // If no text or already finished, return
+    if (!fullText || index >= fullText.length) {
       if (fullText && index >= fullText.length) {
         setIsDone(true);
       }
       return;
     }
+
+    console.log('Streaming text, current index:', index, 'of', fullText.length);
 
     // Setup interval to add characters over time
     const intervalId = setInterval(() => {
@@ -41,7 +50,7 @@ export function useStreamingText(fullText: string, options: StreamingTextOptions
       });
     }, delay);
 
-    // Cleanup interval on unmount
+    // Cleanup interval on unmount or when dependencies change
     return () => clearInterval(intervalId);
   }, [fullText, index, delay, enabled]);
 

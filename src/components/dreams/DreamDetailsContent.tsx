@@ -27,9 +27,11 @@ const DreamDetailsContent: React.FC<DreamDetailsContentProps> = ({ dreamId }) =>
   const [dream, setDream] = useState<Dream | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthorized, setIsAuthorized] = useState(false);
+  
+  // Initialize streaming text with empty string initially
   const { text: streamedInterpretation, isDone: streamingDone } = useStreamingText(
     dream?.interpretation || '', 
-    { delay: 20, enabled: !!dream }
+    { delay: 20, enabled: true }
   );
   
   useEffect(() => {
@@ -82,6 +84,7 @@ const DreamDetailsContent: React.FC<DreamDetailsContentProps> = ({ dreamId }) =>
         
         setDream(data);
         setIsAuthorized(true);
+        console.log("Dream loaded, interpretation length:", data.interpretation?.length || 0);
       } catch (error) {
         console.error('Error:', error);
         toast.error("حدث خطأ غير متوقع");
@@ -188,7 +191,6 @@ const DreamDetailsContent: React.FC<DreamDetailsContentProps> = ({ dreamId }) =>
           <Button variant="outline" onClick={handleBack}>
             العودة للملف الشخصي
           </Button>
-          {/* يمكن إضافة أزرار إضافية هنا مثل زر الطباعة أو المشاركة */}
         </div>
       </CardFooter>
     </Card>
