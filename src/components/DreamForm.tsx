@@ -187,9 +187,16 @@ const DreamForm = () => {
     }
     
     if (dreamText.trim()) {
+      const currentWordCount = dreamText.trim().split(/\s+/).length;
+      
+      // Add minimum word count validation
+      if (currentWordCount < 10) {
+        toast.error("يجب أن يحتوي وصف الحلم على 10 كلمات على الأقل للحصول على تفسير دقيق");
+        return;
+      }
+      
       if (interpretationSettings) {
-        const wordCount = dreamText.trim().split(/\s+/).length;
-        if (wordCount > interpretationSettings.max_input_words) {
+        if (currentWordCount > interpretationSettings.max_input_words) {
           toast.error(`الرجاء تقليل عدد الكلمات. الحد الأقصى المسموح به هو ${interpretationSettings.max_input_words} كلمة.`);
           return;
         }
@@ -252,7 +259,7 @@ const DreamForm = () => {
           <CardHeader>
             <CardTitle className="text-2xl">فسّر حلمك الآن</CardTitle>
             <CardDescription>
-              اكتب حلمك بلغة عربية فصيحة وباختصار لكي تحصل على تفسير دقيق
+              اكتب حلمك بلغة عربية فصيحة وباختصار (10 كلمات على الأقل) لكي تحصل على تفسير دقيق
             </CardDescription>
             {renderAuthenticationStatus()}
           </CardHeader>
@@ -261,7 +268,7 @@ const DreamForm = () => {
               <div className="space-y-4">
                 <Textarea
                   id="dream-form-textarea"
-                  placeholder="صف حلمك بالتفصيل..."
+                  placeholder="صف حلمك بالتفصيل (10 كلمات على الأقل)..."
                   className="min-h-[150px] resize-none"
                   value={dreamText}
                   onChange={(e) => setDreamText(e.target.value)}
@@ -276,6 +283,9 @@ const DreamForm = () => {
                           <span> / </span>
                           <span>{interpretationSettings.max_input_words}</span>
                           <span> كلمة</span>
+                          {wordCount < 10 && (
+                            <span className="text-amber-500 mr-2">(الحد الأدنى: 10 كلمات)</span>
+                          )}
                         </div>
                         <div>
                           <span>{charCount}</span>
@@ -294,7 +304,7 @@ const DreamForm = () => {
                 <Button
                   type="submit"
                   className="w-full"
-                  disabled={isLoading || !dreamText.trim() || (interpretationSettings && wordCount > interpretationSettings.max_input_words)}
+                  disabled={isLoading || !dreamText.trim() || wordCount < 10 || (interpretationSettings && wordCount > interpretationSettings.max_input_words)}
                 >
                   {isLoading ? (
                     <>
