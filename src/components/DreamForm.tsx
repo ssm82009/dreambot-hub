@@ -112,7 +112,7 @@ const DreamForm = () => {
 
       if (invokeError) {
         console.error("خطأ في استدعاء وظيفة تفسير الحلم:", invokeError);
-        setError(`فشل في استدعاء وظيفة تفسير الحلم: ${invokeError.message}`);
+        setError(invokeError.message || "فشل في استدعاء وظيفة تفسير الحلم");
         toast.error("حدث خطأ أثناء تفسير الحلم، يرجى المحاولة مرة أخرى");
         setIsLoading(false);
         return;
@@ -120,8 +120,8 @@ const DreamForm = () => {
 
       if (aiResponse.error) {
         console.error("خطأ من وظيفة تفسير الحلم:", aiResponse.error);
-        setError(`خطأ من وظيفة تفسير الحلم: ${aiResponse.error}`);
-        toast.error("حدث خطأ في معالجة الحلم، يرجى المحاولة مرة أخرى");
+        setError(aiResponse.error);
+        toast.error("حدث خطأ في معالجة الحلم: " + aiResponse.error);
         setIsLoading(false);
         return;
       }
@@ -129,23 +129,28 @@ const DreamForm = () => {
       const generatedInterpretation = aiResponse?.interpretation || "لم نتمكن من الحصول على تفسير في هذا الوقت.";
       console.log("Received interpretation successfully");
       
-      const extractedTags = extractKeywords(dream);
-      console.log("Extracted tags:", extractedTags);
-      
-      const { error: insertError } = await supabase
-        .from('dreams')
-        .insert({
-          dream_text: dream,
-          interpretation: generatedInterpretation,
-          user_id: userId,
-          tags: extractedTags
-        });
-      
-      if (insertError) {
-        console.error("خطأ في حفظ الحلم:", insertError);
-        toast.error("حدث خطأ عند حفظ الحلم، ولكن تم الحصول على التفسير");
-      } else {
-        toast.success("تم حفظ الحلم وتفسيره بنجاح");
+      try {
+        const extractedTags = extractKeywords(dream);
+        console.log("Extracted tags:", extractedTags);
+        
+        const { error: insertError } = await supabase
+          .from('dreams')
+          .insert({
+            dream_text: dream,
+            interpretation: generatedInterpretation,
+            user_id: userId,
+            tags: extractedTags
+          });
+        
+        if (insertError) {
+          console.error("خطأ في حفظ الحلم:", insertError);
+          toast.error("حدث خطأ عند حفظ الحلم، ولكن تم الحصول على التفسير");
+        } else {
+          toast.success("تم حفظ الحلم وتفسيره بنجاح");
+        }
+      } catch (saveError) {
+        console.error("خطأ في حفظ الحلم في قاعدة البيانات:", saveError);
+        toast.error("تم تفسير الحلم ولكن لم يتم حفظه في سجلاتك");
       }
 
       setInterpretation(generatedInterpretation);
@@ -218,6 +223,28 @@ const DreamForm = () => {
     return null;
   };
 
+  const renderAiSettingsStatus = () => {
+    if (!error) return null;
+    
+    const isApiKeyIssue = error.includes('API') || error.includes('مفتاح') || error.includes('quota');
+    
+    if (isApiKeyIssue && isAuthenticated) {
+      return (
+        <div className="text-xs text-amber-600 flex items-center justify-center mt-1">
+          <Button 
+            variant="link" 
+            className="p-0 h-auto text-xs text-amber-600 underline" 
+            onClick={() => navigate('/admin')}
+          >
+            التحقق من إعدادات API في لوحة التحكم
+          </Button>
+        </div>
+      );
+    }
+    
+    return null;
+  };
+
   return (
     <div className="container mx-auto px-4 py-12 rtl" id="dream-form-section">
       <div className="max-w-3xl mx-auto">
@@ -278,6 +305,7 @@ const DreamForm = () => {
                     'فسّر الحلم'
                   )}
                 </Button>
+                {renderAiSettingsStatus()}
               </div>
             </form>
           </CardContent>
@@ -286,7 +314,11 @@ const DreamForm = () => {
             <CardContent className="pt-0">
               <div className="bg-red-50 border border-red-300 rounded-md p-3 text-red-800 text-sm">
                 <p><strong>حدث خطأ:</strong> {error}</p>
-                <p className="mt-2">يرجى التأكد من الإعدادات في لوحة التحكم وضبط مفتاح API لمزود الذكاء الاصطناعي.</p>
+                {error.includes('API') || error.includes('مفتاح') ? (
+                  <p className="mt-2">يرجى التأكد من الإعدادات في لوحة التحكم وضبط مفتاح API لمزود الذكاء الاصطناعي.</p>
+                ) : (
+                  <p className="mt-2">يرجى المحاولة مرة أخرى أو الاتصال بمسؤول النظام للمساعدة.</p>
+                )}
               </div>
             </CardContent>
           )}

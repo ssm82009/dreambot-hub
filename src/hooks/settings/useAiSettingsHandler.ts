@@ -51,12 +51,42 @@ export const useAiSettingsHandler = () => {
     }
   };
 
+  const validateApiKey = (provider: string, apiKey: string): boolean => {
+    if (!apiKey.trim()) {
+      toast.error("مفتاح API مطلوب");
+      return false;
+    }
+
+    // التحقق البسيط من التنسيق المتوقع لمفاتيح API
+    if (provider === 'openai' && !apiKey.startsWith('sk-')) {
+      toast.error("يبدو أن مفتاح OpenAI غير صالح. يجب أن يبدأ بـ 'sk-'");
+      return false;
+    }
+
+    if (provider === 'together' && !apiKey.startsWith('tok_')) {
+      toast.error("يبدو أن مفتاح Together.ai غير صالح. يجب أن يبدأ بـ 'tok_'");
+      return false;
+    }
+
+    if (provider === 'anthropic' && !apiKey.startsWith('sk-ant-')) {
+      toast.error("يبدو أن مفتاح Anthropic غير صالح. يجب أن يبدأ بـ 'sk-ant-'");
+      return false;
+    }
+
+    return true;
+  };
+
   const handleAiSettingsSubmit = async (data: {
     provider: string;
     apiKey: string;
     model: string;
   }) => {
     try {
+      // تحقق أساسي من مفتاح API
+      if (!validateApiKey(data.provider, data.apiKey)) {
+        return;
+      }
+      
       setIsUpdating(true);
       
       // Update local state immediately for UI feedback
