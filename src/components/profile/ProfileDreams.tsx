@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -63,7 +62,7 @@ const ProfileDreams: React.FC<ProfileDreamsProps> = ({ userId, dreamsCount }) =>
   };
   
   const handleViewDream = (dreamId: string) => {
-    navigate(`/dreams/${dreamId}`);
+    navigate(`/dream/${dreamId}`);
   };
   
   if (isLoading) {
