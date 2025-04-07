@@ -16,7 +16,6 @@ import { formatDate } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Dream } from '@/types/database';
-import { useStreamingText } from '@/hooks/useStreamingText';
 
 interface DreamDetailsContentProps {
   dreamId?: string;
@@ -27,12 +26,6 @@ const DreamDetailsContent: React.FC<DreamDetailsContentProps> = ({ dreamId }) =>
   const [dream, setDream] = useState<Dream | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthorized, setIsAuthorized] = useState(false);
-  
-  // Initialize streaming text with empty string initially
-  const { text: streamedInterpretation, isDone: streamingDone } = useStreamingText(
-    dream?.interpretation || '', 
-    { delay: 20, enabled: true }
-  );
   
   useEffect(() => {
     const fetchDreamDetails = async () => {
@@ -84,7 +77,6 @@ const DreamDetailsContent: React.FC<DreamDetailsContentProps> = ({ dreamId }) =>
         
         setDream(data);
         setIsAuthorized(true);
-        console.log("Dream loaded, interpretation length:", data.interpretation?.length || 0);
       } catch (error) {
         console.error('Error:', error);
         toast.error("حدث خطأ غير متوقع");
@@ -164,8 +156,7 @@ const DreamDetailsContent: React.FC<DreamDetailsContentProps> = ({ dreamId }) =>
         <div>
           <h3 className="text-lg font-semibold mb-2">التفسير:</h3>
           <div className="p-4 bg-primary/5 rounded-md whitespace-pre-line border border-primary/10">
-            {streamedInterpretation}
-            {!streamingDone && <span className="inline-block w-1 h-5 ml-1 bg-primary animate-pulse"></span>}
+            {dream.interpretation}
           </div>
         </div>
         
@@ -191,6 +182,7 @@ const DreamDetailsContent: React.FC<DreamDetailsContentProps> = ({ dreamId }) =>
           <Button variant="outline" onClick={handleBack}>
             العودة للملف الشخصي
           </Button>
+          {/* يمكن إضافة أزرار إضافية هنا مثل زر الطباعة أو المشاركة */}
         </div>
       </CardFooter>
     </Card>
