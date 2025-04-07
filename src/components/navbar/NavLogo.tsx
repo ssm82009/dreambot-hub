@@ -18,12 +18,15 @@ const NavLogo: React.FC<NavLogoProps> = ({
   };
 
   return (
-    <Link to="/" className="flex-shrink-0 flex flex-col items-center">
-      <span className="font-bold text-primary" style={textStyle}>
+    <Link to="/" className="flex-shrink-0 flex flex-col items-center group">
+      <span 
+        className="font-amiri font-bold gradient-text transition-all duration-300 group-hover:scale-105" 
+        style={textStyle}
+      >
         {logoText}
       </span>
       {slug && (
-        <span className="text-muted-foreground text-xs mt-1">
+        <span className="text-muted-foreground text-xs mt-1 transition-all duration-300">
           {slug}
         </span>
       )}

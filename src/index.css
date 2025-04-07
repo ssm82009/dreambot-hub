@@ -1,5 +1,7 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -7,7 +9,7 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
+    --background: 210 50% 98%;
     --foreground: 222.2 84% 4.9%;
 
     --card: 0 0% 100%;
@@ -16,7 +18,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 262 47% 42%;
+    --primary: 202 79% 63%;
     --primary-foreground: 210 40% 98%;
 
     --secondary: 221 39% 11%;
@@ -25,15 +27,15 @@
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
 
-    --accent: 43 89% 51%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 43 74% 57%;
+    --accent-foreground: 43 89% 20%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 262 47% 42%;
+    --ring: 202 79% 63%;
 
     --radius: 0.5rem;
   }
@@ -48,7 +50,7 @@
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 262 47% 52%;
+    --primary: 202 79% 63%;
     --primary-foreground: 222.2 47.4% 11.2%;
 
     --secondary: 217.2 32.6% 17.5%;
@@ -57,15 +59,15 @@
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
 
-    --accent: 43 89% 61%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 43 74% 57%;
+    --accent-foreground: 210 40% 98%;
 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
 
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 262 47% 52%;
+    --ring: 202 79% 63%;
   }
 }
 
@@ -89,5 +91,21 @@
 }
 
 .gradient-text {
-  @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary;
+  @apply bg-clip-text text-transparent bg-gradient-to-r from-skyBlue to-gold;
+}
+
+.glass-card {
+  @apply bg-white/70 backdrop-blur-sm border border-white/20 shadow-dream rounded-lg;
+}
+
+.dream-title {
+  @apply font-amiri font-bold;
+}
+
+.star {
+  @apply absolute w-1 h-1 bg-gold rounded-full animate-sparkle;
+}
+
+.dream-box {
+  @apply bg-dreamBg border border-skyBlue/20 rounded-lg shadow-dream p-6;
 }

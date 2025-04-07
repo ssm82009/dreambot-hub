@@ -21,6 +21,8 @@ export default {
 		extend: {
 			fontFamily: {
 				'tajawal': ['Tajawal', 'sans-serif'],
+				'amiri': ['Amiri', 'serif'],
+				'cairo': ['Cairo', 'sans-serif'],
 			},
 			colors: {
 				border: 'hsl(var(--border))',
@@ -55,7 +57,10 @@ export default {
 				card: {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
-				}
+				},
+				skyBlue: '#4FB3E8',
+				gold: '#D4AF37',
+				dreamBg: '#F0F8FF',
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
@@ -86,12 +91,31 @@ export default {
 					'50%': {
 						transform: 'translateY(-10px)',
 					},
+				},
+				'sparkle': {
+					'0%, 100%': {
+						opacity: '1',
+						transform: 'scale(1)',
+					},
+					'50%': {
+						opacity: '0.6',
+						transform: 'scale(0.8)',
+					},
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out',
 				'float': 'float 6s ease-in-out infinite',
+				'sparkle': 'sparkle 3s ease-in-out infinite',
+			},
+			backgroundImage: {
+				'dream-pattern': "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%239C92AC' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")",
+				'dream-gradient': 'linear-gradient(135deg, rgba(79, 179, 232, 0.1) 0%, rgba(212, 175, 55, 0.1) 100%)',
+			},
+			boxShadow: {
+				'dream': '0 4px 20px -2px rgba(79, 179, 232, 0.25)',
+				'gold': '0 4px 20px -2px rgba(212, 175, 55, 0.25)',
 			}
 		}
 	},
