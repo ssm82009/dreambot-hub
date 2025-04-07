@@ -22,7 +22,7 @@ const Navbar = () => {
   const [userEmail, setUserEmail] = React.useState('');
   const isMobile = useIsMobile();
   const { handleLogout } = useLogoutHandler();
-  const { themeSettings } = useThemeSettings();
+  const { themeSettings, loading } = useThemeSettings();
 
   useEffect(() => {
     // Check if user is logged in
@@ -50,17 +50,20 @@ const Navbar = () => {
     setIsMenuOpen(!isMenuOpen);
   };
 
-  // تطبيق لون الهيدر من الإعدادات
-  const headerStyle: CSSProperties = {
-    backgroundColor: themeSettings.headerColor || 'bg-background/80',
-    borderBottomWidth: '1px',
-    borderBottomStyle: 'solid' as 'solid',
-    borderBottomColor: themeSettings.navbarBorderColor || '#e5e7eb'
-  };
+  // إعداد أسلوب النافبار
+  const headerStyle: CSSProperties = loading 
+    ? { opacity: 0 } // إخفاء النافبار أثناء التحميل
+    : {
+        backgroundColor: themeSettings.headerColor || 'bg-background/80',
+        borderBottomWidth: '1px',
+        borderBottomStyle: 'solid' as 'solid',
+        borderBottomColor: themeSettings.navbarBorderColor || '#e5e7eb',
+        transition: 'opacity 0.3s ease-in-out, background-color 0.3s ease-in-out'
+      };
 
   return (
     <nav 
-      className="backdrop-blur-md fixed w-full top-0 z-50 shadow-sm rtl"
+      className={`backdrop-blur-md fixed w-full top-0 z-50 shadow-sm rtl navbar-transition ${loading ? 'navbar-loading' : 'navbar-loaded'}`}
       style={headerStyle}
     >
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -69,13 +72,14 @@ const Navbar = () => {
             <NavLogo 
               logoText={themeSettings.logoText} 
               fontSize={themeSettings.logoFontSize}
-              slug={themeSettings.slug} 
+              slug={themeSettings.slug}
+              isLoading={loading}
             />
           </div>
 
           {/* Desktop Menu */}
           {!isMobile && (
-            <div className="hidden md:flex items-center space-x-6 rtl:space-x-reverse">
+            <div className={`hidden md:flex items-center space-x-6 rtl:space-x-reverse transition-opacity duration-300 ${loading ? 'opacity-0' : 'opacity-100'}`}>
               <NavLinks isAdmin={isAdmin} />
               
               <ThemeToggle isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
@@ -96,7 +100,7 @@ const Navbar = () => {
 
           {/* Mobile Menu Button */}
           {isMobile && (
-            <div className="flex items-center">
+            <div className={`flex items-center transition-opacity duration-300 ${loading ? 'opacity-0' : 'opacity-100'}`}>
               <ThemeToggle isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
               <MobileMenuToggle 
                 isOpen={isMenuOpen} 

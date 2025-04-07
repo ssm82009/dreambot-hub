@@ -9,8 +9,20 @@ export const useThemeSettings = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // استخدام localStorage للتخزين المؤقت للإعدادات
+    const cachedSettings = localStorage.getItem('themeSettings');
+    if (cachedSettings) {
+      try {
+        const parsedSettings = JSON.parse(cachedSettings);
+        setThemeSettings(parsedSettings);
+        // نضع قيمة التحميل كـ false لإظهار النافبار مباشرة مع القيم المخزنة مؤقتاً
+        setLoading(false);
+      } catch (error) {
+        console.error("خطأ في تحليل إعدادات المظهر المخزنة:", error);
+      }
+    }
+
     const fetchThemeSettings = async () => {
-      setLoading(true);
       try {
         const { data, error } = await supabase
           .from('theme_settings')
@@ -24,10 +36,7 @@ export const useThemeSettings = () => {
         
         if (error) {
           console.error("خطأ في جلب إعدادات المظهر:", error);
-          // Use default settings if there's an error
-          setThemeSettings(initialThemeSettings);
         } else if (data) {
-          // Type guard to ensure data is not null
           const settings = {
             primaryColor: data.primary_color || initialThemeSettings.primaryColor,
             buttonColor: data.button_color || initialThemeSettings.buttonColor,
@@ -46,11 +55,12 @@ export const useThemeSettings = () => {
           };
           
           setThemeSettings(settings);
+          
+          // تخزين الإعدادات في localStorage للاستخدام المستقبلي
+          localStorage.setItem('themeSettings', JSON.stringify(settings));
         }
       } catch (error) {
         console.error("خطأ في جلب إعدادات المظهر:", error);
-        // Use default settings if there's an error
-        setThemeSettings(initialThemeSettings);
       } finally {
         setLoading(false);
       }
