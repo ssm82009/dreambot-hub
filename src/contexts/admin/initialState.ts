@@ -1,4 +1,3 @@
-
 import { 
   AiSettingsFormValues, 
   InterpretationSettingsFormValues,
@@ -49,19 +48,20 @@ export const initialPaymentSettings: PaymentSettingsFormValues = {
 };
 
 export const initialThemeSettings: ThemeSettingsFormValues = {
-  primaryColor: '#9b87f5',
-  buttonColor: '#9b87f5',
-  textColor: '#1A1F2C',
-  backgroundColor: '#F9F9F9',
-  headerColor: '#FFFFFF',
-  footerColor: '#1A1F2C',
-  logoText: 'تفسير الأحلام',
+  primaryColor: "#6366f1",
+  buttonColor: "#4f46e5",
+  textColor: "#1f2937",
+  backgroundColor: "#ffffff",
+  headerColor: "#ffffff",
+  footerColor: "#f9fafb",
+  logoText: "تفسير",
   logoFontSize: 24,
-  footerText: 'جميع الحقوق محفوظة © 2024 تفسير الأحلام',
-  twitterLink: '',
-  facebookLink: '',
-  instagramLink: '',
-  slug: 'تفسير الأحلام عبر الذكاء الاصطناعي'
+  footerText: "© 2023 جميع الحقوق محفوظة",
+  twitterLink: "",
+  facebookLink: "",
+  instagramLink: "",
+  slug: "تفسير الأحلام",
+  navbarBorderColor: "#e5e7eb"
 };
 
 export const initialSeoSettings: SeoSettingsFormValues = {
@@ -97,7 +97,6 @@ export const initialActiveSections: ActiveSections = {
   theme: false,
   seo: false,
   homeSections: false,
-  // Add the missing sections
   navbarManagement: false,
   pageManagement: false,
   seoSettings: false,

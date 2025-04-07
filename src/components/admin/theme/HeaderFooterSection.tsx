@@ -8,6 +8,7 @@ type HeaderFooterSectionProps = {
   headerColor: string;
   footerColor: string;
   footerText: string;
+  navbarBorderColor: string; // إضافة لون حدود النافبار
   socialLinks: {
     twitter: string;
     facebook: string;
@@ -20,7 +21,8 @@ type HeaderFooterSectionProps = {
 const HeaderFooterSection: React.FC<HeaderFooterSectionProps> = ({ 
   headerColor, 
   footerColor, 
-  footerText, 
+  footerText,
+  navbarBorderColor, // إضافة لون حدود النافبار
   socialLinks, 
   register, 
   setValue 
@@ -35,6 +37,13 @@ const HeaderFooterSection: React.FC<HeaderFooterSectionProps> = ({
           onChange={(value) => setValue("headerColor", value)}
           register={register}
           name="headerColor"
+        />
+        <ColorInput 
+          label="لون حدود النافبار"
+          value={navbarBorderColor}
+          onChange={(value) => setValue("navbarBorderColor", value)}
+          register={register}
+          name="navbarBorderColor"
         />
         <ColorInput 
           label="لون خلفية الفوتر"

@@ -42,6 +42,7 @@ export const useThemeSettingsHandler = () => {
           facebook_link: data.facebookLink,
           instagram_link: data.instagramLink,
           slug: data.slug,
+          navbar_border_color: data.navbarBorderColor, // إضافة لون حدود النافبار
           updated_at: new Date().toISOString()
         })
         .eq('id', await getThemeSettingsId());

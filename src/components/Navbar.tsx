@@ -51,6 +51,9 @@ const Navbar = () => {
   // تطبيق لون الهيدر من الإعدادات
   const headerStyle = {
     backgroundColor: themeSettings.headerColor || 'bg-background/80',
+    borderBottomWidth: '1px',
+    borderBottomStyle: 'solid',
+    borderBottomColor: themeSettings.navbarBorderColor || '#e5e7eb', // استخدام لون الحدود من الإعدادات
   };
 
   return (

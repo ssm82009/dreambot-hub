@@ -17,7 +17,7 @@ export const useThemeSettings = () => {
           .select(`
             primary_color, button_color, text_color, background_color, 
             logo_text, logo_font_size, header_color, footer_color, footer_text, 
-            twitter_link, facebook_link, instagram_link, slug
+            twitter_link, facebook_link, instagram_link, slug, navbar_border_color
           `)
           .limit(1)
           .single();
@@ -40,7 +40,8 @@ export const useThemeSettings = () => {
             twitterLink: data.twitter_link || "",
             facebookLink: data.facebook_link || "",
             instagramLink: data.instagram_link || "",
-            slug: data.slug || initialThemeSettings.slug
+            slug: data.slug || initialThemeSettings.slug,
+            navbarBorderColor: data.navbar_border_color || initialThemeSettings.navbarBorderColor // إضافة لون حدود النافبار
           });
         }
       } catch (error) {

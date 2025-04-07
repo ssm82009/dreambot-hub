@@ -1,4 +1,3 @@
-
 import { User, CustomPage, NavLink } from '@/types/database';
 
 export type HomeSectionItem = {
@@ -23,6 +22,7 @@ export type ThemeSettingsFormValues = {
   facebookLink?: string;
   instagramLink?: string;
   slug: string;
+  navbarBorderColor: string;
 };
 
 export type AiSettingsFormValues = {
@@ -90,7 +90,6 @@ export type ActiveSections = {
   theme: boolean;
   seo: boolean;
   homeSections: boolean;
-  // Add missing sections
   navbarManagement: boolean;
   pageManagement: boolean;
   seoSettings: boolean;
@@ -104,7 +103,6 @@ export type AdminProviderProps = {
   children: React.ReactNode;
 };
 
-// AdminContextType definition
 export type AdminContextType = {
   isAdmin: boolean;
   setIsAdmin: React.Dispatch<React.SetStateAction<boolean>>;

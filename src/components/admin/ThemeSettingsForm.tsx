@@ -52,6 +52,7 @@ const ThemeSettingsForm: React.FC<ThemeSettingsFormProps> = ({
         headerColor={form.watch("headerColor")}
         footerColor={form.watch("footerColor")}
         footerText={form.watch("footerText")}
+        navbarBorderColor={form.watch("navbarBorderColor")}
         socialLinks={socialLinks}
         register={form.register}
         setValue={form.setValue}

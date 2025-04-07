@@ -1,3 +1,4 @@
+
 import { useAdmin } from '@/contexts/admin';
 import { supabase } from '@/integrations/supabase/client';
 import { initialThemeSettings, initialSeoSettings } from '@/contexts/admin/initialState';
@@ -108,7 +109,7 @@ export const useFetchSettings = () => {
           twitter_link, facebook_link, instagram_link, slug, created_at, updated_at,
           meta_title, meta_description, keywords, enable_sitemap, enable_robots_txt,
           enable_canonical_urls, enable_open_graph, enable_twitter_cards,
-          google_analytics_id, custom_head_tags
+          google_analytics_id, custom_head_tags, navbar_border_color
         `)
         .limit(1)
         .single();
@@ -133,7 +134,8 @@ export const useFetchSettings = () => {
           twitterLink: themeData.twitter_link || "",
           facebookLink: themeData.facebook_link || "",
           instagramLink: themeData.instagram_link || "",
-          slug: themeData.slug || initialThemeSettings.slug
+          slug: themeData.slug || initialThemeSettings.slug,
+          navbarBorderColor: themeData.navbar_border_color || initialThemeSettings.navbarBorderColor
         });
         
         // Update SEO settings from the same theme_settings table
