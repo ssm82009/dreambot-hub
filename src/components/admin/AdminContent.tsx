@@ -15,7 +15,6 @@ import TicketManagementSection from '@/components/admin/sections/TicketManagemen
 import ThemeSettingsSection from '@/components/admin/sections/ThemeSettingsSection';
 import SeoSettingsSection from '@/components/admin/sections/SeoSettingsSection';
 import HomeSectionsSection from '@/components/admin/sections/HomeSectionsSection';
-import DatabaseSettingsSection from '@/components/admin/sections/DatabaseSettingsSection';
 
 const AdminContent: React.FC = () => {
   const { dbLoading, activeSections } = useAdmin();
@@ -52,7 +51,6 @@ const AdminContent: React.FC = () => {
           {activeSections.theme && <ThemeSettingsSection />}
           {activeSections.seo && <SeoSettingsSection />}
           {activeSections.homeSections && <HomeSectionsSection />}
-          {activeSections.database && <DatabaseSettingsSection />}
         </div>
       )}
     </div>

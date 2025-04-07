@@ -1,3 +1,4 @@
+
 import { User, CustomPage, NavLink } from '@/types/database';
 
 export type HomeSectionItem = {
@@ -77,20 +78,26 @@ export type SeoSettingsFormValues = {
 };
 
 export type ActiveSections = {
-  dashboard: boolean;
   aiSettings: boolean;
   interpretationSettings: boolean;
   pricingSettings: boolean;
   paymentSettings: boolean;
+  transactions: boolean;
   users: boolean;
   pages: boolean;
   navbar: boolean;
-  transactions: boolean;
   tickets: boolean;
   theme: boolean;
   seo: boolean;
   homeSections: boolean;
-  database: boolean;
+  // Add missing sections
+  navbarManagement: boolean;
+  pageManagement: boolean;
+  seoSettings: boolean;
+  themeSettings: boolean;
+  ticketManagement: boolean;
+  transactionManagement: boolean;
+  userManagement: boolean;
 };
 
 export type AdminProviderProps = {
