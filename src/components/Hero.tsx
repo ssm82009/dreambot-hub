@@ -39,7 +39,7 @@ const Hero: React.FC<HeroProps> = ({
   };
 
   return (
-    <div className="relative overflow-hidden pt-16 pb-10 rtl"> {/* تقليل padding من pt-24 pb-16 إلى pt-16 pb-10 */}
+    <div className="relative overflow-hidden pt-20 pb-10 rtl"> {/* زيادة padding-top من pt-16 إلى pt-20 */}
       <div className="absolute inset-0 dream-pattern opacity-50 z-0"></div>
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="flex flex-col items-center text-center">
