@@ -40,7 +40,7 @@ serve(async (req) => {
       .from('ai_settings')
       .select('*')
       .limit(1)
-      .single();
+      .maybeSingle();
 
     if (aiError) {
       console.error('خطأ في استرجاع إعدادات الذكاء الاصطناعي:', aiError);
@@ -55,7 +55,7 @@ serve(async (req) => {
       .from('interpretation_settings')
       .select('*')
       .limit(1)
-      .single();
+      .maybeSingle();
 
     if (interpretationError) {
       console.error('خطأ في استرجاع إعدادات التفسير:', interpretationError);
@@ -86,82 +86,96 @@ serve(async (req) => {
     }
 
     // تعزيز تعليمات النظام لضمان استخدام اللغة العربية
-    const enhancedInstructions = `${interpretationSettings.system_instructions}\n\nمهم جداً: يجب أن يكون تفسيرك باللغة العربية فقط. لا تستخدم أي لغة أخرى في إجابتك.`;
+    const systemInstructions = interpretationSettings?.system_instructions || 'أنت مفسر أحلام خبير. يجب أن تقدم تفسيرات دقيقة وشاملة استناداً إلى المراجع الإسلامية والعلمية.';
+    const enhancedInstructions = `${systemInstructions}\n\nمهم جداً: يجب أن يكون تفسيرك باللغة العربية فقط. لا تستخدم أي لغة أخرى في إجابتك.`;
+
+    // التأكد من وجود مزود للذكاء الاصطناعي وإعدادات صالحة
+    const provider = aiSettings?.provider || 'default';
+    const apiKey = aiSettings?.api_key || '';
+    const model = aiSettings?.model || '';
+
+    console.log(`استخدام مزود ${provider} للتفسير مع نموذج ${model}`);
 
     // إنشاء طلب التفسير للذكاء الاصطناعي
     let aiResponse;
-    if (aiSettings?.provider === 'together') {
+    if (provider === 'together' && apiKey) {
       // استخدام Together.ai
-      console.log('استخدام مزود Together.ai للتفسير');
-      const togetherResponse = await fetch('https://api.together.xyz/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${aiSettings.api_key}`
-        },
-        body: JSON.stringify({
-          model: aiSettings.model || 'meta-llama/Llama-3-8b-chat-hf',
-          messages: [
-            {
-              role: 'system',
-              content: enhancedInstructions
-            },
-            {
-              role: 'user',
-              content: `${symbolsContext ? symbolsContext + '\n\n' : ''}الحلم: ${dreamText}\n\nقم بتفسير هذا الحلم بدقة ووضوح باللغة العربية.`
-            }
-          ],
-          max_tokens: interpretationSettings.max_output_words * 3, // تقريبي: الكلمة الواحدة تعادل حوالي 3 tokens
-          temperature: 0.7
-        })
-      });
+      try {
+        console.log('استخدام مزود Together.ai للتفسير');
+        const togetherResponse = await fetch('https://api.together.xyz/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`
+          },
+          body: JSON.stringify({
+            model: model || 'meta-llama/Llama-3-8b-chat-hf',
+            messages: [
+              {
+                role: 'system',
+                content: enhancedInstructions
+              },
+              {
+                role: 'user',
+                content: `${symbolsContext ? symbolsContext + '\n\n' : ''}الحلم: ${dreamText}\n\nقم بتفسير هذا الحلم بدقة ووضوح باللغة العربية.`
+              }
+            ],
+            max_tokens: (interpretationSettings?.max_output_words || 1000) * 3, // تقريبي: الكلمة الواحدة تعادل حوالي 3 tokens
+            temperature: 0.7
+          })
+        });
 
-      const togetherData = await togetherResponse.json();
-      if (togetherData.error) {
-        console.error('خطأ من Together.ai:', togetherData.error);
-        return new Response(
-          JSON.stringify({ error: `خطأ من مزود الذكاء الاصطناعي: ${togetherData.error.message}` }),
-          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+        if (!togetherResponse.ok) {
+          const errorData = await togetherResponse.text();
+          console.error('خطأ من Together.ai:', errorData);
+          throw new Error(`خطأ من Together.ai: ${togetherResponse.status} - ${errorData}`);
+        }
+
+        const togetherData = await togetherResponse.json();
+        aiResponse = togetherData.choices[0]?.message?.content;
+      } catch (error) {
+        console.error('خطأ في استدعاء Together.ai:', error);
+        throw new Error(`فشل استدعاء Together.ai: ${error.message}`);
       }
-
-      aiResponse = togetherData.choices[0]?.message?.content;
-    } else if (aiSettings?.provider === 'openai') {
+    } else if (provider === 'openai' && apiKey) {
       // استخدام OpenAI
-      console.log('استخدام مزود OpenAI للتفسير');
-      const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${aiSettings.api_key}`
-        },
-        body: JSON.stringify({
-          model: aiSettings.model || 'gpt-4o-mini',
-          messages: [
-            {
-              role: 'system',
-              content: enhancedInstructions
-            },
-            {
-              role: 'user',
-              content: `${symbolsContext ? symbolsContext + '\n\n' : ''}الحلم: ${dreamText}\n\nقم بتفسير هذا الحلم بدقة ووضوح باللغة العربية.`
-            }
-          ],
-          max_tokens: interpretationSettings.max_output_words * 4,
-          temperature: 0.7
-        })
-      });
+      try {
+        console.log('استخدام مزود OpenAI للتفسير');
+        const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`
+          },
+          body: JSON.stringify({
+            model: model || 'gpt-4o-mini',
+            messages: [
+              {
+                role: 'system',
+                content: enhancedInstructions
+              },
+              {
+                role: 'user',
+                content: `${symbolsContext ? symbolsContext + '\n\n' : ''}الحلم: ${dreamText}\n\nقم بتفسير هذا الحلم بدقة ووضوح باللغة العربية.`
+              }
+            ],
+            max_tokens: (interpretationSettings?.max_output_words || 1000) * 4,
+            temperature: 0.7
+          })
+        });
 
-      const openaiData = await openaiResponse.json();
-      if (openaiData.error) {
-        console.error('خطأ من OpenAI:', openaiData.error);
-        return new Response(
-          JSON.stringify({ error: `خطأ من مزود الذكاء الاصطناعي: ${openaiData.error.message}` }),
-          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+        if (!openaiResponse.ok) {
+          const errorData = await openaiResponse.text();
+          console.error('خطأ من OpenAI:', errorData);
+          throw new Error(`خطأ من OpenAI: ${openaiResponse.status} - ${errorData}`);
+        }
+
+        const openaiData = await openaiResponse.json();
+        aiResponse = openaiData.choices[0]?.message?.content;
+      } catch (error) {
+        console.error('خطأ في استدعاء OpenAI:', error);
+        throw new Error(`فشل استدعاء OpenAI: ${error.message}`);
       }
-
-      aiResponse = openaiData.choices[0]?.message?.content;
     } else {
       // استخدام طريقة افتراضية بسيطة
       console.log('مزود الذكاء الاصطناعي غير مكوّن بشكل صحيح، استخدام تفسير افتراضي');
@@ -188,6 +202,10 @@ serve(async (req) => {
       }
     }
 
+    if (!aiResponse) {
+      throw new Error("لم يتم الحصول على تفسير من مزود الذكاء الاصطناعي");
+    }
+
     console.log('تم الحصول على تفسير الحلم بنجاح');
     
     return new Response(
@@ -197,7 +215,10 @@ serve(async (req) => {
   } catch (error) {
     console.error('خطأ في معالجة طلب تفسير الحلم:', error);
     return new Response(
-      JSON.stringify({ error: `خطأ في معالجة الطلب: ${error.message}` }),
+      JSON.stringify({ 
+        error: `خطأ في معالجة الطلب: ${error.message}`,
+        errorDetails: error.stack
+      }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }

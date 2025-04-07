@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -20,6 +21,7 @@ const DreamForm = () => {
   const [charCount, setCharCount] = useState(0);
   const [wordCount, setWordCount] = useState(0);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -99,25 +101,38 @@ const DreamForm = () => {
 
   const interpretDream = async (dream: string) => {
     setIsLoading(true);
+    setError(null);
     
     try {
-      const { data: aiResponse, error: aiError } = await supabase.functions.invoke('interpret-dream', {
+      console.log("Calling interpret-dream function with dream text:", dream.substring(0, 50) + "...");
+      
+      const { data: aiResponse, error: invokeError } = await supabase.functions.invoke('interpret-dream', {
         body: { dreamText: dream }
       });
 
-      if (aiError) {
-        console.error("خطأ في استدعاء وظيفة تفسير الحلم:", aiError);
+      if (invokeError) {
+        console.error("خطأ في استدعاء وظيفة تفسير الحلم:", invokeError);
+        setError(`فشل في استدعاء وظيفة تفسير الحلم: ${invokeError.message}`);
         toast.error("حدث خطأ أثناء تفسير الحلم، يرجى المحاولة مرة أخرى");
         setIsLoading(false);
         return;
       }
 
+      if (aiResponse.error) {
+        console.error("خطأ من وظيفة تفسير الحلم:", aiResponse.error);
+        setError(`خطأ من وظيفة تفسير الحلم: ${aiResponse.error}`);
+        toast.error("حدث خطأ في معالجة الحلم، يرجى المحاولة مرة أخرى");
+        setIsLoading(false);
+        return;
+      }
+
       const generatedInterpretation = aiResponse?.interpretation || "لم نتمكن من الحصول على تفسير في هذا الوقت.";
+      console.log("Received interpretation successfully");
       
       const extractedTags = extractKeywords(dream);
       console.log("Extracted tags:", extractedTags);
       
-      const { error } = await supabase
+      const { error: insertError } = await supabase
         .from('dreams')
         .insert({
           dream_text: dream,
@@ -126,15 +141,17 @@ const DreamForm = () => {
           tags: extractedTags
         });
       
-      if (error) {
-        console.error("خطأ في حفظ الحلم:", error);
-        toast.error("حدث خطأ عند حفظ الحلم، يرجى المحاولة مرة أخرى");
+      if (insertError) {
+        console.error("خطأ في حفظ الحلم:", insertError);
+        toast.error("حدث خطأ عند حفظ الحلم، ولكن تم الحصول على التفسير");
       } else {
-        setInterpretation(generatedInterpretation);
-        toast.success("تم حفظ الحلم بنجاح");
+        toast.success("تم حفظ الحلم وتفسيره بنجاح");
       }
+
+      setInterpretation(generatedInterpretation);
     } catch (error) {
       console.error("خطأ في تفسير الحلم:", error);
+      setError(`خطأ غير متوقع: ${error instanceof Error ? error.message : 'خطأ غير معروف'}`);
       toast.error("حدث خطأ أثناء تفسير الحلم");
     } finally {
       setIsLoading(false);
@@ -264,6 +281,15 @@ const DreamForm = () => {
               </div>
             </form>
           </CardContent>
+          
+          {error && (
+            <CardContent className="pt-0">
+              <div className="bg-red-50 border border-red-300 rounded-md p-3 text-red-800 text-sm">
+                <p><strong>حدث خطأ:</strong> {error}</p>
+                <p className="mt-2">يرجى التأكد من الإعدادات في لوحة التحكم وضبط مفتاح API لمزود الذكاء الاصطناعي.</p>
+              </div>
+            </CardContent>
+          )}
           
           {interpretation && (
             <CardFooter className="flex flex-col items-start border-t border-border/50 pt-6">
