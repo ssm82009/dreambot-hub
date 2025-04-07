@@ -10,7 +10,7 @@ interface NavLogoProps {
 
 const NavLogo: React.FC<NavLogoProps> = ({ 
   logoText = "تفسير", 
-  fontSize = 28,
+  fontSize = 24,
   slug = "تفسير الأحلام عبر الذكاء الاصطناعي"
 }) => {
   const textStyle = {
@@ -18,15 +18,12 @@ const NavLogo: React.FC<NavLogoProps> = ({
   };
 
   return (
-    <Link to="/" className="flex-shrink-0 flex flex-col items-center group">
-      <span 
-        className="font-aref gradient-text transition-all duration-300 group-hover:scale-105" 
-        style={textStyle}
-      >
+    <Link to="/" className="flex-shrink-0 flex flex-col items-center">
+      <span className="font-bold text-primary" style={textStyle}>
         {logoText}
       </span>
       {slug && (
-        <span className="text-muted-foreground text-xs mt-1 transition-opacity duration-300 group-hover:opacity-100 opacity-80">
+        <span className="text-muted-foreground text-xs mt-1">
           {slug}
         </span>
       )}
