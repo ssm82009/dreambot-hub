@@ -32,11 +32,21 @@ const Navbar = () => {
     setIsLoggedIn(loginStatus);
     setIsAdmin(adminStatus);
     setUserEmail(email);
+
+    // Check for dark mode preference
+    const isDark = localStorage.getItem('darkMode') === 'true';
+    setIsDarkMode(isDark);
+    if (isDark) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
   }, []);
 
   const toggleDarkMode = () => {
     const newMode = !isDarkMode;
     setIsDarkMode(newMode);
+    localStorage.setItem('darkMode', newMode.toString());
     if (newMode) {
       document.documentElement.classList.add('dark');
     } else {
@@ -55,7 +65,7 @@ const Navbar = () => {
 
   return (
     <nav 
-      className="backdrop-blur-md fixed w-full top-0 z-50 shadow-sm rtl"
+      className="backdrop-blur-md fixed w-full top-0 z-50 shadow-sm rtl border-b border-primary/10"
       style={headerStyle}
     >
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
