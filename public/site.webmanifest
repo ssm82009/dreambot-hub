@@ -25,14 +25,5 @@
   "background_color": "#ffffff",
   "display": "standalone",
   "orientation": "portrait",
-  "scope": "/",
-  "description": "موقع تفسير الأحلام باستخدام الذكاء الاصطناعي",
-  "screenshots": [
-    {
-      "src": "https://images.unsplash.com/photo-1649972904349-6e44c42644a7",
-      "type": "image/jpeg",
-      "sizes": "1080x1920",
-      "form_factor": "wide"
-    }
-  ]
+  "scope": "/"
 }
