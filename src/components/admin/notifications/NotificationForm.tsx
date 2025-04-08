@@ -69,6 +69,7 @@ const NotificationForm: React.FC<NotificationFormProps> = ({ users }) => {
         result = await sendNotificationToAdmin(notification);
         message = 'تم إرسال الإشعار للمشرفين بنجاح';
       } else if (targetType === 'specificUser' && userId) {
+        console.log('إرسال إشعار لمستخدم محدد:', userId);
         // استدعاء وظيفة Edge Function لإرسال إشعار لمستخدم محدد
         result = await supabase.functions.invoke('send-notification', {
           body: {
@@ -78,6 +79,7 @@ const NotificationForm: React.FC<NotificationFormProps> = ({ users }) => {
         });
         message = 'تم إرسال الإشعار للمستخدم بنجاح';
       } else if (targetType === 'all') {
+        console.log('إرسال إشعار لجميع المستخدمين');
         // استدعاء وظيفة Edge Function لإرسال إشعار لجميع المستخدمين
         result = await supabase.functions.invoke('send-notification', {
           body: {
@@ -88,15 +90,17 @@ const NotificationForm: React.FC<NotificationFormProps> = ({ users }) => {
         message = 'تم إرسال الإشعار لجميع المستخدمين بنجاح';
       }
 
+      console.log('نتيجة إرسال الإشعار:', result);
+      
       if (result?.error) {
-        throw new Error(result.error.message);
+        throw new Error(result.error.message || 'حدث خطأ في إرسال الإشعار');
       }
 
       toast.success(message);
       form.reset();
     } catch (error) {
       console.error('خطأ في إرسال الإشعار:', error);
-      toast.error('حدث خطأ في إرسال الإشعار');
+      toast.error('حدث خطأ في إرسال الإشعار: ' + (error.message || 'خطأ غير معروف'));
     } finally {
       setSending(false);
     }

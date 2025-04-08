@@ -16,6 +16,7 @@ interface PushSubscriptionData {
 // استدعاء وظيفة Edge Function لإرسال الإشعار
 export async function sendNotification(userId: string, payload: NotificationPayload) {
   try {
+    console.log(`محاولة إرسال إشعار للمستخدم ${userId}:`, payload);
     // استدعاء وظيفة Edge Function لإرسال الإشعار
     const { data, error } = await supabase.functions.invoke('send-notification', {
       body: {
@@ -24,7 +25,12 @@ export async function sendNotification(userId: string, payload: NotificationPayl
       }
     });
 
-    if (error) throw error;
+    if (error) {
+      console.error('خطأ في استدعاء وظيفة Edge Function:', error);
+      throw error;
+    }
+    
+    console.log('نتيجة إرسال الإشعار:', data);
     return data;
   } catch (error) {
     console.error('خطأ في إرسال الإشعار:', error);
@@ -35,6 +41,7 @@ export async function sendNotification(userId: string, payload: NotificationPayl
 // إرسال إشعار لجميع المشرفين
 export async function sendNotificationToAdmin(payload: NotificationPayload) {
   try {
+    console.log('محاولة إرسال إشعار للمشرفين:', payload);
     // استدعاء وظيفة Edge Function لإرسال الإشعار لجميع المشرفين
     const { data, error } = await supabase.functions.invoke('send-notification', {
       body: {
@@ -43,7 +50,12 @@ export async function sendNotificationToAdmin(payload: NotificationPayload) {
       }
     });
 
-    if (error) throw error;
+    if (error) {
+      console.error('خطأ في استدعاء وظيفة Edge Function للمشرفين:', error);
+      throw error;
+    }
+    
+    console.log('نتيجة إرسال الإشعار للمشرفين:', data);
     return data;
   } catch (error) {
     console.error('خطأ في إرسال الإشعار للمشرفين:', error);
@@ -57,6 +69,7 @@ export async function storeSubscription(subscription: PushSubscription) {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user) throw new Error('المستخدم غير مسجل دخول');
 
+    console.log('محاولة تخزين اشتراك جديد للإشعارات:', subscription.endpoint);
     const { data, error } = await supabase.functions.invoke('store-subscription', {
       body: {
         userId: session.user.id,
@@ -65,7 +78,12 @@ export async function storeSubscription(subscription: PushSubscription) {
       }
     });
 
-    if (error) throw error;
+    if (error) {
+      console.error('خطأ في استدعاء وظيفة Edge Function لتخزين الاشتراك:', error);
+      throw error;
+    }
+    
+    console.log('نتيجة تخزين اشتراك الإشعارات:', data);
     return data;
   } catch (error) {
     console.error('خطأ في تخزين اشتراك الإشعارات:', error);
@@ -79,6 +97,7 @@ export async function removeSubscription(endpoint: string) {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user) throw new Error('المستخدم غير مسجل دخول');
 
+    console.log('محاولة حذف اشتراك الإشعارات:', endpoint);
     const { data, error } = await supabase.functions.invoke('remove-subscription', {
       body: {
         userId: session.user.id,
@@ -86,7 +105,12 @@ export async function removeSubscription(endpoint: string) {
       }
     });
 
-    if (error) throw error;
+    if (error) {
+      console.error('خطأ في استدعاء وظيفة Edge Function لحذف الاشتراك:', error);
+      throw error;
+    }
+    
+    console.log('نتيجة حذف اشتراك الإشعارات:', data);
     return data;
   } catch (error) {
     console.error('خطأ في حذف اشتراك الإشعارات:', error);
