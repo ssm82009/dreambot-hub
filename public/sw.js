@@ -89,10 +89,41 @@ self.addEventListener('push', (event) => {
     lang: 'ar',
     vibrate: [100, 50, 100],
     data: {
-      url: data.url || '/'
-    }
+      url: data.url || '/',
+      type: data.type || 'general'
+    },
+    actions: []
   };
   
+  // إضافة أزرار تفاعلية بناءً على نوع الإشعار
+  if (data.type === 'ticket') {
+    options.actions = [
+      {
+        action: 'view',
+        title: 'عرض التذكرة'
+      },
+      {
+        action: 'close',
+        title: 'إغلاق'
+      }
+    ];
+  } else if (data.type === 'payment') {
+    options.actions = [
+      {
+        action: 'view',
+        title: 'عرض التفاصيل'
+      }
+    ];
+  } else if (data.type === 'subscription') {
+    options.actions = [
+      {
+        action: 'renew',
+        title: 'تجديد الاشتراك'
+      }
+    ];
+  }
+  
+  // إظهار الإشعار
   event.waitUntil(
     self.registration.showNotification(data.title || 'تأويل', options)
   );
@@ -102,6 +133,19 @@ self.addEventListener('push', (event) => {
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   
+  // التعامل مع أزرار الإشعار
+  if (event.action === 'view') {
+    const url = event.notification.data.url;
+    event.waitUntil(clients.openWindow(url));
+    return;
+  }
+  
+  if (event.action === 'renew') {
+    event.waitUntil(clients.openWindow('/pricing'));
+    return;
+  }
+  
+  // التعامل مع النقرة العادية على الإشعار
   event.waitUntil(
     clients.matchAll({ type: 'window' }).then((clientList) => {
       const url = event.notification.data.url || '/';
@@ -117,4 +161,11 @@ self.addEventListener('notificationclick', (event) => {
       }
     })
   );
+});
+
+// استقبال الرسائل من صفحات التطبيق
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });

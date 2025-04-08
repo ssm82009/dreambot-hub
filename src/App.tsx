@@ -26,6 +26,7 @@ import Privacy from './pages/Privacy';
 import { AdminProvider } from './contexts/admin/AdminProvider';
 import { usePageMeta } from './hooks/usePageMeta';
 import { useScrollToTop } from './hooks/useScrollToTop';
+import { useServiceWorkerRegistration } from './hooks/useServiceWorkerRegistration';
 
 // Setup query client
 const queryClient = new QueryClient();
@@ -55,6 +56,7 @@ const App = () => {
 const AppContent = () => {
   usePageMeta();
   useScrollToTop();
+  useServiceWorkerRegistration();  // تسجيل خدمة العامل عند تحميل التطبيق
   
   return (
     <Routes>
