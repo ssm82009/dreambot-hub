@@ -13,6 +13,7 @@ import AuthButtons from './navbar/AuthButtons';
 import MobileMenuToggle from './navbar/MobileMenuToggle';
 import MobileMenu from './navbar/MobileMenu';
 import NotificationBell from './navbar/NotificationBell';
+import { Skeleton } from './ui/skeleton';
 
 import { CSSProperties } from 'react';
 import { supabase } from '@/integrations/supabase/client';
@@ -77,107 +78,91 @@ const Navbar = () => {
     setIsMenuOpen(!isMenuOpen);
   };
 
-  // إعداد أسلوب النافبار
-  const headerStyle: CSSProperties = loading 
-    ? { opacity: 0 } // إخفاء النافبار أثناء التحميل
-    : {
-        backgroundColor: themeSettings.headerColor || 'bg-background/80',
-        borderBottomWidth: '1px',
-        borderBottomStyle: 'solid' as 'solid',
-        borderBottomColor: themeSettings.navbarBorderColor || '#e5e7eb',
-        transition: 'opacity 0.3s ease-in-out, background-color 0.3s ease-in-out',
-        height: `${NAVBAR_HEIGHT}px`
-      };
-
-  // للتأكد من الحالة الصحيحة لتسجيل الدخول
-  console.log('Auth status:', { isLoggedIn, userEmail });
-
-  // Temporary navbar with login buttons while the main navbar is loading
-  if (loading) {
-    return (
-      <nav className="backdrop-blur-md fixed w-full top-0 z-50 shadow-sm rtl" style={{ height: `${NAVBAR_HEIGHT}px` }}>
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 h-full">
-          <div className="flex justify-between h-full items-center">
-            <div className="flex items-center">
-              <div className="h-8 w-32 bg-muted rounded animate-pulse"></div>
-            </div>
-            
-            {!isMobile && (
-              <div className="hidden md:flex items-center space-x-6 rtl:space-x-reverse">
-                <AuthButtons />
-              </div>
-            )}
-            
-            {isMobile && (
-              <div className="flex items-center">
-                <div className="h-8 w-8 bg-muted rounded-full animate-pulse"></div>
-              </div>
-            )}
-          </div>
-        </div>
-      </nav>
-    );
-  }
+  // إعداد أسلوب النافبار - سيكون دائمًا مرئيًا الآن
+  const headerStyle: CSSProperties = {
+    backgroundColor: themeSettings.headerColor || 'bg-background/80',
+    borderBottomWidth: '1px',
+    borderBottomStyle: 'solid' as 'solid',
+    borderBottomColor: themeSettings.navbarBorderColor || '#e5e7eb',
+    transition: 'background-color 0.3s ease-in-out',
+    height: `${NAVBAR_HEIGHT}px`
+  };
 
   // Don't render authentication-dependent elements until we know the auth state
-  // This prevents the flash of buttons before they disappear
   const shouldRenderAuthUI = isLoggedIn !== null;
 
   return (
     <nav 
-      className={`backdrop-blur-md fixed w-full top-0 z-50 shadow-sm rtl navbar-transition ${loading ? 'navbar-loading' : 'navbar-loaded'}`}
+      className="backdrop-blur-md fixed w-full top-0 z-50 shadow-sm rtl"
       style={headerStyle}
     >
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 h-full">
         <div className="flex justify-between h-full items-center">
           <div className="flex items-center">
-            <NavLogo 
-              logoText={themeSettings.logoText} 
-              fontSize={themeSettings.logoFontSize}
-              slug={themeSettings.slug}
-              isLoading={loading}
-            />
+            {loading ? (
+              <Skeleton className="h-8 w-32 bg-muted rounded" />
+            ) : (
+              <NavLogo 
+                logoText={themeSettings.logoText} 
+                fontSize={themeSettings.logoFontSize}
+                slug={themeSettings.slug}
+                isLoading={false}
+              />
+            )}
           </div>
 
           {/* Desktop Menu */}
-          {!isMobile && shouldRenderAuthUI && (
-            <div className={`hidden md:flex items-center space-x-6 rtl:space-x-reverse transition-opacity duration-300 ${loading ? 'opacity-0' : 'opacity-100'}`}>
-              <NavLinks isAdmin={isAdmin} isLoggedIn={isLoggedIn} />
-              
-              <ThemeToggle isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
-
-              {isLoggedIn && (
-                <div className="flex items-center space-x-3 rtl:space-x-reverse">
-                  <UserMenu />
+          {!isMobile && (
+            <div className="hidden md:flex items-center space-x-6 rtl:space-x-reverse">
+              {loading ? (
+                <div className="flex items-center space-x-6 rtl:space-x-reverse">
+                  {[1, 2, 3, 4].map((i) => (
+                    <Skeleton key={i} className="h-4 w-16 bg-muted rounded" />
+                  ))}
+                  <AuthButtons />
                 </div>
+              ) : shouldRenderAuthUI && (
+                <>
+                  <NavLinks isAdmin={isAdmin} isLoggedIn={isLoggedIn} />
+                  <ThemeToggle isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
+                  {isLoggedIn && (
+                    <div className="flex items-center space-x-3 rtl:space-x-reverse">
+                      <UserMenu />
+                    </div>
+                  )}
+                </>
               )}
-              
-              {/* We no longer need this block as AuthButtons is now in NavLinks */}
             </div>
           )}
 
           {/* Mobile Menu Button */}
-          {isMobile && shouldRenderAuthUI && (
-            <div className={`flex items-center transition-opacity duration-300 ${loading ? 'opacity-0' : 'opacity-100'}`}>
+          {isMobile && (
+            <div className="flex items-center">
               <ThemeToggle isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
               
-              {isLoggedIn && (
-                <NotificationBell className="mr-2" />
+              {loading ? (
+                <Skeleton className="ml-2 h-8 w-8 bg-muted rounded-full" />
+              ) : (
+                <>
+                  {isLoggedIn && shouldRenderAuthUI && (
+                    <NotificationBell className="mr-2" />
+                  )}
+                  
+                  <MobileMenuToggle 
+                    isOpen={isMenuOpen} 
+                    toggleMenu={toggleMenu} 
+                    isLoggedIn={isLoggedIn || false}
+                    userEmail={userEmail}
+                  />
+                </>
               )}
-              
-              <MobileMenuToggle 
-                isOpen={isMenuOpen} 
-                toggleMenu={toggleMenu} 
-                isLoggedIn={isLoggedIn}
-                userEmail={userEmail}
-              />
             </div>
           )}
         </div>
       </div>
 
       {/* Mobile Menu */}
-      {isMobile && shouldRenderAuthUI && (
+      {isMobile && shouldRenderAuthUI && !loading && (
         <MobileMenu 
           isOpen={isMenuOpen}
           isLoggedIn={isLoggedIn}
