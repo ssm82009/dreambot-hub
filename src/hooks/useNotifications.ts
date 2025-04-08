@@ -73,6 +73,13 @@ export function useNotifications() {
     
     try {
       console.log("طلب إذن الإشعارات...");
+      
+      if (Notification.permission === 'denied') {
+        toast.error('تم رفض الإشعارات من قبل المتصفح. يرجى تمكين الإشعارات من إعدادات المتصفح.');
+        console.log("الإشعارات مرفوضة من قبل المتصفح");
+        return false;
+      }
+      
       const result = await Notification.requestPermission();
       const granted = result === 'granted';
       
@@ -134,10 +141,12 @@ export function useNotifications() {
           subscribing: false,
           granted: true
         }));
+        
+        toast.success('أنت مشترك بالفعل في الإشعارات');
         return subscription;
       }
       
-      // إنشاء مفتاح VAPID (استخدم مفتاح عام افتراضي للعرض فقط)
+      // إنشاء مفتاح VAPID
       const publicVapidKey = 'BLBz5HW9GU26px7aSGgqZR9xoA7Sj5Q8q0c7_KMgPgTcgccR9EkTuZAs5TmGpJ9liMPHvw4-l7-Ftm1Qz-5qvEs';
       
       const options = {
@@ -146,8 +155,20 @@ export function useNotifications() {
       };
       
       console.log("محاولة الاشتراك في Push Manager...");
-      subscription = await swRegistration.pushManager.subscribe(options);
-      console.log("تم الاشتراك بنجاح:", subscription);
+      try {
+        subscription = await swRegistration.pushManager.subscribe(options);
+        console.log("تم الاشتراك بنجاح:", subscription);
+      } catch (error) {
+        console.error("خطأ في الاشتراك في Push Manager:", error);
+        
+        if (error instanceof DOMException && error.name === "NotAllowedError") {
+          toast.error('تم رفض الإشعارات من قبل المتصفح. يرجى تمكين الإشعارات من إعدادات المتصفح.');
+          setPermission(prev => ({ ...prev, subscribing: false }));
+          return null;
+        }
+        
+        throw error;
+      }
       
       // تخزين اشتراك المستخدم في قاعدة البيانات عبر edge function
       const { data: { session } } = await supabase.auth.getSession();

@@ -22,6 +22,7 @@ self.addEventListener('install', (event) => {
         console.log('Service Worker: تم فتح ذاكرة التخزين المؤقت');
         return cache.addAll(urlsToCache);
       })
+      .then(() => self.skipWaiting()) // تخطي انتظار التنشيط
   );
 });
 
@@ -64,12 +65,13 @@ self.addEventListener('activate', (event) => {
             console.log('Service Worker: حذف كاش قديم', cacheName);
             return caches.delete(cacheName);
           }
+          return null;
         })
       );
     })
+    // مباشرة المطالبة بالسيطرة على العميل دون انتظار إعادة تحميل
+    .then(() => self.clients.claim())
   );
-  // مباشرة المطالبة بالسيطرة على العميل دون انتظار إعادة تحميل
-  return self.clients.claim();
 });
 
 // معالجة الإشعارات Push

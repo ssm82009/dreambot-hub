@@ -2,9 +2,10 @@
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Bell, BellOff, Loader2 } from 'lucide-react';
+import { Bell, BellOff, Loader2, AlertCircle } from 'lucide-react';
 import { useNotifications } from '@/hooks/useNotifications';
 import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const NotificationSettings: React.FC = () => {
   const { 
@@ -20,6 +21,11 @@ const NotificationSettings: React.FC = () => {
   const handleSubscribe = async () => {
     try {
       console.log("بدء عملية تفعيل الإشعارات");
+      
+      if (Notification.permission === 'denied') {
+        alert('تم رفض الإشعارات من قبل المتصفح. يرجى تمكين الإشعارات من إعدادات المتصفح.');
+        return;
+      }
       
       if (Notification.permission !== 'granted') {
         const permission = await requestPermission();
@@ -71,6 +77,15 @@ const NotificationSettings: React.FC = () => {
       </CardHeader>
       <CardContent>
         <div className="flex flex-col gap-4">
+          {Notification.permission === 'denied' && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                تم رفض الإشعارات من قبل المتصفح. يرجى السماح بالإشعارات من إعدادات المتصفح ثم المحاولة مرة أخرى.
+              </AlertDescription>
+            </Alert>
+          )}
+
           <div className="flex items-center justify-between p-4 border rounded-lg">
             <div className="flex flex-col gap-1">
               <div className="flex items-center gap-2">
@@ -108,7 +123,7 @@ const NotificationSettings: React.FC = () => {
               <Button
                 variant="default"
                 onClick={handleSubscribe}
-                disabled={subscribing}
+                disabled={subscribing || Notification.permission === 'denied'}
               >
                 {subscribing ? (
                   <Loader2 className="h-4 w-4 animate-spin ml-2" />
