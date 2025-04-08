@@ -18,6 +18,11 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
+    },
+    {
+      "src": "/lovable-uploads/476e1743-22bf-49a8-8049-3cc6796c563d.png",
+      "sizes": "1024x512",
+      "type": "image/png"
     }
   ],
   "start_url": "/",

@@ -1,3 +1,4 @@
+
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 
@@ -5,7 +6,7 @@ import { useLocation } from 'react-router-dom';
  * Hook to manage page meta tags including title, description, and other SEO elements
  */
 export const usePageMeta = () => {
-  const location = useLocation();
+  const { pathname } = useLocation();
   
   // محاولة استخدام سياق الإدارة، ولكن بطريقة تجنب الأخطاء إذا لم يكن موجوداً
   let seoSettings;
@@ -96,7 +97,7 @@ export const usePageMeta = () => {
         twitterTitle.setAttribute('name', 'twitter:title');
         document.head.appendChild(twitterTitle);
       }
-      twitterTitle.setAttribute('content', seoSettings.metaTitle || 'تفسير الأحلام');
+      twitterTitle.setAttribute('content', seoSettings?.metaTitle || 'تفسير الأحلام');
 
       // Twitter description
       let twitterDesc = document.querySelector('meta[name="twitter:description"]');
@@ -105,7 +106,7 @@ export const usePageMeta = () => {
         twitterDesc.setAttribute('name', 'twitter:description');
         document.head.appendChild(twitterDesc);
       }
-      twitterDesc.setAttribute('content', seoSettings.metaDescription || '');
+      twitterDesc.setAttribute('content', seoSettings?.metaDescription || '');
     }
 
     // إضافة رابط الصفحة الحالي (canonical) إذا كان مفعلاً
@@ -155,7 +156,7 @@ export const usePageMeta = () => {
       // No cleanup needed for title since it's part of the document already
       // For advanced cleanup, you would need to keep track of which elements were added dynamically
     };
-  }, [seoSettings, location.pathname]);
+  }, [seoSettings, pathname]);
 
   return null;
 };
