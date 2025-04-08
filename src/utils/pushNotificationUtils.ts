@@ -21,4 +21,4 @@ export function urlBase64ToUint8Array(base64String: string): Uint8Array {
 }
 
 // المفتاح العام VAPID
-export const PUBLIC_VAPID_KEY = 'BLBz5HW9GU26px7aSGgqZR9xoA7Sj5Q8q0c7_KMgPgTcgccR9EkTuZAs5TmGpJ9liMPHvw4-l7-Ftm1Qz-5qvEs';
+export const PUBLIC_VAPID_KEY = 'BBy5W3xt8ZH4MIpLelj9GvzKu6Cc5DYdQRFrNsYL4m_p9lEO-K1GHL4ZnvcWe89MzB_U9CJ8Xm9QtbtC0lOG0LA';
