@@ -56,15 +56,18 @@ const NotificationsSection: React.FC = () => {
       try {
         setLoading(true);
         
-        // استدعاء وظيفة العد مباشرة
-        const { data: countResult, error: countError } = await supabase.rpc('count_push_subscriptions');
+        // استدعاء وظيفة Edge Function لإنشاء وظيفة العد
+        await supabase.functions.invoke('create-rpc');
+        
+        // استدعاء العدد مباشرة من قاعدة البيانات
+        const { data: countData, error: countError } = await supabase.rpc('count_push_subscriptions');
 
         if (countError) {
           toast.error('حدث خطأ في جلب عدد المشتركين');
           console.error('خطأ في جلب عدد المشتركين:', countError);
           setSubscribersCount(0);
         } else {
-          setSubscribersCount(countResult || 0);
+          setSubscribersCount(countData || 0);
         }
 
         // جلب قائمة المستخدمين
