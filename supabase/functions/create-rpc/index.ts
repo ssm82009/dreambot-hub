@@ -19,8 +19,11 @@ serve(async (req: Request) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     );
     
-    // Create the count_push_subscriptions RPC function
-    const { error } = await supabaseAdmin.rpc('create_count_push_subscriptions_function');
+    // Read the SQL file content
+    const createCountFunctionSql = await Deno.readTextFile('./sql/create_count_function.sql');
+    
+    // Execute the SQL directly
+    const { error } = await supabaseAdmin.withSystems().rpc('exec_sql', { sql: createCountFunctionSql });
     
     if (error) throw error;
     

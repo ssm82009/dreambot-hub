@@ -56,7 +56,7 @@ const NotificationsSection: React.FC = () => {
       try {
         setLoading(true);
         
-        // استخدام rpc لتجنب أخطاء TypeScript مع الجداول الجديدة
+        // استدعاء وظيفة العد مباشرة
         const { data: countResult, error: countError } = await supabase.rpc('count_push_subscriptions');
 
         if (countError) {
