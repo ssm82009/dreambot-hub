@@ -70,11 +70,19 @@ export async function storeSubscription(subscription: PushSubscription) {
     if (!session?.user) throw new Error('المستخدم غير مسجل دخول');
 
     console.log('محاولة تخزين اشتراك جديد للإشعارات:', subscription.endpoint);
+    
+    // تعديل طريقة تخزين الاشتراك لضمان تخزين البيانات بصيغة صحيحة
+    const subscriptionData = {
+      endpoint: subscription.endpoint,
+      keys: (subscription as any).keys,
+      expirationTime: (subscription as any).expirationTime
+    };
+    
     const { data, error } = await supabase.functions.invoke('store-subscription', {
       body: {
         userId: session.user.id,
         endpoint: subscription.endpoint,
-        auth: JSON.stringify(subscription)
+        auth: JSON.stringify(subscriptionData)
       }
     });
 
