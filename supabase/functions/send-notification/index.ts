@@ -1,9 +1,9 @@
 
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.4';
-import * as webPushModule from 'https://esm.sh/web-push@3.6.7';
+import { createClient } from '@supabase/supabase-js';
+import webPush from 'web-push';
 
-// تعريف رؤوس CORS - تم تحديثه للسماح بالطلبات من أي مصدر
+// تعريف رؤوس CORS
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -71,7 +71,6 @@ serve(async (req: Request) => {
     }
 
     // إعداد web-push
-    const webPush = webPushModule;
     webPush.setVapidDetails(
       'mailto:support@example.com',
       vapidPublicKey,
