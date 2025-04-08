@@ -92,6 +92,33 @@ const Navbar = () => {
   // للتأكد من الحالة الصحيحة لتسجيل الدخول
   console.log('Auth status:', { isLoggedIn, userEmail });
 
+  // Temporary navbar with login buttons while the main navbar is loading
+  if (loading) {
+    return (
+      <nav className="backdrop-blur-md fixed w-full top-0 z-50 shadow-sm rtl" style={{ height: `${NAVBAR_HEIGHT}px` }}>
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 h-full">
+          <div className="flex justify-between h-full items-center">
+            <div className="flex items-center">
+              <div className="h-8 w-32 bg-muted rounded animate-pulse"></div>
+            </div>
+            
+            {!isMobile && (
+              <div className="hidden md:flex items-center space-x-6 rtl:space-x-reverse">
+                <AuthButtons />
+              </div>
+            )}
+            
+            {isMobile && (
+              <div className="flex items-center">
+                <div className="h-8 w-8 bg-muted rounded-full animate-pulse"></div>
+              </div>
+            )}
+          </div>
+        </div>
+      </nav>
+    );
+  }
+
   // Don't render authentication-dependent elements until we know the auth state
   // This prevents the flash of buttons before they disappear
   const shouldRenderAuthUI = isLoggedIn !== null;
@@ -115,19 +142,17 @@ const Navbar = () => {
           {/* Desktop Menu */}
           {!isMobile && shouldRenderAuthUI && (
             <div className={`hidden md:flex items-center space-x-6 rtl:space-x-reverse transition-opacity duration-300 ${loading ? 'opacity-0' : 'opacity-100'}`}>
-              <NavLinks isAdmin={isAdmin} />
+              <NavLinks isAdmin={isAdmin} isLoggedIn={isLoggedIn} />
               
               <ThemeToggle isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
 
-              <div className="flex items-center space-x-3 rtl:space-x-reverse">
-                {isLoggedIn ? (
+              {isLoggedIn && (
+                <div className="flex items-center space-x-3 rtl:space-x-reverse">
                   <UserMenu />
-                ) : (
-                  <div className="flex items-center space-x-3 rtl:space-x-reverse">
-                    <AuthButtons />
-                  </div>
-                )}
-              </div>
+                </div>
+              )}
+              
+              {/* We no longer need this block as AuthButtons is now in NavLinks */}
             </div>
           )}
 

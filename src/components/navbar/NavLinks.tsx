@@ -3,12 +3,14 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { NavLink as NavLinkType } from '@/types/database';
+import AuthButtons from './AuthButtons';
 
 interface NavLinksProps {
   isAdmin: boolean;
+  isLoggedIn: boolean | null;
 }
 
-const NavLinks: React.FC<NavLinksProps> = ({ isAdmin }) => {
+const NavLinks: React.FC<NavLinksProps> = ({ isAdmin, isLoggedIn }) => {
   const [links, setLinks] = useState<NavLinkType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -75,6 +77,13 @@ const NavLinks: React.FC<NavLinksProps> = ({ isAdmin }) => {
           </Link>
         );
       })}
+      
+      {/* Add authentication buttons when user is not logged in */}
+      {isLoggedIn === false && (
+        <div className="ml-4">
+          <AuthButtons />
+        </div>
+      )}
     </div>
   );
 };
