@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { urlBase64ToUint8Array, PUBLIC_VAPID_KEY } from '@/utils/pushNotificationUtils';
@@ -19,19 +19,36 @@ export function usePushSubscription(supported: boolean, granted: boolean) {
   });
 
   // التحقق من وجود اشتراك حالي
-  const checkExistingSubscription = async (): Promise<PushSubscription | null> => {
+  const checkExistingSubscription = useCallback(async (): Promise<PushSubscription | null> => {
     if (!supported || !granted) {
       return null;
     }
 
     try {
       const swRegistration = await navigator.serviceWorker.ready;
-      return await swRegistration.pushManager.getSubscription();
+      const subscription = await swRegistration.pushManager.getSubscription();
+      
+      if (subscription) {
+        setState(prev => ({
+          ...prev,
+          subscription
+        }));
+        console.log("تم العثور على اشتراك موجود:", subscription);
+      }
+      
+      return subscription;
     } catch (error) {
       console.error("خطأ في التحقق من الاشتراك الحالي:", error);
       return null;
     }
-  };
+  }, [supported, granted]);
+
+  // التحقق من الاشتراك عند تحميل المكون
+  useEffect(() => {
+    if (supported && granted) {
+      checkExistingSubscription();
+    }
+  }, [supported, granted, checkExistingSubscription]);
 
   // الاشتراك في الإشعارات
   const subscribeToNotifications = async () => {

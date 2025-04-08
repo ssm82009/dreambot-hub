@@ -22,14 +22,12 @@ export function useNotifications() {
     if (supported && granted) {
       const checkSubscription = async () => {
         const existingSubscription = await checkExistingSubscription();
-        if (existingSubscription) {
-          console.log("تم العثور على اشتراك سابق:", existingSubscription);
-        }
+        console.log("التحقق من الاشتراك:", existingSubscription ? "موجود" : "غير موجود");
       };
       
       checkSubscription();
     }
-  }, [supported, granted]);
+  }, [supported, granted, checkExistingSubscription]);
   
   return {
     supported,
