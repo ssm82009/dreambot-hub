@@ -20,9 +20,9 @@ export function useNotificationData() {
         setError(null);
 
         // جلب عدد المشتركين في الإشعارات
-        const { data: subscribersData, error: subscribersError } = await supabase
+        const { count: subscribersCount, error: subscribersError } = await supabase
           .from('push_subscriptions')
-          .select('id', { count: 'exact', head: true });
+          .select('*', { count: 'exact', head: true });
 
         if (subscribersError) {
           throw subscribersError;
@@ -38,7 +38,7 @@ export function useNotificationData() {
         }
 
         if (isMounted) {
-          setSubscribersCount(subscribersData?.count || 0);
+          setSubscribersCount(subscribersCount || 0);
           setUsers(usersData || []);
           setLoading(false);
         }
@@ -93,14 +93,14 @@ export function useNotificationData() {
 
     const refreshSubscribersCount = async () => {
       try {
-        const { data, error: countError } = await supabase
+        const { count, error: countError } = await supabase
           .from('push_subscriptions')
-          .select('id', { count: 'exact', head: true });
+          .select('*', { count: 'exact', head: true });
         
         if (countError) throw countError;
         
         if (isMounted) {
-          setSubscribersCount(data?.count || 0);
+          setSubscribersCount(count || 0);
         }
       } catch (err) {
         console.error('Error refreshing subscribers count:', err);
