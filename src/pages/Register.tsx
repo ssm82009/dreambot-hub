@@ -1,6 +1,7 @@
+
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import Navbar from '@/components/Navbar';
+import Navbar, { NAVBAR_HEIGHT } from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -99,7 +100,7 @@ const Register = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      <main className="flex-1 flex items-center justify-center py-16 px-4 dream-pattern">
+      <main className="flex-1 flex items-center justify-center py-16 px-4 dream-pattern" style={{ paddingTop: `calc(${NAVBAR_HEIGHT}px + 2rem)` }}>
         <Card className="w-full max-w-md shadow-xl rtl">
           <CardHeader className="space-y-2">
             <CardTitle className="text-2xl font-bold text-center">إنشاء حساب جديد</CardTitle>

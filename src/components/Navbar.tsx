@@ -1,9 +1,11 @@
-
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useLogoutHandler } from '@/hooks/settings/useLogoutHandler';
 import { useThemeSettings } from '@/hooks/useThemeSettings';
 import { useAdminCheck } from '@/hooks/useAdminCheck';
+import { Button } from "@/components/ui/button";
+import { LogIn } from "lucide-react";
 
 import NavLogo from './navbar/NavLogo';
 import NavLinks from './navbar/NavLinks';
@@ -18,13 +20,12 @@ import { Skeleton } from './ui/skeleton';
 import { CSSProperties } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
-// إضافة متغير لارتفاع النافبار
-export const NAVBAR_HEIGHT = 80; // ارتفاع النافبار 80 بكسل
+export const NAVBAR_HEIGHT = 80;
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
   const [isDarkMode, setIsDarkMode] = React.useState(false);
-  const [isLoggedIn, setIsLoggedIn] = React.useState<boolean | null>(null); // Initialize as null to prevent flashing
+  const [isLoggedIn, setIsLoggedIn] = React.useState<boolean | null>(null);
   const [userEmail, setUserEmail] = React.useState('');
   const isMobile = useIsMobile();
   const { handleLogout } = useLogoutHandler();
@@ -32,12 +33,10 @@ const Navbar = () => {
   const { isAdmin } = useAdminCheck();
 
   useEffect(() => {
-    // Check current auth status with Supabase
     const checkAuthStatus = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         
-        // Check if user is logged in either via Supabase session or localStorage
         const loginStatus = !!session || 
                           localStorage.getItem('isLoggedIn') === 'true' || 
                           localStorage.getItem('isAdminLoggedIn') === 'true';
@@ -47,14 +46,12 @@ const Navbar = () => {
         setUserEmail(email);
       } catch (error) {
         console.error('Error checking auth status:', error);
-        // Set to false in case of error to ensure buttons show up
         setIsLoggedIn(false);
       }
     };
     
     checkAuthStatus();
     
-    // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
       checkAuthStatus();
     });
@@ -78,7 +75,6 @@ const Navbar = () => {
     setIsMenuOpen(!isMenuOpen);
   };
 
-  // إعداد أسلوب النافبار - سيكون دائمًا مرئيًا الآن
   const headerStyle: CSSProperties = {
     backgroundColor: themeSettings.headerColor || 'bg-background/80',
     borderBottomWidth: '1px',
@@ -88,7 +84,6 @@ const Navbar = () => {
     height: `${NAVBAR_HEIGHT}px`
   };
 
-  // Don't render authentication-dependent elements until we know the auth state
   const shouldRenderAuthUI = isLoggedIn !== null;
 
   return (
@@ -111,7 +106,6 @@ const Navbar = () => {
             )}
           </div>
 
-          {/* Desktop Menu */}
           {!isMobile && (
             <div className="hidden md:flex items-center space-x-6 rtl:space-x-reverse">
               {loading ? (
@@ -136,7 +130,6 @@ const Navbar = () => {
             </div>
           )}
 
-          {/* Mobile Menu Button */}
           {isMobile && (
             <div className="flex items-center">
               <ThemeToggle isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
@@ -170,7 +163,6 @@ const Navbar = () => {
         </div>
       </div>
 
-      {/* Mobile Menu */}
       {isMobile && shouldRenderAuthUI && !loading && (
         <MobileMenu 
           isOpen={isMenuOpen}
