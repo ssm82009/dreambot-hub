@@ -63,7 +63,7 @@ export function useTicketDetails(id: string | undefined) {
         // جلب بيانات المستخدم صاحب التذكرة
         const { data: userData, error: userError } = await supabase
           .from('users')
-          .select('id, email, full_name, role')
+          .select('id, email, full_name, role, subscription_type, subscription_expires_at')
           .eq('id', ticketData.user_id)
           .single();
           
@@ -86,7 +86,7 @@ export function useTicketDetails(id: string | undefined) {
             // Fetch user data for this reply
             const { data: replyUserData, error: replyUserError } = await supabase
               .from('users')
-              .select('id, email, full_name, role')
+              .select('id, email, full_name, role, subscription_type, subscription_expires_at')
               .eq('id', reply.user_id)
               .single();
             
@@ -95,7 +95,7 @@ export function useTicketDetails(id: string | undefined) {
               return { ...reply, user: null };
             }
             
-            return { ...reply, user: replyUserData };
+            return { ...reply, user: replyUserData as User | null };
           })
         );
         
@@ -104,7 +104,7 @@ export function useTicketDetails(id: string | undefined) {
           ...ticketData,
           status: ticketData.status as 'open' | 'closed',
           replies: repliesWithUserData || [],
-          user: userData
+          user: userData as User | undefined
         });
       } catch (error) {
         console.error('Error fetching ticket details:', error);
@@ -152,7 +152,7 @@ export function useTicketDetails(id: string | undefined) {
       // Fetch user data for the new reply
       const { data: userData, error: userError } = await supabase
         .from('users')
-        .select('id, email, full_name, role')
+        .select('id, email, full_name, role, subscription_type, subscription_expires_at')
         .eq('id', userId)
         .single();
         
@@ -163,7 +163,7 @@ export function useTicketDetails(id: string | undefined) {
       // تحديث حالة الردود محلياً
       const newReplyWithUser: TicketReply = {
         ...replyData,
-        user: userData || undefined
+        user: userData as User | null || undefined
       };
       
       setTicket(prev => {

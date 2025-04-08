@@ -17,7 +17,6 @@ const TicketManagement: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
-  // جلب جميع التذاكر
   useEffect(() => {
     const fetchTickets = async () => {
       setIsLoading(true);
@@ -31,7 +30,6 @@ const TicketManagement: React.FC = () => {
           throw error;
         }
 
-        // Cast the data to ensure it matches our Ticket type
         setTickets(data?.map(ticket => ({
           ...ticket,
           status: ticket.status as 'open' | 'closed'
@@ -47,7 +45,6 @@ const TicketManagement: React.FC = () => {
     fetchTickets();
   }, []);
 
-  // تصفية التذاكر حسب البحث
   const filteredTickets = searchTerm
     ? tickets.filter(ticket => 
         ticket.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -56,7 +53,6 @@ const TicketManagement: React.FC = () => {
       )
     : tickets;
 
-  // تغيير حالة التذكرة
   const handleToggleStatus = async (ticket: Ticket, e: React.MouseEvent) => {
     e.stopPropagation();
     
@@ -73,14 +69,12 @@ const TicketManagement: React.FC = () => {
 
       if (error) throw error;
 
-      // تحديث القائمة محلياً
       setTickets(prev => 
         prev.map(t => t.id === ticket.id ? { ...t, status: newStatus, updated_at: new Date().toISOString() } : t)
       );
 
       toast.success(`تم ${newStatus === 'closed' ? 'إغلاق' : 'إعادة فتح'} التذكرة بنجاح`);
       
-      // إرسال إشعار للمستخدم صاحب التذكرة
       try {
         await sendNotification(ticket.user_id, {
           title: `تم ${newStatus === 'closed' ? 'إغلاق' : 'إعادة فتح'} التذكرة`,
@@ -97,7 +91,6 @@ const TicketManagement: React.FC = () => {
     }
   };
 
-  // الانتقال إلى صفحة تفاصيل التذكرة
   const handleTicketClick = (id: string) => {
     navigate(`/tickets/${id}`);
   };
