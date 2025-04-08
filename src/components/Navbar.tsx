@@ -12,6 +12,7 @@ import UserMenu from './navbar/UserMenu';
 import AuthButtons from './navbar/AuthButtons';
 import MobileMenuToggle from './navbar/MobileMenuToggle';
 import MobileMenu from './navbar/MobileMenu';
+import NotificationBell from './navbar/NotificationBell';
 
 import { CSSProperties } from 'react';
 import { supabase } from '@/integrations/supabase/client';
@@ -80,6 +81,9 @@ const Navbar = () => {
         height: `${NAVBAR_HEIGHT}px`
       };
 
+  // للتأكد من الحالة الصحيحة لتسجيل الدخول
+  console.log('Auth status:', { isLoggedIn, userEmail });
+
   return (
     <nav 
       className={`backdrop-blur-md fixed w-full top-0 z-50 shadow-sm rtl navbar-transition ${loading ? 'navbar-loading' : 'navbar-loaded'}`}
@@ -107,7 +111,9 @@ const Navbar = () => {
                 {isLoggedIn ? (
                   <UserMenu />
                 ) : (
-                  <AuthButtons />
+                  <div className="flex items-center space-x-3 rtl:space-x-reverse">
+                    <AuthButtons />
+                  </div>
                 )}
               </div>
             </div>
@@ -117,6 +123,11 @@ const Navbar = () => {
           {isMobile && (
             <div className={`flex items-center transition-opacity duration-300 ${loading ? 'opacity-0' : 'opacity-100'}`}>
               <ThemeToggle isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
+              
+              {isLoggedIn && (
+                <NotificationBell className="mr-2" />
+              )}
+              
               <MobileMenuToggle 
                 isOpen={isMenuOpen} 
                 toggleMenu={toggleMenu} 
