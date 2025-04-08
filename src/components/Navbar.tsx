@@ -23,7 +23,7 @@ export const NAVBAR_HEIGHT = 80; // ارتفاع النافبار 80 بكسل
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
   const [isDarkMode, setIsDarkMode] = React.useState(false);
-  const [isLoggedIn, setIsLoggedIn] = React.useState(false);
+  const [isLoggedIn, setIsLoggedIn] = React.useState<boolean | null>(null); // Initialize as null to prevent flashing
   const [userEmail, setUserEmail] = React.useState('');
   const isMobile = useIsMobile();
   const { handleLogout } = useLogoutHandler();
@@ -33,14 +33,22 @@ const Navbar = () => {
   useEffect(() => {
     // Check current auth status with Supabase
     const checkAuthStatus = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      const loginStatus = !!session || 
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        // Check if user is logged in either via Supabase session or localStorage
+        const loginStatus = !!session || 
                           localStorage.getItem('isLoggedIn') === 'true' || 
                           localStorage.getItem('isAdminLoggedIn') === 'true';
-      const email = localStorage.getItem('userEmail') || '';
-      
-      setIsLoggedIn(loginStatus);
-      setUserEmail(email);
+        const email = localStorage.getItem('userEmail') || '';
+        
+        setIsLoggedIn(loginStatus);
+        setUserEmail(email);
+      } catch (error) {
+        console.error('Error checking auth status:', error);
+        // Set to false in case of error to ensure buttons show up
+        setIsLoggedIn(false);
+      }
     };
     
     checkAuthStatus();
@@ -84,6 +92,10 @@ const Navbar = () => {
   // للتأكد من الحالة الصحيحة لتسجيل الدخول
   console.log('Auth status:', { isLoggedIn, userEmail });
 
+  // Don't render authentication-dependent elements until we know the auth state
+  // This prevents the flash of buttons before they disappear
+  const shouldRenderAuthUI = isLoggedIn !== null;
+
   return (
     <nav 
       className={`backdrop-blur-md fixed w-full top-0 z-50 shadow-sm rtl navbar-transition ${loading ? 'navbar-loading' : 'navbar-loaded'}`}
@@ -101,7 +113,7 @@ const Navbar = () => {
           </div>
 
           {/* Desktop Menu */}
-          {!isMobile && (
+          {!isMobile && shouldRenderAuthUI && (
             <div className={`hidden md:flex items-center space-x-6 rtl:space-x-reverse transition-opacity duration-300 ${loading ? 'opacity-0' : 'opacity-100'}`}>
               <NavLinks isAdmin={isAdmin} />
               
@@ -120,7 +132,7 @@ const Navbar = () => {
           )}
 
           {/* Mobile Menu Button */}
-          {isMobile && (
+          {isMobile && shouldRenderAuthUI && (
             <div className={`flex items-center transition-opacity duration-300 ${loading ? 'opacity-0' : 'opacity-100'}`}>
               <ThemeToggle isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
               
@@ -140,7 +152,7 @@ const Navbar = () => {
       </div>
 
       {/* Mobile Menu */}
-      {isMobile && (
+      {isMobile && shouldRenderAuthUI && (
         <MobileMenu 
           isOpen={isMenuOpen}
           isLoggedIn={isLoggedIn}
