@@ -14,6 +14,7 @@ import MobileMenuToggle from './navbar/MobileMenuToggle';
 import MobileMenu from './navbar/MobileMenu';
 
 import { CSSProperties } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 // إضافة متغير لارتفاع النافبار
 export const NAVBAR_HEIGHT = 80; // ارتفاع النافبار 80 بكسل
@@ -29,13 +30,28 @@ const Navbar = () => {
   const { isAdmin } = useAdminCheck();
 
   useEffect(() => {
-    // Check if user is logged in
-    const loginStatus = localStorage.getItem('isLoggedIn') === 'true' || 
-                        localStorage.getItem('isAdminLoggedIn') === 'true';
-    const email = localStorage.getItem('userEmail') || '';
+    // Check current auth status with Supabase
+    const checkAuthStatus = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const loginStatus = !!session || 
+                          localStorage.getItem('isLoggedIn') === 'true' || 
+                          localStorage.getItem('isAdminLoggedIn') === 'true';
+      const email = localStorage.getItem('userEmail') || '';
+      
+      setIsLoggedIn(loginStatus);
+      setUserEmail(email);
+    };
     
-    setIsLoggedIn(loginStatus);
-    setUserEmail(email);
+    checkAuthStatus();
+    
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+      checkAuthStatus();
+    });
+    
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const toggleDarkMode = () => {
