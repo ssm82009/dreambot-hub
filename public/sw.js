@@ -46,15 +46,29 @@ self.addEventListener('install', (event) => {
 
 // معالجة الطلبات وتقديم الصفحة المناسبة
 self.addEventListener('fetch', (event) => {
+  // التحقق من أن URL الطلب صالح للتخزين المؤقت
+  // نتخطى مخططات URL غير المدعومة مثل chrome-extension و blob
+  const url = new URL(event.request.url);
+  const isValidScheme = url.protocol.startsWith('http');
+  
+  if (!isValidScheme) {
+    return; // تخطي الطلبات ذات المخططات غير المدعومة
+  }
+  
   event.respondWith(
     fetch(event.request)
       .then((response) => {
         // إذا كان الطلب ناجحا، قم بنسخه وتخزينه في الكاش
         if (event.request.method === 'GET') {
+          // تخزين مؤقت للاستجابات الناجحة فقط
           const responseToCache = response.clone();
           caches.open(CACHE_NAME)
             .then((cache) => {
-              cache.put(event.request, responseToCache);
+              try {
+                cache.put(event.request, responseToCache);
+              } catch (error) {
+                console.error('خطأ في تخزين الاستجابة في الكاش:', error);
+              }
             });
         }
         return response;
