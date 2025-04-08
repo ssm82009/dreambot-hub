@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { TicketWithReplies, TicketReply } from '@/types/tickets';
+import { User } from '@/types/database';
+import { sendNotification, sendNotificationToAdmin } from '@/services/notificationService';
 
 export function useTicketDetails(id: string | undefined) {
   const navigate = useNavigate();
@@ -58,6 +60,17 @@ export function useTicketDetails(id: string | undefined) {
 
         if (ticketError) throw ticketError;
         
+        // جلب بيانات المستخدم صاحب التذكرة
+        const { data: userData, error: userError } = await supabase
+          .from('users')
+          .select('id, email, full_name, role')
+          .eq('id', ticketData.user_id)
+          .single();
+          
+        if (userError) {
+          console.error('Error fetching ticket user data:', userError);
+        }
+        
         // جلب الردود
         const { data: repliesData, error: repliesError } = await supabase
           .from('ticket_replies')
@@ -71,18 +84,18 @@ export function useTicketDetails(id: string | undefined) {
         const repliesWithUserData = await Promise.all(
           (repliesData || []).map(async (reply) => {
             // Fetch user data for this reply
-            const { data: userData, error: userError } = await supabase
+            const { data: replyUserData, error: replyUserError } = await supabase
               .from('users')
               .select('id, email, full_name, role')
               .eq('id', reply.user_id)
               .single();
             
-            if (userError) {
-              console.error('Error fetching user data:', userError);
+            if (replyUserError) {
+              console.error('Error fetching reply user data:', replyUserError);
               return { ...reply, user: null };
             }
             
-            return { ...reply, user: userData };
+            return { ...reply, user: replyUserData };
           })
         );
         
@@ -90,7 +103,8 @@ export function useTicketDetails(id: string | undefined) {
         setTicket({
           ...ticketData,
           status: ticketData.status as 'open' | 'closed',
-          replies: repliesWithUserData || []
+          replies: repliesWithUserData || [],
+          user: userData
         });
       } catch (error) {
         console.error('Error fetching ticket details:', error);
@@ -129,6 +143,12 @@ export function useTicketDetails(id: string | undefined) {
 
       if (error) throw error;
 
+      // Update ticket updated_at timestamp
+      await supabase
+        .from('tickets')
+        .update({ updated_at: new Date().toISOString() })
+        .eq('id', ticket.id);
+
       // Fetch user data for the new reply
       const { data: userData, error: userError } = await supabase
         .from('users')
@@ -150,11 +170,36 @@ export function useTicketDetails(id: string | undefined) {
         if (!prev) return prev;
         return {
           ...prev,
+          updated_at: new Date().toISOString(),
           replies: [...prev.replies, newReplyWithUser]
         };
       });
       
       toast.success('تم إضافة الرد بنجاح');
+
+      // إرسال إشعار حسب دور المستخدم
+      try {
+        if (isAdmin && ticket.user_id) {
+          // إذا كان المستجيب هو المشرف، أرسل إشعارًا للمستخدم صاحب التذكرة
+          await sendNotification(ticket.user_id, {
+            title: 'رد جديد على تذكرتك',
+            body: `تم إضافة رد جديد على التذكرة: ${ticket.title}`,
+            url: `/tickets/${ticket.id}`,
+            type: 'ticket'
+          });
+        } else {
+          // إذا كان المستجيب هو المستخدم، أرسل إشعارًا للمشرفين
+          await sendNotificationToAdmin({
+            title: 'رد جديد على تذكرة',
+            body: `تم إضافة رد جديد على التذكرة: ${ticket.title}`,
+            url: `/tickets/${ticket.id}`,
+            type: 'ticket'
+          });
+        }
+      } catch (notifyError) {
+        console.error('Error sending notification:', notifyError);
+      }
+
       return true;
     } catch (error) {
       console.error('Error adding reply:', error);
@@ -195,6 +240,20 @@ export function useTicketDetails(id: string | undefined) {
       });
 
       toast.success(`تم ${newStatus === 'closed' ? 'إغلاق' : 'إعادة فتح'} التذكرة بنجاح`);
+
+      // إرسال إشعار للمستخدم إذا تم تغيير الحالة بواسطة المشرف
+      if (isAdmin && ticket.user_id) {
+        try {
+          await sendNotification(ticket.user_id, {
+            title: `تم ${newStatus === 'closed' ? 'إغلاق' : 'إعادة فتح'} التذكرة`,
+            body: `تم ${newStatus === 'closed' ? 'إغلاق' : 'إعادة فتح'} التذكرة: ${ticket.title}`,
+            url: `/tickets/${ticket.id}`,
+            type: 'ticket'
+          });
+        } catch (notifyError) {
+          console.error('Error sending notification:', notifyError);
+        }
+      }
     } catch (error) {
       console.error('Error updating ticket status:', error);
       toast.error('حدث خطأ أثناء تحديث حالة التذكرة');

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -10,6 +9,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
 import { formatDate } from '@/utils/formatDate';
+import { sendNotification } from '@/services/notificationService';
 
 const TicketManagement: React.FC = () => {
   const [tickets, setTickets] = useState<Ticket[]>([]);
@@ -79,6 +79,18 @@ const TicketManagement: React.FC = () => {
       );
 
       toast.success(`تم ${newStatus === 'closed' ? 'إغلاق' : 'إعادة فتح'} التذكرة بنجاح`);
+      
+      // إرسال إشعار للمستخدم صاحب التذكرة
+      try {
+        await sendNotification(ticket.user_id, {
+          title: `تم ${newStatus === 'closed' ? 'إغلاق' : 'إعادة فتح'} التذكرة`,
+          body: `تم ${newStatus === 'closed' ? 'إغلاق' : 'إعادة فتح'} التذكرة: ${ticket.title}`,
+          url: `/tickets/${ticket.id}`,
+          type: 'ticket'
+        });
+      } catch (notifyError) {
+        console.error('Error sending notification:', notifyError);
+      }
     } catch (error) {
       console.error('Error updating ticket status:', error);
       toast.error('حدث خطأ أثناء تحديث حالة التذكرة');

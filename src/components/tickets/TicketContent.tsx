@@ -11,6 +11,12 @@ const TicketContent: React.FC<TicketContentProps> = ({ ticket }) => {
   return (
     <div className="space-y-6">
       <div className="border p-4 rounded-md bg-muted/50">
+        {ticket.user && (
+          <div className="mb-3 pb-3 border-b text-sm text-muted-foreground">
+            <span>البريد الإلكتروني: </span>
+            <span className="font-medium">{ticket.user.email}</span>
+          </div>
+        )}
         <p className="whitespace-pre-wrap">{ticket.description}</p>
       </div>
 
