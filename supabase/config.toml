@@ -76,3 +76,9 @@ minimal_migrations = false
 
 [functions.send-notification]
 verify_jwt = true
+
+[functions.store-subscription]
+verify_jwt = true
+
+[functions.remove-subscription]
+verify_jwt = true

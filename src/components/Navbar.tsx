@@ -20,7 +20,6 @@ export const NAVBAR_HEIGHT = 80; // ارتفاع النافبار 80 بكسل
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
   const [isDarkMode, setIsDarkMode] = React.useState(false);
-  const [isAdmin, setIsAdmin] = React.useState(false);
   const [isLoggedIn, setIsLoggedIn] = React.useState(false);
   const [userEmail, setUserEmail] = React.useState('');
   const isMobile = useIsMobile();
@@ -31,11 +30,9 @@ const Navbar = () => {
     // Check if user is logged in
     const loginStatus = localStorage.getItem('isLoggedIn') === 'true' || 
                         localStorage.getItem('isAdminLoggedIn') === 'true';
-    const adminStatus = localStorage.getItem('isAdminLoggedIn') === 'true';
     const email = localStorage.getItem('userEmail') || '';
     
     setIsLoggedIn(loginStatus);
-    setIsAdmin(adminStatus);
     setUserEmail(email);
   }, []);
 
@@ -84,17 +81,13 @@ const Navbar = () => {
           {/* Desktop Menu */}
           {!isMobile && (
             <div className={`hidden md:flex items-center space-x-6 rtl:space-x-reverse transition-opacity duration-300 ${loading ? 'opacity-0' : 'opacity-100'}`}>
-              <NavLinks isAdmin={isAdmin} />
+              <NavLinks />
               
               <ThemeToggle isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
 
               <div className="flex items-center space-x-3 rtl:space-x-reverse">
                 {isLoggedIn ? (
-                  <UserMenu 
-                    userEmail={userEmail} 
-                    isAdmin={isAdmin} 
-                    handleLogout={handleLogout} 
-                  />
+                  <UserMenu />
                 ) : (
                   <AuthButtons />
                 )}
@@ -122,7 +115,6 @@ const Navbar = () => {
         <MobileMenu 
           isOpen={isMenuOpen}
           isLoggedIn={isLoggedIn}
-          isAdmin={isAdmin}
           onToggle={toggleMenu}
           onLogout={handleLogout}
           headerColor={themeSettings.headerColor}
