@@ -77,13 +77,6 @@ const NavLinks: React.FC<NavLinksProps> = ({ isAdmin, isLoggedIn }) => {
           </Link>
         );
       })}
-      
-      {/* Add authentication buttons when user is not logged in */}
-      {isLoggedIn === false && (
-        <div className="ml-4">
-          <AuthButtons />
-        </div>
-      )}
     </div>
   );
 };

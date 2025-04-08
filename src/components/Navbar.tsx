@@ -119,14 +119,15 @@ const Navbar = () => {
                   {[1, 2, 3, 4].map((i) => (
                     <Skeleton key={i} className="h-4 w-16 bg-muted rounded" />
                   ))}
-                  <AuthButtons />
                 </div>
               ) : shouldRenderAuthUI && (
                 <>
                   <NavLinks isAdmin={isAdmin} isLoggedIn={isLoggedIn} />
+                  {isLoggedIn === false && <AuthButtons />}
                   <ThemeToggle isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
                   {isLoggedIn && (
                     <div className="flex items-center space-x-3 rtl:space-x-reverse">
+                      <NotificationBell className="ml-2" />
                       <UserMenu />
                     </div>
                   )}
@@ -147,7 +148,15 @@ const Navbar = () => {
                   {isLoggedIn && shouldRenderAuthUI && (
                     <NotificationBell className="mr-2" />
                   )}
-                  
+                  {isLoggedIn === false && !isMenuOpen && shouldRenderAuthUI && (
+                    <div className="mr-2">
+                      <Link to="/login">
+                        <Button variant="ghost" size="sm">
+                          <LogIn className="h-4 w-4" />
+                        </Button>
+                      </Link>
+                    </div>
+                  )}
                   <MobileMenuToggle 
                     isOpen={isMenuOpen} 
                     toggleMenu={toggleMenu} 
