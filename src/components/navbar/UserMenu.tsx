@@ -19,7 +19,7 @@ import NotificationBell from './NotificationBell';
 export const UserMenu = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  // Fix: correctly use the useAdminCheck hook which returns { isAdmin }
+  // Use the useAdminCheck hook properly, destructuring the isAdmin value
   const { isAdmin } = useAdminCheck();
   const displayName = useUserDisplayName();
 
