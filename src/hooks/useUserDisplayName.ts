@@ -6,21 +6,28 @@ import { supabase } from '@/integrations/supabase/client';
  * Hook to get display name from user email
  * Returns first part of email if no name is found
  */
-export const useUserDisplayName = (email: string): string => {
+export const useUserDisplayName = (): string => {
   const [displayName, setDisplayName] = useState<string>('');
 
   useEffect(() => {
-    if (!email) {
-      setDisplayName('');
-      return;
-    }
+    const fetchUserDetails = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session || !session.user) {
+        setDisplayName('');
+        return;
+      }
+      
+      const email = session.user.email;
+      if (!email) {
+        setDisplayName('');
+        return;
+      }
 
-    // Default display name from email (before the @ symbol)
-    const defaultName = email.split('@')[0];
-    setDisplayName(defaultName);
+      // Default display name from email (before the @ symbol)
+      const defaultName = email.split('@')[0];
+      setDisplayName(defaultName);
 
-    // Try to fetch full name from database
-    const fetchUserName = async () => {
+      // Try to fetch full name from database
       try {
         const { data, error } = await supabase
           .from('users')
@@ -41,8 +48,8 @@ export const useUserDisplayName = (email: string): string => {
       }
     };
 
-    fetchUserName();
-  }, [email]);
+    fetchUserDetails();
+  }, []);
 
   return displayName;
 };
