@@ -87,28 +87,30 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ className })
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            className={className}
-            onClick={handleToggleNotifications}
-            disabled={subscribing}
-          >
-            {subscription ? (
-              <Bell className="h-5 w-5" />
-            ) : (
-              <BellOff className="h-5 w-5" />
-            )}
+          <div className="relative">
+            <Button
+              variant="ghost"
+              size="icon"
+              className={className}
+              onClick={handleToggleNotifications}
+              disabled={subscribing}
+            >
+              {subscription ? (
+                <Bell className="h-5 w-5" />
+              ) : (
+                <BellOff className="h-5 w-5" />
+              )}
+            </Button>
             
             {isAdmin && openTicketsCount > 0 && (
               <Badge 
-                className="absolute -top-1 -right-1 bg-red-500 text-white text-xs" 
+                className="absolute -top-1 -right-1 px-1 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-red-500 text-white text-xs" 
                 variant="destructive"
               >
                 {openTicketsCount}
               </Badge>
             )}
-          </Button>
+          </div>
         </TooltipTrigger>
         <TooltipContent>
           <p>{subscription ? 'إلغاء تفعيل الإشعارات' : 'تفعيل الإشعارات'}</p>
