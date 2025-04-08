@@ -3,12 +3,14 @@ const CACHE_NAME = 'taweel-cache-v1';
 const urlsToCache = [
   '/',
   '/index.html',
+  '/offline.html',
   '/src/main.tsx',
   '/src/index.css',
   '/favicon.ico',
   '/apple-touch-icon.png',
   '/android-chrome-192x192.png',
-  '/android-chrome-512x512.png'
+  '/android-chrome-512x512.png',
+  '/lovable-uploads/476e1743-22bf-49a8-8049-3cc6796c563d.png'
 ];
 
 // تثبيت خدمة العامل وتخزين الموارد الأساسية
@@ -22,7 +24,7 @@ self.addEventListener('install', (event) => {
   );
 });
 
-// استراتيجية الشبكة أولا ثم الذاكرة المؤقتة
+// معالجة الطلبات وتقديم الصفحة المناسبة
 self.addEventListener('fetch', (event) => {
   event.respondWith(
     fetch(event.request)
@@ -38,7 +40,12 @@ self.addEventListener('fetch', (event) => {
         return response;
       })
       .catch(() => {
-        // إذا فشل الطلب، حاول استرداده من الكاش
+        // إذا فشل الطلب وكان طلب صفحة، أرجع صفحة عدم الاتصال
+        if (event.request.mode === 'navigate') {
+          return caches.match('/offline.html');
+        }
+        
+        // محاولة استرداد من الكاش للموارد الأخرى
         return caches.match(event.request);
       })
   );
@@ -56,6 +63,58 @@ self.addEventListener('activate', (event) => {
           }
         })
       );
+    })
+  );
+});
+
+// معالجة الإشعارات Push
+self.addEventListener('push', (event) => {
+  if (!event.data) return;
+  
+  let data = {};
+  try {
+    data = event.data.json();
+  } catch (e) {
+    data = {
+      title: 'تأويل',
+      body: event.data.text(),
+    };
+  }
+  
+  const options = {
+    body: data.body || 'تم استلام إشعار جديد',
+    icon: '/android-chrome-192x192.png',
+    badge: '/favicon-32x32.png',
+    dir: 'rtl',
+    lang: 'ar',
+    vibrate: [100, 50, 100],
+    data: {
+      url: data.url || '/'
+    }
+  };
+  
+  event.waitUntil(
+    self.registration.showNotification(data.title || 'تأويل', options)
+  );
+});
+
+// عند النقر على الإشعار
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  
+  event.waitUntil(
+    clients.matchAll({ type: 'window' }).then((clientList) => {
+      const url = event.notification.data.url || '/';
+      
+      for (const client of clientList) {
+        if (client.url === url && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      
+      if (clients.openWindow) {
+        return clients.openWindow(url);
+      }
     })
   );
 });
