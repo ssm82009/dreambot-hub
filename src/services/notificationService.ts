@@ -17,7 +17,7 @@ interface PushSubscriptionData {
 export async function sendNotification(userId: string, payload: NotificationPayload) {
   try {
     console.log(`محاولة إرسال إشعار للمستخدم ${userId}:`, payload);
-    // استدعاء وظيفة Edge Function لإرسال الإشعار
+    
     const { data, error } = await supabase.functions.invoke('send-notification', {
       body: {
         userId,
@@ -42,7 +42,7 @@ export async function sendNotification(userId: string, payload: NotificationPayl
 export async function sendNotificationToAdmin(payload: NotificationPayload) {
   try {
     console.log('محاولة إرسال إشعار للمشرفين:', payload);
-    // استدعاء وظيفة Edge Function لإرسال الإشعار لجميع المشرفين
+    
     const { data, error } = await supabase.functions.invoke('send-notification', {
       body: {
         adminOnly: true,

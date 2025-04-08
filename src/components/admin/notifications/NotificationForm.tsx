@@ -4,7 +4,6 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
 import { sendNotificationToAdmin } from '@/services/notificationService';
 import { Loader2, Send } from 'lucide-react';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -12,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
+import { supabase } from '@/integrations/supabase/client';
 
 const formSchema = z.object({
   title: z.string().min(1, 'يجب إدخال عنوان الإشعار').max(100, 'العنوان طويل جدًا'),
@@ -69,24 +69,38 @@ const NotificationForm: React.FC<NotificationFormProps> = ({ users }) => {
         result = await sendNotificationToAdmin(notification);
         message = 'تم إرسال الإشعار للمشرفين بنجاح';
       } else if (targetType === 'specificUser' && userId) {
-        console.log('إرسال إشعار لمستخدم محدد:', userId);
-        // استدعاء وظيفة Edge Function لإرسال إشعار لمستخدم محدد
-        result = await supabase.functions.invoke('send-notification', {
+        console.log('إرسال إشعار لمستخدم محدد:', userId, notification);
+        
+        const { data, error } = await supabase.functions.invoke('send-notification', {
           body: {
             userId,
             notification
           }
         });
+        
+        result = data;
+        
+        if (error) {
+          throw new Error(error.message || 'حدث خطأ في إرسال الإشعار للمستخدم');
+        }
+        
         message = 'تم إرسال الإشعار للمستخدم بنجاح';
       } else if (targetType === 'all') {
-        console.log('إرسال إشعار لجميع المستخدمين');
-        // استدعاء وظيفة Edge Function لإرسال إشعار لجميع المستخدمين
-        result = await supabase.functions.invoke('send-notification', {
+        console.log('إرسال إشعار لجميع المستخدمين', notification);
+        
+        const { data, error } = await supabase.functions.invoke('send-notification', {
           body: {
             allUsers: true,
             notification
           }
         });
+        
+        result = data;
+        
+        if (error) {
+          throw new Error(error.message || 'حدث خطأ في إرسال الإشعار لجميع المستخدمين');
+        }
+        
         message = 'تم إرسال الإشعار لجميع المستخدمين بنجاح';
       }
 
