@@ -12,6 +12,7 @@ export interface NotificationDataState {
   subscribersCount: number;
   users: User[];
   loading: boolean;
+  error: string | null;
 }
 
 export const useNotificationData = () => {
@@ -19,31 +20,29 @@ export const useNotificationData = () => {
     subscribersCount: 0,
     users: [],
     loading: false,
+    error: null
   });
 
   // جلب عدد المشتركين وقائمة المستخدمين عند تحميل المكون
   useEffect(() => {
     const fetchData = async () => {
       try {
-        setState(prev => ({ ...prev, loading: true }));
+        setState(prev => ({ ...prev, loading: true, error: null }));
         
-        // استدعاء وظيفة Edge Function لإنشاء وظيفة العد
-        await supabase.functions.invoke('create-rpc');
+        // استدعاء وظيفة Supabase للحصول على عدد المشتركين
+        let subscribersCount = 0;
         
-        // استدعاء العدد مباشرة من قاعدة البيانات
-        // استخدام any لتجاوز مشكلة الأنواع
-        const { data: countData, error: countError }: { data: number | null, error: any } = await supabase.rpc(
-          'count_push_subscriptions' as any
-        );
+        try {
+          // محاولة استدعاء وظيفة العد من قاعدة البيانات مباشرة
+          const { data, error } = await supabase
+            .from('push_subscriptions')
+            .select('id', { count: 'exact', head: true });
 
-        if (countError) {
-          toast.error('حدث خطأ في جلب عدد المشتركين');
+          if (error) throw error;
+          subscribersCount = data?.length || 0;
+        } catch (countError) {
           console.error('خطأ في جلب عدد المشتركين:', countError);
-        } else {
-          setState(prev => ({
-            ...prev,
-            subscribersCount: countData || 0
-          }));
+          // نستمر بدون رفع استثناء حتى نتمكن من عرض بقية البيانات
         }
 
         // جلب قائمة المستخدمين
@@ -52,20 +51,24 @@ export const useNotificationData = () => {
           .select('id, email');
 
         if (userError) {
-          toast.error('حدث خطأ في جلب قائمة المستخدمين');
-          console.error('خطأ في جلب قائمة المستخدمين:', userError);
-          return;
+          throw userError;
         }
 
         setState(prev => ({
           ...prev,
+          subscribersCount,
           users: userData || [],
-          loading: false
+          loading: false,
+          error: null
         }));
-      } catch (error) {
+      } catch (error: any) {
         console.error('خطأ غير متوقع:', error);
-        toast.error('حدث خطأ غير متوقع');
-        setState(prev => ({ ...prev, loading: false }));
+        setState(prev => ({ 
+          ...prev, 
+          loading: false, 
+          error: error.message || 'حدث خطأ غير متوقع' 
+        }));
+        toast.error('حدث خطأ أثناء جلب البيانات');
       }
     };
 

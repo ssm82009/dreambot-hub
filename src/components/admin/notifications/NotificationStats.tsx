@@ -1,15 +1,21 @@
 
 import React from 'react';
-import { Loader2 } from 'lucide-react';
+import { Loader2, AlertCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface NotificationStatsProps {
   subscribersCount: number;
   loading: boolean;
+  error: string | null;
 }
 
-const NotificationStats: React.FC<NotificationStatsProps> = ({ subscribersCount, loading }) => {
+const NotificationStats: React.FC<NotificationStatsProps> = ({ 
+  subscribersCount, 
+  loading, 
+  error 
+}) => {
   return (
     <Card className="col-span-1">
       <CardHeader>
@@ -17,6 +23,15 @@ const NotificationStats: React.FC<NotificationStatsProps> = ({ subscribersCount,
         <CardDescription>تفاصيل عن المشتركين في الإشعارات</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        {error && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              {error}
+            </AlertDescription>
+          </Alert>
+        )}
+        
         <div className="flex flex-col space-y-2 p-4 border rounded-lg">
           <div className="flex items-center justify-between">
             <span className="text-muted-foreground">عدد المشتركين</span>
