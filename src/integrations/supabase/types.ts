@@ -174,6 +174,39 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_logs: {
+        Row: {
+          body: string
+          id: string
+          read_at: string | null
+          sent_at: string
+          title: string
+          type: string | null
+          url: string | null
+          user_id: string
+        }
+        Insert: {
+          body: string
+          id?: string
+          read_at?: string | null
+          sent_at?: string
+          title: string
+          type?: string | null
+          url?: string | null
+          user_id: string
+        }
+        Update: {
+          body?: string
+          id?: string
+          read_at?: string | null
+          sent_at?: string
+          title?: string
+          type?: string | null
+          url?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       payment_invoices: {
         Row: {
           amount: number
@@ -342,6 +375,33 @@ export type Database = {
           pro_plan_name?: string
           pro_plan_price?: number
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      push_subscriptions: {
+        Row: {
+          auth: string
+          created_at: string
+          endpoint: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          auth: string
+          created_at?: string
+          endpoint: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          auth?: string
+          created_at?: string
+          endpoint?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }

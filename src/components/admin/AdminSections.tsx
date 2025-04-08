@@ -1,5 +1,6 @@
+
 import React from 'react';
-import DashboardStats from './sections/DashboardStats';
+import DashboardStatsSection from './sections/DashboardStats';
 import AiSettingsSection from './sections/AiSettingsSection';
 import InterpretationSettingsSection from './sections/InterpretationSettingsSection';
 import PricingSettingsSection from './sections/PricingSettingsSection';
@@ -43,7 +44,7 @@ const AdminSections: React.FC = () => {
       {activeSections.notifications && <NotificationsSection />}
       
       {/* If no section is active, show dashboard */}
-      {!Object.values(activeSections).some(Boolean) && <DashboardStats />}
+      {!Object.values(activeSections).some(Boolean) && <DashboardStatsSection />}
     </div>
   );
 };

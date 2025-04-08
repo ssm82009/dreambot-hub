@@ -55,17 +55,17 @@ const NotificationsSection: React.FC = () => {
     const fetchSubscribersCount = async () => {
       try {
         setLoading(true);
-        const { count, error } = await supabase
-          .from('push_subscriptions')
-          .select('id', { count: 'exact', head: true });
+        
+        // استخدام rpc لتجنب أخطاء TypeScript مع الجداول الجديدة
+        const { data: countResult, error: countError } = await supabase.rpc('count_push_subscriptions');
 
-        if (error) {
+        if (countError) {
           toast.error('حدث خطأ في جلب عدد المشتركين');
-          console.error('خطأ في جلب عدد المشتركين:', error);
-          return;
+          console.error('خطأ في جلب عدد المشتركين:', countError);
+          setSubscribersCount(0);
+        } else {
+          setSubscribersCount(countResult || 0);
         }
-
-        setSubscribersCount(count || 0);
 
         // جلب قائمة المستخدمين
         const { data: userData, error: userError } = await supabase
