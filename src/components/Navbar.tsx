@@ -38,10 +38,19 @@ const Navbar = () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         
-        const loginStatus = !!session || 
-                          localStorage.getItem('isLoggedIn') === 'true' || 
-                          localStorage.getItem('isAdminLoggedIn') === 'true';
-        const email = localStorage.getItem('userEmail') || '';
+        const loginStatus = !!session;
+        const email = session?.user?.email || localStorage.getItem('userEmail') || '';
+        
+        if (loginStatus) {
+          localStorage.setItem('isLoggedIn', 'true');
+          if (email) localStorage.setItem('userEmail', email);
+        } else {
+          // Make sure we clear localStorage if session is null
+          localStorage.removeItem('isLoggedIn');
+          localStorage.removeItem('isAdminLoggedIn');
+          localStorage.removeItem('userEmail');
+          localStorage.removeItem('userName');
+        }
         
         setIsLoggedIn(loginStatus);
         setUserEmail(email);
@@ -53,7 +62,8 @@ const Navbar = () => {
     
     checkAuthStatus();
     
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      console.log('Auth state changed:', event);
       checkAuthStatus();
     });
     
@@ -118,7 +128,7 @@ const Navbar = () => {
               ) : shouldRenderAuthUI && (
                 <>
                   <NavLinks isAdmin={isAdmin} isLoggedIn={isLoggedIn} />
-                  {isLoggedIn === false && <AuthButtons />}
+                  {!isLoggedIn && <AuthButtons />}
                   <ThemeToggle isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
                   {isLoggedIn && (
                     <div className="flex items-center space-x-3 rtl:space-x-reverse">
@@ -142,7 +152,7 @@ const Navbar = () => {
                   {isLoggedIn && shouldRenderAuthUI && (
                     <NotificationBell className="mr-2" />
                   )}
-                  {isLoggedIn === false && !isMenuOpen && shouldRenderAuthUI && (
+                  {!isLoggedIn && !isMenuOpen && shouldRenderAuthUI && (
                     <div className="mr-2">
                       <Link to="/login">
                         <Button variant="ghost" size="sm">

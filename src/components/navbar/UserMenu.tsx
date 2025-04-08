@@ -12,15 +12,15 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { User, Settings, LogOut, TicketIcon } from "lucide-react";
 import { supabase } from '@/integrations/supabase/client';
 import { useAdminCheck } from '@/hooks/useAdminCheck';
-import { toast } from 'sonner';
+import { useLogoutHandler } from '@/hooks/settings/useLogoutHandler';
 import { useUserDisplayName } from '@/hooks/useUserDisplayName';
 
 export const UserMenu = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  // Use the useAdminCheck hook properly, destructuring the isAdmin value
   const { isAdmin } = useAdminCheck();
   const displayName = useUserDisplayName();
+  const { handleLogout } = useLogoutHandler();
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -32,17 +32,6 @@ export const UserMenu = () => {
 
     checkAuth();
   }, []);
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    localStorage.removeItem('isLoggedIn');
-    localStorage.removeItem('userEmail');
-    localStorage.removeItem('userName');
-    toast.success('تم تسجيل الخروج بنجاح');
-    setTimeout(() => {
-      window.location.href = '/';
-    }, 1000);
-  };
 
   if (isLoading) return null;
 
