@@ -2,8 +2,6 @@
 // استخدام المسار الكامل لتجنب مشاكل الاستيراد في Deno
 import { serve } from "std/http/server.ts";
 import { createClient } from "@supabase/supabase-js";
-// تصحيح استيراد مكتبة web-push باستخدام المسار المحدد في import_map.json
-import * as webPush from "web-push";
 
 // تعريف رؤوس CORS
 const corsHeaders = {
@@ -24,6 +22,35 @@ interface RequestBody {
     url?: string;
     type?: 'general' | 'ticket' | 'payment' | 'subscription';
   };
+}
+
+// استدعاء مكتبة web-push بطريقة تتوافق مع Deno
+// استخدام import dynamically لتجنب مشاكل التهيئة
+async function initializeWebPush() {
+  try {
+    // استخدام دالة استيراد ديناميكي بدلاً من الاستيراد الثابت
+    const webPushModule = await import("web-push");
+    const webPush = webPushModule.default;
+    
+    const vapidPublicKey = Deno.env.get('VAPID_PUBLIC_KEY') || '';
+    const vapidPrivateKey = Deno.env.get('VAPID_PRIVATE_KEY') || '';
+    
+    if (!vapidPublicKey || !vapidPrivateKey) {
+      console.error("مفاتيح VAPID غير مهيأة");
+      throw new Error("مفاتيح VAPID غير مهيأة");
+    }
+    
+    webPush.setVapidDetails(
+      'mailto:support@example.com',
+      vapidPublicKey,
+      vapidPrivateKey
+    );
+    
+    return webPush;
+  } catch (error) {
+    console.error("خطأ في تهيئة web-push:", error);
+    throw error;
+  }
 }
 
 serve(async (req: Request) => {
@@ -57,32 +84,13 @@ serve(async (req: Request) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     );
 
-    // إعداد مفاتيح VAPID للإشعارات
-    const vapidPublicKey = Deno.env.get('VAPID_PUBLIC_KEY') || '';
-    const vapidPrivateKey = Deno.env.get('VAPID_PRIVATE_KEY') || '';
-    
-    if (!vapidPublicKey || !vapidPrivateKey) {
-      console.error("مفاتيح VAPID غير مهيأة");
-      return new Response(
-        JSON.stringify({ error: 'مفاتيح VAPID غير مهيأة' }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
-    }
-
-    // إعداد web-push بطريقة آمنة
+    // تهيئة web-push
+    let webPush;
     try {
-      webPush.setVapidDetails(
-        'mailto:support@example.com',
-        vapidPublicKey,
-        vapidPrivateKey
-      );
+      webPush = await initializeWebPush();
     } catch (error) {
-      console.error("خطأ في إعداد مفاتيح VAPID:", error);
       return new Response(
-        JSON.stringify({ error: 'فشل في إعداد مفاتيح VAPID', details: error.message }),
+        JSON.stringify({ error: 'فشل في تهيئة مكتبة web-push', details: error.message }),
         {
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -229,6 +237,7 @@ serve(async (req: Request) => {
 
     // إرسال الإشعار لكل مشترك
     console.log(`محاولة إرسال الإشعارات إلى ${subscriptions.length} مشترك...`);
+    
     const pushPromises = subscriptions.map(async (subscription) => {
       try {
         // تحليل البيانات بشكل آمن
