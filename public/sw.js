@@ -4,13 +4,12 @@ const urlsToCache = [
   '/',
   '/index.html',
   '/offline.html',
-  '/src/main.tsx',
-  '/src/index.css',
+  // نستبعد المصادر التي قد تكون مشكلة
   '/favicon.ico',
   '/apple-touch-icon.png',
   '/android-chrome-192x192.png',
-  '/android-chrome-512x512.png',
-  '/lovable-uploads/476e1743-22bf-49a8-8049-3cc6796c563d.png'
+  '/android-chrome-512x512.png'
+  // يتم تحميل الصورة فقط عند الحاجة
 ];
 
 // تثبيت خدمة العامل وتخزين الموارد الأساسية
@@ -20,7 +19,26 @@ self.addEventListener('install', (event) => {
     caches.open(CACHE_NAME)
       .then((cache) => {
         console.log('Service Worker: تم فتح ذاكرة التخزين المؤقت');
-        return cache.addAll(urlsToCache);
+        
+        // استخدام طريقة أكثر مرونة للتخزين المؤقت، مع تخزين كل مورد على حدة
+        // بدلاً من استخدام addAll الذي يفشل كله إذا فشل أي مورد فردي
+        const cachePromises = urlsToCache.map(url => {
+          return fetch(url)
+            .then(response => {
+              // إذا كان الرد ناجحاً نقوم بتخزينه
+              if (response.ok) {
+                return cache.put(url, response);
+              }
+              console.error(`خطأ في تخزين المورد: ${url}، حالة: ${response.status}`);
+              return Promise.resolve(); // نستمر حتى مع وجود خطأ
+            })
+            .catch(error => {
+              console.error(`فشل في طلب المورد: ${url}`, error);
+              return Promise.resolve(); // نستمر حتى مع وجود خطأ
+            });
+        });
+        
+        return Promise.all(cachePromises);
       })
       .then(() => self.skipWaiting()) // تخطي انتظار التنشيط
   );

@@ -31,6 +31,7 @@ export function useNotifications() {
           // إذا كان التصريح ممنوحًا، تحقق من وجود اشتراك
           let subscription = null;
           if (granted) {
+            // تأكد من أن خدمة العامل مسجلة وجاهزة
             const swRegistration = await navigator.serviceWorker.ready;
             subscription = await swRegistration.pushManager.getSubscription();
             console.log("تم العثور على اشتراك الإشعارات:", subscription);
@@ -61,7 +62,17 @@ export function useNotifications() {
       }
     };
     
-    checkNotificationSupport();
+    // التأكد من تسجيل خدمة العامل قبل التحقق من دعم الإشعارات
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.ready.then(() => {
+        checkNotificationSupport();
+      }).catch(error => {
+        console.error("خطأ في انتظار جاهزية خدمة العامل:", error);
+        checkNotificationSupport(); // نحاول على أي حال
+      });
+    } else {
+      checkNotificationSupport();
+    }
   }, []);
   
   // طلب إذن الإشعارات
