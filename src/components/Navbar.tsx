@@ -29,6 +29,16 @@ const Navbar = () => {
   const { handleLogout } = useLogoutHandler();
   const { themeSettings, loading } = useThemeSettings();
   const { isAdmin } = useAdminCheck();
+  const [initialRender, setInitialRender] = React.useState(true);
+
+  useEffect(() => {
+    // تعيين مؤقت لتغيير حالة العرض المبدئي بعد 500 مللي ثانية
+    const timer = setTimeout(() => {
+      setInitialRender(false);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     // Check current auth status with Supabase
@@ -44,6 +54,9 @@ const Navbar = () => {
         
         setIsLoggedIn(loginStatus);
         setUserEmail(email);
+        
+        // تسجيل معلومات حالة تسجيل الدخول للتصحيح
+        console.log("حالة تسجيل الدخول محدثة:", { loginStatus, email });
       } catch (error) {
         console.error('Error checking auth status:', error);
         // Set to false in case of error to ensure buttons show up
@@ -88,6 +101,42 @@ const Navbar = () => {
         transition: 'opacity 0.3s ease-in-out, background-color 0.3s ease-in-out',
         height: `${NAVBAR_HEIGHT}px`
       };
+
+  // تسجيل حالة الواجهة للتصحيح
+  console.log("حالة النافبار:", { loading, initialRender, isLoggedIn });
+
+  // إضافة نافبار مبدئي إذا كانت الإعدادات قيد التحميل
+  if (initialRender) {
+    return (
+      <nav className="backdrop-blur-md fixed w-full top-0 z-50 shadow-sm rtl" 
+           style={{ height: `${NAVBAR_HEIGHT}px` }}>
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 h-full">
+          <div className="flex justify-between h-full items-center">
+            <div className="flex items-center">
+              <span className="text-xl font-bold">تأويل</span>
+            </div>
+            
+            {/* عرض أزرار تسجيل الدخول دائمًا في النافبار المبدئي لتجنب الوميض */}
+            <div className="hidden md:flex items-center space-x-6 rtl:space-x-reverse">
+              <div className="flex items-center space-x-3 rtl:space-x-reverse">
+                <AuthButtons />
+              </div>
+            </div>
+            
+            {/* زر القائمة للجوال */}
+            {isMobile && (
+              <div className="flex items-center">
+                <button className="p-2">
+                  <span className="sr-only">القائمة</span>
+                  <div className="h-6 w-6"></div>
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </nav>
+    );
+  }
 
   // للتأكد من الحالة الصحيحة لتسجيل الدخول
   console.log('Auth status:', { isLoggedIn, userEmail });
