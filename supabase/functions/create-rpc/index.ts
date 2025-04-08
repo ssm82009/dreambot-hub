@@ -19,8 +19,25 @@ serve(async (req: Request) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     );
     
-    // Read the SQL file content
-    const createCountFunctionSql = await Deno.readTextFile('./sql/create_count_function.sql');
+    // Define the SQL for creating the count function
+    const createCountFunctionSql = `
+    -- Create a function to count push subscriptions
+    CREATE OR REPLACE FUNCTION public.count_push_subscriptions()
+    RETURNS INTEGER
+    LANGUAGE plpgsql
+    SECURITY DEFINER
+    AS $$
+    BEGIN
+      RETURN (
+        SELECT COUNT(*)::integer
+        FROM public.push_subscriptions
+      );
+    END;
+    $$;
+
+    -- Grant usage to authenticated users
+    GRANT EXECUTE ON FUNCTION public.count_push_subscriptions() TO authenticated;
+    `;
     
     // Execute the SQL directly
     const { error } = await supabaseAdmin.withSystems().rpc('exec_sql', { sql: createCountFunctionSql });

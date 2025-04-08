@@ -60,7 +60,10 @@ const NotificationsSection: React.FC = () => {
         await supabase.functions.invoke('create-rpc');
         
         // استدعاء العدد مباشرة من قاعدة البيانات
-        const { data: countData, error: countError } = await supabase.rpc('count_push_subscriptions');
+        // استخدام الإشارة إلى النوع لتوضيح أن الدالة تُرجع عددًا صحيحًا
+        const { data: countData, error: countError } = await supabase.rpc(
+          'count_push_subscriptions'
+        ) as { data: number | null, error: any };
 
         if (countError) {
           toast.error('حدث خطأ في جلب عدد المشتركين');
