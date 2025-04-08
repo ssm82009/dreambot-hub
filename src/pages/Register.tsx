@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
@@ -10,7 +9,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { useAdminCheck } from '@/hooks/useAdminCheck';
+import { checkIfAdminEmail } from '@/hooks/useAdminCheck';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -23,7 +22,7 @@ const Register = () => {
   const [termsAccepted, setTermsAccepted] = useState(false);
   
   // Check if the email is a designated admin email
-  const isAdminEmail = useAdminCheck(email);
+  const isAdminEmail = checkIfAdminEmail(email);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

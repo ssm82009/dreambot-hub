@@ -4,7 +4,11 @@ import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { NavLink as NavLinkType } from '@/types/database';
 
-const NavLinks: React.FC<{ isAdmin: boolean }> = ({ isAdmin }) => {
+interface NavLinksProps {
+  isAdmin: boolean;
+}
+
+const NavLinks: React.FC<NavLinksProps> = ({ isAdmin }) => {
   const [links, setLinks] = useState<NavLinkType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 

@@ -1,7 +1,6 @@
 
-import { useMemo } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 // This hook checks if a user is an admin
 export function useAdminCheck() {
@@ -35,4 +34,11 @@ export function useAdminCheck() {
   }, []);
 
   return { isAdmin };
+}
+
+// This alternate version accepts an email parameter for checking if that email is admin
+export function checkIfAdminEmail(email: string): boolean {
+  if (!email) return false;
+  const adminEmails = ['ssm4all@gmail.com'];
+  return adminEmails.includes(email.toLowerCase());
 }

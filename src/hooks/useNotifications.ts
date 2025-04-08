@@ -122,14 +122,21 @@ export function useNotifications() {
       
       subscription = await sw.pushManager.subscribe(options);
       
-      // تخزين اشتراك المستخدم في قاعدة البيانات
+      // تخزين اشتراك المستخدم في قاعدة البيانات عبر edge function
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
-        // معالجة تخزين الاشتراك دون الوصول مباشرة إلى push_subscriptions
-        // في حالة التنفيذ الفعلي، سنستخدم edge function لهذا
         try {
-          // سنستخدم edge function بدلاً من محاولة الكتابة المباشرة للجدول
-          console.log('تم إنشاء اشتراك للإشعارات:', subscription.endpoint);
+          // استخدام Edge Function لتخزين الاشتراك
+          const { error } = await supabase.functions.invoke('store-subscription', {
+            body: {
+              userId: session.user.id,
+              endpoint: subscription.endpoint,
+              auth: JSON.stringify(subscription.toJSON())
+            }
+          });
+          
+          if (error) throw error;
+          
         } catch (error) {
           console.error('خطأ في تخزين اشتراك الإشعارات:', error);
         }
@@ -158,12 +165,23 @@ export function useNotifications() {
     try {
       await permission.subscription.unsubscribe();
       
-      // حذف الاشتراك من قاعدة البيانات
+      // حذف الاشتراك من قاعدة البيانات عبر edge function
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
-        // في حالة التنفيذ الفعلي، سنستخدم edge function لهذا
-        // بدلاً من محاولة الحذف المباشر من الجدول
-        console.log('تم إلغاء اشتراك الإشعارات:', permission.subscription.endpoint);
+        try {
+          // استخدام Edge Function لحذف الاشتراك
+          const { error } = await supabase.functions.invoke('remove-subscription', {
+            body: {
+              userId: session.user.id,
+              endpoint: permission.subscription.endpoint
+            }
+          });
+          
+          if (error) throw error;
+          
+        } catch (error) {
+          console.error('خطأ في حذف اشتراك الإشعارات:', error);
+        }
       }
       
       setPermission(prev => ({

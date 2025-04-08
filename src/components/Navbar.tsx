@@ -1,8 +1,9 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useLogoutHandler } from '@/hooks/settings/useLogoutHandler';
 import { useThemeSettings } from '@/hooks/useThemeSettings';
+import { useAdminCheck } from '@/hooks/useAdminCheck';
 
 import NavLogo from './navbar/NavLogo';
 import NavLinks from './navbar/NavLinks';
@@ -25,6 +26,7 @@ const Navbar = () => {
   const isMobile = useIsMobile();
   const { handleLogout } = useLogoutHandler();
   const { themeSettings, loading } = useThemeSettings();
+  const { isAdmin } = useAdminCheck();
 
   useEffect(() => {
     // Check if user is logged in
@@ -81,7 +83,7 @@ const Navbar = () => {
           {/* Desktop Menu */}
           {!isMobile && (
             <div className={`hidden md:flex items-center space-x-6 rtl:space-x-reverse transition-opacity duration-300 ${loading ? 'opacity-0' : 'opacity-100'}`}>
-              <NavLinks />
+              <NavLinks isAdmin={isAdmin} />
               
               <ThemeToggle isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
 
@@ -115,6 +117,7 @@ const Navbar = () => {
         <MobileMenu 
           isOpen={isMenuOpen}
           isLoggedIn={isLoggedIn}
+          isAdmin={isAdmin}
           onToggle={toggleMenu}
           onLogout={handleLogout}
           headerColor={themeSettings.headerColor}
