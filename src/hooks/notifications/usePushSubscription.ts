@@ -114,7 +114,7 @@ export function usePushSubscription(supported: boolean, granted: boolean) {
             body: {
               userId: session.user.id,
               endpoint: subscription.endpoint,
-              auth: JSON.stringify(subscription.toJSON())
+              auth: JSON.stringify(subscription)
             }
           });
           
