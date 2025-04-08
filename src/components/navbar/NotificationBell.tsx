@@ -1,5 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Bell, BellOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -18,6 +19,7 @@ interface NotificationBellProps {
 }
 
 export const NotificationBell: React.FC<NotificationBellProps> = ({ className }) => {
+  const navigate = useNavigate();
   const { supported, granted, subscription, subscribing, subscribeToNotifications, unsubscribeFromNotifications } = useNotifications();
   const [openTicketsCount, setOpenTicketsCount] = useState<number>(0);
   const { isAdmin } = useAdminCheck();
@@ -81,6 +83,12 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ className })
     }
   };
 
+  // معالج النقر على شارة العدد للانتقال إلى صفحة التذاكر
+  const handleBadgeClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // منع انتشار الحدث إلى زر الجرس
+    navigate('/tickets');
+  };
+
   if (!supported) return null;
 
   return (
@@ -104,8 +112,9 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ className })
             
             {isAdmin && openTicketsCount > 0 && (
               <Badge 
-                className="absolute -top-1 -right-1 px-1 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-red-500 text-white text-xs" 
+                className="absolute -top-1 -right-1 px-1 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-red-500 text-white text-xs cursor-pointer" 
                 variant="destructive"
+                onClick={handleBadgeClick}
               >
                 {openTicketsCount}
               </Badge>
