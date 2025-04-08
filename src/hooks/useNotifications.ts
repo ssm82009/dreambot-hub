@@ -27,19 +27,30 @@ export function useNotifications() {
         const permission = Notification.permission;
         const granted = permission === 'granted';
         
-        // إذا كان التصريح ممنوحًا، تحقق من وجود اشتراك
-        let subscription = null;
-        if (granted) {
-          const sw = await navigator.serviceWorker.ready;
-          subscription = await sw.pushManager.getSubscription();
+        try {
+          // إذا كان التصريح ممنوحًا، تحقق من وجود اشتراك
+          let subscription = null;
+          if (granted) {
+            const swRegistration = await navigator.serviceWorker.ready;
+            subscription = await swRegistration.pushManager.getSubscription();
+            console.log("تم العثور على اشتراك الإشعارات:", subscription);
+          }
+          
+          setPermission({
+            granted,
+            supported,
+            subscription,
+            subscribing: false
+          });
+        } catch (error) {
+          console.error("خطأ في التحقق من اشتراك الإشعارات:", error);
+          setPermission({
+            granted,
+            supported,
+            subscription: null,
+            subscribing: false
+          });
         }
-        
-        setPermission({
-          granted,
-          supported,
-          subscription,
-          subscribing: false
-        });
       } else {
         setPermission({
           granted: false,
@@ -61,8 +72,11 @@ export function useNotifications() {
     }
     
     try {
+      console.log("طلب إذن الإشعارات...");
       const result = await Notification.requestPermission();
       const granted = result === 'granted';
+      
+      console.log("نتيجة طلب إذن الإشعارات:", result);
       
       setPermission(prev => ({
         ...prev,
@@ -85,34 +99,45 @@ export function useNotifications() {
   
   // الاشتراك في الإشعارات
   const subscribeToNotifications = async () => {
-    if (!permission.supported) return null;
-    
-    // طلب الإذن إذا لم يكن ممنوحًا بالفعل
-    if (!permission.granted) {
-      const granted = await requestPermission();
-      if (!granted) return null;
+    if (!permission.supported) {
+      toast.error('متصفحك لا يدعم الإشعارات');
+      return null;
     }
     
     try {
       setPermission(prev => ({ ...prev, subscribing: true }));
       
-      const sw = await navigator.serviceWorker.ready;
+      // طلب الإذن إذا لم يكن ممنوحًا بالفعل
+      if (Notification.permission !== 'granted') {
+        const granted = await requestPermission();
+        if (!granted) {
+          setPermission(prev => ({ ...prev, subscribing: false }));
+          return null;
+        }
+      }
+      
+      console.log("بدء عملية الاشتراك في الإشعارات...");
+      
+      // انتظار جاهزية service worker
+      const swRegistration = await navigator.serviceWorker.ready;
+      console.log("Service Worker جاهز:", swRegistration);
       
       // التحقق من وجود اشتراك حالي
-      let subscription = await sw.pushManager.getSubscription();
+      let subscription = await swRegistration.pushManager.getSubscription();
       
       // إذا كان المتصفح مشتركًا بالفعل، ارجع الاشتراك الحالي
       if (subscription) {
+        console.log("تم العثور على اشتراك موجود:", subscription);
         setPermission(prev => ({
           ...prev,
           subscription,
-          subscribing: false
+          subscribing: false,
+          granted: true
         }));
         return subscription;
       }
       
-      // إنشاء اشتراك جديد - في بيئة الإنتاج يجب توفير مفتاح VAPID من الخادم
-      // هنا نستخدم مفتاح عام افتراضي لأغراض العرض فقط
+      // إنشاء مفتاح VAPID (استخدم مفتاح عام افتراضي للعرض فقط)
       const publicVapidKey = 'BLBz5HW9GU26px7aSGgqZR9xoA7Sj5Q8q0c7_KMgPgTcgccR9EkTuZAs5TmGpJ9liMPHvw4-l7-Ftm1Qz-5qvEs';
       
       const options = {
@@ -120,12 +145,15 @@ export function useNotifications() {
         applicationServerKey: urlBase64ToUint8Array(publicVapidKey)
       };
       
-      subscription = await sw.pushManager.subscribe(options);
+      console.log("محاولة الاشتراك في Push Manager...");
+      subscription = await swRegistration.pushManager.subscribe(options);
+      console.log("تم الاشتراك بنجاح:", subscription);
       
       // تخزين اشتراك المستخدم في قاعدة البيانات عبر edge function
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
         try {
+          console.log("تخزين الاشتراك في قاعدة البيانات...");
           // استخدام Edge Function لتخزين الاشتراك
           const { error } = await supabase.functions.invoke('store-subscription', {
             body: {
@@ -135,7 +163,12 @@ export function useNotifications() {
             }
           });
           
-          if (error) throw error;
+          if (error) {
+            console.error("خطأ في تخزين الاشتراك:", error);
+            throw error;
+          }
+          
+          console.log("تم تخزين الاشتراك بنجاح");
           
         } catch (error) {
           console.error('خطأ في تخزين اشتراك الإشعارات:', error);
@@ -145,7 +178,8 @@ export function useNotifications() {
       setPermission(prev => ({
         ...prev,
         subscription,
-        subscribing: false
+        subscribing: false,
+        granted: true
       }));
       
       toast.success('تم الاشتراك في الإشعارات بنجاح');
@@ -160,15 +194,21 @@ export function useNotifications() {
   
   // إلغاء الاشتراك في الإشعارات
   const unsubscribeFromNotifications = async () => {
-    if (!permission.subscription) return false;
+    if (!permission.subscription) {
+      toast.error('لا يوجد اشتراك نشط للإشعارات');
+      return false;
+    }
     
     try {
+      console.log("إلغاء الاشتراك من الإشعارات...");
       await permission.subscription.unsubscribe();
+      console.log("تم إلغاء الاشتراك بنجاح");
       
       // حذف الاشتراك من قاعدة البيانات عبر edge function
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
         try {
+          console.log("حذف الاشتراك من قاعدة البيانات...");
           // استخدام Edge Function لحذف الاشتراك
           const { error } = await supabase.functions.invoke('remove-subscription', {
             body: {
@@ -177,7 +217,11 @@ export function useNotifications() {
             }
           });
           
-          if (error) throw error;
+          if (error) {
+            console.error("خطأ في حذف الاشتراك:", error);
+            throw error;
+          }
+          console.log("تم حذف الاشتراك من قاعدة البيانات بنجاح");
           
         } catch (error) {
           console.error('خطأ في حذف اشتراك الإشعارات:', error);

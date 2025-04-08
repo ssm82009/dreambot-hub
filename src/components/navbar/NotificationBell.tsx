@@ -18,7 +18,7 @@ interface NotificationBellProps {
 }
 
 export const NotificationBell: React.FC<NotificationBellProps> = ({ className }) => {
-  const { supported, granted, subscription, subscribeToNotifications, unsubscribeFromNotifications } = useNotifications();
+  const { supported, granted, subscription, subscribing, subscribeToNotifications, unsubscribeFromNotifications } = useNotifications();
   const [openTicketsCount, setOpenTicketsCount] = useState<number>(0);
   const { isAdmin } = useAdminCheck();
 
@@ -63,11 +63,17 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ className })
     };
   }, [isAdmin]);
 
+  // معالج النقر على زر الإشعارات
   const handleToggleNotifications = async () => {
-    if (subscription) {
-      await unsubscribeFromNotifications();
-    } else {
-      await subscribeToNotifications();
+    console.log("تبديل حالة الإشعارات:", subscription ? "إلغاء الاشتراك" : "الاشتراك");
+    try {
+      if (subscription) {
+        await unsubscribeFromNotifications();
+      } else {
+        await subscribeToNotifications();
+      }
+    } catch (err) {
+      console.error("خطأ في تبديل حالة الإشعارات:", err);
     }
   };
 
@@ -82,7 +88,7 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ className })
             size="icon"
             className={className}
             onClick={handleToggleNotifications}
-            disabled={!granted && !!subscription}
+            disabled={subscribing}
           >
             {subscription ? (
               <Bell className="h-5 w-5" />

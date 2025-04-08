@@ -18,10 +18,27 @@ const NotificationSettings: React.FC = () => {
   } = useNotifications();
 
   const handleSubscribe = async () => {
-    if (!granted) {
-      await requestPermission();
+    try {
+      console.log("بدء عملية تفعيل الإشعارات");
+      
+      if (Notification.permission !== 'granted') {
+        const permission = await requestPermission();
+        if (!permission) return;
+      }
+      
+      await subscribeToNotifications();
+    } catch (error) {
+      console.error("خطأ أثناء الاشتراك في الإشعارات:", error);
     }
-    await subscribeToNotifications();
+  };
+
+  const handleUnsubscribe = async () => {
+    try {
+      console.log("بدء عملية إلغاء تفعيل الإشعارات");
+      await unsubscribeFromNotifications();
+    } catch (error) {
+      console.error("خطأ أثناء إلغاء الاشتراك في الإشعارات:", error);
+    }
   };
 
   if (!supported) {
@@ -72,25 +89,37 @@ const NotificationSettings: React.FC = () => {
                 استلام إشعارات حول حالة الاشتراك، التذاكر، والمدفوعات
               </p>
             </div>
-            <Button
-              variant={subscription ? "outline" : "default"}
-              onClick={subscription ? unsubscribeFromNotifications : handleSubscribe}
-              disabled={subscribing}
-            >
-              {subscribing ? (
-                <Loader2 className="h-4 w-4 animate-spin ml-2" />
-              ) : subscription ? (
-                <>
-                  <BellOff className="h-4 w-4 ml-2" />
-                  إيقاف
-                </>
-              ) : (
-                <>
-                  <Bell className="h-4 w-4 ml-2" />
-                  تفعيل
-                </>
-              )}
-            </Button>
+            {subscription ? (
+              <Button
+                variant="outline"
+                onClick={handleUnsubscribe}
+                disabled={subscribing}
+              >
+                {subscribing ? (
+                  <Loader2 className="h-4 w-4 animate-spin ml-2" />
+                ) : (
+                  <>
+                    <BellOff className="h-4 w-4 ml-2" />
+                    إيقاف
+                  </>
+                )}
+              </Button>
+            ) : (
+              <Button
+                variant="default"
+                onClick={handleSubscribe}
+                disabled={subscribing}
+              >
+                {subscribing ? (
+                  <Loader2 className="h-4 w-4 animate-spin ml-2" />
+                ) : (
+                  <>
+                    <Bell className="h-4 w-4 ml-2" />
+                    تفعيل
+                  </>
+                )}
+              </Button>
+            )}
           </div>
 
           <div className="p-4 border rounded-lg bg-muted/10">

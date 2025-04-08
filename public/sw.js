@@ -15,10 +15,11 @@ const urlsToCache = [
 
 // تثبيت خدمة العامل وتخزين الموارد الأساسية
 self.addEventListener('install', (event) => {
+  console.log('Service Worker: تم تثبيت خدمة العامل');
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
-        console.log('تم فتح ذاكرة التخزين المؤقت');
+        console.log('Service Worker: تم فتح ذاكرة التخزين المؤقت');
         return cache.addAll(urlsToCache);
       })
   );
@@ -53,32 +54,43 @@ self.addEventListener('fetch', (event) => {
 
 // تحديث الكاش عند تحديث خدمة العامل
 self.addEventListener('activate', (event) => {
+  console.log('Service Worker: تم تنشيط خدمة العامل');
   const cacheWhitelist = [CACHE_NAME];
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
           if (cacheWhitelist.indexOf(cacheName) === -1) {
+            console.log('Service Worker: حذف كاش قديم', cacheName);
             return caches.delete(cacheName);
           }
         })
       );
     })
   );
+  // مباشرة المطالبة بالسيطرة على العميل دون انتظار إعادة تحميل
+  return self.clients.claim();
 });
 
 // معالجة الإشعارات Push
 self.addEventListener('push', (event) => {
-  if (!event.data) return;
+  console.log('Service Worker: تم استلام إشعار Push', event);
+  
+  if (!event.data) {
+    console.log('Service Worker: لا توجد بيانات في الإشعار');
+    return;
+  }
   
   let data = {};
   try {
     data = event.data.json();
+    console.log('Service Worker: بيانات الإشعار', data);
   } catch (e) {
     data = {
       title: 'تأويل',
       body: event.data.text(),
     };
+    console.log('Service Worker: نص الإشعار البسيط', event.data.text());
   }
   
   const options = {
@@ -124,6 +136,7 @@ self.addEventListener('push', (event) => {
   }
   
   // إظهار الإشعار
+  console.log('Service Worker: عرض الإشعار', data.title, options);
   event.waitUntil(
     self.registration.showNotification(data.title || 'تأويل', options)
   );
@@ -131,6 +144,7 @@ self.addEventListener('push', (event) => {
 
 // عند النقر على الإشعار
 self.addEventListener('notificationclick', (event) => {
+  console.log('Service Worker: تم النقر على الإشعار', event);
   event.notification.close();
   
   // التعامل مع أزرار الإشعار
@@ -165,6 +179,7 @@ self.addEventListener('notificationclick', (event) => {
 
 // استقبال الرسائل من صفحات التطبيق
 self.addEventListener('message', (event) => {
+  console.log('Service Worker: تم استلام رسالة', event.data);
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
   }
