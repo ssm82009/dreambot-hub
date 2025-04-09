@@ -1,7 +1,7 @@
 // استخدام المسار الكامل لتجنب مشاكل الاستيراد في Deno
-import { serve } from "std/http/server.ts";
-import { createClient } from "npm:@supabase/supabase-js";
+import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import * as firebaseAdmin from "npm:firebase-admin";
+import { createClient } from "npm:@supabase/supabase-js";
 
 // تعريف رؤوس CORS
 const corsHeaders = {
@@ -117,7 +117,7 @@ serve(async (req: Request) => {
     const { userId, adminOnly, allUsers, notification } = requestData;
 
     if (!notification?.title || !notification?.body) {
-      console.error("بيانات الإشعار غير كاملة");
+      console.error("بيانات الإشعار غير كافية");
       return new Response(
         JSON.stringify({ error: 'يجب توفير عنوان ومحتوى للإشعار' }),
         {
@@ -222,7 +222,7 @@ serve(async (req: Request) => {
     } else {
       console.error("لم يتم تحديد المستخدمين المستهدفين");
       return new Response(
-        JSON.stringify({ error: 'يجب تحديد المستخدم أو مجموعة المستخدمين المسته��فة' }),
+        JSON.stringify({ error: 'يجب تحديد المستخدم أو مجموعة المستخدمين المستهيئة' }),
         {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },

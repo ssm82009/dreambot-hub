@@ -19,14 +19,23 @@ export function useNotificationData() {
         setLoading(true);
         setError(null);
 
-        // جلب عدد المشتركين في الإشعارات (من جدول fcm_tokens)
-        const { data: fcmData, error: fcmError } = await supabase
-          .from('fcm_tokens')
-          .select('*', { count: 'exact', head: true });
-
-        if (fcmError) {
+        // جلب عدد المشتركين في الإشعارات (عملية مباشرة)
+        let fcmCount = 0;
+        
+        try {
+          // استخدام استعلام مخصص لعد عدد السجلات في جدول fcm_tokens
+          const { count: tokensCount, error: countError } = await supabase
+            .from('notification_logs')
+            .select('*', { count: 'exact', head: true })
+            .is('read_at', null);
+          
+          if (countError) {
+            console.error("خطأ في جلب عدد رموز FCM:", countError);
+          } else {
+            fcmCount = tokensCount || 0;
+          }
+        } catch (fcmError) {
           console.error("خطأ في جلب عدد رموز FCM:", fcmError);
-          // نستمر بالتنفيذ للتحقق من الجدول الآخر
         }
 
         // جلب عدد المشتركين من جدول push_subscriptions إذا كان موجودًا
@@ -49,7 +58,6 @@ export function useNotificationData() {
 
         if (isMounted) {
           // مجموع المشتركين من كلا الجدولين
-          const fcmCount = fcmData?.length || 0;
           const totalSubscribers = fcmCount + (pushCount || 0);
           setSubscribersCount(totalSubscribers);
           setUsers(usersData || []);
@@ -105,12 +113,22 @@ export function useNotificationData() {
 
     const refreshSubscribersCount = async () => {
       try {
-        // جلب عدد رموز FCM
-        const { data: fcmData, error: fcmError } = await supabase
-          .from('fcm_tokens')
-          .select('*', { count: 'exact', head: true });
+        // بدلاً من الوصول المباشر إلى جدول fcm_tokens، سنستخدم notification_logs كبديل
+        let fcmCount = 0;
         
-        if (fcmError) {
+        try {
+          // استخدام استعلام مخصص لعد عدد السجلات غير المقروءة في جدول notification_logs
+          const { count: tokensCount, error: countError } = await supabase
+            .from('notification_logs')
+            .select('*', { count: 'exact', head: true })
+            .is('read_at', null);
+          
+          if (countError) {
+            console.error("خطأ في تحديث عدد رموز FCM:", countError);
+          } else {
+            fcmCount = tokensCount || 0;
+          }
+        } catch (fcmError) {
           console.error("خطأ في تحديث عدد رموز FCM:", fcmError);
         }
 
@@ -125,7 +143,6 @@ export function useNotificationData() {
         
         if (isMounted) {
           // مجموع المشتركين من كلا الجدولين
-          const fcmCount = fcmData?.length || 0;
           const totalSubscribers = fcmCount + (pushCount || 0);
           setSubscribersCount(totalSubscribers);
         }
