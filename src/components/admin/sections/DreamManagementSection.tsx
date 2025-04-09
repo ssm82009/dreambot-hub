@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Book, RefreshCw } from 'lucide-react';
 import AdminSection from '@/components/admin/AdminSection';
@@ -26,6 +25,8 @@ const DreamManagementSection = () => {
   const [totalDreams, setTotalDreams] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [userEmails, setUserEmails] = useState<Record<string, string>>({});
+  const [userNames, setUserNames] = useState<Record<string, string>>({});
   const pageSize = 10;
 
   const fetchDreamsCount = async () => {
@@ -58,19 +59,50 @@ const DreamManagementSection = () => {
       const from = (page - 1) * pageSize;
       const to = from + pageSize - 1;
 
-      const { data, error } = await supabase
+      // Fetch dreams without the join
+      const { data: dreamsData, error: dreamsError } = await supabase
         .from('dreams')
-        .select('*, users(email, full_name)')
+        .select('*')
         .range(from, to)
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Error fetching dreams:', error);
+      if (dreamsError) {
+        console.error('Error fetching dreams:', dreamsError);
         toast.error('حدث خطأ أثناء تحميل الأحلام');
         return;
       }
 
-      setDreams(data || []);
+      // Set the dreams data
+      setDreams(dreamsData || []);
+
+      // If we have dreams with user_ids, fetch the user information separately
+      const userIds = dreamsData
+        ?.map(dream => dream.user_id)
+        .filter(id => id !== null && id !== undefined) as string[];
+
+      if (userIds.length > 0) {
+        const uniqueUserIds = [...new Set(userIds)];
+        const { data: usersData, error: usersError } = await supabase
+          .from('users')
+          .select('id, email, full_name')
+          .in('id', uniqueUserIds);
+
+        if (usersError) {
+          console.error('Error fetching users:', usersError);
+        } else if (usersData) {
+          // Create lookup objects for emails and names
+          const emailLookup: Record<string, string> = {};
+          const nameLookup: Record<string, string> = {};
+          
+          usersData.forEach(user => {
+            emailLookup[user.id] = user.email;
+            nameLookup[user.id] = user.full_name || '';
+          });
+          
+          setUserEmails(emailLookup);
+          setUserNames(nameLookup);
+        }
+      }
     } catch (error) {
       console.error('Error in fetchDreams:', error);
       toast.error('حدث خطأ غير متوقع');
@@ -96,6 +128,20 @@ const DreamManagementSection = () => {
 
   const truncateText = (text: string, maxLength = 50) => {
     return text.length > maxLength ? `${text.substring(0, maxLength)}...` : text;
+  };
+
+  const getUserDisplayName = (userId: string | null) => {
+    if (!userId) return 'غير معروف';
+    
+    if (userNames[userId]) {
+      return userNames[userId];
+    }
+    
+    if (userEmails[userId]) {
+      return userEmails[userId];
+    }
+    
+    return 'غير معروف';
   };
 
   const renderPagination = () => {
@@ -225,7 +271,7 @@ const DreamManagementSection = () => {
                 {dreams.map((dream) => (
                   <TableRow key={dream.id}>
                     <TableCell>
-                      {dream.users?.full_name || dream.users?.email || 'غير معروف'}
+                      {getUserDisplayName(dream.user_id)}
                     </TableCell>
                     <TableCell>{truncateText(dream.dream_text)}</TableCell>
                     <TableCell>{formatDate(dream.created_at)}</TableCell>
