@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bell, BellOff, Loader2 } from 'lucide-react';
@@ -25,8 +24,8 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ className })
   const [openTicketsCount, setOpenTicketsCount] = useState<number>(0);
   const { isAdmin } = useAdminCheck();
   const [loading, setLoading] = useState<boolean>(false);
+  const [processingAction, setProcessingAction] = useState<boolean>(false);
 
-  // جلب عدد التذاكر المفتوحة للمشرف
   useEffect(() => {
     if (!isAdmin) return;
 
@@ -47,7 +46,6 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ className })
 
     fetchOpenTicketsCount();
 
-    // الاستماع للتغييرات في التذاكر في الوقت الفعلي
     const channel = supabase
       .channel('ticket-changes')
       .on('postgres_changes', 
@@ -67,27 +65,22 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ className })
     };
   }, [isAdmin]);
 
-  // معالج النقر على زر الإشعارات
   const handleToggleNotifications = async () => {
+    if (processingAction) return;
+
     console.log("تبديل حالة الإشعارات:", subscription ? "إلغاء الاشتراك" : "الاشتراك");
     try {
       setLoading(true);
+      setProcessingAction(true);
       
-      // التحقق من وجود اتصال بالإنترنت
       if (!navigator.onLine) {
         toast.error('لا يوجد اتصال بالإنترنت. يرجى التحقق من اتصالك والمحاولة مرة أخرى.');
         return;
       }
       
       if (subscription) {
-        const success = await unsubscribeFromNotifications();
-        if (success) {
-          toast.success('تم إلغاء تفعيل الإشعارات بنجاح');
-        } else {
-          toast.error('فشل في إلغاء تفعيل الإشعارات');
-        }
+        await unsubscribeFromNotifications();
       } else {
-        // التحقق من دعم الإشعارات
         if (!supported) {
           toast.error('متصفحك لا يدعم الإشعارات');
           return;
@@ -98,24 +91,19 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ className })
           return;
         }
         
-        const token = await subscribeToNotifications();
-        if (token) {
-          toast.success('تم تفعيل الإشعارات بنجاح');
-        } else {
-          toast.error('فشل في تفعيل الإشعارات');
-        }
+        await subscribeToNotifications();
       }
     } catch (err) {
       console.error("خطأ في تبديل حالة الإشعارات:", err);
       toast.error('حدث خطأ أثناء معالجة طلب الإشعارات');
     } finally {
       setLoading(false);
+      setTimeout(() => setProcessingAction(false), 1000);
     }
   };
 
-  // معالج النقر على شارة العدد للانتقال إلى صفحة التذاكر
   const handleBadgeClick = (e: React.MouseEvent) => {
-    e.stopPropagation(); // منع انتشار الحدث إلى زر الجرس
+    e.stopPropagation();
     navigate('/tickets');
   };
 
@@ -131,7 +119,7 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ className })
               size="icon"
               className={className}
               onClick={handleToggleNotifications}
-              disabled={subscribing || loading}
+              disabled={subscribing || loading || processingAction}
             >
               {loading ? (
                 <Loader2 className="h-5 w-5 animate-spin" />

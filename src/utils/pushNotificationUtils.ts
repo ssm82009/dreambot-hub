@@ -45,10 +45,26 @@ export async function getOrCreateFirebaseToken(messaging: any, getTokenFn: (mess
     
     console.log("تم منح إذن الإشعارات، جاري الحصول على التوكن...");
     
-    // استخدام وظيفة getToken المستقلة من Firebase v9+
-    currentToken = await getTokenFn(messaging, { 
-      vapidKey: FCM_VAPID_KEY 
-    });
+    // التحقق من التسجيل الحالي للـ Service Worker
+    try {
+      const swRegistrations = await navigator.serviceWorker.getRegistrations();
+      const fmRegistration = swRegistrations.find(reg => 
+        reg.active?.scriptURL.includes('firebase-messaging-sw.js')
+      );
+      
+      // استخدام وظيفة getToken المستقلة من Firebase v9+
+      currentToken = await getTokenFn(messaging, { 
+        vapidKey: FCM_VAPID_KEY,
+        serviceWorkerRegistration: fmRegistration
+      });
+    } catch (error) {
+      console.error("خطأ في استدعاء getToken:", error);
+      
+      // محاولة مرة أخرى بدون تمرير التسجيل
+      currentToken = await getTokenFn(messaging, { 
+        vapidKey: FCM_VAPID_KEY
+      });
+    }
     
     if (currentToken) {
       console.log("تم الحصول على التوكن:", currentToken);
@@ -71,14 +87,16 @@ export async function getOrCreateFirebaseToken(messaging: any, getTokenFn: (mess
 export function onFirebaseTokenRefresh(messaging: any): void {
   // تسجيل مستمع للتوكن المتجدد باستخدام Firebase v9+
   try {
-    const { onMessage } = require('firebase/messaging');
-    
-    // استخدام onMessage للاستماع للرسائل القادمة
-    onMessage(messaging, (payload: any) => {
-      console.log('تم استلام رسالة:', payload);
+    import('firebase/messaging').then(({ onMessage }) => {
+      // استخدام onMessage للاستماع للرسائل القادمة
+      onMessage(messaging, (payload: any) => {
+        console.log('تم استلام رسالة:', payload);
+      });
+      
+      console.log("تم تسجيل مستمع للرسائل بنجاح");
+    }).catch(error => {
+      console.error("فشل في استيراد وحدة المراسلة:", error);
     });
-    
-    console.log("تم تسجيل مستمع للرسائل بنجاح");
   } catch (error) {
     console.error("فشل في تسجيل مستمع للرسائل:", error);
   }

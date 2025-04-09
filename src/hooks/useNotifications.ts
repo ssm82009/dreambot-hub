@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useNotificationPermission } from './notifications/useNotificationPermission';
 import { initializeFirebase, registerForPushNotifications } from '@/services/firebaseService';
+import { toast } from 'sonner';
 
 /**
  * هوك إدارة الإشعارات الرئيسي
@@ -13,6 +14,7 @@ export function useNotifications() {
   const [initializing, setInitializing] = useState(true);
   const [subscribing, setSubscribing] = useState(false);
   const [initialized, setInitialized] = useState(false);
+  const [hasShownToast, setHasShownToast] = useState(false);
 
   // تهيئة Firebase عند تحميل المكون
   useEffect(() => {
@@ -82,6 +84,7 @@ export function useNotifications() {
 
     if (Notification.permission === 'denied') {
       console.error("تم رفض إذن الإشعارات");
+      toast.error("تم رفض الإشعارات من قبل المتصفح. يرجى تمكينها من الإعدادات");
       return null;
     }
     
@@ -98,11 +101,13 @@ export function useNotifications() {
 
     try {
       setSubscribing(true);
+      setHasShownToast(false); // إعادة تعيين حالة عرض الإشعارات
 
       // إذا لم يكن هناك إذن، اطلب إذن الإشعارات
       if (Notification.permission !== 'granted') {
         const permissionGranted = await requestPermission();
         if (!permissionGranted) {
+          toast.error("تم رفض الإشعارات من قبل المتصفح");
           return null;
         }
       }
@@ -114,13 +119,29 @@ export function useNotifications() {
       if (newToken) {
         console.log("تم الحصول على رمز Firebase:", newToken);
         setToken(newToken);
+        
+        if (!hasShownToast) {
+          toast.success("تم تفعيل الإشعارات بنجاح");
+          setHasShownToast(true);
+        }
       } else {
         console.error("فشل في الحصول على رمز Firebase");
+        
+        if (!hasShownToast) {
+          toast.error("فشل في تفعيل الإشعارات");
+          setHasShownToast(true);
+        }
       }
       
       return newToken;
     } catch (error) {
       console.error("خطأ في الاشتراك في الإشعارات:", error);
+      
+      if (!hasShownToast) {
+        toast.error("حدث خطأ أثناء تفعيل الإشعارات");
+        setHasShownToast(true);
+      }
+      
       return null;
     } finally {
       setSubscribing(false);
@@ -142,10 +163,12 @@ export function useNotifications() {
       localStorage.removeItem('fcm_token');
       
       setToken(null);
+      toast.success("تم إلغاء تفعيل الإشعارات بنجاح");
       
       return true;
     } catch (error) {
       console.error("خطأ في إلغاء الاشتراك من الإشعارات:", error);
+      toast.error("فشل في إلغاء تفعيل الإشعارات");
       return false;
     } finally {
       setSubscribing(false);

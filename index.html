@@ -41,11 +41,8 @@
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', async () => {
           try {
-            // أولاً، سجل firebase-messaging-sw.js
-            const fmRegistration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
-              scope: '/firebase-cloud-messaging-push-scope'
-            });
-            
+            // تسجيل firebase-messaging-sw.js أولاً
+            const fmRegistration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
             console.log('Firebase Messaging SW registered successfully:', fmRegistration.scope);
             
             // ثم سجل خدمة العامل الرئيسية

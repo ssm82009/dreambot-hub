@@ -52,12 +52,21 @@ export async function initializeFirebase() {
     
     // إرسال تكوين Firebase إلى خدمة العامل إذا كانت مسجلة
     try {
-      const registration = await navigator.serviceWorker.ready;
-      registration.active?.postMessage({
-        type: 'FIREBASE_CONFIG',
-        config: firebaseConfig
-      });
-      console.log("تم إرسال تكوين Firebase إلى خدمة العامل");
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      const fmRegistration = registrations.find(reg => 
+        reg.scope.includes('firebase-cloud-messaging-push-scope') || 
+        reg.active?.scriptURL.includes('firebase-messaging-sw.js')
+      );
+      
+      if (fmRegistration?.active) {
+        fmRegistration.active.postMessage({
+          type: 'FIREBASE_CONFIG',
+          config: firebaseConfig
+        });
+        console.log("تم إرسال تكوين Firebase إلى خدمة العامل");
+      } else {
+        console.log("خدمة العامل للإشعارات غير مسجلة بعد");
+      }
     } catch (e) {
       console.warn("لا يمكن إرسال التكوين إلى خدمة العامل:", e);
     }
@@ -80,8 +89,27 @@ export async function registerForPushNotifications(): Promise<string | null> {
   }
   
   try {
-    // استخدام استدعاء منفصل لوظيفة getToken بدلاً من استدعائها على كائن الرسائل مباشرة
+    // استخدام استدعاء منفصل لوظيفة getToken
     const { getToken } = await import('firebase/messaging');
+    
+    // التحقق من تسجيل Service Worker
+    const registrations = await navigator.serviceWorker.getRegistrations();
+    const swRegistration = registrations.find(reg => 
+      reg.active?.scriptURL.includes('firebase-messaging-sw.js')
+    );
+    
+    if (!swRegistration) {
+      console.error("Service Worker للإشعارات غير مسجل");
+      try {
+        console.log("محاولة تسجيل Service Worker يدويًا...");
+        await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+        console.log("تم تسجيل Service Worker بنجاح");
+      } catch (err) {
+        console.error("فشل في تسجيل Service Worker:", err);
+        return null;
+      }
+    }
+    
     return await getOrCreateFirebaseToken(firebaseMessaging, getToken);
   } catch (error) {
     console.error("فشل في تسجيل الإشعارات:", error);
