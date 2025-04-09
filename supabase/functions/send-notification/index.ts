@@ -2,10 +2,7 @@
 // استخدام المسار الكامل لتجنب مشاكل الاستيراد في Deno
 import { serve } from "std/http/server.ts";
 import { createClient } from "@supabase/supabase-js";
-import * as webPushModule from "web-push";
-
-// تأكد من الحصول على كائن webPush بشكل صحيح
-const webPush = webPushModule.default || webPushModule;
+import * as firebaseAdmin from "firebase-admin";
 
 // تعريف رؤوس CORS
 const corsHeaders = {
@@ -26,6 +23,30 @@ interface RequestBody {
     url?: string;
     type?: 'general' | 'ticket' | 'payment' | 'subscription';
   };
+}
+
+// تهيئة Firebase Admin SDK
+let initialized = false;
+function initializeFirebase() {
+  if (initialized) return;
+  
+  try {
+    const serviceAccount = JSON.parse(Deno.env.get('FIREBASE_SERVICE_ACCOUNT') || '{}');
+    
+    if (!serviceAccount.project_id) {
+      throw new Error('تكوين Firebase غير صالح أو مفقود');
+    }
+    
+    firebaseAdmin.initializeApp({
+      credential: firebaseAdmin.credential.cert(serviceAccount)
+    });
+    
+    initialized = true;
+    console.log("تم تهيئة Firebase Admin SDK بنجاح");
+  } catch (error) {
+    console.error("فشل في تهيئة Firebase Admin SDK:", error);
+    throw error;
+  }
 }
 
 serve(async (req: Request) => {
@@ -63,31 +84,14 @@ serve(async (req: Request) => {
     
     console.log("تم إنشاء عميل Supabase بنجاح");
 
-    // تهيئة web-push
+    // تهيئة Firebase
     try {
-      console.log("بدء تهيئة مكتبة web-push...");
-      
-      const vapidPublicKey = Deno.env.get('VAPID_PUBLIC_KEY') || '';
-      const vapidPrivateKey = Deno.env.get('VAPID_PRIVATE_KEY') || '';
-      
-      console.log("مفاتيح VAPID:", !!vapidPublicKey, !!vapidPrivateKey);
-      
-      if (!vapidPublicKey || !vapidPrivateKey) {
-        console.error("مفاتيح VAPID غير مهيأة");
-        throw new Error("مفاتيح VAPID غير مهيأة");
-      }
-      
-      console.log("جاري تعيين مفاتيح VAPID...");
-      webPush.setVapidDetails(
-        'mailto:support@example.com',
-        vapidPublicKey,
-        vapidPrivateKey
-      );
-      console.log("تم تعيين مفاتيح VAPID بنجاح");
+      console.log("بدء تهيئة Firebase Admin SDK...");
+      initializeFirebase();
     } catch (error) {
-      console.error("فشل في تهيئة مكتبة web-push:", error);
+      console.error("فشل في تهيئة Firebase Admin SDK:", error);
       return new Response(
-        JSON.stringify({ error: 'فشل في تهيئة مكتبة web-push', details: error.message }),
+        JSON.stringify({ error: 'فشل في تهيئة Firebase Admin SDK', details: error.message }),
         {
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -124,8 +128,8 @@ serve(async (req: Request) => {
       );
     }
 
-    // البحث عن المشتركين
-    let subscriptions = [];
+    // البحث عن رموز (توكنات) FCM للمستخدمين
+    let tokens: string[] = [];
 
     if (adminOnly) {
       // إرسال الإشعار للمشرفين فقط
@@ -150,15 +154,15 @@ serve(async (req: Request) => {
         const adminIds = admins.map((admin) => admin.id);
         console.log(`تم العثور على ${adminIds.length} مشرف`);
         
-        const { data, error: subError } = await supabaseAdmin
-          .from('push_subscriptions')
-          .select('*')
+        const { data, error: tokenError } = await supabaseAdmin
+          .from('fcm_tokens')
+          .select('token')
           .in('user_id', adminIds);
 
-        if (subError) {
-          console.error("خطأ في جلب اشتراكات المشرفين:", subError);
+        if (tokenError) {
+          console.error("خطأ في جلب رموز المشرفين:", tokenError);
           return new Response(
-            JSON.stringify({ error: 'خطأ في جلب اشتراكات المشرفين', details: subError.message }),
+            JSON.stringify({ error: 'خطأ في جلب رموز المشرفين', details: tokenError.message }),
             {
               status: 500,
               headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -166,21 +170,23 @@ serve(async (req: Request) => {
           );
         }
 
-        subscriptions = data || [];
-        console.log(`تم العثور على ${subscriptions.length} اشتراك للمشرفين`);
+        if (data) {
+          tokens = data.map(record => record.token);
+        }
+        console.log(`تم العثور على ${tokens.length} رمز للمشرفين`);
       }
     } else if (userId) {
       // إرسال الإشعار لمستخدم محدد
-      console.log(`جاري البحث عن اشتراكات المستخدم ${userId}...`);
-      const { data, error: subError } = await supabaseAdmin
-        .from('push_subscriptions')
-        .select('*')
+      console.log(`جاري البحث عن رموز المستخدم ${userId}...`);
+      const { data, error: tokenError } = await supabaseAdmin
+        .from('fcm_tokens')
+        .select('token')
         .eq('user_id', userId);
 
-      if (subError) {
-        console.error("خطأ في جلب اشتراكات المستخدم:", subError);
+      if (tokenError) {
+        console.error("خطأ في جلب رموز المستخدم:", tokenError);
         return new Response(
-          JSON.stringify({ error: 'خطأ في جلب اشتراكات المستخدم', details: subError.message }),
+          JSON.stringify({ error: 'خطأ في جلب رموز المستخدم', details: tokenError.message }),
           {
             status: 500,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -188,19 +194,21 @@ serve(async (req: Request) => {
         );
       }
 
-      subscriptions = data || [];
-      console.log(`تم العثور على ${subscriptions.length} اشتراك للمستخدم`);
+      if (data) {
+        tokens = data.map(record => record.token);
+      }
+      console.log(`تم العثور على ${tokens.length} رمز للمستخدم`);
     } else if (allUsers) {
       // إرسال الإشعار لجميع المستخدمين
-      console.log("جاري البحث عن جميع الاشتراكات...");
-      const { data, error: subError } = await supabaseAdmin
-        .from('push_subscriptions')
-        .select('*');
+      console.log("جاري البحث عن جميع الرموز...");
+      const { data, error: tokenError } = await supabaseAdmin
+        .from('fcm_tokens')
+        .select('token');
 
-      if (subError) {
-        console.error("خطأ في جلب جميع الاشتراكات:", subError);
+      if (tokenError) {
+        console.error("خطأ في جلب جميع الرموز:", tokenError);
         return new Response(
-          JSON.stringify({ error: 'خطأ في جلب جميع الاشتراكات', details: subError.message }),
+          JSON.stringify({ error: 'خطأ في جلب جميع الرموز', details: tokenError.message }),
           {
             status: 500,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -208,8 +216,10 @@ serve(async (req: Request) => {
         );
       }
 
-      subscriptions = data || [];
-      console.log(`تم العثور على ${subscriptions.length} اشتراك إجمالي`);
+      if (data) {
+        tokens = data.map(record => record.token);
+      }
+      console.log(`تم العثور على ${tokens.length} رمز إجمالي`);
     } else {
       console.error("لم يتم تحديد المستخدمين المستهدفين");
       return new Response(
@@ -221,65 +231,44 @@ serve(async (req: Request) => {
       );
     }
 
-    // إذا لم يوجد مشتركين، لا يوجد داعي للمتابعة
-    if (!subscriptions.length) {
-      console.log("لا يوجد مشتركين لإرسال الإشعارات إليهم");
+    // إذا لم يوجد رموز (توكنات)، لا يوجد داعي للمتابعة
+    if (tokens.length === 0) {
+      console.log("لا يوجد رموز لإرسال الإشعارات إليها");
       return new Response(
-        JSON.stringify({ success: true, message: 'لا يوجد مشتركين', sentCount: 0 }),
+        JSON.stringify({ success: true, message: 'لا يوجد رموز مستهدفة', sentCount: 0 }),
         {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         }
       );
     }
 
-    // إرسال الإشعار لكل مشترك
-    console.log(`محاولة إرسال الإشعارات إلى ${subscriptions.length} مشترك...`);
+    // إعداد رسالة الإشعار
+    const message = {
+      notification: {
+        title: notification.title,
+        body: notification.body
+      },
+      data: {
+        url: notification.url || '/',
+        type: notification.type || 'general'
+      },
+      tokens: tokens
+    };
     
-    const pushPromises = subscriptions.map(async (subscription) => {
-      try {
-        // تحليل البيانات بشكل آمن
-        let parsedSubscription;
-        try {
-          parsedSubscription = JSON.parse(subscription.auth);
-          console.log("تم تحليل بيانات الاشتراك للمستخدم:", subscription.id);
-          
-          // التحقق من أن البيانات تحتوي على الحقول المطلوبة
-          if (!parsedSubscription.endpoint || !parsedSubscription.keys) {
-            console.error(`اشتراك غير صالح للمستخدم ${subscription.id}, البيانات:`, JSON.stringify(parsedSubscription));
-            return false;
-          }
-        } catch (error) {
-          console.error(`خطأ في تحليل بيانات الاشتراك للمستخدم ${subscription.id}:`, error);
-          return false;
-        }
-        
-        const pushPayload = JSON.stringify({
-          title: notification.title,
-          body: notification.body,
-          url: notification.url || '/',
-          type: notification.type || 'general'
-        });
-
-        console.log(`محاولة إرسال إشعار للمشترك ${subscription.id} بالبيانات:`, pushPayload);
-
-        // إرسال الإشعار باستخدام web-push
-        try {
-          await webPush.sendNotification(
-            parsedSubscription,
-            pushPayload
-          );
-          console.log(`تم إرسال الإشعار بنجاح للمشترك ${subscription.id}`);
-        } catch (pushError) {
-          console.error(`خطأ في إرسال الإشعار للمشترك ${subscription.id}:`, pushError);
-          return false;
-        }
-
-        // تسجيل الإشعار في قاعدة البيانات
+    console.log(`محاولة إرسال الإشعارات إلى ${tokens.length} رمز...`);
+    
+    try {
+      // إرسال الإشعار باستخدام Firebase
+      const response = await firebaseAdmin.messaging().sendMulticast(message);
+      console.log(`تم إرسال الإشعار بنجاح: ${response.successCount} نجاح، ${response.failureCount} فشل`);
+      
+      // تسجيل الإشعارات في قاعدة البيانات
+      if (userId) {
         try {
           await supabaseAdmin
             .from('notification_logs')
             .insert({
-              user_id: subscription.user_id,
+              user_id: userId,
               title: notification.title,
               body: notification.body,
               url: notification.url,
@@ -290,29 +279,28 @@ serve(async (req: Request) => {
           console.error(`خطأ في تسجيل الإشعار في قاعدة البيانات:`, logError);
           // لا نريد أن نفشل العملية برمتها إذا فشل التسجيل، لذلك نستمر
         }
-
-        return true;
-      } catch (error) {
-        console.error(`خطأ في معالجة الإشعار للمشترك ${subscription.id}:`, error);
-        return false;
       }
-    });
-
-    // انتظار إكمال جميع عمليات الإرسال
-    const results = await Promise.all(pushPromises);
-    const successCount = results.filter(Boolean).length;
-
-    console.log(`تم إرسال ${successCount} من ${subscriptions.length} إشعارات بنجاح`);
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message: `تم إرسال ${successCount} من ${subscriptions.length} إشعارات بنجاح`,
-        sentCount: successCount
-      }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
-    );
+      
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: `تم إرسال ${response.successCount} من ${tokens.length} إشعارات بنجاح`,
+          sentCount: response.successCount
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
+    } catch (error) {
+      console.error('خطأ في إرسال الإشعارات عبر Firebase:', error);
+      return new Response(
+        JSON.stringify({ error: 'خطأ في إرسال الإشعارات', details: error.message }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
+    }
   } catch (error) {
     console.error('خطأ في معالجة طلب الإشعار:', error);
     

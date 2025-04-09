@@ -106,7 +106,7 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// معالجة الإشعارات Push
+// استقبال رسائل Firebase Cloud Messaging
 self.addEventListener('push', (event) => {
   console.log('Service Worker: تم استلام إشعار Push', event);
   
@@ -130,24 +130,25 @@ self.addEventListener('push', (event) => {
       console.log('Service Worker: نص الإشعار البسيط', event.data.text());
     }
     
-    // تكوين خيارات الإشعار
-    const options = {
-      body: data.body || 'تم استلام إشعار جديد',
+    // استخراج البيانات من الإشعار
+    const notificationTitle = data.notification?.title || 'تأويل';
+    const notificationOptions = {
+      body: data.notification?.body || 'تم استلام إشعار جديد',
       icon: '/android-chrome-192x192.png',
       badge: '/favicon-32x32.png',
       dir: 'rtl',
       lang: 'ar',
       vibrate: [100, 50, 100],
       data: {
-        url: data.url || '/',
-        type: data.type || 'general'
+        url: data.data?.url || '/',
+        type: data.data?.type || 'general'
       },
       actions: []
     };
     
     // إضافة أزرار تفاعلية بناءً على نوع الإشعار
-    if (data.type === 'ticket') {
-      options.actions = [
+    if (data.data?.type === 'ticket') {
+      notificationOptions.actions = [
         {
           action: 'view',
           title: 'عرض التذكرة'
@@ -157,15 +158,15 @@ self.addEventListener('push', (event) => {
           title: 'إغلاق'
         }
       ];
-    } else if (data.type === 'payment') {
-      options.actions = [
+    } else if (data.data?.type === 'payment') {
+      notificationOptions.actions = [
         {
           action: 'view',
           title: 'عرض التفاصيل'
         }
       ];
-    } else if (data.type === 'subscription') {
-      options.actions = [
+    } else if (data.data?.type === 'subscription') {
+      notificationOptions.actions = [
         {
           action: 'renew',
           title: 'تجديد الاشتراك'
@@ -174,9 +175,9 @@ self.addEventListener('push', (event) => {
     }
     
     // إظهار الإشعار
-    console.log('Service Worker: عرض الإشعار', data.title, options);
+    console.log('Service Worker: عرض الإشعار', notificationTitle, notificationOptions);
     event.waitUntil(
-      self.registration.showNotification(data.title || 'تأويل', options)
+      self.registration.showNotification(notificationTitle, notificationOptions)
     );
     
   } catch (error) {
@@ -232,6 +233,11 @@ self.addEventListener('notificationclick', (event) => {
     // في حالة وجود خطأ، فتح الصفحة الرئيسية
     event.waitUntil(clients.openWindow('/'));
   }
+});
+
+// معالجة إشعارات Firebase
+self.addEventListener('firebase-messaging-sw-ready', () => {
+  console.log('Service Worker: Firebase Messaging جاهز');
 });
 
 // استقبال الرسائل من صفحات التطبيق
