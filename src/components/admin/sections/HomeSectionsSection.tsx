@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { LayoutDashboard, EditIcon, Palette } from 'lucide-react';
 import AdminSection from '@/components/admin/AdminSection';
@@ -45,7 +46,10 @@ const HomeSectionsSection = () => {
   };
 
   // Save changes to database
-  const saveChanges = async () => {
+  const saveChanges = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    // منع السلوك الافتراضي للزر لمنع إعادة تحميل الصفحة
+    e.preventDefault();
+
     setDbLoading(true);
     try {
       setHomeSectionsForm(sections);
