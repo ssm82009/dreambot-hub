@@ -39,7 +39,7 @@ export const AdminProvider: React.FC<AdminProviderProps> = ({ children }) => {
   const [paymentSettingsForm, setPaymentSettingsForm] = useState(initialPaymentSettings);
   const [themeSettingsForm, setThemeSettingsForm] = useState(initialThemeSettings);
   const [seoSettingsForm, setSeoSettingsForm] = useState(initialSeoSettings);
-  const [homeSectionsForm, setHomeSectionsForm] = useState(initialHomeSections);
+  const [homeSectionsForm, setHomeSectionsForm] = useState<typeof initialHomeSections>(initialHomeSections);
   
   // UI state
   const [activeSections, setActiveSections] = useState<ActiveSections>(initialActiveSections);
@@ -92,9 +92,7 @@ export const AdminProvider: React.FC<AdminProviderProps> = ({ children }) => {
         seoSettingsForm,
         setSeoSettingsForm,
         homeSectionsForm,
-        setHomeSectionsForm: (settings) => {
-          setHomeSectionsForm(prev => ({ ...prev, ...settings }));
-        },
+        setHomeSectionsForm,
         activeSections,
         setActiveSections: (sections) => {
           setActiveSections(prev => ({ ...prev, ...sections }));

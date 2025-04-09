@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { LayoutDashboard, EditIcon, Palette } from 'lucide-react';
 import AdminSection from '@/components/admin/AdminSection';
@@ -16,8 +15,7 @@ import NotificationHeader from '@/components/admin/notifications/NotificationHea
 
 const HomeSectionsSection = () => {
   const { homeSectionsForm, setHomeSectionsForm, activeSections, toggleSection, setDbLoading } = useAdmin();
-  const [sections, setSections] = useState<HomeSectionItem[]>(homeSectionsForm);
-  const [editingSection, setEditingSection] = useState<string | null>(null);
+  const [sections, setSections] = useState<HomeSectionItem[]>(homeSectionsForm || []);
 
   // Handle section order change
   const moveSection = (id: string, direction: 'up' | 'down') => {
@@ -52,6 +50,7 @@ const HomeSectionsSection = () => {
 
     setDbLoading(true);
     try {
+      // Pass the array directly rather than spreading it
       setHomeSectionsForm(sections);
       
       // Convert sections to a format compatible with Json type
@@ -414,6 +413,24 @@ const HomeSectionsSection = () => {
       </div>
     );
   };
+
+  // Check if sections is an array before mapping over it
+  if (!Array.isArray(sections)) {
+    console.error("Sections is not an array:", sections);
+    return (
+      <AdminSection 
+        title="أقسام الصفحة الرئيسية" 
+        description="ترتيب وإظهار/إخفاء وتعديل محتوى وخلفيات أقسام الصفحة الرئيسية"
+        icon={LayoutDashboard}
+        isOpen={activeSections.homeSections}
+        onToggle={() => toggleSection('homeSections')}
+      >
+        <div className="p-4 text-center">
+          <p className="text-red-500">خطأ في تحميل بيانات الأقسام. يرجى تحديث الصفحة.</p>
+        </div>
+      </AdminSection>
+    );
+  }
 
   return (
     <AdminSection 
