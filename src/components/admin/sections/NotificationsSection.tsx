@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { sendNotificationToAdmin } from '@/services/notificationService';
+import { sendNotificationToAdmin, sendNotificationToAllUsers, sendNotification } from '@/services/notificationService';
 import { Loader2, Bell, Send } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -54,9 +54,6 @@ const NotificationsSection: React.FC = () => {
     const fetchSubscribersCount = async () => {
       try {
         setLoading(true);
-        
-        // استدعاء وظيفة Edge Function لإنشاء وظيفة العد
-        await supabase.functions.invoke('create-rpc');
         
         // استدعاء العدد مباشرة من قاعدة البيانات
         const { data: countData, error: countError } = await supabase.rpc('count_push_subscriptions');
@@ -113,22 +110,12 @@ const NotificationsSection: React.FC = () => {
         result = await sendNotificationToAdmin(notification);
         message = 'تم إرسال الإشعار للمشرفين بنجاح';
       } else if (targetType === 'specificUser' && userId) {
-        // استدعاء وظيفة Edge Function لإرسال إشعار لمستخدم محدد
-        result = await supabase.functions.invoke('send-notification', {
-          body: {
-            userId,
-            notification
-          }
-        });
+        // إرسال إشعار لمستخدم محدد
+        result = await sendNotification(userId, notification);
         message = 'تم إرسال الإشعار للمستخدم بنجاح';
       } else if (targetType === 'all') {
-        // استدعاء وظيفة Edge Function لإرسال إشعار لجميع المستخدمين
-        result = await supabase.functions.invoke('send-notification', {
-          body: {
-            allUsers: true,
-            notification
-          }
-        });
+        // إرسال إشعار لجميع المستخدمين
+        result = await sendNotificationToAllUsers(notification);
         message = 'تم إرسال الإشعار لجميع المستخدمين بنجاح';
       }
 
@@ -185,7 +172,7 @@ const NotificationsSection: React.FC = () => {
         <Card className="col-span-1 md:col-span-2">
           <CardHeader>
             <CardTitle>إرسال إشعار جديد</CardTitle>
-            <CardDescription>أرسل إشعارات للمستخدمين والمشرفين</CardDescription>
+            <CardDescription>أرسل إشعارات للمست��دمين والمشرفين</CardDescription>
           </CardHeader>
           <CardContent>
             <Form {...form}>

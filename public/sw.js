@@ -1,6 +1,6 @@
 
 // إصدار ذاكرة التخزين المؤقت - قم بتغييره عند تحديث ملفات التطبيق الرئيسية
-const CACHE_NAME = 'taweel-cache-v3';
+const CACHE_NAME = 'taweel-cache-v4';
 
 // قائمة الموارد التي سيتم تخزينها مؤقتًا
 const urlsToCache = [
@@ -129,7 +129,7 @@ self.addEventListener('fetch', (event) => {
   );
 });
 
-// معالجة الإشعارات Push
+// معالجة الإشعارات Push من Firebase
 self.addEventListener('push', (event) => {
   console.log('Service Worker: تم استلام إشعار Push');
   
@@ -149,10 +149,44 @@ self.addEventListener('push', (event) => {
       };
     }
     
+    const title = data.notification?.title || data.title || 'تأويل';
+    const body = data.notification?.body || data.body || 'تم استلام إشعار جديد';
+    const icon = data.notification?.icon || '/android-chrome-192x192.png';
+    const badge = data.notification?.badge || '/favicon-32x32.png';
+    
+    const options = {
+      body: body,
+      icon: icon,
+      badge: badge,
+      dir: 'rtl',
+      lang: 'ar',
+      vibrate: [100, 50, 100],
+      data: {
+        url: data.data?.url || data.notification?.click_action || '/',
+        type: data.data?.type || 'general'
+      }
+    };
+    
+    event.waitUntil(
+      self.registration.showNotification(title, options)
+    );
+    
+  } catch (error) {
+    console.error('Service Worker: خطأ في معالجة إشعار Push', error);
+  }
+});
+
+// معالجة إشعارات Firebase بتنسيق آخر
+self.addEventListener('message', (event) => {
+  console.log('Service Worker: تم استلام رسالة', event.data);
+  
+  if (event.data && event.data.type === 'FIREBASE_NOTIFICATION') {
+    const data = event.data.notification;
+    
     const options = {
       body: data.body || 'تم استلام إشعار جديد',
-      icon: '/android-chrome-192x192.png',
-      badge: '/favicon-32x32.png',
+      icon: data.icon || '/android-chrome-192x192.png',
+      badge: data.badge || '/favicon-32x32.png',
       dir: 'rtl',
       lang: 'ar',
       vibrate: [100, 50, 100],
@@ -162,12 +196,9 @@ self.addEventListener('push', (event) => {
       }
     };
     
-    event.waitUntil(
-      self.registration.showNotification(data.title || 'تأويل', options)
-    );
-    
-  } catch (error) {
-    console.error('Service Worker: خطأ في معالجة إشعار Push', error);
+    self.registration.showNotification(data.title || 'تأويل', options);
+  } else if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
   }
 });
 
@@ -193,11 +224,4 @@ self.addEventListener('notificationclick', (event) => {
       }
     })
   );
-});
-
-// استقبال الرسائل من صفحات التطبيق
-self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'SKIP_WAITING') {
-    self.skipWaiting();
-  }
 });

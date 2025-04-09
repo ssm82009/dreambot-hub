@@ -1,31 +1,26 @@
 
 import { supabase } from '@/integrations/supabase/client';
+import { 
+  initializeFirebaseKey, 
+  sendNotificationToUser, 
+  sendNotificationToAdmin,
+  sendNotificationToAllUsers,
+  type NotificationPayload 
+} from './firebaseNotificationService';
 
-interface NotificationPayload {
-  title: string;
-  body: string;
-  url?: string;
-  type?: 'general' | 'ticket' | 'payment' | 'subscription';
-}
+// استدعاء وظيفة تهيئة مفتاح Firebase مباشرة
+initializeFirebaseKey().catch(err => console.error('فشل تهيئة مفتاح Firebase:', err));
 
 interface PushSubscriptionData {
   endpoint: string;
   auth: string; // JSON string of subscription
 }
 
-// استدعاء وظيفة Edge Function لإرسال الإشعار
+// إرسال إشعار لمستخدم محدد
 export async function sendNotification(userId: string, payload: NotificationPayload) {
   try {
-    // استدعاء وظيفة Edge Function لإرسال الإشعار
-    const { data, error } = await supabase.functions.invoke('send-notification', {
-      body: {
-        userId,
-        notification: payload
-      }
-    });
-
-    if (error) throw error;
-    return data;
+    // استخدام خدمة Firebase مباشرة
+    return await sendNotificationToUser(userId, payload);
   } catch (error) {
     console.error('خطأ في إرسال الإشعار:', error);
     throw error;
@@ -35,16 +30,8 @@ export async function sendNotification(userId: string, payload: NotificationPayl
 // إرسال إشعار لجميع المشرفين
 export async function sendNotificationToAdmin(payload: NotificationPayload) {
   try {
-    // استدعاء وظيفة Edge Function لإرسال الإشعار لجميع المشرفين
-    const { data, error } = await supabase.functions.invoke('send-notification', {
-      body: {
-        adminOnly: true,
-        notification: payload
-      }
-    });
-
-    if (error) throw error;
-    return data;
+    // استخدام خدمة Firebase مباشرة
+    return await sendNotificationToAdmin(payload);
   } catch (error) {
     console.error('خطأ في إرسال الإشعار للمشرفين:', error);
     throw error;
@@ -57,13 +44,14 @@ export async function storeSubscription(subscription: PushSubscription) {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user) throw new Error('المستخدم غير مسجل دخول');
 
-    const { data, error } = await supabase.functions.invoke('store-subscription', {
-      body: {
-        userId: session.user.id,
+    // تخزين الاشتراك مباشرة في قاعدة البيانات
+    const { data, error } = await supabase
+      .from('push_subscriptions')
+      .insert({
+        user_id: session.user.id,
         endpoint: subscription.endpoint,
         auth: JSON.stringify(subscription)
-      }
-    });
+      });
 
     if (error) throw error;
     return data;
@@ -79,17 +67,28 @@ export async function removeSubscription(endpoint: string) {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user) throw new Error('المستخدم غير مسجل دخول');
 
-    const { data, error } = await supabase.functions.invoke('remove-subscription', {
-      body: {
-        userId: session.user.id,
-        endpoint
-      }
-    });
+    // حذف الاشتراك مباشرة من قاعدة البيانات
+    const { data, error } = await supabase
+      .from('push_subscriptions')
+      .delete()
+      .eq('user_id', session.user.id)
+      .eq('endpoint', endpoint);
 
     if (error) throw error;
     return data;
   } catch (error) {
     console.error('خطأ في حذف اشتراك الإشعارات:', error);
+    throw error;
+  }
+}
+
+// إرسال إشعار لجميع المستخدمين
+export async function sendNotificationToAllUsers(payload: NotificationPayload) {
+  try {
+    // استخدام خدمة Firebase مباشرة
+    return await sendNotificationToAllUsers(payload);
+  } catch (error) {
+    console.error('خطأ في إرسال الإشعار لجميع المستخدمين:', error);
     throw error;
   }
 }
