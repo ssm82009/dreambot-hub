@@ -107,3 +107,8 @@
 .gradient-text {
   @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary;
 }
+
+/* Ensure admin sidebar doesn't overlap with footer */
+.flex-grow.flex {
+  min-height: calc(100vh - var(--footer-height, 220px) - var(--navbar-height, 64px));
+}
