@@ -1,3 +1,4 @@
+
 // استخدام المسار الكامل لتجنب مشاكل الاستيراد في Deno
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import * as firebaseAdmin from "npm:firebase-admin";
@@ -51,7 +52,7 @@ function initializeFirebase() {
 serve(async (req: Request) => {
   console.log("وظيفة send-notification تم استدعاؤها، طريقة الطلب:", req.method);
   
-  // معالجة طلبات CORS
+  // معالجة طلبات CORS - هذا هو التعديل الرئيسي
   if (req.method === 'OPTIONS') {
     console.log("تمت معالجة طلب OPTIONS لـ CORS");
     return new Response(null, { 
@@ -61,6 +62,9 @@ serve(async (req: Request) => {
   }
 
   try {
+    // التأكد من إضافة رؤوس CORS إلى جميع الاستجابات
+    const headers = { ...corsHeaders, 'Content-Type': 'application/json' };
+    
     // فحص المصادقة
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
@@ -69,7 +73,7 @@ serve(async (req: Request) => {
         JSON.stringify({ error: 'غير مصرح. ترويسة Authorization مطلوبة.' }),
         {
           status: 401,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          headers: headers,
         }
       );
     }
@@ -93,7 +97,7 @@ serve(async (req: Request) => {
         JSON.stringify({ error: 'فشل في تهيئة Firebase Admin SDK', details: error.message }),
         {
           status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          headers: headers,
         }
       );
     }
@@ -109,7 +113,7 @@ serve(async (req: Request) => {
         JSON.stringify({ error: 'بيانات JSON غير صالحة' }),
         {
           status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          headers: headers,
         }
       );
     }
@@ -122,7 +126,7 @@ serve(async (req: Request) => {
         JSON.stringify({ error: 'يجب توفير عنوان ومحتوى للإشعار' }),
         {
           status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          headers: headers,
         }
       );
     }
@@ -144,7 +148,7 @@ serve(async (req: Request) => {
           JSON.stringify({ error: 'خطأ في جلب المشرفين', details: adminError.message }),
           {
             status: 500,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            headers: headers,
           }
         );
       }
@@ -164,7 +168,7 @@ serve(async (req: Request) => {
             JSON.stringify({ error: 'خطأ في جلب رموز المشرفين', details: tokenError.message }),
             {
               status: 500,
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              headers: headers,
             }
           );
         }
@@ -188,7 +192,7 @@ serve(async (req: Request) => {
           JSON.stringify({ error: 'خطأ في جلب رموز المستخدم', details: tokenError.message }),
           {
             status: 500,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            headers: headers,
           }
         );
       }
@@ -210,7 +214,7 @@ serve(async (req: Request) => {
           JSON.stringify({ error: 'خطأ في جلب جميع الرموز', details: tokenError.message }),
           {
             status: 500,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            headers: headers,
           }
         );
       }
@@ -225,7 +229,7 @@ serve(async (req: Request) => {
         JSON.stringify({ error: 'يجب تحديد المستخدم أو مجموعة المستخدمين المستهيئة' }),
         {
           status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          headers: headers,
         }
       );
     }
@@ -236,7 +240,7 @@ serve(async (req: Request) => {
       return new Response(
         JSON.stringify({ success: true, message: 'لا يوجد رموز مستهدفة', sentCount: 0 }),
         {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          headers: headers,
         }
       );
     }
@@ -287,7 +291,7 @@ serve(async (req: Request) => {
           sentCount: response.successCount
         }),
         {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          headers: headers,
         }
       );
     } catch (error) {
@@ -296,7 +300,7 @@ serve(async (req: Request) => {
         JSON.stringify({ error: 'خطأ في إرسال الإشعارات', details: error.message }),
         {
           status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          headers: headers,
         }
       );
     }
