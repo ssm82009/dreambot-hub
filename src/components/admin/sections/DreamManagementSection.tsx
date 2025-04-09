@@ -215,7 +215,7 @@ const DreamManagementSection = () => {
   };
 
   const viewDream = (dreamId: string) => {
-    navigate(`/dream/${dreamId}`);
+    navigate(`/dream/${dreamId}`, { state: { from: 'admin' } });
   };
 
   return (

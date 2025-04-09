@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   Card, 
   CardContent, 
@@ -24,11 +24,24 @@ interface DreamDetailsContentProps {
 
 const DreamDetailsContent: React.FC<DreamDetailsContentProps> = ({ dreamId }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [dream, setDream] = useState<Dream | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthorized, setIsAuthorized] = useState(false);
+  const [isFromAdmin, setIsFromAdmin] = useState(false);
   
   useEffect(() => {
+    // تحديد ما إذا كان المستخدم قادمًا من لوحة المشرف
+    const checkIfFromAdmin = () => {
+      const referrer = document.referrer;
+      const adminPath = location.state?.from === 'admin';
+      const adminReferrer = referrer.includes('/admin');
+      
+      setIsFromAdmin(adminPath || adminReferrer);
+    };
+
+    checkIfFromAdmin();
+    
     const fetchDreamDetails = async () => {
       if (!dreamId) {
         setIsLoading(false);
@@ -68,8 +81,16 @@ const DreamDetailsContent: React.FC<DreamDetailsContentProps> = ({ dreamId }) =>
           return;
         }
         
-        // التحقق من أن الحلم ينتمي للمستخدم الحالي
-        if (data.user_id !== userId) {
+        // التحقق من أن الحلم ينتمي للمستخدم الحالي أو أن المستخدم مشرف
+        const { data: userData } = await supabase
+          .from('users')
+          .select('role')
+          .eq('id', userId)
+          .maybeSingle();
+        
+        const isAdmin = userData?.role === 'admin';
+        
+        if (data.user_id !== userId && !isAdmin) {
           setIsAuthorized(false);
           toast.error("لا يمكنك عرض تفاصيل هذا الحلم");
           navigate('/profile');
@@ -87,10 +108,14 @@ const DreamDetailsContent: React.FC<DreamDetailsContentProps> = ({ dreamId }) =>
     };
     
     fetchDreamDetails();
-  }, [dreamId, navigate]);
+  }, [dreamId, navigate, location.state]);
   
   const handleBack = () => {
-    navigate('/profile');
+    if (isFromAdmin) {
+      navigate('/admin', { state: { activeSection: 'dreams' } });
+    } else {
+      navigate('/profile');
+    }
   };
   
   if (isLoading) {
@@ -119,7 +144,7 @@ const DreamDetailsContent: React.FC<DreamDetailsContentProps> = ({ dreamId }) =>
             قد يكون الحلم غير موجود أو أنك لا تملك صلاحية الوصول إليه.
           </p>
           <Button className="mt-4" onClick={handleBack}>
-            العودة للملف الشخصي
+            {isFromAdmin ? 'العودة للوحة المشرف' : 'العودة للملف الشخصي'}
           </Button>
         </CardContent>
       </Card>
@@ -139,7 +164,7 @@ const DreamDetailsContent: React.FC<DreamDetailsContentProps> = ({ dreamId }) =>
           </div>
           <Button variant="outline" size="sm" onClick={handleBack}>
             <ArrowRight className="h-4 w-4 ml-1" />
-            العودة
+            {isFromAdmin ? 'العودة للوحة المشرف' : 'العودة'}
           </Button>
         </div>
       </CardHeader>
@@ -191,7 +216,7 @@ const DreamDetailsContent: React.FC<DreamDetailsContentProps> = ({ dreamId }) =>
       <CardFooter className="border-t p-6">
         <div className="w-full flex justify-between">
           <Button variant="outline" onClick={handleBack}>
-            العودة للملف الشخصي
+            {isFromAdmin ? 'العودة للوحة المشرف' : 'العودة للملف الشخصي'}
           </Button>
           {/* يمكن إضافة أزرار إضافية هنا مثل زر الطباعة أو المشاركة */}
         </div>
