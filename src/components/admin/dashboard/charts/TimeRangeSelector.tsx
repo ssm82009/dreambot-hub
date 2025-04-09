@@ -12,7 +12,7 @@ const TimeRangeSelector: React.FC<TimeRangeSelectorProps> = ({ timeRange, onTime
   return (
     <Card className="p-1">
       <CardContent className="p-0">
-        <Tabs defaultValue="week" value={timeRange} onValueChange={(value) => onTimeRangeChange(value as 'week' | 'month' | 'year')}>
+        <Tabs defaultValue={timeRange} value={timeRange} onValueChange={(value) => onTimeRangeChange(value as 'week' | 'month' | 'year')}>
           <TabsList>
             <TabsTrigger value="week">أسبوع</TabsTrigger>
             <TabsTrigger value="month">شهر</TabsTrigger>

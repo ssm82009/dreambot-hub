@@ -43,33 +43,36 @@ export const useFetchDashboardStats = () => {
       }
       setActiveSubscriptions(activeCount);
 
-      // جلب عدد الأحلام بناءً على حقل ID بشكل صريح ومباشر
-      console.log("Fetching total dreams count using ID field...");
-      const { count: dreamsCount, error: dreamsError } = await supabase
+      // تحسين طريقة جلب عدد الأحلام باستخدام استعلام أكثر دقة
+      console.log("Fetching accurate dreams count...");
+      // استخدام استعلام مباشر بواسطة حساب عدد السجلات بناءً على حقل id
+      const { count: exactDreamsCount, error: countError } = await supabase
         .from('dreams')
         .select('id', { count: 'exact', head: true });
 
-      if (dreamsError) {
-        throw new Error(`Error fetching dreams count: ${dreamsError.message}`);
+      if (countError) {
+        throw new Error(`Error in exact dreams count: ${countError.message}`);
       }
+
+      // طباعة العدد الدقيق للأحلام
+      console.log("Exact dreams count from database:", exactDreamsCount);
       
-      // محاولة بديلة لجلب عدد السجلات
-      if (dreamsCount === null) {
-        console.log("Count returned null, trying alternative method...");
+      // إذا كان هناك مشكلة في الحصول على العدد، نستخدم طريقة بديلة
+      if (exactDreamsCount === null) {
+        console.log("Count returned null, using alternative counting method");
         const { data: allDreams, error: allDreamsError } = await supabase
           .from('dreams')
           .select('id');
         
         if (allDreamsError) {
-          throw new Error(`Error fetching all dreams: ${allDreamsError.message}`);
+          throw new Error(`Error in alternative dreams count: ${allDreamsError.message}`);
         }
         
-        console.log("Alternative method: Total dreams count:", allDreams?.length);
-        setTotalDreams(allDreams?.length || 0);
+        const manualCount = allDreams?.length || 0;
+        console.log("Manual dreams count:", manualCount);
+        setTotalDreams(manualCount);
       } else {
-        // طباعة العدد المسترجع للتحقق
-        console.log("Total dreams count:", dreamsCount);
-        setTotalDreams(dreamsCount);
+        setTotalDreams(exactDreamsCount);
       }
 
       // Fetch total tickets
