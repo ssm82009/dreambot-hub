@@ -19,13 +19,23 @@ export function useNotificationData() {
         setLoading(true);
         setError(null);
 
-        // جلب عدد المشتركين في الإشعارات
-        const { count: subscribersCount, error: subscribersError } = await supabase
+        // جلب عدد المشتركين في الإشعارات (من جدول fcm_tokens)
+        const { count: fcmCount, error: fcmError } = await supabase
+          .from('fcm_tokens')
+          .select('*', { count: 'exact', head: true });
+
+        if (fcmError) {
+          console.error("خطأ في جلب عدد رموز FCM:", fcmError);
+          // نستمر بالتنفيذ للتحقق من الجدول الآخر
+        }
+
+        // جلب عدد المشتركين من جدول push_subscriptions إذا كان موجودًا
+        const { count: pushCount, error: pushError } = await supabase
           .from('push_subscriptions')
           .select('*', { count: 'exact', head: true });
 
-        if (subscribersError) {
-          throw subscribersError;
+        if (pushError && pushError.code !== 'PGRST116') { // PGRST116: الجدول غير موجود
+          console.error("خطأ في جلب عدد اشتراكات Push:", pushError);
         }
 
         // جلب قائمة المستخدمين لإرسال الإشعارات لهم
@@ -38,7 +48,9 @@ export function useNotificationData() {
         }
 
         if (isMounted) {
-          setSubscribersCount(subscribersCount || 0);
+          // مجموع المشتركين من كلا الجدولين
+          const totalSubscribers = (fcmCount || 0) + (pushCount || 0);
+          setSubscribersCount(totalSubscribers);
           setUsers(usersData || []);
           setLoading(false);
         }
@@ -62,14 +74,14 @@ export function useNotificationData() {
           supabase.removeChannel(realtimeChannel);
         }
 
-        // إنشاء اشتراك جديد لمراقبة التغييرات في جدول الاشتراكات
+        // إنشاء اشتراك جديد لمراقبة التغييرات في جدول رموز FCM
         realtimeChannel = supabase
-          .channel('push-subscriptions-changes')
+          .channel('fcm-tokens-changes')
           .on('postgres_changes', 
             { 
               event: '*', 
               schema: 'public', 
-              table: 'push_subscriptions' 
+              table: 'fcm_tokens' 
             }, 
             () => {
               // تحديث العدد عند حدوث أي تغيير
@@ -93,14 +105,28 @@ export function useNotificationData() {
 
     const refreshSubscribersCount = async () => {
       try {
-        const { count, error: countError } = await supabase
-          .from('push_subscriptions')
+        // جلب عدد رموز FCM
+        const { count: fcmCount, error: fcmError } = await supabase
+          .from('fcm_tokens')
           .select('*', { count: 'exact', head: true });
         
-        if (countError) throw countError;
+        if (fcmError) {
+          console.error("خطأ في تحديث عدد رموز FCM:", fcmError);
+        }
+
+        // جلب عدد اشتراكات Push
+        const { count: pushCount, error: pushError } = await supabase
+          .from('push_subscriptions')
+          .select('*', { count: 'exact', head: true });
+
+        if (pushError && pushError.code !== 'PGRST116') {
+          console.error("خطأ في تحديث عدد اشتراكات Push:", pushError);
+        }
         
         if (isMounted) {
-          setSubscribersCount(count || 0);
+          // مجموع المشتركين من كلا الجدولين
+          const totalSubscribers = (fcmCount || 0) + (pushCount || 0);
+          setSubscribersCount(totalSubscribers);
         }
       } catch (err) {
         console.error('Error refreshing subscribers count:', err);

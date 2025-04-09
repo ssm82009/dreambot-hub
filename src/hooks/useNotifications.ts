@@ -12,14 +12,26 @@ export function useNotifications() {
   const [token, setToken] = useState<string | null>(null);
   const [initializing, setInitializing] = useState(true);
   const [subscribing, setSubscribing] = useState(false);
+  const [initialized, setInitialized] = useState(false);
 
   // تهيئة Firebase عند تحميل المكون
   useEffect(() => {
     async function init() {
       try {
-        const initialized = await initializeFirebase();
-        if (!initialized) {
+        // تجنب إعادة التهيئة إذا كانت قد تمت بالفعل
+        if (initialized) {
+          setInitializing(false);
+          return;
+        }
+        
+        console.log("جاري تهيئة Firebase...");
+        const firebaseInitialized = await initializeFirebase();
+        
+        if (!firebaseInitialized) {
           console.error("فشل في تهيئة Firebase");
+        } else {
+          console.log("تم تهيئة Firebase بنجاح");
+          setInitialized(true);
         }
       } catch (error) {
         console.error("خطأ أثناء تهيئة Firebase:", error);
@@ -29,16 +41,17 @@ export function useNotifications() {
     }
 
     init();
-  }, []);
+  }, [initialized]);
 
   // التحقق من وجود اشتراك عند تحميل المكون
   useEffect(() => {
-    if (supported && granted && !initializing) {
+    if (supported && granted && !initializing && initialized) {
       const checkToken = async () => {
         try {
           setSubscribing(true);
+          console.log("التحقق من وجود رمز اشتراك Firebase...");
           const newToken = await registerForPushNotifications();
-          console.log("التحقق من الرمز:", newToken ? "موجود" : "غير موجود");
+          console.log("نتيجة التحقق:", newToken ? "موجود" : "غير موجود");
           setToken(newToken);
         } catch (error) {
           console.error("خطأ في التحقق من رمز الإشعارات:", error);
@@ -49,7 +62,7 @@ export function useNotifications() {
       
       checkToken();
     }
-  }, [supported, granted, initializing]);
+  }, [supported, granted, initializing, initialized]);
   
   // وظيفة الاشتراك في الإشعارات
   const subscribeToNotifications = async () => {
@@ -61,6 +74,17 @@ export function useNotifications() {
     if (Notification.permission === 'denied') {
       console.error("تم رفض إذن الإشعارات");
       return null;
+    }
+    
+    // التحقق من تهيئة Firebase
+    if (!initialized && !initializing) {
+      console.log("جاري محاولة إعادة تهيئة Firebase...");
+      const firebaseInitialized = await initializeFirebase();
+      if (!firebaseInitialized) {
+        console.error("فشل في تهيئة Firebase");
+        return null;
+      }
+      setInitialized(true);
     }
 
     try {
@@ -75,8 +99,15 @@ export function useNotifications() {
       }
 
       // تسجيل الإشعارات
+      console.log("جاري تسجيل الجهاز للإشعارات...");
       const newToken = await registerForPushNotifications();
-      setToken(newToken);
+      
+      if (newToken) {
+        console.log("تم الحصول على رمز Firebase:", newToken);
+        setToken(newToken);
+      } else {
+        console.error("فشل في الحصول على رمز Firebase");
+      }
       
       return newToken;
     } catch (error) {
@@ -97,6 +128,7 @@ export function useNotifications() {
     try {
       setSubscribing(true);
       
+      console.log("جاري حذف رمز Firebase:", token);
       // حذف الرمز من قاعدة البيانات
       await deleteFcmToken(token);
       

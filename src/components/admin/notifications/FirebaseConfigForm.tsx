@@ -96,8 +96,8 @@ const FirebaseConfigForm: React.FC = () => {
     try {
       setLoading(true);
 
-      // Use explicit type casting to avoid TypeScript errors
-      const { error } = await supabase.from('firebase_config').insert({
+      // تحويل القيم من النموذج إلى صيغة متوافقة مع قاعدة البيانات
+      const firebaseConfigData = {
         api_key: values.apiKey,
         auth_domain: values.authDomain,
         project_id: values.projectId,
@@ -105,7 +105,9 @@ const FirebaseConfigForm: React.FC = () => {
         messaging_sender_id: values.messagingSenderId,
         app_id: values.appId,
         measurement_id: values.measurementId,
-      } as Partial<FirebaseConfig>);
+      };
+
+      const { error } = await supabase.from('firebase_config').insert(firebaseConfigData);
 
       if (error) throw error;
 

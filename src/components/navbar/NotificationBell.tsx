@@ -13,6 +13,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { toast } from 'sonner';
 
 interface NotificationBellProps {
   className?: string;
@@ -72,17 +73,41 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ className })
     try {
       setLoading(true);
       
+      // التحقق من وجود اتصال بالإنترنت
+      if (!navigator.onLine) {
+        toast.error('لا يوجد اتصال بالإنترنت. يرجى التحقق من اتصالك والمحاولة مرة أخرى.');
+        return;
+      }
+      
       if (subscription) {
-        await unsubscribeFromNotifications();
+        const success = await unsubscribeFromNotifications();
+        if (success) {
+          toast.success('تم إلغاء تفعيل الإشعارات بنجاح');
+        } else {
+          toast.error('فشل في إلغاء تفعيل الإشعارات');
+        }
       } else {
-        if (Notification.permission === 'denied') {
-          alert('تم رفض الإشعارات. يرجى السماح بالإشعارات من إعدادات المتصفح.');
+        // التحقق من دعم الإشعارات
+        if (!supported) {
+          toast.error('متصفحك لا يدعم الإشعارات');
           return;
         }
-        await subscribeToNotifications();
+        
+        if (Notification.permission === 'denied') {
+          toast.error('تم رفض الإشعارات. يرجى السماح بالإشعارات من إعدادات المتصفح.');
+          return;
+        }
+        
+        const token = await subscribeToNotifications();
+        if (token) {
+          toast.success('تم تفعيل الإشعارات بنجاح');
+        } else {
+          toast.error('فشل في تفعيل الإشعارات');
+        }
       }
     } catch (err) {
       console.error("خطأ في تبديل حالة الإشعارات:", err);
+      toast.error('حدث خطأ أثناء معالجة طلب الإشعارات');
     } finally {
       setLoading(false);
     }

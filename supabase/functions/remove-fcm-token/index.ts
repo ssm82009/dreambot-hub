@@ -24,6 +24,7 @@ serve(async (req: Request) => {
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      { auth: { persistSession: false } }
     );
 
     // تحليل بيانات الطلب
@@ -40,11 +41,16 @@ serve(async (req: Request) => {
     }
 
     // حذف الرمز من قاعدة البيانات
-    const { data, error } = await supabaseAdmin.from('fcm_tokens')
+    const { error } = await supabaseAdmin
+      .from('fcm_tokens')
       .delete()
-      .match({ user_id: userId, token });
+      .eq('user_id', userId)
+      .eq('token', token);
 
-    if (error) throw error;
+    if (error) {
+      console.error('خطأ في حذف رمز FCM:', error);
+      throw error;
+    }
 
     return new Response(
       JSON.stringify({ success: true }),
