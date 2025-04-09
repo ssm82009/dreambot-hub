@@ -16,6 +16,7 @@ import ThemeSettingsSection from './sections/ThemeSettingsSection';
 import SeoSettingsSection from './sections/SeoSettingsSection';
 import HomeSectionsSection from './sections/HomeSectionsSection';
 import NotificationsSection from './sections/NotificationsSection';
+import DreamManagementSection from './sections/DreamManagementSection';
 
 const AdminContent: React.FC = () => {
   const { dbLoading, activeSections } = useAdmin();
@@ -53,6 +54,7 @@ const AdminContent: React.FC = () => {
           {activeSections.seo && <SeoSettingsSection />}
           {activeSections.homeSections && <HomeSectionsSection />}
           {activeSections.notifications && <NotificationsSection />}
+          {activeSections.dreams && <DreamManagementSection />}
         </div>
       )}
     </div>

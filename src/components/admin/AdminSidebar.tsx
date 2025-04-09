@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAdmin } from '@/contexts/admin';
@@ -26,7 +25,8 @@ import {
   LayoutDashboard,
   TicketCheck,
   CreditCard as TransactionIcon,
-  Bell
+  Bell,
+  Moon
 } from 'lucide-react';
 
 const AdminSidebar: React.FC = () => {
@@ -83,6 +83,12 @@ const AdminSidebar: React.FC = () => {
       label: 'إعدادات التفسير',
       icon: FileText,
       action: () => handleSectionToggle('interpretationSettings')
+    },
+    {
+      id: 'dreams',
+      label: 'إدارة الأحلام',
+      icon: Moon,
+      action: () => handleSectionToggle('dreams')
     },
     {
       id: 'pricingSettings',
