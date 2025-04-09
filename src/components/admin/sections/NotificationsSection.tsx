@@ -1,12 +1,11 @@
-
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { sendNotificationToAdmin, sendNotificationToAllUsers, sendNotification } from '@/services/notificationService';
-import { Loader2, Bell, Send } from 'lucide-react';
+import { sendNotificationToAdmin, sendNotificationToAllUsers, sendNotification, setFCMServerKey } from '@/services/notificationService';
+import { Loader2, Bell, Send, Key } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -14,6 +13,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const formSchema = z.object({
   title: z.string().min(1, 'يجب إدخال عنوان الإشعار').max(100, 'العنوان طويل جدًا'),
@@ -28,6 +28,11 @@ const formSchema = z.object({
   userId: z.string().optional(),
 });
 
+const fcmKeySchema = z.object({
+  fcmKey: z.string().min(1, 'يجب إدخال مفتاح FCM'),
+});
+
+type FCMKeyFormValues = z.infer<typeof fcmKeySchema>;
 type NotificationFormValues = z.infer<typeof formSchema>;
 
 const NotificationsSection: React.FC = () => {
@@ -35,6 +40,8 @@ const NotificationsSection: React.FC = () => {
   const [subscribersCount, setSubscribersCount] = useState<number>(0);
   const [sending, setSending] = useState<boolean>(false);
   const [users, setUsers] = useState<{ id: string; email: string }[]>([]);
+  const [fcmKeyMissing, setFcmKeyMissing] = useState<boolean>(false);
+  const [savingKey, setSavingKey] = useState<boolean>(false);
 
   const form = useForm<NotificationFormValues>({
     resolver: zodResolver(formSchema),
@@ -48,15 +55,41 @@ const NotificationsSection: React.FC = () => {
     },
   });
 
+  const fcmKeyForm = useForm<FCMKeyFormValues>({
+    resolver: zodResolver(fcmKeySchema),
+    defaultValues: {
+      fcmKey: '',
+    },
+  });
+
   const targetType = form.watch('targetType');
 
-  // جلب عدد المشتركين وقائمة المستخدمين عند تحميل المكون
+  const checkFcmKey = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('app_settings')
+        .select('value')
+        .eq('key', 'fcm_server_key')
+        .single();
+      
+      if (error || !data || !data.value) {
+        setFcmKeyMissing(true);
+      } else {
+        setFcmKeyMissing(false);
+      }
+    } catch (error) {
+      console.error('خطأ في التحقق من مفتاح FCM:', error);
+      setFcmKeyMissing(true);
+    }
+  };
+
   useEffect(() => {
-    const fetchSubscribersCount = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
         
-        // استدعاء العدد مباشرة من قاعدة البيانات
+        await checkFcmKey();
+        
         const { data: countData, error: countError } = await supabase.rpc('count_push_subscriptions');
 
         if (countError) {
@@ -64,11 +97,9 @@ const NotificationsSection: React.FC = () => {
           console.error('خطأ في جلب عدد المشتركين:', countError);
           setSubscribersCount(0);
         } else {
-          // تأكد من أن countData عدد صحيح
           setSubscribersCount(typeof countData === 'number' ? countData : 0);
         }
 
-        // جلب قائمة المستخدمين
         const { data: userData, error: userError } = await supabase
           .from('users')
           .select('id, email');
@@ -88,8 +119,36 @@ const NotificationsSection: React.FC = () => {
       }
     };
 
-    fetchSubscribersCount();
+    fetchData();
   }, []);
+
+  const saveFcmKey = async (values: FCMKeyFormValues) => {
+    try {
+      setSavingKey(true);
+      const { fcmKey } = values;
+      
+      const { error } = await supabase
+        .from('app_settings')
+        .upsert({ 
+          key: 'fcm_server_key', 
+          value: fcmKey,
+          description: 'مفتاح Firebase Cloud Messaging للإشعارات'
+        });
+      
+      if (error) throw error;
+      
+      setFCMServerKey(fcmKey);
+      
+      toast.success('تم حفظ مفتاح FCM بنجاح');
+      setFcmKeyMissing(false);
+      fcmKeyForm.reset();
+    } catch (error) {
+      console.error('خطأ في حفظ مفتاح FCM:', error);
+      toast.error('حدث خطأ في حفظ مفتاح FCM');
+    } finally {
+      setSavingKey(false);
+    }
+  };
 
   const onSubmit = async (values: NotificationFormValues) => {
     try {
@@ -106,16 +165,13 @@ const NotificationsSection: React.FC = () => {
       let result;
       let message = '';
 
-      // إرسال الإشعار بناءً على نوع المستهدف
       if (targetType === 'admin') {
         result = await sendNotificationToAdmin(notification);
         message = 'تم إرسال الإشعار للمشرفين بنجاح';
       } else if (targetType === 'specificUser' && userId) {
-        // إرسال إشعار لمستخدم محدد
         result = await sendNotification(userId, notification);
         message = 'تم إرسال الإشعار للمستخدم بنجاح';
       } else if (targetType === 'all') {
-        // إرسال إشعار لجميع المستخدمين
         result = await sendNotificationToAllUsers(notification);
         message = 'تم إرسال الإشعار لجميع المستخدمين بنجاح';
       }
@@ -139,6 +195,51 @@ const NotificationsSection: React.FC = () => {
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">إدارة الإشعارات</h2>
       </div>
+
+      {fcmKeyMissing && (
+        <Alert variant="warning" className="bg-yellow-50 border-yellow-200">
+          <Key className="h-5 w-5" />
+          <AlertTitle>مفتاح FCM غير متوفر</AlertTitle>
+          <AlertDescription>
+            يجب إضافة مفتاح Firebase Cloud Messaging (FCM) لتمكين إرسال الإشعارات.
+          </AlertDescription>
+          
+          <Form {...fcmKeyForm}>
+            <form onSubmit={fcmKeyForm.handleSubmit(saveFcmKey)} className="mt-4 space-y-4">
+              <FormField
+                control={fcmKeyForm.control}
+                name="fcmKey"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>مفتاح FCM السيرفر</FormLabel>
+                    <FormControl>
+                      <Input placeholder="أدخل مفتاح FCM السيرفر" {...field} />
+                    </FormControl>
+                    <FormDescription>
+                      يمكنك الحصول على هذا المفتاح من لوحة تحكم Firebase
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <Button type="submit" disabled={savingKey}>
+                {savingKey ? (
+                  <>
+                    <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+                    جاري الحفظ...
+                  </>
+                ) : (
+                  <>
+                    <Key className="ml-2 h-4 w-4" />
+                    حفظ المفتاح
+                  </>
+                )}
+              </Button>
+            </form>
+          </Form>
+        </Alert>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="col-span-1">
@@ -325,7 +426,7 @@ const NotificationsSection: React.FC = () => {
                 <Button 
                   type="submit" 
                   className="w-full" 
-                  disabled={sending}
+                  disabled={sending || fcmKeyMissing}
                 >
                   {sending ? (
                     <>
@@ -339,6 +440,12 @@ const NotificationsSection: React.FC = () => {
                     </>
                   )}
                 </Button>
+                
+                {fcmKeyMissing && (
+                  <p className="text-center text-sm text-orange-600">
+                    يجب إضافة مفتاح FCM قبل إرسال الإشعارات
+                  </p>
+                )}
               </form>
             </Form>
           </CardContent>

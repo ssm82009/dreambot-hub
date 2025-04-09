@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -13,9 +12,21 @@ export interface NotificationPayload {
   type?: 'general' | 'ticket' | 'payment' | 'subscription';
 }
 
+// تعيين مفتاح FCM يدويًا (يمكن استخدامها للاختبار أو في حالة عدم وجود المفتاح في قاعدة البيانات)
+export function setFirebaseKey(key: string) {
+  if (key && key.trim() !== '') {
+    FCM_SERVER_KEY = key;
+    return true;
+  }
+  return false;
+}
+
 // تهيئة مفتاح FCM من قاعدة البيانات
 export async function initializeFirebaseKey() {
   try {
+    // إذا كان المفتاح موجودا بالفعل، لا داعي للاستعلام عن قاعدة البيانات
+    if (FCM_SERVER_KEY) return true;
+    
     // محاولة جلب المفتاح من قاعدة البيانات
     const { data, error } = await supabase
       .from('app_settings')
@@ -23,7 +34,10 @@ export async function initializeFirebaseKey() {
       .eq('key', 'fcm_server_key')
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.warn('خطأ في جلب مفتاح FCM:', error.message);
+      return false;
+    }
     
     if (data && data.value) {
       FCM_SERVER_KEY = data.value;
@@ -46,6 +60,7 @@ async function ensureFirebaseKey() {
       throw new Error('مفتاح FCM غير متوفر');
     }
   }
+  return true;
 }
 
 // إرسال إشعار إلى مشترك واحد
@@ -98,7 +113,7 @@ async function sendNotificationToSubscription(subscription: PushSubscription, pa
       await removeInvalidSubscription(subscription.endpoint);
     }
     
-    return false;
+    throw error;
   }
 }
 

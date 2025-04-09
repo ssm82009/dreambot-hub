@@ -1,7 +1,7 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { 
   initializeFirebaseKey, 
+  setFirebaseKey,
   sendNotificationToUser as firebaseSendToUser, 
   sendNotificationToAdmin as firebaseSendToAdmin,
   sendNotificationToAllUsers as firebaseSendToAll,
@@ -14,6 +14,12 @@ initializeFirebaseKey().catch(err => console.error('فشل تهيئة مفتاح
 interface PushSubscriptionData {
   endpoint: string;
   auth: string; // JSON string of subscription
+}
+
+// تعيين مفتاح FCM يدويًا (مفيد للتطوير أو الاختبار)
+export function setFCMServerKey(key: string) {
+  if (!key) return false;
+  return setFirebaseKey(key);
 }
 
 // إرسال إشعار لمستخدم محدد
