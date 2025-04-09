@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useAdmin } from '@/contexts/admin';
 import { cn } from '@/lib/utils';
@@ -17,12 +18,27 @@ import {
   Search, 
   LayoutDashboard, 
   Bell,
-  Book
+  Book,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
+
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
+  SidebarGroup,
+  SidebarGroupLabel,
+  SidebarFooter,
+  useSidebar
+} from '@/components/ui/sidebar';
 
 interface MenuItem {
   name: string;
-  section: string;
+  section: keyof typeof initialSections;
   icon: React.ElementType;
 }
 
@@ -31,13 +47,33 @@ interface MenuCategory {
   items: MenuItem[];
 }
 
+// Bring initialSections here
+const initialSections = {
+  dashboard: true,
+  aiSettings: false,
+  interpretationSettings: false,
+  pricingSettings: false,
+  paymentSettings: false,
+  users: false,
+  pages: false,
+  navbar: false,
+  transactions: false,
+  tickets: false,
+  theme: false,
+  seo: false,
+  homeSections: false,
+  notifications: false,
+  dreams: false,
+};
+
 const AdminSidebar: React.FC = () => {
   const { activeSections, toggleSection } = useAdmin();
   const location = useLocation();
   const navigate = useNavigate();
+  const { open, toggleSidebar } = useSidebar();
 
-  const isActive = (section: string): boolean => {
-    return location.pathname.includes(section);
+  const isActive = (section: keyof typeof initialSections): boolean => {
+    return activeSections[section as keyof typeof activeSections] || location.pathname.includes(section);
   };
 
   const menuItems: MenuCategory[] = [
@@ -134,35 +170,48 @@ const AdminSidebar: React.FC = () => {
   ];
 
   return (
-    <aside className="w-[16rem] h-screen bg-secondary border-l border-secondary-foreground/10 fixed top-0 right-0 z-20">
-      <div className="p-4">
-        <h2 className="text-lg font-bold">لوحة التحكم</h2>
-      </div>
-      <nav className="flex flex-col space-y-1">
+    <Sidebar>
+      <SidebarHeader>
+        <div className="flex items-center justify-between p-4">
+          <h2 className="text-lg font-bold">لوحة التحكم</h2>
+          <button 
+            onClick={toggleSidebar} 
+            className="p-1.5 rounded-md hover:bg-sidebar-accent text-sidebar-foreground"
+          >
+            {open ? <ChevronRight className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
+          </button>
+        </div>
+      </SidebarHeader>
+      <SidebarContent>
         {menuItems.map((category, index) => (
-          <div key={index} className="space-y-1">
-            <div className="px-4 py-2 text-sm font-semibold text-muted-foreground">{category.category}</div>
-            {category.items.map((item) => (
-              <button
-                key={item.section}
-                className={cn(
-                  "flex items-center w-full p-2 text-sm font-medium rounded-md transition-colors hover:bg-secondary-foreground/10",
-                  activeSections[item.section] && "bg-secondary-foreground/10",
-                  isActive(item.section) && "bg-secondary-foreground/10",
-                )}
-                onClick={() => {
-                  toggleSection(item.section);
-                  navigate(`/admin?section=${item.section}`);
-                }}
-              >
-                <item.icon className="w-4 h-4 ml-2" />
-                <span>{item.name}</span>
-              </button>
-            ))}
-          </div>
+          <SidebarGroup key={index}>
+            <SidebarGroupLabel>{category.category}</SidebarGroupLabel>
+            <SidebarMenu>
+              {category.items.map((item) => (
+                <SidebarMenuItem key={item.section}>
+                  <SidebarMenuButton
+                    isActive={isActive(item.section)}
+                    tooltip={item.name}
+                    onClick={() => {
+                      toggleSection(item.section as keyof typeof activeSections);
+                      navigate(`/admin?section=${item.section}`);
+                    }}
+                  >
+                    <item.icon className="h-4 w-4" />
+                    <span>{item.name}</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroup>
         ))}
-      </nav>
-    </aside>
+      </SidebarContent>
+      <SidebarFooter>
+        <div className="p-4 text-xs text-muted-foreground text-center">
+          نظام إدارة تفسير الأحلام الإصدار 1.0
+        </div>
+      </SidebarFooter>
+    </Sidebar>
   );
 };
 

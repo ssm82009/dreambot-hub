@@ -1,3 +1,4 @@
+
 import { User, CustomPage, NavLink } from '@/types/database';
 
 export type HomeSectionItem = {
@@ -93,6 +94,7 @@ export interface ActiveSections {
   seo: boolean;
   homeSections: boolean;
   notifications: boolean;
+  dreams: boolean;
 }
 
 export type AdminProviderProps = {

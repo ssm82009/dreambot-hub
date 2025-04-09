@@ -1,3 +1,4 @@
+
 import { 
   AiSettingsFormValues, 
   InterpretationSettingsFormValues,
@@ -6,8 +7,7 @@ import {
   ThemeSettingsFormValues, 
   SeoSettingsFormValues,
   HomeSectionItem,
-  ActiveSections,
-  AdminSections
+  ActiveSections
 } from './types';
 
 export const initialAiSettings: AiSettingsFormValues = {
@@ -99,23 +99,6 @@ export const initialActiveSections: ActiveSections = {
   theme: false,
   seo: false,
   homeSections: false,
-  notifications: false
-};
-
-export const initialSections: AdminSections = {
-  dashboard: true,
-  aiSettings: false,
-  interpretationSettings: false,
-  pricingSettings: false,
-  paymentSettings: false,
-  users: false,
-  pages: false,
-  navbar: false,
-  transactions: false,
-  tickets: false,
-  theme: false,
-  seo: false,
-  homeSections: false,
   notifications: false,
-  dreams: false,
+  dreams: false
 };

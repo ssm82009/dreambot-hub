@@ -61,8 +61,8 @@ const AdminDashboard = () => {
       <SidebarProvider>
         <div className="min-h-screen flex flex-row-reverse w-full dream-pattern" dir="rtl" style={{ paddingTop: `${NAVBAR_HEIGHT}px` }}>
           <AdminSidebar />
-          <main className="flex-1 p-4 mr-[16rem]">
-            <div className="w-full pr-0">
+          <main className="flex-1 p-6" style={{ paddingRight: "1rem" }}>
+            <div className="w-full">
               <AdminHeader />
               <AdminContent />
             </div>
