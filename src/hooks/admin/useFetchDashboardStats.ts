@@ -43,8 +43,8 @@ export const useFetchDashboardStats = () => {
       }
       setActiveSubscriptions(activeCount);
 
-      // ✓ تحسين طريقة جلب إجمالي عدد الأحلام وضمان تحديثها
-      // Now simply use count parameter without timestamp-based workaround
+      // جلب العدد الحقيقي الإجمالي للأحلام - لا فلاتر أو قيود زمنية
+      // استعلام بسيط للحصول على العدد الإجمالي بدون أي شروط تصفية
       const { count: dreamsCount, error: dreamsError } = await supabase
         .from('dreams')
         .select('*', { count: 'exact', head: true });

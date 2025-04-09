@@ -43,7 +43,7 @@ const DashboardCharts: React.FC<DashboardChartsProps> = ({ timeRange }) => {
         // تحديد النطاق الزمني بناءً على الفلتر المحدد
         const startDate = getStartDateByRange(timeRange);
         
-        // Simple approach without timestamp-based cache busting
+        // استخدام طريقة أكثر موثوقية لجلب بيانات الأحلام حسب التاريخ المحدد
         const { data: dreamsStats, error: dreamsError } = await supabase
           .from('dreams')
           .select('created_at')
