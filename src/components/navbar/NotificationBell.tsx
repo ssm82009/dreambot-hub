@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bell, BellOff, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { useNotifications } from '@/hooks/useNotifications';
 import { supabase } from '@/integrations/supabase/client';
 import { useAdminCheck } from '@/hooks/useAdminCheck';
+import { toast } from 'sonner';
 import {
   Tooltip,
   TooltipContent,
@@ -26,14 +27,14 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ className })
     subscription, 
     subscribing, 
     isCheckingSubscription,
+    requestPermission,
     subscribeToNotifications, 
     unsubscribeFromNotifications 
   } = useNotifications();
   const [openTicketsCount, setOpenTicketsCount] = useState<number>(0);
   const { isAdmin } = useAdminCheck();
   const [loading, setLoading] = useState<boolean>(false);
-  const buttonRef = useRef<HTMLButtonElement>(null);
-  const clickDisabled = useRef<boolean>(false);
+  const [processingRequest, setProcessingRequest] = useState<boolean>(false);
 
   // جلب عدد التذاكر المفتوحة للمشرف
   useEffect(() => {
@@ -46,7 +47,10 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ className })
           .select('id', { count: 'exact', head: true })
           .eq('status', 'open');
 
-        if (error) throw error;
+        if (error) {
+          console.error('خطأ في جلب عدد التذاكر المفتوحة:', error);
+          return;
+        }
         
         setOpenTicketsCount(count || 0);
       } catch (error) {
@@ -78,36 +82,49 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ className })
 
   // معالج النقر على زر الإشعارات
   const handleToggleNotifications = async () => {
-    // تجنب النقرات المتتالية السريعة
-    if (clickDisabled.current || loading || subscribing || isCheckingSubscription) {
-      console.log("زر الإشعارات معطل حاليًا");
+    // تجنب معالجة طلبات متعددة في نفس الوقت
+    if (processingRequest || loading || subscribing || isCheckingSubscription) {
       return;
     }
     
-    // تعطيل الزر مؤقتًا لمنع النقرات المتعددة
-    clickDisabled.current = true;
-    setTimeout(() => {
-      clickDisabled.current = false;
-    }, 2000); // تعطيل لمدة ثانيتين
-    
-    console.log("تبديل حالة الإشعارات:", subscription ? "إلغاء الاشتراك" : "الاشتراك");
-    
     try {
+      setProcessingRequest(true);
       setLoading(true);
       
       if (subscription) {
+        console.log("بدء عملية إلغاء الاشتراك من الإشعارات");
         await unsubscribeFromNotifications();
+        toast.success('تم إلغاء تفعيل الإشعارات');
       } else {
-        if (Notification.permission === 'denied') {
-          alert('تم رفض الإشعارات. يرجى السماح بالإشعارات من إعدادات المتصفح.');
-          return;
+        console.log("بدء عملية الاشتراك في الإشعارات");
+        
+        // تحقق من الإذن أولاً إذا لم يكن ممنوحًا
+        if (!granted) {
+          console.log("طلب إذن الإشعارات...");
+          const permissionGranted = await requestPermission();
+          
+          if (!permissionGranted) {
+            console.log("تم رفض إذن الإشعارات");
+            toast.error('يجب السماح بالإشعارات لتفعيل هذه الخدمة');
+            return;
+          }
         }
-        await subscribeToNotifications();
+        
+        // إذا تم منح الإذن، قم بالاشتراك
+        const result = await subscribeToNotifications();
+        if (result) {
+          toast.success('تم تفعيل الإشعارات بنجاح');
+        }
       }
     } catch (err) {
       console.error("خطأ في تبديل حالة الإشعارات:", err);
+      toast.error('حدث خطأ أثناء تغيير إعدادات الإشعارات');
     } finally {
       setLoading(false);
+      // تأخير إعادة تعيين معالجة الطلبات للسماح بتحديث واجهة المستخدم
+      setTimeout(() => {
+        setProcessingRequest(false);
+      }, 1000);
     }
   };
 
@@ -119,18 +136,26 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ className })
 
   if (!supported) return null;
 
+  // تحديد نص التلميح
+  const getTooltipText = () => {
+    if (loading || subscribing || isCheckingSubscription) {
+      return 'جاري المعالجة...';
+    }
+    return subscription ? 'إلغاء تفعيل الإشعارات' : 'تفعيل الإشعارات';
+  };
+
   return (
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
           <div className="relative">
             <Button
-              ref={buttonRef}
               variant="ghost"
               size="icon"
               className={className}
               onClick={handleToggleNotifications}
-              disabled={loading || subscribing || isCheckingSubscription}
+              disabled={loading || subscribing || isCheckingSubscription || processingRequest}
+              aria-label={subscription ? 'إلغاء تفعيل الإشعارات' : 'تفعيل الإشعارات'}
             >
               {loading || subscribing || isCheckingSubscription ? (
                 <Loader2 className="h-5 w-5 animate-spin" />
@@ -147,13 +172,13 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ className })
                 variant="destructive"
                 onClick={handleBadgeClick}
               >
-                {openTicketsCount}
+                {openTicketsCount > 99 ? '99+' : openTicketsCount}
               </Badge>
             )}
           </div>
         </TooltipTrigger>
         <TooltipContent>
-          <p>{subscription ? 'إلغاء تفعيل الإشعارات' : 'تفعيل الإشعارات'}</p>
+          <p>{getTooltipText()}</p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>

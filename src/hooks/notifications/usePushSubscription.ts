@@ -3,8 +3,6 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { 
-  urlBase64ToUint8Array, 
-  PUBLIC_VAPID_KEY, 
   registerServiceWorker,
   getExistingSubscription,
   subscribeToPush,
@@ -25,7 +23,6 @@ export function usePushSubscription(supported: boolean, granted: boolean) {
     subscribing: false
   });
   const subscriptionInProgress = useRef<boolean>(false);
-  const toastShown = useRef<boolean>(false);
 
   // التحقق من وجود اشتراك حالي
   const checkExistingSubscription = useCallback(async (): Promise<PushSubscription | null> => {
@@ -34,6 +31,8 @@ export function usePushSubscription(supported: boolean, granted: boolean) {
     }
 
     try {
+      console.log("التحقق من وجود اشتراك حالي...");
+      
       // تسجيل خدمة العامل أولاً للتأكد من وجودها
       await registerServiceWorker();
       
@@ -45,7 +44,9 @@ export function usePushSubscription(supported: boolean, granted: boolean) {
           ...prev,
           subscription
         }));
-        console.log("تم العثور على اشتراك موجود:", subscription);
+        console.log("تم العثور على اشتراك موجود");
+      } else {
+        console.log("لم يتم العثور على اشتراك");
       }
       
       return subscription;
@@ -58,14 +59,16 @@ export function usePushSubscription(supported: boolean, granted: boolean) {
   // التحقق من الاشتراك عند تحميل المكون
   useEffect(() => {
     if (supported && granted) {
-      checkExistingSubscription();
+      checkExistingSubscription().catch(error => {
+        console.error("خطأ أثناء التحقق التلقائي من الاشتراك:", error);
+      });
     }
   }, [supported, granted, checkExistingSubscription]);
 
   // الاشتراك في الإشعارات
-  const subscribeToNotifications = async () => {
+  const subscribeToNotifications = useCallback(async () => {
     if (!supported) {
-      toast.error('متصفحك لا يدعم الإشعارات');
+      console.log("الإشعارات غير مدعومة");
       return null;
     }
     
@@ -89,18 +92,12 @@ export function usePushSubscription(supported: boolean, granted: boolean) {
       
       // إذا كان المتصفح مشتركًا بالفعل، ارجع الاشتراك الحالي
       if (subscription) {
-        console.log("تم العثور على اشتراك موجود:", subscription);
+        console.log("تم العثور على اشتراك موجود، لا حاجة للاشتراك مجددًا");
         setState(prev => ({
           ...prev,
           subscription,
           subscribing: false
         }));
-        
-        if (!toastShown.current) {
-          toast.success('أنت مشترك بالفعل في الإشعارات');
-          toastShown.current = true;
-        }
-        
         return subscription;
       }
       
@@ -131,7 +128,6 @@ export function usePushSubscription(supported: boolean, granted: boolean) {
           }
           
           console.log("تم تخزين الاشتراك بنجاح");
-          
         } catch (error) {
           console.error('خطأ في تخزين اشتراك الإشعارات:', error);
         }
@@ -143,36 +139,20 @@ export function usePushSubscription(supported: boolean, granted: boolean) {
         subscribing: false
       }));
       
-      if (!toastShown.current) {
-        toast.success('تم الاشتراك في الإشعارات بنجاح');
-        toastShown.current = true;
-      }
-      
       return subscription;
     } catch (error) {
       console.error('خطأ في الاشتراك في الإشعارات:', error);
-      
-      if (!toastShown.current) {
-        toast.error('حدث خطأ أثناء الاشتراك في الإشعارات');
-        toastShown.current = true;
-      }
-      
       setState(prev => ({ ...prev, subscribing: false }));
       return null;
     } finally {
       subscriptionInProgress.current = false;
-      
-      // إعادة تعيين علم التوست بعد فترة
-      setTimeout(() => {
-        toastShown.current = false;
-      }, 3000);
     }
-  };
+  }, [supported]);
   
   // إلغاء الاشتراك في الإشعارات
-  const unsubscribeFromNotifications = async () => {
+  const unsubscribeFromNotifications = useCallback(async () => {
     if (!state.subscription) {
-      toast.error('لا يوجد اشتراك نشط للإشعارات');
+      console.log("لا يوجد اشتراك نشط للإشعارات");
       return false;
     }
     
@@ -183,6 +163,7 @@ export function usePushSubscription(supported: boolean, granted: boolean) {
     
     try {
       subscriptionInProgress.current = true;
+      setState(prev => ({ ...prev, subscribing: true }));
       
       console.log("إلغاء الاشتراك من الإشعارات...");
       const result = await unsubscribeFromPush(state.subscription);
@@ -210,7 +191,6 @@ export function usePushSubscription(supported: boolean, granted: boolean) {
           }
           
           console.log("تم حذف الاشتراك من قاعدة البيانات بنجاح");
-          
         } catch (error) {
           console.error('خطأ في حذف اشتراك الإشعارات:', error);
         }
@@ -218,33 +198,19 @@ export function usePushSubscription(supported: boolean, granted: boolean) {
       
       setState(prev => ({
         ...prev,
-        subscription: null
+        subscription: null,
+        subscribing: false
       }));
-      
-      if (!toastShown.current) {
-        toast.success('تم إلغاء الاشتراك من الإشعارات');
-        toastShown.current = true;
-      }
       
       return true;
     } catch (error) {
       console.error('خطأ في إلغاء الاشتراك من الإشعارات:', error);
-      
-      if (!toastShown.current) {
-        toast.error('حدث خطأ أثناء إلغاء الاشتراك من الإشعارات');
-        toastShown.current = true;
-      }
-      
+      setState(prev => ({ ...prev, subscribing: false }));
       return false;
     } finally {
       subscriptionInProgress.current = false;
-      
-      // إعادة تعيين علم التوست بعد فترة
-      setTimeout(() => {
-        toastShown.current = false;
-      }, 3000);
     }
-  };
+  }, [state.subscription]);
 
   return {
     ...state,
