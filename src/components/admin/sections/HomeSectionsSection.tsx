@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { LayoutDashboard, EditIcon, Palette } from 'lucide-react';
 import AdminSection from '@/components/admin/AdminSection';
@@ -17,7 +16,6 @@ import NotificationHeader from '@/components/admin/notifications/NotificationHea
 const HomeSectionsSection = () => {
   const { homeSectionsForm, setHomeSectionsForm, activeSections, toggleSection, setDbLoading } = useAdmin();
   const [sections, setSections] = useState<HomeSectionItem[]>(homeSectionsForm || []);
-  const [editingSection, setEditingSection] = useState<string | null>(null);
 
   // Handle section order change
   const moveSection = (id: string, direction: 'up' | 'down') => {
@@ -47,6 +45,7 @@ const HomeSectionsSection = () => {
 
   // Save changes to database
   const saveChanges = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    // منع السلوك الافتراضي للزر لمنع إعادة تحميل الصفحة
     e.preventDefault();
 
     setDbLoading(true);
