@@ -1,7 +1,5 @@
-
 import React from 'react';
 import { useAdmin } from '@/contexts/admin';
-import { cn } from '@/lib/utils';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { 
   Settings, 
@@ -189,7 +187,7 @@ const AdminSidebar: React.FC = () => {
   ];
 
   return (
-    <Sidebar className="bg-white" variant="sidebar" side="left">
+    <Sidebar className="bg-white h-auto" variant="floating" side="left">
       <SidebarHeader>
         <div className="flex items-center justify-between p-4">
           <h2 className="text-lg font-bold">لوحة التحكم</h2>
@@ -201,7 +199,7 @@ const AdminSidebar: React.FC = () => {
           </button>
         </div>
       </SidebarHeader>
-      <SidebarContent>
+      <SidebarContent className="overflow-y-auto max-h-[calc(100vh-200px)]">
         {menuItems.map((category, index) => (
           <SidebarGroup key={index}>
             <SidebarGroupLabel>{category.category}</SidebarGroupLabel>

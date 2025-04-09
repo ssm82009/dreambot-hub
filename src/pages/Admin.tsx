@@ -58,12 +58,12 @@ const AdminDashboard = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      <div className="flex-grow flex" style={{ paddingTop: `${NAVBAR_HEIGHT}px` }}>
+      <div className="flex-1 flex flex-col md:flex-row" style={{ paddingTop: `${NAVBAR_HEIGHT}px`, marginBottom: "1rem" }}>
         <SidebarProvider>
           <div className="flex flex-row w-full dream-pattern" dir="rtl">
             <AdminSidebar />
-            <main className="flex-1 p-6 pb-16">
-              <div className="w-full">
+            <main className="flex-1 p-6">
+              <div className="w-full mb-16">
                 <AdminHeader />
                 <AdminContent />
               </div>
@@ -71,7 +71,7 @@ const AdminDashboard = () => {
           </div>
         </SidebarProvider>
       </div>
-      <Footer />
+      <Footer className="mt-auto" />
     </div>
   );
 };
