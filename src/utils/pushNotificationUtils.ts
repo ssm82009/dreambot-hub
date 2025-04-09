@@ -28,8 +28,9 @@ export function urlBase64ToUint8Array(base64String: string): Uint8Array {
 /**
  * الحصول على توكن Firebase Messaging وتخزينه
  * @param messaging كائن Firebase Messaging
+ * @param getTokenFn وظيفة الحصول على التوكن من Firebase
  */
-export async function getOrCreateFirebaseToken(messaging: any): Promise<string | null> {
+export async function getOrCreateFirebaseToken(messaging: any, getTokenFn: (messaging: any, options: any) => Promise<string>): Promise<string | null> {
   let currentToken = null;
   
   try {
@@ -44,9 +45,8 @@ export async function getOrCreateFirebaseToken(messaging: any): Promise<string |
     
     console.log("تم منح إذن الإشعارات، جاري الحصول على التوكن...");
     
-    // محاولة الحصول على التوكن الحالي - تصحيح الخطأ هنا
-    // استخدام الطريقة الصحيحة من Firebase v9+
-    currentToken = await messaging.getToken({ 
+    // استخدام وظيفة getToken المستقلة من Firebase v9+
+    currentToken = await getTokenFn(messaging, { 
       vapidKey: FCM_VAPID_KEY 
     });
     
@@ -69,16 +69,17 @@ export async function getOrCreateFirebaseToken(messaging: any): Promise<string |
  * @param messaging كائن Firebase Messaging
  */
 export function onFirebaseTokenRefresh(messaging: any): void {
-  // تحديث الطريقة للتوافق مع Firebase v9+
-  // استخدام onTokenRefresh معدلة للإصدار الجديد
-  messaging.onTokenRefresh = async () => {
-    try {
-      const refreshedToken = await messaging.getToken({ vapidKey: FCM_VAPID_KEY });
-      console.log("تم تجديد التوكن:", refreshedToken);
-      // تخزين التوكن المحدث في localStorage
-      localStorage.setItem('fcm_token', refreshedToken);
-    } catch (error) {
-      console.error("لم يتمكن من تجديد التوكن:", error);
-    }
-  };
+  // تسجيل مستمع للتوكن المتجدد باستخدام Firebase v9+
+  try {
+    const { onMessage } = require('firebase/messaging');
+    
+    // استخدام onMessage للاستماع للرسائل القادمة
+    onMessage(messaging, (payload: any) => {
+      console.log('تم استلام رسالة:', payload);
+    });
+    
+    console.log("تم تسجيل مستمع للرسائل بنجاح");
+  } catch (error) {
+    console.error("فشل في تسجيل مستمع للرسائل:", error);
+  }
 }

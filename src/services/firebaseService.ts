@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { getOrCreateFirebaseToken } from '@/utils/pushNotificationUtils';
 import { FirebaseConfig } from '@/types/database';
@@ -16,7 +15,6 @@ export async function initializeFirebase() {
     const { getMessaging } = await import('firebase/messaging');
     
     // استعلام عن تكوين Firebase من قاعدة البيانات
-    // Use explicit type casting to avoid TypeScript errors
     const { data, error } = await supabase
       .from('firebase_config')
       .select('*')
@@ -68,7 +66,14 @@ export async function registerForPushNotifications(): Promise<string | null> {
     return null;
   }
   
-  return await getOrCreateFirebaseToken(firebaseMessaging);
+  try {
+    // استخدام استدعاء منفصل لوظيفة getToken بدلاً من استدعائها على كائن الرسائل مباشرة
+    const { getToken } = await import('firebase/messaging');
+    return await getOrCreateFirebaseToken(firebaseMessaging, getToken);
+  } catch (error) {
+    console.error("فشل في تسجيل الإشعارات:", error);
+    return null;
+  }
 }
 
 /**
