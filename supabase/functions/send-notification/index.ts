@@ -28,23 +28,32 @@ interface RequestBody {
 // استخدام import dynamically لتجنب مشاكل التهيئة
 async function initializeWebPush() {
   try {
+    console.log("بدء تهيئة مكتبة web-push...");
+    
     // استخدام دالة استيراد ديناميكي بدلاً من الاستيراد الثابت
     const webPushModule = await import("web-push");
-    const webPush = webPushModule.default;
+    console.log("تم استيراد مكتبة web-push بنجاح");
+    
+    // في الإصدارات الحديثة، webPush هو المصدر الافتراضي للوحدة
+    const webPush = webPushModule.default || webPushModule;
     
     const vapidPublicKey = Deno.env.get('VAPID_PUBLIC_KEY') || '';
     const vapidPrivateKey = Deno.env.get('VAPID_PRIVATE_KEY') || '';
+    
+    console.log("مفاتيح VAPID:", !!vapidPublicKey, !!vapidPrivateKey);
     
     if (!vapidPublicKey || !vapidPrivateKey) {
       console.error("مفاتيح VAPID غير مهيأة");
       throw new Error("مفاتيح VAPID غير مهيأة");
     }
     
+    console.log("جاري تعيين مفاتيح VAPID...");
     webPush.setVapidDetails(
       'mailto:support@example.com',
       vapidPublicKey,
       vapidPrivateKey
     );
+    console.log("تم تعيين مفاتيح VAPID بنجاح");
     
     return webPush;
   } catch (error) {
@@ -79,16 +88,22 @@ serve(async (req: Request) => {
       );
     }
 
+    console.log("إنشاء عميل Supabase...");
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      { auth: { persistSession: false } }
     );
+    
+    console.log("تم إنشاء عميل Supabase بنجاح");
 
     // تهيئة web-push
     let webPush;
     try {
       webPush = await initializeWebPush();
+      console.log("تم تهيئة مكتبة web-push بنجاح");
     } catch (error) {
+      console.error("فشل في تهيئة مكتبة web-push:", error);
       return new Response(
         JSON.stringify({ error: 'فشل في تهيئة مكتبة web-push', details: error.message }),
         {
@@ -244,10 +259,11 @@ serve(async (req: Request) => {
         let parsedSubscription;
         try {
           parsedSubscription = JSON.parse(subscription.auth);
+          console.log("تم تحليل بيانات الاشتراك للمستخدم:", subscription.id);
           
           // التحقق من أن البيانات تحتوي على الحقول المطلوبة
           if (!parsedSubscription.endpoint || !parsedSubscription.keys) {
-            console.error(`اشتراك غير صالح للمستخدم ${subscription.id}`);
+            console.error(`اشتراك غير صالح للمستخدم ${subscription.id}, البيانات:`, JSON.stringify(parsedSubscription));
             return false;
           }
         } catch (error) {
@@ -262,7 +278,7 @@ serve(async (req: Request) => {
           type: notification.type || 'general'
         });
 
-        console.log(`محاولة إرسال إشعار للمشترك ${subscription.id}`);
+        console.log(`محاولة إرسال إشعار للمشترك ${subscription.id} بالبيانات:`, pushPayload);
 
         // إرسال الإشعار باستخدام web-push
         try {
