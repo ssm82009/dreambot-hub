@@ -147,7 +147,7 @@ const DashboardCharts: React.FC<DashboardChartsProps> = ({ timeRange }) => {
           return {
             name: format(date, 'yyyy-MM'),
             count: 0,
-            // Fix: Remove the second argument from ArDisplay.formatDate call
+            // تصحيح: إزالة المعامل الثاني من استدعاء ArDisplay.formatDate
             displayName: ArDisplay.formatDate(date),
           };
         }).reverse();

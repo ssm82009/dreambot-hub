@@ -43,16 +43,16 @@ export const useFetchDashboardStats = () => {
       }
       setActiveSubscriptions(activeCount);
 
-      // Fetch total dreams
-      const { data: dreamsData, error: dreamsError, count: dreamsCount } = await supabase
+      // ✓ تحسين طريقة جلب إجمالي عدد الأحلام باستخدام count مباشرة من Supabase
+      const { count: dreamsCount, error: dreamsError } = await supabase
         .from('dreams')
-        .select('*', { count: 'exact', head: false });
+        .select('*', { count: 'exact', head: true });
 
       if (dreamsError) {
-        throw new Error(`Error fetching dreams: ${dreamsError.message}`);
+        throw new Error(`Error fetching dreams count: ${dreamsError.message}`);
       }
       
-      console.log("Dreams data fetched:", dreamsCount, "dreams found");
+      console.log("Dreams count fetched:", dreamsCount, "dreams found");
       setTotalDreams(dreamsCount || 0);
 
       // Fetch total tickets
