@@ -9,13 +9,21 @@ type HeroProps = {
 };
 
 const Hero = ({ title, subtitle, style = {} }: HeroProps) => {
-  return (
-    <section 
-      className="py-20 px-4 text-center rtl"
-      style={{
+  // تحديد ما إذا كان سيتم استخدام خلفية متدرجة
+  const backgroundStyle = style.gradientColors 
+    ? { 
+        backgroundImage: `linear-gradient(${style.gradientDirection || '135deg'}, ${style.gradientColors})`,
+        color: style.textColor || '#000000'
+      }
+    : {
         backgroundColor: style.backgroundColor || '#ffffff',
         color: style.textColor || '#000000'
-      }}
+      };
+
+  return (
+    <section 
+      className="py-20 px-4 text-center rtl mt-16" // إضافة mt-16 لعمل هامش علوي
+      style={backgroundStyle}
     >
       <div className="container mx-auto max-w-4xl">
         <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">{title}</h1>

@@ -1,3 +1,4 @@
+
 import { User, CustomPage, NavLink } from '@/types/database';
 
 // Define Json type to match the Supabase Json type
@@ -12,6 +13,8 @@ export type Json =
 export type HomeSectionStyle = {
   backgroundColor?: string;
   textColor?: string;
+  gradientColors?: string;
+  gradientDirection?: string;
   [key: string]: string | undefined; // Add index signature to make it compatible with Json
 };
 

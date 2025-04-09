@@ -68,6 +68,28 @@ const Index = () => {
   const tryItStyle = getSectionStyle('tryIt');
   const howItWorksStyle = getSectionStyle('howItWorks');
 
+  // تحديد نمط الخلفية لقسم تجربة الخدمة
+  const tryItBackgroundStyle = tryItStyle.gradientColors
+    ? { 
+        backgroundImage: `linear-gradient(${tryItStyle.gradientDirection || '135deg'}, ${tryItStyle.gradientColors})`,
+        color: tryItStyle.textColor || '#000000' 
+      }
+    : {
+        backgroundColor: tryItStyle.backgroundColor || '#f3f4f6',
+        color: tryItStyle.textColor || '#000000'
+      };
+
+  // تحديد نمط الخلفية لقسم كيف يعمل
+  const howItWorksBackgroundStyle = howItWorksStyle.gradientColors
+    ? { 
+        backgroundImage: `linear-gradient(${howItWorksStyle.gradientDirection || '135deg'}, ${howItWorksStyle.gradientColors})`,
+        color: howItWorksStyle.textColor || '#000000' 
+      }
+    : {
+        backgroundColor: howItWorksStyle.backgroundColor || '#ffffff',
+        color: howItWorksStyle.textColor || '#000000'
+      };
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -82,10 +104,7 @@ const Index = () => {
           <section 
             id="try-it" 
             className="py-16"
-            style={{
-              backgroundColor: tryItStyle.backgroundColor || '#f3f4f6',
-              color: tryItStyle.textColor || '#000000'
-            }}
+            style={tryItBackgroundStyle}
           >
             <div className="container mx-auto px-4 sm:px-6 lg:px-8">
               <div className="text-center mb-12 rtl">
@@ -102,10 +121,7 @@ const Index = () => {
         {isVisible('howItWorks') && (
           <section 
             className="py-20 rtl"
-            style={{
-              backgroundColor: howItWorksStyle.backgroundColor || '#ffffff',
-              color: howItWorksStyle.textColor || '#000000'
-            }}
+            style={howItWorksBackgroundStyle}
           >
             <div className="container mx-auto px-4 sm:px-6 lg:px-8">
               <div className="text-center mb-16">
