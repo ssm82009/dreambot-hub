@@ -40,18 +40,23 @@ const DashboardCharts: React.FC<DashboardChartsProps> = ({ timeRange }) => {
     const fetchData = async () => {
       setLoading(true);
       try {
+        console.log("Fetching chart data for time range:", timeRange);
         // تحديد النطاق الزمني بناءً على الفلتر المحدد
         const startDate = getStartDateByRange(timeRange);
         
-        // استخدام طريقة أكثر موثوقية لجلب بيانات الأحلام حسب التاريخ المحدد
+        // استعلام مباشر لجلب بيانات الأحلام ضمن النطاق الزمني المحدد
+        console.log("Fetching dreams data since:", startDate.toISOString());
         const { data: dreamsStats, error: dreamsError } = await supabase
           .from('dreams')
           .select('created_at')
           .gte('created_at', startDate.toISOString());
 
         if (dreamsError) {
-          console.error('Error fetching dreams:', dreamsError);
+          console.error('Error fetching dreams for chart:', dreamsError);
         }
+
+        // طباعة عدد الأحلام المسترجعة للتأكد
+        console.log("Dreams data fetched for chart:", dreamsStats?.length || 0, "dreams found");
 
         if (dreamsStats) {
           // معالجة البيانات لتجميع الأحلام حسب الفترة الزمنية
@@ -60,14 +65,17 @@ const DashboardCharts: React.FC<DashboardChartsProps> = ({ timeRange }) => {
         }
 
         // أحضر بيانات المستخدمين حسب التاريخ
+        console.log("Fetching users data since:", startDate.toISOString());
         const { data: usersStats, error: usersError } = await supabase
           .from('users')
           .select('created_at, subscription_type')
           .gte('created_at', startDate.toISOString());
 
         if (usersError) {
-          console.error('Error fetching users:', usersError);
+          console.error('Error fetching users for chart:', usersError);
         }
+
+        console.log("Users data fetched for chart:", usersStats?.length || 0, "users found");
 
         if (usersStats) {
           // معالجة البيانات لتجميع المستخدمين حسب الفترة الزمنية

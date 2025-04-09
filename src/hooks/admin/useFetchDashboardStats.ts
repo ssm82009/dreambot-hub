@@ -43,8 +43,8 @@ export const useFetchDashboardStats = () => {
       }
       setActiveSubscriptions(activeCount);
 
-      // جلب العدد الحقيقي الإجمالي للأحلام - لا فلاتر أو قيود زمنية
-      // استعلام بسيط للحصول على العدد الإجمالي بدون أي شروط تصفية
+      // استعلام مباشر لعد الأحلام بطريقة صريحة وبسيطة - ضمان جلب العدد الإجمالي الكامل
+      console.log("Fetching total dreams count...");
       const { count: dreamsCount, error: dreamsError } = await supabase
         .from('dreams')
         .select('*', { count: 'exact', head: true });
@@ -53,7 +53,8 @@ export const useFetchDashboardStats = () => {
         throw new Error(`Error fetching dreams count: ${dreamsError.message}`);
       }
       
-      console.log("Dreams count fetched:", dreamsCount, "dreams found");
+      // طباعة العدد المسترجع للتحقق
+      console.log("Total dreams count:", dreamsCount);
       setTotalDreams(dreamsCount || 0);
 
       // Fetch total tickets
