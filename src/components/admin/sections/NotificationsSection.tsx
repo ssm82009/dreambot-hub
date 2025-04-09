@@ -133,14 +133,14 @@ const NotificationsSection: React.FC = () => {
       }
 
       if (result?.error) {
-        throw new Error(result.error.message);
+        throw new Error(result.error.message || 'حدث خطأ في إرسال الإشعار');
       }
 
       toast.success(message);
       form.reset();
     } catch (error) {
       console.error('خطأ في إرسال الإشعار:', error);
-      toast.error('حدث خطأ في إرسال الإشعار');
+      toast.error(error.message || 'حدث خطأ في إرسال الإشعار');
     } finally {
       setSending(false);
     }

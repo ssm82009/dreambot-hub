@@ -39,6 +39,7 @@ serve(async (req: Request) => {
     const vapidPrivateKey = Deno.env.get('VAPID_PRIVATE_KEY') || '';
     
     if (!vapidPublicKey || !vapidPrivateKey) {
+      console.error("مفاتيح VAPID غير مهيأة");
       return new Response(
         JSON.stringify({ error: 'مفاتيح VAPID غير مهيأة' }),
         {
@@ -135,7 +136,22 @@ serve(async (req: Request) => {
     // إرسال الإشعار لكل مشترك
     const pushPromises = subscriptions.map(async (subscription) => {
       try {
-        const parsedSubscription = JSON.parse(subscription.auth);
+        console.log(`محاولة إرسال إشعار للمشترك ${subscription.id}`);
+
+        // تحليل بيانات الاشتراك من حقل auth
+        let parsedSubscription;
+        try {
+          parsedSubscription = JSON.parse(subscription.auth);
+          
+          // التحقق من صحة بنية الاشتراك المطلوبة لـ web-push
+          if (!parsedSubscription.endpoint || !parsedSubscription.keys) {
+            console.error(`بنية اشتراك غير صحيحة للمشترك ${subscription.id}`);
+            return false;
+          }
+        } catch (error) {
+          console.error(`خطأ في تحليل بيانات الاشتراك للمشترك ${subscription.id}:`, error);
+          return false;
+        }
         
         const pushPayload = JSON.stringify({
           title: notification.title,
@@ -144,31 +160,52 @@ serve(async (req: Request) => {
           type: notification.type || 'general'
         });
 
-        console.log(`محاولة إرسال إشعار للمشترك ${subscription.id}`);
-
         // إرسال الإشعار باستخدام web-push
-        await webPush.sendNotification(
-          parsedSubscription,
-          pushPayload
-        );
+        try {
+          await webPush.sendNotification(
+            parsedSubscription,
+            pushPayload
+          );
+          
+          console.log(`تم إرسال الإشعار بنجاح للمشترك ${subscription.id}`);
 
-        console.log(`تم إرسال الإشعار بنجاح للمشترك ${subscription.id}`);
+          // تسجيل الإشعار في قاعدة البيانات
+          await supabaseAdmin
+            .from('notification_logs')
+            .insert({
+              user_id: subscription.user_id,
+              title: notification.title,
+              body: notification.body,
+              url: notification.url,
+              type: notification.type,
+              sent_at: new Date()
+            });
 
-        // تسجيل الإشعار في قاعدة البيانات
-        await supabaseAdmin
-          .from('notification_logs')
-          .insert({
-            user_id: subscription.user_id,
-            title: notification.title,
-            body: notification.body,
-            url: notification.url,
-            type: notification.type,
-            sent_at: new Date()
-          });
-
-        return true;
+          return true;
+        } catch (pushError) {
+          console.error(`خطأ في إرسال الإشعار: ${pushError.message}`);
+          
+          // التحقق مما إذا كان الاشتراك غير صالح أو منتهي الصلاحية
+          if (pushError.statusCode === 404 || pushError.statusCode === 410) {
+            console.log(`اشتراك غير صالح، يجب حذفه: ${subscription.id}`);
+            
+            // حذف الاشتراك غير الصالح من قاعدة البيانات
+            try {
+              await supabaseAdmin
+                .from('push_subscriptions')
+                .delete()
+                .eq('id', subscription.id);
+              
+              console.log(`تم حذف الاشتراك ${subscription.id} لأنه غير صالح`);
+            } catch (deleteError) {
+              console.error(`خطأ في حذف الاشتراك غير الصالح:`, deleteError);
+            }
+          }
+          
+          return false;
+        }
       } catch (error) {
-        console.error(`خطأ في إرسال الإشعار للمشترك ${subscription.id}:`, error);
+        console.error(`خطأ عام في معالجة الإشعار للمشترك ${subscription.id}:`, error);
         return false;
       }
     });
@@ -191,7 +228,7 @@ serve(async (req: Request) => {
     console.error('خطأ في معالجة طلب الإشعار:', error);
     
     return new Response(
-      JSON.stringify({ error: 'حدث خطأ أثناء معالجة الطلب' }),
+      JSON.stringify({ error: 'حدث خطأ أثناء معالجة الطلب', details: error.message }),
       {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
