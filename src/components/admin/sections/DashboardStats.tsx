@@ -4,8 +4,7 @@ import { Users, Rabbit, CreditCard, PenSquare, TicketCheck } from 'lucide-react'
 import { useAdmin } from '@/contexts/admin';
 import StatsCard from '../dashboard/StatsCard';
 import DashboardCharts from '../dashboard/DashboardCharts';
-import { Card, CardContent } from '@/components/ui/card';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import TimeRangeSelector from '../dashboard/charts/TimeRangeSelector';
 
 const DashboardStatsSection: React.FC = () => {
   const { dreams, userCount, subscriptions, openTickets } = useAdmin();
@@ -76,17 +75,7 @@ const DashboardStatsSection: React.FC = () => {
     <>
       <div className="flex justify-between items-center mb-6 rtl">
         <h2 className="text-2xl font-bold">لوحة الإحصاءات</h2>
-        <Card className="p-1">
-          <CardContent className="p-0">
-            <Tabs defaultValue="week" value={timeRange} onValueChange={(value) => setTimeRange(value as 'week' | 'month' | 'year')}>
-              <TabsList>
-                <TabsTrigger value="week">أسبوع</TabsTrigger>
-                <TabsTrigger value="month">شهر</TabsTrigger>
-                <TabsTrigger value="year">سنة</TabsTrigger>
-              </TabsList>
-            </Tabs>
-          </CardContent>
-        </Card>
+        <TimeRangeSelector timeRange={timeRange} onTimeRangeChange={setTimeRange} />
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 rtl mb-8">
