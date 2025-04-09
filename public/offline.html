@@ -1,140 +1,74 @@
 
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>غير متصل - تأويل</title>
-    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
-    <style>
-      @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap');
-      
-      :root {
-        --primary: #9b87f5;
-        --primary-hover: #8673d6;
-        --background: #f9f9f9;
-        --text: #1a1f2c;
-      }
-      
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
-      
-      body {
-        font-family: 'Tajawal', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-        background-color: var(--background);
-        color: var(--text);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        height: 100vh;
-        margin: 0;
-        padding: 20px;
-        text-align: center;
-        direction: rtl;
-      }
-      
-      .container {
-        max-width: 500px;
-        width: 90%;
-        padding: 40px;
-        background-color: white;
-        border-radius: 15px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-      }
-      
-      .logo {
-        font-size: 32px;
-        font-weight: 700;
-        margin-bottom: 10px;
-        color: var(--primary);
-      }
-      
-      .subtitle {
-        font-size: 18px;
-        color: #666;
-        margin-bottom: 30px;
-      }
-      
-      h1 {
-        color: var(--text);
-        margin-bottom: 20px;
-        font-size: 24px;
-      }
-      
-      .dream-pattern {
-        padding: 20px;
-        background-color: #f3f4ff;
-        border-radius: 12px;
-        margin: 20px 0;
-        position: relative;
-        background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%239C92AC' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-      }
-      
-      p {
-        line-height: 1.6;
-        margin-bottom: 25px;
-      }
-      
-      .button {
-        background-color: var(--primary);
-        color: white;
-        border: none;
-        padding: 12px 24px;
-        border-radius: 6px;
-        font-size: 16px;
-        font-weight: 500;
-        cursor: pointer;
-        transition: background-color 0.3s;
-        font-family: 'Tajawal', sans-serif;
-      }
-      
-      .button:hover {
-        background-color: var(--primary-hover);
-      }
-      
-      .icon {
-        display: block;
-        margin: 0 auto 20px;
-        width: 80px;
-        height: 80px;
-      }
-      
-      .icon svg {
-        width: 100%;
-        height: 100%;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="container">
-      <div class="logo">تأويل</div>
-      <div class="subtitle">تفسير فوري للرؤى والأحلام</div>
-      
-      <div class="icon">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#9b87f5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="1" y1="1" x2="23" y2="23"></line>
-          <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"></path>
-          <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"></path>
-          <path d="M10.71 5.05A16 16 0 0 1 22.58 9"></path>
-          <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"></path>
-          <path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path>
-          <line x1="12" y1="20" x2="12.01" y2="20"></line>
-        </svg>
-      </div>
-      
-      <h1>أنت غير متصل بالإنترنت</h1>
-      
-      <div class="dream-pattern">
-        <p>"قد ينقطع الاتصال، لكن التأويل لا ينقطع"</p>
-      </div>
-      
-      <p>يبدو أنك غير متصل بالإنترنت حاليًا. يرجى التحقق من اتصالك والمحاولة مرة أخرى للاستمرار في تفسير أحلامك.</p>
-      
-      <button class="button" onclick="window.location.reload()">إعادة المحاولة</button>
-    </div>
-  </body>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>تأويل - أنت غير متصل</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: #f7f7f7;
+      color: #333;
+      text-align: center;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 600px;
+      padding: 2rem;
+      background-color: white;
+      border-radius: 1rem;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+      margin: 1rem;
+    }
+    .logo {
+      font-size: 2.5rem;
+      font-weight: bold;
+      margin-bottom: 2rem;
+      color: #8854d0;
+    }
+    h1 {
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+    }
+    p {
+      line-height: 1.6;
+      margin-bottom: 1.5rem;
+    }
+    button {
+      background-color: #8854d0;
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 0.5rem;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    button:hover {
+      background-color: #6c45a5;
+    }
+    .icon {
+      display: block;
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">تأويل</div>
+    <span class="icon">📶</span>
+    <h1>أنت غير متصل بالإنترنت</h1>
+    <p>يبدو أن اتصالك بالإنترنت منقطع حالياً. يرجى التحقق من اتصالك والمحاولة مرة أخرى.</p>
+    <p>سيتم إعادة الاتصال تلقائياً بمجرد استعادة الاتصال بالإنترنت.</p>
+    <button onclick="window.location.reload()">إعادة المحاولة</button>
+  </div>
+</body>
 </html>

@@ -114,6 +114,48 @@ export type Database = {
         }
         Relationships: []
       }
+      firebase_config: {
+        Row: {
+          api_key: string
+          app_id: string
+          auth_domain: string
+          created_at: string
+          id: string
+          measurement_id: string | null
+          messaging_sender_id: string
+          project_id: string
+          service_account_key: Json | null
+          storage_bucket: string
+          updated_at: string
+        }
+        Insert: {
+          api_key: string
+          app_id: string
+          auth_domain: string
+          created_at?: string
+          id?: string
+          measurement_id?: string | null
+          messaging_sender_id: string
+          project_id: string
+          service_account_key?: Json | null
+          storage_bucket: string
+          updated_at?: string
+        }
+        Update: {
+          api_key?: string
+          app_id?: string
+          auth_domain?: string
+          created_at?: string
+          id?: string
+          measurement_id?: string | null
+          messaging_sender_id?: string
+          project_id?: string
+          service_account_key?: Json | null
+          storage_bucket?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       interpretation_settings: {
         Row: {
           created_at: string | null

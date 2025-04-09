@@ -17,23 +17,31 @@ export function useNotifications() {
     unsubscribeFromNotifications 
   } = usePushSubscription(supported, granted);
   
+  const [isCheckingSubscription, setIsCheckingSubscription] = useState(false);
+  
   // التحقق من وجود اشتراك عند تحميل المكون
   useEffect(() => {
-    if (supported && granted) {
+    if (supported && granted && !isCheckingSubscription) {
       const checkSubscription = async () => {
-        const existingSubscription = await checkExistingSubscription();
-        console.log("التحقق من الاشتراك:", existingSubscription ? "موجود" : "غير موجود");
+        setIsCheckingSubscription(true);
+        try {
+          const existingSubscription = await checkExistingSubscription();
+          console.log("التحقق من الاشتراك:", existingSubscription ? "موجود" : "غير موجود");
+        } finally {
+          setIsCheckingSubscription(false);
+        }
       };
       
       checkSubscription();
     }
-  }, [supported, granted, checkExistingSubscription]);
+  }, [supported, granted, checkExistingSubscription, isCheckingSubscription]);
   
   return {
     supported,
     granted,
     subscription,
     subscribing,
+    isCheckingSubscription,
     requestPermission,
     subscribeToNotifications,
     unsubscribeFromNotifications

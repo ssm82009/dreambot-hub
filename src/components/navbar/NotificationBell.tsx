@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bell, BellOff, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -20,10 +20,20 @@ interface NotificationBellProps {
 
 export const NotificationBell: React.FC<NotificationBellProps> = ({ className }) => {
   const navigate = useNavigate();
-  const { supported, granted, subscription, subscribing, subscribeToNotifications, unsubscribeFromNotifications } = useNotifications();
+  const { 
+    supported, 
+    granted, 
+    subscription, 
+    subscribing, 
+    isCheckingSubscription,
+    subscribeToNotifications, 
+    unsubscribeFromNotifications 
+  } = useNotifications();
   const [openTicketsCount, setOpenTicketsCount] = useState<number>(0);
   const { isAdmin } = useAdminCheck();
   const [loading, setLoading] = useState<boolean>(false);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const clickDisabled = useRef<boolean>(false);
 
   // جلب عدد التذاكر المفتوحة للمشرف
   useEffect(() => {
@@ -68,7 +78,20 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ className })
 
   // معالج النقر على زر الإشعارات
   const handleToggleNotifications = async () => {
+    // تجنب النقرات المتتالية السريعة
+    if (clickDisabled.current || loading || subscribing || isCheckingSubscription) {
+      console.log("زر الإشعارات معطل حاليًا");
+      return;
+    }
+    
+    // تعطيل الزر مؤقتًا لمنع النقرات المتعددة
+    clickDisabled.current = true;
+    setTimeout(() => {
+      clickDisabled.current = false;
+    }, 2000); // تعطيل لمدة ثانيتين
+    
     console.log("تبديل حالة الإشعارات:", subscription ? "إلغاء الاشتراك" : "الاشتراك");
+    
     try {
       setLoading(true);
       
@@ -102,13 +125,14 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ className })
         <TooltipTrigger asChild>
           <div className="relative">
             <Button
+              ref={buttonRef}
               variant="ghost"
               size="icon"
               className={className}
               onClick={handleToggleNotifications}
-              disabled={subscribing || loading}
+              disabled={loading || subscribing || isCheckingSubscription}
             >
-              {loading ? (
+              {loading || subscribing || isCheckingSubscription ? (
                 <Loader2 className="h-5 w-5 animate-spin" />
               ) : subscription ? (
                 <Bell className="h-5 w-5" />
