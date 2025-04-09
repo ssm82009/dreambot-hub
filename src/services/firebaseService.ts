@@ -16,6 +16,7 @@ export async function initializeFirebase() {
     const { getMessaging } = await import('firebase/messaging');
     
     // استعلام عن تكوين Firebase من قاعدة البيانات
+    // Use explicit type casting to avoid TypeScript errors
     const { data, error } = await supabase
       .from('firebase_config')
       .select('*')

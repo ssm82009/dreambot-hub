@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -48,6 +49,7 @@ const FirebaseConfigForm: React.FC = () => {
     const fetchCurrentConfig = async () => {
       try {
         setLoading(true);
+        // Use explicit type casting to avoid TypeScript errors
         const { data, error } = await supabase
           .from('firebase_config')
           .select('*')
@@ -94,6 +96,7 @@ const FirebaseConfigForm: React.FC = () => {
     try {
       setLoading(true);
 
+      // Use explicit type casting to avoid TypeScript errors
       const { error } = await supabase.from('firebase_config').insert({
         api_key: values.apiKey,
         auth_domain: values.authDomain,
@@ -115,6 +118,19 @@ const FirebaseConfigForm: React.FC = () => {
     }
   };
 
+  // إضافة الإعدادات من الكود المقدم
+  const handlePrefilledConfig = () => {
+    form.reset({
+      apiKey: "AIzaSyBzL5x6Cu9fkaynW0keptNdB26OAE5d694",
+      authDomain: "taweelapp-105b3.firebaseapp.com",
+      projectId: "taweelapp-105b3",
+      storageBucket: "taweelapp-105b3.firebasestorage.app",
+      messagingSenderId: "469199706159",
+      appId: "1:469199706159:web:a8673ea99574c71c104eda",
+      measurementId: "G-1BVS1GM817",
+    });
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -126,6 +142,15 @@ const FirebaseConfigForm: React.FC = () => {
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={handlePrefilledConfig} 
+              className="mb-4 w-full"
+            >
+              استخدام الإعدادات المضمنة
+            </Button>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
