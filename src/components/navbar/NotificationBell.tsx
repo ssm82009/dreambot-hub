@@ -106,6 +106,8 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ className })
           if (!permissionGranted) {
             console.log("تم رفض إذن الإشعارات");
             toast.error('يجب السماح بالإشعارات لتفعيل هذه الخدمة');
+            setProcessingRequest(false);
+            setLoading(false);
             return;
           }
         }
@@ -124,7 +126,7 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ className })
       // تأخير إعادة تعيين معالجة الطلبات للسماح بتحديث واجهة المستخدم
       setTimeout(() => {
         setProcessingRequest(false);
-      }, 1000);
+      }, 500);
     }
   };
 

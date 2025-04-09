@@ -46,6 +46,10 @@ export function usePushSubscription(supported: boolean, granted: boolean) {
         }));
         console.log("تم العثور على اشتراك موجود");
       } else {
+        setState(prev => ({
+          ...prev,
+          subscription: null
+        }));
         console.log("لم يتم العثور على اشتراك");
       }
       
@@ -130,6 +134,7 @@ export function usePushSubscription(supported: boolean, granted: boolean) {
           console.log("تم تخزين الاشتراك بنجاح");
         } catch (error) {
           console.error('خطأ في تخزين اشتراك الإشعارات:', error);
+          toast.error('حدث خطأ في تخزين اشتراك الإشعارات');
         }
       }
       
@@ -142,10 +147,14 @@ export function usePushSubscription(supported: boolean, granted: boolean) {
       return subscription;
     } catch (error) {
       console.error('خطأ في الاشتراك في الإشعارات:', error);
+      toast.error('حدث خطأ أثناء الاشتراك في الإشعارات');
       setState(prev => ({ ...prev, subscribing: false }));
       return null;
     } finally {
-      subscriptionInProgress.current = false;
+      // تأكد من إعادة تعيين العلم دائمًا بعد انتهاء العملية
+      setTimeout(() => {
+        subscriptionInProgress.current = false;
+      }, 500);
     }
   }, [supported]);
   
@@ -208,7 +217,10 @@ export function usePushSubscription(supported: boolean, granted: boolean) {
       setState(prev => ({ ...prev, subscribing: false }));
       return false;
     } finally {
-      subscriptionInProgress.current = false;
+      // تأكد من إعادة تعيين العلم دائمًا بعد انتهاء العملية
+      setTimeout(() => {
+        subscriptionInProgress.current = false;
+      }, 500);
     }
   }, [state.subscription]);
 

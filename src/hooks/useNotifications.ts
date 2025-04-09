@@ -2,6 +2,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNotificationPermission } from './notifications/useNotificationPermission';
 import { usePushSubscription } from './notifications/usePushSubscription';
+import { toast } from 'sonner';
 
 /**
  * هوك إدارة الإشعارات الرئيسي
@@ -44,6 +45,7 @@ export function useNotifications() {
     try {
       if (!supported) {
         console.log("الإشعارات غير مدعومة");
+        toast.error('متصفحك لا يدعم الإشعارات');
         return null;
       }
       
@@ -57,7 +59,8 @@ export function useNotifications() {
       }
       
       // محاولة الاشتراك بعد منح الإذن
-      return await subscribeToNotifications();
+      const result = await subscribeToNotifications();
+      return result;
     } catch (error) {
       console.error("خطأ في عملية الاشتراك:", error);
       return null;

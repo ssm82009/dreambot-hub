@@ -40,6 +40,10 @@ export function useNotificationPermission() {
           granted: false,
           supported
         });
+        
+        if (!supported) {
+          console.log("متصفحك لا يدعم الإشعارات");
+        }
       }
     };
     
