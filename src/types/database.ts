@@ -40,9 +40,9 @@ export type PaymentSettings = {
   paylink_api_key: string | null;
   paylink_secret_key: string | null;
   paypal_enabled: boolean;
+  paypal_sandbox: boolean;
   paypal_client_id: string | null;
   paypal_secret: string | null;
-  paypal_sandbox: boolean;
   created_at?: string;
   updated_at?: string;
 };
@@ -104,6 +104,7 @@ export type Dream = {
   user_id: string | null;
   tags: string[] | null;
   created_at: string;
+  users?: User;  // Add the users relationship
 };
 
 export type DreamSymbol = {

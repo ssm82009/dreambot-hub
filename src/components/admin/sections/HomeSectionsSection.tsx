@@ -1,9 +1,8 @@
-
 import React, { useState } from 'react';
 import { LayoutDashboard, EditIcon, Palette } from 'lucide-react';
 import AdminSection from '@/components/admin/AdminSection';
 import { useAdmin } from '@/contexts/admin';
-import { HomeSectionItem } from '@/contexts/admin/types';
+import { HomeSectionItem, Json } from '@/contexts/admin/types';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
@@ -51,9 +50,12 @@ const HomeSectionsSection = () => {
     try {
       setHomeSectionsForm(sections);
       
+      // Convert sections to a format compatible with Json type
+      const sectionsJson: Json = JSON.parse(JSON.stringify(sections));
+      
       const { error } = await supabase
         .from('site_settings')
-        .update({ home_sections: sections })
+        .update({ home_sections: sectionsJson })
         .eq('id', 'home_sections');
       
       if (error) throw error;

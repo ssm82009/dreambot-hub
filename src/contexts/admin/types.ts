@@ -1,5 +1,25 @@
-
 import { User, CustomPage, NavLink } from '@/types/database';
+
+// Define Json type to match the Supabase Json type
+export type Json = 
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[];
+
+export type HomeSectionStyle = {
+  backgroundColor?: string;
+  textColor?: string;
+  [key: string]: string | undefined; // Add index signature to make it compatible with Json
+};
+
+export type HomeSectionContent = {
+  title?: string;
+  subtitle?: string;
+  [key: string]: any; // Already has index signature
+};
 
 export type HomeSectionItem = {
   id: string;
@@ -8,6 +28,7 @@ export type HomeSectionItem = {
   visible: boolean;
   content?: HomeSectionContent;
   style?: HomeSectionStyle;
+  [key: string]: any; // Add index signature to make it compatible with Json
 };
 
 export type ThemeSettingsFormValues = {
@@ -142,15 +163,3 @@ export type AdminContextType = {
   setActiveSections: (sections: Partial<ActiveSections>) => void;
   toggleSection: (section: keyof ActiveSections) => void;
 };
-
-export interface HomeSectionStyle {
-  backgroundColor?: string;
-  textColor?: string;
-  // We can add more style properties here in the future
-}
-
-export interface HomeSectionContent {
-  title?: string;
-  subtitle?: string;
-  [key: string]: any;
-}
