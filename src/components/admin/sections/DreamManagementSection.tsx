@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Book, RefreshCw } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import AdminSection from '@/components/admin/AdminSection';
 import { useAdmin } from '@/contexts/admin';
 import { supabase } from '@/integrations/supabase/client';
@@ -28,6 +29,7 @@ const DreamManagementSection = () => {
   const [userEmails, setUserEmails] = useState<Record<string, string>>({});
   const [userNames, setUserNames] = useState<Record<string, string>>({});
   const pageSize = 10;
+  const navigate = useNavigate();
 
   const fetchDreamsCount = async () => {
     try {
@@ -213,7 +215,7 @@ const DreamManagementSection = () => {
   };
 
   const viewDream = (dreamId: string) => {
-    window.open(`/dream/${dreamId}`, '_blank');
+    navigate(`/dream/${dreamId}`);
   };
 
   return (
