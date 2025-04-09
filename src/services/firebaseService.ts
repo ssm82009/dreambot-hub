@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { getOrCreateFirebaseToken } from '@/utils/pushNotificationUtils';
 import { FirebaseConfig } from '@/types/database';
@@ -48,6 +49,18 @@ export async function initializeFirebase() {
     
     // الحصول على كائن الرسائل
     firebaseMessaging = getMessaging(firebaseApp);
+    
+    // إرسال تكوين Firebase إلى خدمة العامل إذا كانت مسجلة
+    try {
+      const registration = await navigator.serviceWorker.ready;
+      registration.active?.postMessage({
+        type: 'FIREBASE_CONFIG',
+        config: firebaseConfig
+      });
+      console.log("تم إرسال تكوين Firebase إلى خدمة العامل");
+    } catch (e) {
+      console.warn("لا يمكن إرسال التكوين إلى خدمة العامل:", e);
+    }
     
     console.log("تم تهيئة Firebase بنجاح");
     return true;
