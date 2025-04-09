@@ -43,19 +43,34 @@ export const useFetchDashboardStats = () => {
       }
       setActiveSubscriptions(activeCount);
 
-      // استعلام مباشر لعد الأحلام بطريقة صريحة وبسيطة - ضمان جلب العدد الإجمالي الكامل
-      console.log("Fetching total dreams count...");
+      // جلب عدد الأحلام بناءً على حقل ID بشكل صريح ومباشر
+      console.log("Fetching total dreams count using ID field...");
       const { count: dreamsCount, error: dreamsError } = await supabase
         .from('dreams')
-        .select('*', { count: 'exact', head: true });
+        .select('id', { count: 'exact', head: true });
 
       if (dreamsError) {
         throw new Error(`Error fetching dreams count: ${dreamsError.message}`);
       }
       
-      // طباعة العدد المسترجع للتحقق
-      console.log("Total dreams count:", dreamsCount);
-      setTotalDreams(dreamsCount || 0);
+      // محاولة بديلة لجلب عدد السجلات
+      if (dreamsCount === null) {
+        console.log("Count returned null, trying alternative method...");
+        const { data: allDreams, error: allDreamsError } = await supabase
+          .from('dreams')
+          .select('id');
+        
+        if (allDreamsError) {
+          throw new Error(`Error fetching all dreams: ${allDreamsError.message}`);
+        }
+        
+        console.log("Alternative method: Total dreams count:", allDreams?.length);
+        setTotalDreams(allDreams?.length || 0);
+      } else {
+        // طباعة العدد المسترجع للتحقق
+        console.log("Total dreams count:", dreamsCount);
+        setTotalDreams(dreamsCount);
+      }
 
       // Fetch total tickets
       const { data: ticketsData, error: ticketsError, count: ticketsCount } = await supabase
