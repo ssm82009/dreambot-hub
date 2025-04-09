@@ -1,25 +1,27 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { 
-  initializeFirebaseKey, 
-  setFirebaseKey,
+  initializeServiceAccountKey, 
+  setServiceAccountKey,
   sendNotificationToUser as firebaseSendToUser, 
   sendNotificationToAdmin as firebaseSendToAdmin,
   sendNotificationToAllUsers as firebaseSendToAll,
-  type NotificationPayload 
+  type NotificationPayload,
+  type ServiceAccountKey
 } from './firebaseNotificationService';
 
 // استدعاء وظيفة تهيئة مفتاح Firebase مباشرة
-initializeFirebaseKey().catch(err => console.error('فشل تهيئة مفتاح Firebase:', err));
+initializeServiceAccountKey().catch(err => console.error('فشل تهيئة مفتاح الحساب الخدمي:', err));
 
 interface PushSubscriptionData {
   endpoint: string;
   auth: string; // JSON string of subscription
 }
 
-// تعيين مفتاح FCM يدويًا (مفيد للتطوير أو الاختبار)
-export function setFCMServerKey(key: string) {
-  if (!key) return false;
-  return setFirebaseKey(key);
+// تعيين مفتاح الحساب الخدمي يدويًا (مفيد للتطوير أو الاختبار)
+export function setFirebaseServiceAccountKey(serviceAccountJson: string) {
+  if (!serviceAccountJson) return false;
+  return setServiceAccountKey(serviceAccountJson);
 }
 
 // إرسال إشعار لمستخدم محدد

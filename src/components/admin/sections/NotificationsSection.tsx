@@ -1,10 +1,11 @@
+
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { sendNotificationToAdmin, sendNotificationToAllUsers, sendNotification, setFCMServerKey } from '@/services/notificationService';
+import { sendNotificationToAdmin, sendNotificationToAllUsers, sendNotification, setFirebaseServiceAccountKey } from '@/services/notificationService';
 import { Loader2, Bell, Send, Key } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -28,11 +29,11 @@ const formSchema = z.object({
   userId: z.string().optional(),
 });
 
-const fcmKeySchema = z.object({
-  fcmKey: z.string().min(1, 'يجب إدخال مفتاح FCM'),
+const serviceAccountKeySchema = z.object({
+  serviceAccountKey: z.string().min(1, 'يجب إدخال مفتاح الحساب الخدمي'),
 });
 
-type FCMKeyFormValues = z.infer<typeof fcmKeySchema>;
+type ServiceAccountKeyFormValues = z.infer<typeof serviceAccountKeySchema>;
 type NotificationFormValues = z.infer<typeof formSchema>;
 
 const NotificationsSection: React.FC = () => {
@@ -40,7 +41,7 @@ const NotificationsSection: React.FC = () => {
   const [subscribersCount, setSubscribersCount] = useState<number>(0);
   const [sending, setSending] = useState<boolean>(false);
   const [users, setUsers] = useState<{ id: string; email: string }[]>([]);
-  const [fcmKeyMissing, setFcmKeyMissing] = useState<boolean>(false);
+  const [serviceAccountKeyMissing, setServiceAccountKeyMissing] = useState<boolean>(false);
   const [savingKey, setSavingKey] = useState<boolean>(false);
 
   const form = useForm<NotificationFormValues>({
@@ -55,31 +56,31 @@ const NotificationsSection: React.FC = () => {
     },
   });
 
-  const fcmKeyForm = useForm<FCMKeyFormValues>({
-    resolver: zodResolver(fcmKeySchema),
+  const serviceAccountKeyForm = useForm<ServiceAccountKeyFormValues>({
+    resolver: zodResolver(serviceAccountKeySchema),
     defaultValues: {
-      fcmKey: '',
+      serviceAccountKey: '',
     },
   });
 
   const targetType = form.watch('targetType');
 
-  const checkFcmKey = async () => {
+  const checkServiceAccountKey = async () => {
     try {
       const { data, error } = await supabase
         .from('app_settings')
         .select('value')
-        .eq('key', 'fcm_server_key')
+        .eq('key', 'firebase_service_account_key')
         .single();
       
       if (error || !data || !data.value) {
-        setFcmKeyMissing(true);
+        setServiceAccountKeyMissing(true);
       } else {
-        setFcmKeyMissing(false);
+        setServiceAccountKeyMissing(false);
       }
     } catch (error) {
-      console.error('خطأ في التحقق من مفتاح FCM:', error);
-      setFcmKeyMissing(true);
+      console.error('خطأ في التحقق من مفتاح الحساب الخدمي:', error);
+      setServiceAccountKeyMissing(true);
     }
   };
 
@@ -88,7 +89,7 @@ const NotificationsSection: React.FC = () => {
       try {
         setLoading(true);
         
-        await checkFcmKey();
+        await checkServiceAccountKey();
         
         const { data: countData, error: countError } = await supabase.rpc('count_push_subscriptions');
 
@@ -122,29 +123,38 @@ const NotificationsSection: React.FC = () => {
     fetchData();
   }, []);
 
-  const saveFcmKey = async (values: FCMKeyFormValues) => {
+  const saveServiceAccountKey = async (values: ServiceAccountKeyFormValues) => {
     try {
       setSavingKey(true);
-      const { fcmKey } = values;
+      const { serviceAccountKey } = values;
+      
+      // تحقق من صحة المفتاح
+      try {
+        JSON.parse(serviceAccountKey);
+      } catch (e) {
+        toast.error('المفتاح المدخل ليس بصيغة JSON صحيحة');
+        return;
+      }
       
       const { error } = await supabase
         .from('app_settings')
         .upsert({ 
-          key: 'fcm_server_key', 
-          value: fcmKey,
-          description: 'مفتاح Firebase Cloud Messaging للإشعارات'
+          key: 'firebase_service_account_key', 
+          value: serviceAccountKey,
+          description: 'مفتاح الحساب الخدمي لإشعارات Firebase'
         });
       
       if (error) throw error;
       
-      setFCMServerKey(fcmKey);
+      // تعيين المفتاح في الخدمة
+      setFirebaseServiceAccountKey(serviceAccountKey);
       
-      toast.success('تم حفظ مفتاح FCM بنجاح');
-      setFcmKeyMissing(false);
-      fcmKeyForm.reset();
+      toast.success('تم حفظ مفتاح الحساب الخدمي بنجاح');
+      setServiceAccountKeyMissing(false);
+      serviceAccountKeyForm.reset();
     } catch (error) {
-      console.error('خطأ في حفظ مفتاح FCM:', error);
-      toast.error('حدث خطأ في حفظ مفتاح FCM');
+      console.error('خطأ في حفظ مفتاح الحساب الخدمي:', error);
+      toast.error('حدث خطأ في حفظ مفتاح الحساب الخدمي');
     } finally {
       setSavingKey(false);
     }
@@ -196,27 +206,31 @@ const NotificationsSection: React.FC = () => {
         <h2 className="text-2xl font-bold">إدارة الإشعارات</h2>
       </div>
 
-      {fcmKeyMissing && (
-        <Alert variant="warning" className="bg-yellow-50 border-yellow-200">
+      {serviceAccountKeyMissing && (
+        <Alert variant="destructive" className="bg-red-50 border-red-200">
           <Key className="h-5 w-5" />
-          <AlertTitle>مفتاح FCM غير متوفر</AlertTitle>
+          <AlertTitle>مفتاح الحساب الخدمي غير متوفر</AlertTitle>
           <AlertDescription>
-            يجب إضافة مفتاح Firebase Cloud Messaging (FCM) لتمكين إرسال الإشعارات.
+            يجب إضافة مفتاح الحساب الخدمي (Service Account Key) الخاص بـ Firebase لتمكين إرسال الإشعارات.
           </AlertDescription>
           
-          <Form {...fcmKeyForm}>
-            <form onSubmit={fcmKeyForm.handleSubmit(saveFcmKey)} className="mt-4 space-y-4">
+          <Form {...serviceAccountKeyForm}>
+            <form onSubmit={serviceAccountKeyForm.handleSubmit(saveServiceAccountKey)} className="mt-4 space-y-4">
               <FormField
-                control={fcmKeyForm.control}
-                name="fcmKey"
+                control={serviceAccountKeyForm.control}
+                name="serviceAccountKey"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>مفتاح FCM السيرفر</FormLabel>
+                    <FormLabel>مفتاح الحساب الخدمي (JSON)</FormLabel>
                     <FormControl>
-                      <Input placeholder="أدخل مفتاح FCM السيرفر" {...field} />
+                      <Textarea 
+                        placeholder='أدخل مفتاح الحساب الخدمي بصيغة JSON' 
+                        className="min-h-[100px]" 
+                        {...field} 
+                      />
                     </FormControl>
                     <FormDescription>
-                      يمكنك الحصول على هذا المفتاح من لوحة تحكم Firebase
+                      يمكنك الحصول على مفتاح الحساب الخدمي من إعدادات المشروع في Firebase
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -426,7 +440,7 @@ const NotificationsSection: React.FC = () => {
                 <Button 
                   type="submit" 
                   className="w-full" 
-                  disabled={sending || fcmKeyMissing}
+                  disabled={sending || serviceAccountKeyMissing}
                 >
                   {sending ? (
                     <>
@@ -441,9 +455,9 @@ const NotificationsSection: React.FC = () => {
                   )}
                 </Button>
                 
-                {fcmKeyMissing && (
+                {serviceAccountKeyMissing && (
                   <p className="text-center text-sm text-orange-600">
-                    يجب إضافة مفتاح FCM قبل إرسال الإشعارات
+                    يجب إضافة مفتاح الحساب الخدمي قبل إرسال الإشعارات
                   </p>
                 )}
               </form>
@@ -456,3 +470,4 @@ const NotificationsSection: React.FC = () => {
 };
 
 export default NotificationsSection;
+

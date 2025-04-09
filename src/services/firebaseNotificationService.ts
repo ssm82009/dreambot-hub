@@ -1,8 +1,6 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-
-// مفتاح FCM السيرفر (يجب تخزينه في قاعدة البيانات)
-let FCM_SERVER_KEY = '';
 
 // واجهة بيانات الإشعار
 export interface NotificationPayload {
@@ -12,101 +10,213 @@ export interface NotificationPayload {
   type?: 'general' | 'ticket' | 'payment' | 'subscription';
 }
 
-// تعيين مفتاح FCM يدويًا (يمكن استخدامها للاختبار أو في حالة عدم وجود المفتاح في قاعدة البيانات)
-export function setFirebaseKey(key: string) {
-  if (key && key.trim() !== '') {
-    FCM_SERVER_KEY = key;
-    return true;
-  }
-  return false;
+// واجهة مفتاح حساب الخدمة
+export interface ServiceAccountKey {
+  client_email: string;
+  private_key: string;
+  project_id: string;
 }
 
-// تهيئة مفتاح FCM من قاعدة البيانات
-export async function initializeFirebaseKey() {
+// تخزين مفتاح الحساب الخدمي بشكل مؤقت
+let serviceAccountKey: ServiceAccountKey | null = null;
+
+// تخزين معرف مشروع Firebase
+let projectId: string | null = null;
+
+// تعيين مفتاح الحساب الخدمي يدويًا
+export function setServiceAccountKey(key: string) {
+  try {
+    if (!key || key.trim() === '') return false;
+    
+    // محاولة تحليل مفتاح JSON
+    const parsedKey = JSON.parse(key);
+    
+    // التحقق من وجود الحقول الأساسية
+    if (!parsedKey.client_email || !parsedKey.private_key || !parsedKey.project_id) {
+      console.error('مفتاح الحساب الخدمي غير صالح، يجب أن يحتوي على client_email و private_key و project_id');
+      return false;
+    }
+    
+    serviceAccountKey = parsedKey;
+    projectId = parsedKey.project_id;
+    
+    console.log('تم تعيين مفتاح الحساب الخدمي بنجاح');
+    return true;
+  } catch (error) {
+    console.error('خطأ في تعيين مفتاح الحساب الخدمي:', error);
+    return false;
+  }
+}
+
+// تهيئة مفتاح الحساب الخدمي من قاعدة البيانات
+export async function initializeServiceAccountKey() {
   try {
     // إذا كان المفتاح موجودا بالفعل، لا داعي للاستعلام عن قاعدة البيانات
-    if (FCM_SERVER_KEY) return true;
+    if (serviceAccountKey) return true;
     
     // محاولة جلب المفتاح من قاعدة البيانات
     const { data, error } = await supabase
       .from('app_settings')
       .select('key, value')
-      .eq('key', 'fcm_server_key')
+      .eq('key', 'firebase_service_account_key')
       .single();
 
     if (error) {
-      console.warn('خطأ في جلب مفتاح FCM:', error.message);
+      console.warn('خطأ في جلب مفتاح الحساب الخدمي:', error.message);
       return false;
     }
     
-    if (data && data.value) {
-      FCM_SERVER_KEY = data.value;
-      return true;
+    if (data?.value) {
+      try {
+        const parsedKey = JSON.parse(data.value);
+        
+        if (!parsedKey.client_email || !parsedKey.private_key || !parsedKey.project_id) {
+          console.error('مفتاح الحساب الخدمي في قاعدة البيانات غير صالح');
+          return false;
+        }
+        
+        serviceAccountKey = parsedKey;
+        projectId = parsedKey.project_id;
+        
+        console.log('تم تهيئة مفتاح الحساب الخدمي من قاعدة البيانات');
+        return true;
+      } catch (error) {
+        console.error('خطأ في تحليل مفتاح الحساب الخدمي من قاعدة البيانات:', error);
+        return false;
+      }
     } else {
-      console.error('مفتاح FCM غير موجود في قاعدة البيانات');
+      console.error('مفتاح الحساب الخدمي غير موجود في قاعدة البيانات');
       return false;
     }
   } catch (error) {
-    console.error('خطأ في تهيئة مفتاح Firebase:', error);
+    console.error('خطأ في تهيئة مفتاح الحساب الخدمي:', error);
     return false;
   }
 }
 
+// استدعاء وظيفة تهيئة مفتاح Firebase مباشرة
+initializeServiceAccountKey().catch(err => console.error('فشل تهيئة مفتاح الحساب الخدمي:', err));
+
 // التحقق من وجود المفتاح وجلبه إذا كان غير موجود
-async function ensureFirebaseKey() {
-  if (!FCM_SERVER_KEY) {
-    const initialized = await initializeFirebaseKey();
+async function ensureServiceAccountKey() {
+  if (!serviceAccountKey) {
+    const initialized = await initializeServiceAccountKey();
     if (!initialized) {
-      throw new Error('مفتاح FCM غير متوفر');
+      throw new Error('مفتاح الحساب الخدمي غير متوفر');
     }
   }
   return true;
 }
 
+// الحصول على رمز وصول (access token) من Firebase
+async function getFirebaseAccessToken() {
+  try {
+    await ensureServiceAccountKey();
+    
+    if (!serviceAccountKey) {
+      throw new Error('مفتاح الحساب الخدمي غير متوفر');
+    }
+    
+    // إنشاء JWT assertion للحصول على رمز الوصول
+    const now = Math.floor(Date.now() / 1000);
+    const expTime = now + 3600; // صلاحية لمدة ساعة
+    
+    const header = {
+      alg: 'RS256',
+      typ: 'JWT'
+    };
+    
+    const payload = {
+      iss: serviceAccountKey.client_email,
+      scope: 'https://www.googleapis.com/auth/firebase.messaging',
+      aud: 'https://oauth2.googleapis.com/token',
+      exp: expTime,
+      iat: now
+    };
+    
+    // توقيع JWT باستخدام المفتاح الخاص - نحتاج لمكتبة لتوقيع JWT
+    // هذا سيتطلب مكتبة مثل jsonwebtoken أو يمكننا استخدام خدمة سوبابيس للتوقيع
+    
+    // استخدام وظيفة سوبابيس للتوقيع بدلاً من تنفيذه محليًا
+    const { data: tokenData, error } = await supabase.functions.invoke('get-firebase-token', {
+      body: {
+        clientEmail: serviceAccountKey.client_email,
+        privateKey: serviceAccountKey.private_key,
+        projectId: serviceAccountKey.project_id
+      }
+    });
+    
+    if (error) {
+      throw new Error(`خطأ في الحصول على رمز الوصول: ${error.message}`);
+    }
+    
+    if (!tokenData?.access_token) {
+      throw new Error('لم يتم الحصول على رمز وصول صالح');
+    }
+    
+    return tokenData.access_token;
+  } catch (error) {
+    console.error('خطأ في الحصول على رمز وصول Firebase:', error);
+    throw error;
+  }
+}
+
 // إرسال إشعار إلى مشترك واحد
 async function sendNotificationToSubscription(subscription: PushSubscription, payload: NotificationPayload) {
   try {
-    await ensureFirebaseKey();
-
+    // الحصول على رمز الوصول
+    const accessToken = await getFirebaseAccessToken();
+    
+    if (!projectId) {
+      throw new Error('معرف مشروع Firebase غير متوفر');
+    }
+    
     // إعداد بيانات الإشعار
     const notification = {
       title: payload.title,
       body: payload.body,
-      icon: '/android-chrome-192x192.png',
-      badge: '/favicon-32x32.png',
-      data: {
-        url: payload.url || '/',
-        type: payload.type || 'general'
+      image: '/android-chrome-192x192.png'
+    };
+    
+    const message = {
+      message: {
+        token: subscription.endpoint,
+        notification,
+        webpush: {
+          notification: {
+            icon: '/android-chrome-192x192.png',
+            badge: '/favicon-32x32.png',
+          },
+          fcm_options: {
+            link: payload.url || '/'
+          },
+          data: {
+            url: payload.url || '/',
+            type: payload.type || 'general'
+          }
+        }
       }
     };
-
-    // إرسال الإشعار باستخدام واجهة برمجة تطبيقات FCM
-    const response = await fetch('https://fcm.googleapis.com/fcm/send', {
+    
+    // إرسال الإشعار باستخدام واجهة برمجة تطبيقات Firebase Cloud Messaging V1
+    const response = await fetch(`https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `key=${FCM_SERVER_KEY}`
+        'Authorization': `Bearer ${accessToken}`
       },
-      body: JSON.stringify({
-        to: subscription.endpoint,
-        notification,
-        webpush: {
-          fcm_options: {
-            link: payload.url || '/'
-          }
-        }
-      })
+      body: JSON.stringify(message)
     });
-
+    
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(`فشل إرسال الإشعار: ${response.status} - ${JSON.stringify(errorData)}`);
     }
-
+    
     return true;
   } catch (error) {
     console.error('خطأ في إرسال الإشعار:', error);
-
+    
     // التعامل مع الاشتراكات غير الصالحة
     if (error.message?.includes('NotRegistered') || error.message?.includes('InvalidRegistration')) {
       // حذف الاشتراك غير الصالح من قاعدة البيانات
@@ -310,3 +420,4 @@ async function removeInvalidSubscription(endpoint: string) {
     return false;
   }
 }
+
