@@ -20,11 +20,9 @@ export function useNotificationData() {
         setError(null);
 
         // جلب عدد المشتركين في الإشعارات (من جدول fcm_tokens)
-        const { count: fcmCount, error: fcmError } = await supabase.rpc(
-          'count_fcm_tokens',
-          {},
-          { count: 'exact' }
-        );
+        const { data: fcmData, error: fcmError } = await supabase
+          .from('fcm_tokens')
+          .select('*', { count: 'exact', head: true });
 
         if (fcmError) {
           console.error("خطأ في جلب عدد رموز FCM:", fcmError);
@@ -51,7 +49,8 @@ export function useNotificationData() {
 
         if (isMounted) {
           // مجموع المشتركين من كلا الجدولين
-          const totalSubscribers = (fcmCount || 0) + (pushCount || 0);
+          const fcmCount = fcmData?.length || 0;
+          const totalSubscribers = fcmCount + (pushCount || 0);
           setSubscribersCount(totalSubscribers);
           setUsers(usersData || []);
           setLoading(false);
@@ -107,11 +106,9 @@ export function useNotificationData() {
     const refreshSubscribersCount = async () => {
       try {
         // جلب عدد رموز FCM
-        const { count: fcmCount, error: fcmError } = await supabase.rpc(
-          'count_fcm_tokens',
-          {},
-          { count: 'exact' }
-        );
+        const { data: fcmData, error: fcmError } = await supabase
+          .from('fcm_tokens')
+          .select('*', { count: 'exact', head: true });
         
         if (fcmError) {
           console.error("خطأ في تحديث عدد رموز FCM:", fcmError);
@@ -128,7 +125,8 @@ export function useNotificationData() {
         
         if (isMounted) {
           // مجموع المشتركين من كلا الجدولين
-          const totalSubscribers = (fcmCount || 0) + (pushCount || 0);
+          const fcmCount = fcmData?.length || 0;
+          const totalSubscribers = fcmCount + (pushCount || 0);
           setSubscribersCount(totalSubscribers);
         }
       } catch (err) {

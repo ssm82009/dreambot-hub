@@ -1,5 +1,5 @@
 
-import { serve } from "std/http/server.ts";
+import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js";
 import { readFileSync } from "npm:fs";
 import path from "npm:path";
