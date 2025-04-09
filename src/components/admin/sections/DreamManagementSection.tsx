@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Loader2 } from 'lucide-react';
+import { Loader2, BookOpen } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import AdminSection from '@/components/admin/AdminSection';
@@ -8,6 +8,7 @@ import DreamTable from '@/components/admin/dream/DreamTable';
 import DreamSearch from '@/components/admin/dream/DreamSearch';
 import DreamPagination from '@/components/admin/dream/DreamPagination';
 import { Dream } from '@/types/database';
+import { toast } from 'sonner';
 
 const DreamManagementSection: React.FC = () => {
   const [dreams, setDreams] = useState<Dream[]>([]);
@@ -30,6 +31,8 @@ const DreamManagementSection: React.FC = () => {
       const from = (currentPage - 1) * dreamsPerPage;
       const to = from + dreamsPerPage - 1;
       
+      console.log(`Fetching dreams from ${from} to ${to}, search term: "${searchTerm}"`);
+      
       // Create base query
       let query = supabase
         .from('dreams')
@@ -47,10 +50,14 @@ const DreamManagementSection: React.FC = () => {
       
       if (error) throw error;
       
+      console.log(`Retrieved ${data?.length} dreams. Total count: ${count}`);
+      console.log('Dreams data:', data);
+      
       setDreams(data || []);
       setTotalDreams(count || 0);
     } catch (error) {
       console.error('Error fetching dreams:', error);
+      toast.error('حدث خطأ أثناء جلب الأحلام');
     } finally {
       setLoading(false);
     }
@@ -77,19 +84,31 @@ const DreamManagementSection: React.FC = () => {
     setCurrentPage(1); // Reset to first page when searching
   };
   
+  const handleRefresh = () => {
+    fetchDreams();
+  };
+  
   return (
     <AdminSection
       title="إدارة الأحلام"
       description="عرض وإدارة جميع الأحلام المقدمة من المستخدمين"
-      icon={() => <Loader2 className="h-5 w-5" />}
+      icon={() => <BookOpen className="h-5 w-5" />}
       isOpen={true}
       onToggle={() => {}}
     >
       <div className="space-y-4">
-        <DreamSearch
-          searchTerm={searchTerm}
-          onSearchChange={handleSearchChange}
-        />
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <DreamSearch
+            searchTerm={searchTerm}
+            onSearchChange={handleSearchChange}
+          />
+          <button 
+            onClick={handleRefresh} 
+            className="inline-flex items-center justify-center whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2"
+          >
+            تحديث البيانات
+          </button>
+        </div>
         
         <Card className="overflow-hidden border rounded-md">
           {loading ? (
@@ -106,13 +125,18 @@ const DreamManagementSection: React.FC = () => {
         </Card>
         
         {totalDreams > 0 && (
-          <DreamPagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={handlePageChange}
-            onNextPage={handleNextPage}
-            onPreviousPage={handlePreviousPage}
-          />
+          <div className="flex justify-between items-center">
+            <div className="text-sm text-muted-foreground">
+              إجمالي الأحلام: {totalDreams}
+            </div>
+            <DreamPagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+              onNextPage={handleNextPage}
+              onPreviousPage={handlePreviousPage}
+            />
+          </div>
         )}
       </div>
     </AdminSection>

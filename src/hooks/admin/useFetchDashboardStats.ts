@@ -43,36 +43,30 @@ export const useFetchDashboardStats = () => {
       }
       setActiveSubscriptions(activeCount);
 
-      // تحسين طريقة جلب عدد الأحلام باستخدام استعلام أكثر دقة
-      console.log("Fetching accurate dreams count...");
-      // استخدام استعلام مباشر بواسطة حساب عدد السجلات بناءً على حقل id
-      const { count: exactDreamsCount, error: countError } = await supabase
+      // جلب عدد الأحلام بطريقة دقيقة مباشرة
+      console.log("Fetching dreams count directly using count method...");
+      const { count: exactDreamsCount, error: dreamsCountError } = await supabase
         .from('dreams')
-        .select('id', { count: 'exact', head: true });
+        .select('*', { count: 'exact', head: true });
 
-      if (countError) {
-        throw new Error(`Error in exact dreams count: ${countError.message}`);
-      }
-
-      // طباعة العدد الدقيق للأحلام
-      console.log("Exact dreams count from database:", exactDreamsCount);
-      
-      // إذا كان هناك مشكلة في الحصول على العدد، نستخدم طريقة بديلة
-      if (exactDreamsCount === null) {
-        console.log("Count returned null, using alternative counting method");
-        const { data: allDreams, error: allDreamsError } = await supabase
+      if (dreamsCountError) {
+        console.error("Error getting dreams count:", dreamsCountError);
+        
+        // إذا فشلت طريقة الجلب الأولى، نستخدم طريقة بديلة
+        console.log("Using fallback method to count dreams...");
+        const { data: dreamsData, error: dreamsDataError } = await supabase
           .from('dreams')
           .select('id');
         
-        if (allDreamsError) {
-          throw new Error(`Error in alternative dreams count: ${allDreamsError.message}`);
+        if (dreamsDataError) {
+          throw new Error(`Error fetching dreams data: ${dreamsDataError.message}`);
         }
         
-        const manualCount = allDreams?.length || 0;
-        console.log("Manual dreams count:", manualCount);
-        setTotalDreams(manualCount);
+        console.log("Dreams count from fallback method:", dreamsData?.length || 0);
+        setTotalDreams(dreamsData?.length || 0);
       } else {
-        setTotalDreams(exactDreamsCount);
+        console.log("Dreams count from direct method:", exactDreamsCount);
+        setTotalDreams(exactDreamsCount || 0);
       }
 
       // Fetch total tickets

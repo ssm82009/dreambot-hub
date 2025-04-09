@@ -17,6 +17,7 @@ const DreamTable: React.FC<DreamTableProps> = ({ dreams }) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const truncateText = (text: string, maxLength: number = 100) => {
+    if (!text) return '-';
     if (text.length <= maxLength) return text;
     return text.slice(0, maxLength) + '...';
   };
@@ -31,6 +32,7 @@ const DreamTable: React.FC<DreamTableProps> = ({ dreams }) => {
   };
 
   const handleViewDream = (dream: Dream) => {
+    console.log('Viewing dream:', dream);
     setSelectedDream(dream);
     setIsDialogOpen(true);
   };
@@ -65,7 +67,7 @@ const DreamTable: React.FC<DreamTableProps> = ({ dreams }) => {
                   {truncateText(dream.interpretation)}
                 </TableCell>
                 <TableCell className="whitespace-nowrap px-1 py-1">
-                  {dream.tags ? dream.tags.join(', ') : '-'}
+                  {dream.tags && dream.tags.length > 0 ? dream.tags.join(', ') : '-'}
                 </TableCell>
                 <TableCell className="whitespace-nowrap px-1 py-1">
                   <Button 
