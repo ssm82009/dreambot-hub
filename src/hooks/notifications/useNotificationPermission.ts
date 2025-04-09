@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 
 export interface NotificationPermissionState {
@@ -23,13 +23,9 @@ export function useNotificationPermission() {
                         'serviceWorker' in navigator && 
                         'PushManager' in window;
       
-      console.log("فحص دعم الإشعارات:", supported ? "مدعوم" : "غير مدعوم");
-      
       if (supported) {
         const permission = Notification.permission;
         const granted = permission === 'granted';
-        
-        console.log("حالة إذن الإشعارات الحالية:", permission);
         
         setState({
           granted,
@@ -40,10 +36,6 @@ export function useNotificationPermission() {
           granted: false,
           supported
         });
-        
-        if (!supported) {
-          console.log("متصفحك لا يدعم الإشعارات");
-        }
       }
     };
     
@@ -53,9 +45,8 @@ export function useNotificationPermission() {
   /**
    * طلب إذن الإشعارات
    */
-  const requestPermission = useCallback(async () => {
+  const requestPermission = async () => {
     if (!state.supported) {
-      console.log("متصفحك لا يدعم الإشعارات");
       toast.error('متصفحك لا يدعم الإشعارات');
       return false;
     }
@@ -64,8 +55,8 @@ export function useNotificationPermission() {
       console.log("طلب إذن الإشعارات...");
       
       if (Notification.permission === 'denied') {
-        console.log("الإشعارات مرفوضة من قبل المتصفح");
         toast.error('تم رفض الإشعارات من قبل المتصفح. يرجى تمكين الإشعارات من إعدادات المتصفح.');
+        console.log("الإشعارات مرفوضة من قبل المتصفح");
         return false;
       }
       
@@ -80,6 +71,7 @@ export function useNotificationPermission() {
       }));
       
       if (granted) {
+        toast.success('تم السماح بالإشعارات');
         return true;
       } else {
         toast.error('لم يتم السماح بالإشعارات');
@@ -90,7 +82,7 @@ export function useNotificationPermission() {
       toast.error('حدث خطأ أثناء طلب إذن الإشعارات');
       return false;
     }
-  }, [state.supported]);
+  };
 
   return {
     ...state,

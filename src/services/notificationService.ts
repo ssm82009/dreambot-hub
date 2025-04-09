@@ -1,34 +1,37 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { 
-  initializeServiceAccountKey, 
-  setServiceAccountKey,
-  sendNotificationToUser as firebaseSendToUser, 
-  sendNotificationToAdmin as firebaseSendToAdmin,
-  sendNotificationToAllUsers as firebaseSendToAll,
-  type NotificationPayload,
-  type ServiceAccountKey
-} from './firebaseNotificationService';
 
-// استدعاء وظيفة تهيئة مفتاح Firebase مباشرة
-initializeServiceAccountKey().catch(err => console.error('فشل تهيئة مفتاح الحساب الخدمي:', err));
+interface NotificationPayload {
+  title: string;
+  body: string;
+  url?: string;
+  type?: 'general' | 'ticket' | 'payment' | 'subscription';
+}
 
 interface PushSubscriptionData {
   endpoint: string;
   auth: string; // JSON string of subscription
 }
 
-// تعيين مفتاح الحساب الخدمي يدويًا (مفيد للتطوير أو الاختبار)
-export function setFirebaseServiceAccountKey(serviceAccountJson: string) {
-  if (!serviceAccountJson) return false;
-  return setServiceAccountKey(serviceAccountJson);
-}
-
-// إرسال إشعار لمستخدم محدد
+// استدعاء وظيفة Edge Function لإرسال الإشعار
 export async function sendNotification(userId: string, payload: NotificationPayload) {
   try {
-    // استخدام خدمة Firebase مباشرة
-    return await firebaseSendToUser(userId, payload);
+    console.log(`محاولة إرسال إشعار للمستخدم ${userId}:`, payload);
+    
+    const { data, error } = await supabase.functions.invoke('send-notification', {
+      body: {
+        userId,
+        notification: payload
+      }
+    });
+
+    if (error) {
+      console.error('خطأ في استدعاء وظيفة Edge Function:', error);
+      throw error;
+    }
+    
+    console.log('نتيجة إرسال الإشعار:', data);
+    return data;
   } catch (error) {
     console.error('خطأ في إرسال الإشعار:', error);
     throw error;
@@ -38,8 +41,22 @@ export async function sendNotification(userId: string, payload: NotificationPayl
 // إرسال إشعار لجميع المشرفين
 export async function sendNotificationToAdmin(payload: NotificationPayload) {
   try {
-    // استخدام خدمة Firebase مباشرة
-    return await firebaseSendToAdmin(payload);
+    console.log('محاولة إرسال إشعار للمشرفين:', payload);
+    
+    const { data, error } = await supabase.functions.invoke('send-notification', {
+      body: {
+        adminOnly: true,
+        notification: payload
+      }
+    });
+
+    if (error) {
+      console.error('خطأ في استدعاء وظيفة Edge Function للمشرفين:', error);
+      throw error;
+    }
+    
+    console.log('نتيجة إرسال الإشعار للمشرفين:', data);
+    return data;
   } catch (error) {
     console.error('خطأ في إرسال الإشعار للمشرفين:', error);
     throw error;
@@ -52,16 +69,29 @@ export async function storeSubscription(subscription: PushSubscription) {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user) throw new Error('المستخدم غير مسجل دخول');
 
-    // تخزين الاشتراك مباشرة في قاعدة البيانات
-    const { data, error } = await supabase
-      .from('push_subscriptions')
-      .insert({
-        user_id: session.user.id,
+    console.log('محاولة تخزين اشتراك جديد للإشعارات:', subscription.endpoint);
+    
+    // تعديل طريقة تخزين الاشتراك لضمان تخزين البيانات بصيغة صحيحة
+    const subscriptionData = {
+      endpoint: subscription.endpoint,
+      keys: (subscription as any).keys,
+      expirationTime: (subscription as any).expirationTime
+    };
+    
+    const { data, error } = await supabase.functions.invoke('store-subscription', {
+      body: {
+        userId: session.user.id,
         endpoint: subscription.endpoint,
-        auth: JSON.stringify(subscription)
-      });
+        auth: JSON.stringify(subscriptionData)
+      }
+    });
 
-    if (error) throw error;
+    if (error) {
+      console.error('خطأ في استدعاء وظيفة Edge Function لتخزين الاشتراك:', error);
+      throw error;
+    }
+    
+    console.log('نتيجة تخزين اشتراك الإشعارات:', data);
     return data;
   } catch (error) {
     console.error('خطأ في تخزين اشتراك الإشعارات:', error);
@@ -75,28 +105,23 @@ export async function removeSubscription(endpoint: string) {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user) throw new Error('المستخدم غير مسجل دخول');
 
-    // حذف الاشتراك مباشرة من قاعدة البيانات
-    const { data, error } = await supabase
-      .from('push_subscriptions')
-      .delete()
-      .eq('user_id', session.user.id)
-      .eq('endpoint', endpoint);
+    console.log('محاولة حذف اشتراك الإشعارات:', endpoint);
+    const { data, error } = await supabase.functions.invoke('remove-subscription', {
+      body: {
+        userId: session.user.id,
+        endpoint
+      }
+    });
 
-    if (error) throw error;
+    if (error) {
+      console.error('خطأ في استدعاء وظيفة Edge Function لحذف الاشتراك:', error);
+      throw error;
+    }
+    
+    console.log('نتيجة حذف اشتراك الإشعارات:', data);
     return data;
   } catch (error) {
     console.error('خطأ في حذف اشتراك الإشعارات:', error);
-    throw error;
-  }
-}
-
-// إرسال إشعار لجميع المستخدمين
-export async function sendNotificationToAllUsers(payload: NotificationPayload) {
-  try {
-    // استخدام خدمة Firebase مباشرة
-    return await firebaseSendToAll(payload);
-  } catch (error) {
-    console.error('خطأ في إرسال الإشعار لجميع المستخدمين:', error);
     throw error;
   }
 }

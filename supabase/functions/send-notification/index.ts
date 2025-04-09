@@ -1,12 +1,14 @@
 
-import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.4';
-import { webPush } from 'https://esm.sh/web-push@3.6.7';
+// استخدام المسار الكامل لتجنب مشاكل الاستيراد في Deno
+import { serve } from "std/http/server.ts";
+import { createClient } from "@supabase/supabase-js";
 
 // تعريف رؤوس CORS
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Max-Age': '86400',
 };
 
 // تعريف واجهة البيانات
@@ -22,26 +24,73 @@ interface RequestBody {
   };
 }
 
-serve(async (req: Request) => {
-  // معالجة طلبات CORS
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
-
+// استدعاء مكتبة web-push بطريقة تتوافق مع Deno
+// استخدام import dynamically لتجنب مشاكل التهيئة
+async function initializeWebPush() {
   try {
-    const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-    );
-
-    // إعداد مفاتيح VAPID للإشعارات
+    // استخدام دالة استيراد ديناميكي بدلاً من الاستيراد الثابت
+    const webPushModule = await import("web-push");
+    const webPush = webPushModule.default;
+    
     const vapidPublicKey = Deno.env.get('VAPID_PUBLIC_KEY') || '';
     const vapidPrivateKey = Deno.env.get('VAPID_PRIVATE_KEY') || '';
     
     if (!vapidPublicKey || !vapidPrivateKey) {
       console.error("مفاتيح VAPID غير مهيأة");
+      throw new Error("مفاتيح VAPID غير مهيأة");
+    }
+    
+    webPush.setVapidDetails(
+      'mailto:support@example.com',
+      vapidPublicKey,
+      vapidPrivateKey
+    );
+    
+    return webPush;
+  } catch (error) {
+    console.error("خطأ في تهيئة web-push:", error);
+    throw error;
+  }
+}
+
+serve(async (req: Request) => {
+  console.log("وظيفة send-notification تم استدعاؤها، طريقة الطلب:", req.method);
+  
+  // معالجة طلبات CORS
+  if (req.method === 'OPTIONS') {
+    console.log("تمت معالجة طلب OPTIONS لـ CORS");
+    return new Response(null, { 
+      headers: corsHeaders,
+      status: 204
+    });
+  }
+
+  try {
+    // فحص المصادقة
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      console.error("خطأ المصادقة: ترويسة التخويل مفقودة");
       return new Response(
-        JSON.stringify({ error: 'مفاتيح VAPID غير مهيأة' }),
+        JSON.stringify({ error: 'غير مصرح. ترويسة Authorization مطلوبة.' }),
+        {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+    );
+
+    // تهيئة web-push
+    let webPush;
+    try {
+      webPush = await initializeWebPush();
+    } catch (error) {
+      return new Response(
+        JSON.stringify({ error: 'فشل في تهيئة مكتبة web-push', details: error.message }),
         {
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -49,22 +98,26 @@ serve(async (req: Request) => {
       );
     }
 
-    console.log("VAPID keys configured correctly");
-
-    // إعداد web-push
-    webPush.setVapidDetails(
-      'mailto:support@example.com',
-      vapidPublicKey,
-      vapidPrivateKey
-    );
-
     // تحليل بيانات الطلب
-    const requestData: RequestBody = await req.json();
-    console.log("Received request data:", JSON.stringify(requestData));
+    let requestData: RequestBody;
+    try {
+      requestData = await req.json();
+      console.log("بيانات الطلب المستلمة:", JSON.stringify(requestData));
+    } catch (error) {
+      console.error("خطأ في تحليل بيانات الطلب JSON:", error);
+      return new Response(
+        JSON.stringify({ error: 'بيانات JSON غير صالحة' }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
+    }
     
     const { userId, adminOnly, allUsers, notification } = requestData;
 
     if (!notification?.title || !notification?.body) {
+      console.error("بيانات الإشعار غير كاملة");
       return new Response(
         JSON.stringify({ error: 'يجب توفير عنوان ومحتوى للإشعار' }),
         {
@@ -79,41 +132,89 @@ serve(async (req: Request) => {
 
     if (adminOnly) {
       // إرسال الإشعار للمشرفين فقط
-      const { data: admins } = await supabaseAdmin
+      console.log("جاري البحث عن المشرفين...");
+      const { data: admins, error: adminError } = await supabaseAdmin
         .from('users')
         .select('id')
         .eq('role', 'admin');
-      
-      console.log("Found admins:", admins?.length || 0);
+
+      if (adminError) {
+        console.error("خطأ في جلب المشرفين:", adminError);
+        return new Response(
+          JSON.stringify({ error: 'خطأ في جلب المشرفين', details: adminError.message }),
+          {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          }
+        );
+      }
 
       if (admins && admins.length > 0) {
         const adminIds = admins.map((admin) => admin.id);
-        const { data } = await supabaseAdmin
+        console.log(`تم العثور على ${adminIds.length} مشرف`);
+        
+        const { data, error: subError } = await supabaseAdmin
           .from('push_subscriptions')
           .select('*')
           .in('user_id', adminIds);
 
+        if (subError) {
+          console.error("خطأ في جلب اشتراكات المشرفين:", subError);
+          return new Response(
+            JSON.stringify({ error: 'خطأ في جلب اشتراكات المشرفين', details: subError.message }),
+            {
+              status: 500,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            }
+          );
+        }
+
         subscriptions = data || [];
-        console.log("Found admin subscriptions:", subscriptions.length);
+        console.log(`تم العثور على ${subscriptions.length} اشتراك للمشرفين`);
       }
     } else if (userId) {
       // إرسال الإشعار لمستخدم محدد
-      const { data } = await supabaseAdmin
+      console.log(`جاري البحث عن اشتراكات المستخدم ${userId}...`);
+      const { data, error: subError } = await supabaseAdmin
         .from('push_subscriptions')
         .select('*')
         .eq('user_id', userId);
 
+      if (subError) {
+        console.error("خطأ في جلب اشتراكات المستخدم:", subError);
+        return new Response(
+          JSON.stringify({ error: 'خطأ في جلب اشتراكات المستخدم', details: subError.message }),
+          {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          }
+        );
+      }
+
       subscriptions = data || [];
-      console.log("Found user subscriptions:", subscriptions.length);
+      console.log(`تم العثور على ${subscriptions.length} اشتراك للمستخدم`);
     } else if (allUsers) {
       // إرسال الإشعار لجميع المستخدمين
-      const { data } = await supabaseAdmin
+      console.log("جاري البحث عن جميع الاشتراكات...");
+      const { data, error: subError } = await supabaseAdmin
         .from('push_subscriptions')
         .select('*');
 
+      if (subError) {
+        console.error("خطأ في جلب جميع الاشتراكات:", subError);
+        return new Response(
+          JSON.stringify({ error: 'خطأ في جلب جميع الاشتراكات', details: subError.message }),
+          {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          }
+        );
+      }
+
       subscriptions = data || [];
-      console.log("Found all subscriptions:", subscriptions.length);
+      console.log(`تم العثور على ${subscriptions.length} اشتراك إجمالي`);
     } else {
+      console.error("لم يتم تحديد المستخدمين المستهدفين");
       return new Response(
         JSON.stringify({ error: 'يجب تحديد المستخدم أو مجموعة المستخدمين المستهدفة' }),
         {
@@ -125,6 +226,7 @@ serve(async (req: Request) => {
 
     // إذا لم يوجد مشتركين، لا يوجد داعي للمتابعة
     if (!subscriptions.length) {
+      console.log("لا يوجد مشتركين لإرسال الإشعارات إليهم");
       return new Response(
         JSON.stringify({ success: true, message: 'لا يوجد مشتركين', sentCount: 0 }),
         {
@@ -134,22 +236,22 @@ serve(async (req: Request) => {
     }
 
     // إرسال الإشعار لكل مشترك
+    console.log(`محاولة إرسال الإشعارات إلى ${subscriptions.length} مشترك...`);
+    
     const pushPromises = subscriptions.map(async (subscription) => {
       try {
-        console.log(`محاولة إرسال إشعار للمشترك ${subscription.id}`);
-
-        // تحليل بيانات الاشتراك من حقل auth
+        // تحليل البيانات بشكل آمن
         let parsedSubscription;
         try {
           parsedSubscription = JSON.parse(subscription.auth);
           
-          // التحقق من صحة بنية الاشتراك المطلوبة لـ web-push
+          // التحقق من أن البيانات تحتوي على الحقول المطلوبة
           if (!parsedSubscription.endpoint || !parsedSubscription.keys) {
-            console.error(`بنية اشتراك غير صحيحة للمشترك ${subscription.id}`);
+            console.error(`اشتراك غير صالح للمستخدم ${subscription.id}`);
             return false;
           }
         } catch (error) {
-          console.error(`خطأ في تحليل بيانات الاشتراك للمشترك ${subscription.id}:`, error);
+          console.error(`خطأ في تحليل بيانات الاشتراك للمستخدم ${subscription.id}:`, error);
           return false;
         }
         
@@ -160,16 +262,22 @@ serve(async (req: Request) => {
           type: notification.type || 'general'
         });
 
+        console.log(`محاولة إرسال إشعار للمشترك ${subscription.id}`);
+
         // إرسال الإشعار باستخدام web-push
         try {
           await webPush.sendNotification(
             parsedSubscription,
             pushPayload
           );
-          
           console.log(`تم إرسال الإشعار بنجاح للمشترك ${subscription.id}`);
+        } catch (pushError) {
+          console.error(`خطأ في إرسال الإشعار للمشترك ${subscription.id}:`, pushError);
+          return false;
+        }
 
-          // تسجيل الإشعار في قاعدة البيانات
+        // تسجيل الإشعار في قاعدة البيانات
+        try {
           await supabaseAdmin
             .from('notification_logs')
             .insert({
@@ -178,34 +286,16 @@ serve(async (req: Request) => {
               body: notification.body,
               url: notification.url,
               type: notification.type,
-              sent_at: new Date()
+              sent_at: new Date().toISOString()
             });
-
-          return true;
-        } catch (pushError) {
-          console.error(`خطأ في إرسال الإشعار: ${pushError.message}`);
-          
-          // التحقق مما إذا كان الاشتراك غير صالح أو منتهي الصلاحية
-          if (pushError.statusCode === 404 || pushError.statusCode === 410) {
-            console.log(`اشتراك غير صالح، يجب حذفه: ${subscription.id}`);
-            
-            // حذف الاشتراك غير الصالح من قاعدة البيانات
-            try {
-              await supabaseAdmin
-                .from('push_subscriptions')
-                .delete()
-                .eq('id', subscription.id);
-              
-              console.log(`تم حذف الاشتراك ${subscription.id} لأنه غير صالح`);
-            } catch (deleteError) {
-              console.error(`خطأ في حذف الاشتراك غير الصالح:`, deleteError);
-            }
-          }
-          
-          return false;
+        } catch (logError) {
+          console.error(`خطأ في تسجيل الإشعار في قاعدة البيانات:`, logError);
+          // لا نريد أن نفشل العملية برمتها إذا فشل التسجيل، لذلك نستمر
         }
+
+        return true;
       } catch (error) {
-        console.error(`خطأ عام في معالجة الإشعار للمشترك ${subscription.id}:`, error);
+        console.error(`خطأ في معالجة الإشعار للمشترك ${subscription.id}:`, error);
         return false;
       }
     });
@@ -214,6 +304,7 @@ serve(async (req: Request) => {
     const results = await Promise.all(pushPromises);
     const successCount = results.filter(Boolean).length;
 
+    console.log(`تم إرسال ${successCount} من ${subscriptions.length} إشعارات بنجاح`);
     return new Response(
       JSON.stringify({
         success: true,

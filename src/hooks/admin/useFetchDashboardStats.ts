@@ -43,34 +43,17 @@ export const useFetchDashboardStats = () => {
       }
       setActiveSubscriptions(activeCount);
 
-      // Get accurate dreams count - try multiple methods if needed
-      // First attempt: Count directly using Supabase count
-      console.log("Fetching dreams count directly...");
-      const { count: dreamsCount, error: dreamsCountError } = await supabase
+      // Fetch total dreams
+      const { data: dreamsData, error: dreamsError, count: dreamsCount } = await supabase
         .from('dreams')
-        .select('*', { count: 'exact', head: true });
-      
-      if (dreamsCountError) {
-        console.error("Error getting dreams count via direct method:", dreamsCountError);
-        
-        // Second attempt: Get all dreams and count them
-        console.log("Trying alternative method to count dreams...");
-        const { data: allDreams, error: allDreamsError } = await supabase
-          .from('dreams')
-          .select('id');
-        
-        if (allDreamsError) {
-          console.error("Error with alternative dreams count method:", allDreamsError);
-          throw new Error(`Failed to get dreams count: ${allDreamsError.message}`);
-        }
-        
-        const dreamsTotal = allDreams?.length || 0;
-        console.log(`Dreams count (alternative method): ${dreamsTotal}`);
-        setTotalDreams(dreamsTotal);
-      } else {
-        console.log(`Dreams count (direct method): ${dreamsCount}`);
-        setTotalDreams(dreamsCount || 0);
+        .select('*', { count: 'exact', head: false });
+
+      if (dreamsError) {
+        throw new Error(`Error fetching dreams: ${dreamsError.message}`);
       }
+      
+      console.log("Dreams data fetched:", dreamsCount, "dreams found");
+      setTotalDreams(dreamsCount || 0);
 
       // Fetch total tickets
       const { data: ticketsData, error: ticketsError, count: ticketsCount } = await supabase
@@ -84,7 +67,7 @@ export const useFetchDashboardStats = () => {
       console.log("Tickets data fetched:", ticketsCount, "tickets found");
       setTotalTickets(ticketsCount || 0);
 
-      // Fetch open tickets
+      // جلب عدد التذاكر المفتوحة
       const { data: openTicketsData, error: openTicketsError, count: openTicketsCount } = await supabase
         .from('tickets')
         .select('*', { count: 'exact', head: false })

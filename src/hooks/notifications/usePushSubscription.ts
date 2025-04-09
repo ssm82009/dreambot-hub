@@ -1,13 +1,8 @@
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { 
-  registerServiceWorker,
-  getExistingSubscription,
-  subscribeToPush,
-  unsubscribeFromPush
-} from '@/utils/pushNotificationUtils';
+import { urlBase64ToUint8Array, PUBLIC_VAPID_KEY } from '@/utils/pushNotificationUtils';
 
 export interface PushSubscriptionState {
   subscription: PushSubscription | null;
@@ -22,7 +17,6 @@ export function usePushSubscription(supported: boolean, granted: boolean) {
     subscription: null,
     subscribing: false
   });
-  const subscriptionInProgress = useRef<boolean>(false);
 
   // التحقق من وجود اشتراك حالي
   const checkExistingSubscription = useCallback(async (): Promise<PushSubscription | null> => {
@@ -31,26 +25,15 @@ export function usePushSubscription(supported: boolean, granted: boolean) {
     }
 
     try {
-      console.log("التحقق من وجود اشتراك حالي...");
-      
-      // تسجيل خدمة العامل أولاً للتأكد من وجودها
-      await registerServiceWorker();
-      
-      // الحصول على الاشتراك الحالي
-      const subscription = await getExistingSubscription();
+      const swRegistration = await navigator.serviceWorker.ready;
+      const subscription = await swRegistration.pushManager.getSubscription();
       
       if (subscription) {
         setState(prev => ({
           ...prev,
           subscription
         }));
-        console.log("تم العثور على اشتراك موجود");
-      } else {
-        setState(prev => ({
-          ...prev,
-          subscription: null
-        }));
-        console.log("لم يتم العثور على اشتراك");
+        console.log("تم العثور على اشتراك موجود:", subscription);
       }
       
       return subscription;
@@ -63,61 +46,70 @@ export function usePushSubscription(supported: boolean, granted: boolean) {
   // التحقق من الاشتراك عند تحميل المكون
   useEffect(() => {
     if (supported && granted) {
-      checkExistingSubscription().catch(error => {
-        console.error("خطأ أثناء التحقق التلقائي من الاشتراك:", error);
-      });
+      checkExistingSubscription();
     }
   }, [supported, granted, checkExistingSubscription]);
 
   // الاشتراك في الإشعارات
-  const subscribeToNotifications = useCallback(async () => {
+  const subscribeToNotifications = async () => {
     if (!supported) {
-      console.log("الإشعارات غير مدعومة");
-      return null;
-    }
-    
-    // منع الاشتراك المتزامن المتعدد
-    if (subscriptionInProgress.current) {
-      console.log("عملية الاشتراك قيد التقدم بالفعل");
+      toast.error('متصفحك لا يدعم الإشعارات');
       return null;
     }
     
     try {
-      subscriptionInProgress.current = true;
       setState(prev => ({ ...prev, subscribing: true }));
       
       console.log("بدء عملية الاشتراك في الإشعارات...");
       
-      // تسجيل خدمة العامل
-      await registerServiceWorker();
+      // انتظار جاهزية service worker
+      const swRegistration = await navigator.serviceWorker.ready;
+      console.log("Service Worker جاهز:", swRegistration);
       
       // التحقق من وجود اشتراك حالي
-      let subscription = await getExistingSubscription();
+      let subscription = await swRegistration.pushManager.getSubscription();
       
       // إذا كان المتصفح مشتركًا بالفعل، ارجع الاشتراك الحالي
       if (subscription) {
-        console.log("تم العثور على اشتراك موجود، لا حاجة للاشتراك مجددًا");
+        console.log("تم العثور على اشتراك موجود:", subscription);
         setState(prev => ({
           ...prev,
           subscription,
           subscribing: false
         }));
+        
+        toast.success('أنت مشترك بالفعل في الإشعارات');
         return subscription;
       }
       
       // إنشاء اشتراك جديد
-      subscription = await subscribeToPush();
+      const options = {
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(PUBLIC_VAPID_KEY)
+      };
       
-      if (!subscription) {
-        throw new Error("فشل الاشتراك في الإشعارات");
+      console.log("محاولة الاشتراك في Push Manager...");
+      try {
+        subscription = await swRegistration.pushManager.subscribe(options);
+        console.log("تم الاشتراك بنجاح:", subscription);
+      } catch (error) {
+        console.error("خطأ في الاشتراك في Push Manager:", error);
+        
+        if (error instanceof DOMException && error.name === "NotAllowedError") {
+          toast.error('تم رفض الإشعارات من قبل المتصفح. يرجى تمكين الإشعارات من إعدادات المتصفح.');
+          setState(prev => ({ ...prev, subscribing: false }));
+          return null;
+        }
+        
+        throw error;
       }
       
-      // تخزين اشتراك المستخدم في قاعدة البيانات
+      // تخزين اشتراك المستخدم في قاعدة البيانات عبر edge function
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
         try {
           console.log("تخزين الاشتراك في قاعدة البيانات...");
-          
+          // استخدام Edge Function لتخزين الاشتراك
           const { error } = await supabase.functions.invoke('store-subscription', {
             body: {
               userId: session.user.id,
@@ -132,9 +124,9 @@ export function usePushSubscription(supported: boolean, granted: boolean) {
           }
           
           console.log("تم تخزين الاشتراك بنجاح");
+          
         } catch (error) {
           console.error('خطأ في تخزين اشتراك الإشعارات:', error);
-          toast.error('حدث خطأ في تخزين اشتراك الإشعارات');
         }
       }
       
@@ -144,49 +136,34 @@ export function usePushSubscription(supported: boolean, granted: boolean) {
         subscribing: false
       }));
       
+      toast.success('تم الاشتراك في الإشعارات بنجاح');
       return subscription;
     } catch (error) {
       console.error('خطأ في الاشتراك في الإشعارات:', error);
       toast.error('حدث خطأ أثناء الاشتراك في الإشعارات');
       setState(prev => ({ ...prev, subscribing: false }));
       return null;
-    } finally {
-      // تأكد من إعادة تعيين العلم دائمًا بعد انتهاء العملية
-      setTimeout(() => {
-        subscriptionInProgress.current = false;
-      }, 500);
     }
-  }, [supported]);
+  };
   
   // إلغاء الاشتراك في الإشعارات
-  const unsubscribeFromNotifications = useCallback(async () => {
+  const unsubscribeFromNotifications = async () => {
     if (!state.subscription) {
-      console.log("لا يوجد اشتراك نشط للإشعارات");
-      return false;
-    }
-    
-    if (subscriptionInProgress.current) {
-      console.log("عملية إلغاء الاشتراك قيد التقدم بالفعل");
+      toast.error('لا يوجد اشتراك نشط للإشعارات');
       return false;
     }
     
     try {
-      subscriptionInProgress.current = true;
-      setState(prev => ({ ...prev, subscribing: true }));
-      
       console.log("إلغاء الاشتراك من الإشعارات...");
-      const result = await unsubscribeFromPush(state.subscription);
+      await state.subscription.unsubscribe();
+      console.log("تم إلغاء الاشتراك بنجاح");
       
-      if (!result) {
-        throw new Error("فشل إلغاء الاشتراك");
-      }
-      
-      // حذف الاشتراك من قاعدة البيانات
+      // حذف الاشتراك من قاعدة البيانات عبر edge function
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
         try {
           console.log("حذف الاشتراك من قاعدة البيانات...");
-          
+          // استخدام Edge Function لحذف الاشتراك
           const { error } = await supabase.functions.invoke('remove-subscription', {
             body: {
               userId: session.user.id,
@@ -198,8 +175,8 @@ export function usePushSubscription(supported: boolean, granted: boolean) {
             console.error("خطأ في حذف الاشتراك:", error);
             throw error;
           }
-          
           console.log("تم حذف الاشتراك من قاعدة البيانات بنجاح");
+          
         } catch (error) {
           console.error('خطأ في حذف اشتراك الإشعارات:', error);
         }
@@ -207,22 +184,17 @@ export function usePushSubscription(supported: boolean, granted: boolean) {
       
       setState(prev => ({
         ...prev,
-        subscription: null,
-        subscribing: false
+        subscription: null
       }));
       
+      toast.success('تم إلغاء الاشتراك من الإشعارات');
       return true;
     } catch (error) {
       console.error('خطأ في إلغاء الاشتراك من الإشعارات:', error);
-      setState(prev => ({ ...prev, subscribing: false }));
+      toast.error('حدث خطأ أثناء إلغاء الاشتراك من الإشعارات');
       return false;
-    } finally {
-      // تأكد من إعادة تعيين العلم دائمًا بعد انتهاء العملية
-      setTimeout(() => {
-        subscriptionInProgress.current = false;
-      }, 500);
     }
-  }, [state.subscription]);
+  };
 
   return {
     ...state,

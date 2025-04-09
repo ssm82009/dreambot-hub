@@ -1,50 +1,99 @@
 
-// إصدار ذاكرة التخزين المؤقت - قم بتغييره عند تحديث ملفات التطبيق الرئيسية
-const CACHE_NAME = 'taweel-cache-v4';
-
-// قائمة الموارد التي سيتم تخزينها مؤقتًا
+const CACHE_NAME = 'taweel-cache-v1';
 const urlsToCache = [
   '/',
   '/index.html',
   '/offline.html',
-  '/favicon.ico'
+  // نستبعد المصادر التي قد تكون مشكلة
+  '/favicon.ico',
+  '/apple-touch-icon.png',
+  '/android-chrome-192x192.png',
+  '/android-chrome-512x512.png'
+  // يتم تحميل الصورة فقط عند الحاجة
 ];
-
-// متغير عام لتتبع ما إذا تم بالفعل عرض توست التحديث
-let updateNotificationShown = false;
 
 // تثبيت خدمة العامل وتخزين الموارد الأساسية
 self.addEventListener('install', (event) => {
   console.log('Service Worker: تم تثبيت خدمة العامل');
-  
-  // تخطي مرحلة الانتظار للتنشيط الفوري
-  self.skipWaiting();
-  
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
         console.log('Service Worker: تم فتح ذاكرة التخزين المؤقت');
-        return cache.addAll(urlsToCache);
+        
+        // استخدام طريقة أكثر مرونة للتخزين المؤقت، مع تخزين كل مورد على حدة
+        // بدلاً من استخدام addAll الذي يفشل كله إذا فشل أي مورد فردي
+        const cachePromises = urlsToCache.map(url => {
+          return fetch(url)
+            .then(response => {
+              // إذا كان الرد ناجحاً نقوم بتخزينه
+              if (response.ok) {
+                return cache.put(url, response);
+              }
+              console.error(`خطأ في تخزين المورد: ${url}، حالة: ${response.status}`);
+              return Promise.resolve(); // نستمر حتى مع وجود خطأ
+            })
+            .catch(error => {
+              console.error(`فشل في طلب المورد: ${url}`, error);
+              return Promise.resolve(); // نستمر حتى مع وجود خطأ
+            });
+        });
+        
+        return Promise.all(cachePromises);
       })
-      .catch(err => {
-        console.error('خطأ في تخزين الموارد الأساسية:', err);
+      .then(() => self.skipWaiting()) // تخطي انتظار التنشيط
+  );
+});
+
+// معالجة الطلبات وتقديم الصفحة المناسبة
+self.addEventListener('fetch', (event) => {
+  // التحقق من أن URL الطلب صالح للتخزين المؤقت
+  // نتخطى مخططات URL غير المدعومة مثل chrome-extension و blob
+  const url = new URL(event.request.url);
+  const isValidScheme = url.protocol.startsWith('http');
+  
+  if (!isValidScheme) {
+    return; // تخطي الطلبات ذات المخططات غير المدعومة
+  }
+  
+  event.respondWith(
+    fetch(event.request)
+      .then((response) => {
+        // إذا كان الطلب ناجحا، قم بنسخه وتخزينه في الكاش
+        if (event.request.method === 'GET') {
+          // تخزين مؤقت للاستجابات الناجحة فقط
+          const responseToCache = response.clone();
+          caches.open(CACHE_NAME)
+            .then((cache) => {
+              try {
+                cache.put(event.request, responseToCache);
+              } catch (error) {
+                console.error('خطأ في تخزين الاستجابة في الكاش:', error);
+              }
+            });
+        }
+        return response;
+      })
+      .catch(() => {
+        // إذا فشل الطلب وكان طلب صفحة، أرجع صفحة عدم الاتصال
+        if (event.request.mode === 'navigate') {
+          return caches.match('/offline.html');
+        }
+        
+        // محاولة استرداد من الكاش للموارد الأخرى
+        return caches.match(event.request);
       })
   );
 });
 
-// تنشيط خدمة العامل وتحديث الكاش
+// تحديث الكاش عند تحديث خدمة العامل
 self.addEventListener('activate', (event) => {
   console.log('Service Worker: تم تنشيط خدمة العامل');
-  
-  // المطالبة بالسيطرة على العملاء دون انتظار إعادة التحميل
-  event.waitUntil(self.clients.claim());
-  
-  // حذف الكاش القديم
+  const cacheWhitelist = [CACHE_NAME];
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
+          if (cacheWhitelist.indexOf(cacheName) === -1) {
             console.log('Service Worker: حذف كاش قديم', cacheName);
             return caches.delete(cacheName);
           }
@@ -52,86 +101,14 @@ self.addEventListener('activate', (event) => {
         })
       );
     })
+    // مباشرة المطالبة بالسيطرة على العميل دون انتظار إعادة تحميل
+    .then(() => self.clients.claim())
   );
 });
 
-// معالجة الطلبات وتقديم الصفحة المناسبة
-self.addEventListener('fetch', (event) => {
-  // تخطي طلبات غير HTTP/HTTPS
-  if (!event.request.url.startsWith('http')) {
-    return;
-  }
-  
-  // تخطي طلبات الأصول ذات الهاش مثل index-k8ph8wwL.js
-  if (event.request.url.includes('index-') && event.request.url.includes('.js')) {
-    console.log('تخطي تخزين ملف الأصول مع هاش:', event.request.url);
-    return;
-  }
-  
-  event.respondWith(
-    // محاولة جلب الطلب من الشبكة أولا
-    fetch(event.request)
-      .then((response) => {
-        // تخزين الاستجابات الناجحة للطلبات GET فقط
-        if (event.request.method === 'GET' && response.status === 200) {
-          // استنساخ النسخة للتخزين المؤقت
-          const responseToCache = response.clone();
-          
-          // محاولة تخزين الاستجابة في الكاش
-          caches.open(CACHE_NAME)
-            .then((cache) => {
-              cache.put(event.request, responseToCache);
-            })
-            .catch(err => console.error('خطأ في تخزين الاستجابة:', err));
-        }
-        return response;
-      })
-      .catch(() => {
-        // محاولة استرداد من الكاش
-        return caches.match(event.request)
-          .then((cachedResponse) => {
-            // إذا وجدنا استجابة في الكاش، نعيدها
-            if (cachedResponse) {
-              return cachedResponse;
-            }
-            
-            // إذا كان الطلب لصفحة رئيسية وليس موجودًا في الكاش
-            if (event.request.mode === 'navigate') {
-              return caches.match('/offline.html')
-                .then(offlineResponse => {
-                  return offlineResponse || new Response('أنت غير متصل بالإنترنت.', {
-                    headers: { 'Content-Type': 'text/html;charset=utf-8' }
-                  });
-                });
-            }
-            
-            // إذا كان طلب أصل وليس في الكاش، نعيد استجابة فارغة بدلاً من خطأ
-            if (event.request.destination === 'script' || 
-                event.request.destination === 'style' || 
-                event.request.destination === 'image') {
-              return new Response('', { 
-                status: 200, 
-                headers: new Headers({
-                  'Content-Type': event.request.destination === 'image' ? 
-                    'image/svg+xml' : 
-                    (event.request.destination === 'script' ? 'application/javascript' : 'text/css')
-                })
-              });
-            }
-            
-            // كإجراء أخير، نعيد رسالة خطأ
-            return new Response('المورد غير متوفر حاليا.', {
-              status: 404,
-              headers: { 'Content-Type': 'text/plain;charset=utf-8' }
-            });
-          });
-      })
-  );
-});
-
-// معالجة الإشعارات Push من Firebase
+// معالجة الإشعارات Push
 self.addEventListener('push', (event) => {
-  console.log('Service Worker: تم استلام إشعار Push');
+  console.log('Service Worker: تم استلام إشعار Push', event);
   
   if (!event.data) {
     console.log('Service Worker: لا توجد بيانات في الإشعار');
@@ -139,89 +116,128 @@ self.addEventListener('push', (event) => {
   }
   
   try {
-    let data;
+    // محاولة تحليل بيانات الإشعار
+    let data = {};
     try {
       data = event.data.json();
+      console.log('Service Worker: بيانات الإشعار', data);
     } catch (e) {
+      // إذا فشل التحليل، استخدم النص البسيط
       data = {
         title: 'تأويل',
         body: event.data.text(),
       };
+      console.log('Service Worker: نص الإشعار البسيط', event.data.text());
     }
     
-    const title = data.notification?.title || data.title || 'تأويل';
-    const body = data.notification?.body || data.body || 'تم استلام إشعار جديد';
-    const icon = data.notification?.icon || '/android-chrome-192x192.png';
-    const badge = data.notification?.badge || '/favicon-32x32.png';
-    
-    const options = {
-      body: body,
-      icon: icon,
-      badge: badge,
-      dir: 'rtl',
-      lang: 'ar',
-      vibrate: [100, 50, 100],
-      data: {
-        url: data.data?.url || data.notification?.click_action || '/',
-        type: data.data?.type || 'general'
-      }
-    };
-    
-    event.waitUntil(
-      self.registration.showNotification(title, options)
-    );
-    
-  } catch (error) {
-    console.error('Service Worker: خطأ في معالجة إشعار Push', error);
-  }
-});
-
-// معالجة إشعارات Firebase بتنسيق آخر
-self.addEventListener('message', (event) => {
-  console.log('Service Worker: تم استلام رسالة', event.data);
-  
-  if (event.data && event.data.type === 'FIREBASE_NOTIFICATION') {
-    const data = event.data.notification;
-    
+    // تكوين خيارات الإشعار
     const options = {
       body: data.body || 'تم استلام إشعار جديد',
-      icon: data.icon || '/android-chrome-192x192.png',
-      badge: data.badge || '/favicon-32x32.png',
+      icon: '/android-chrome-192x192.png',
+      badge: '/favicon-32x32.png',
       dir: 'rtl',
       lang: 'ar',
       vibrate: [100, 50, 100],
       data: {
         url: data.url || '/',
         type: data.type || 'general'
-      }
+      },
+      actions: []
     };
     
-    self.registration.showNotification(data.title || 'تأويل', options);
-  } else if (event.data && event.data.type === 'SKIP_WAITING') {
-    self.skipWaiting();
+    // إضافة أزرار تفاعلية بناءً على نوع الإشعار
+    if (data.type === 'ticket') {
+      options.actions = [
+        {
+          action: 'view',
+          title: 'عرض التذكرة'
+        },
+        {
+          action: 'close',
+          title: 'إغلاق'
+        }
+      ];
+    } else if (data.type === 'payment') {
+      options.actions = [
+        {
+          action: 'view',
+          title: 'عرض التفاصيل'
+        }
+      ];
+    } else if (data.type === 'subscription') {
+      options.actions = [
+        {
+          action: 'renew',
+          title: 'تجديد الاشتراك'
+        }
+      ];
+    }
+    
+    // إظهار الإشعار
+    console.log('Service Worker: عرض الإشعار', data.title, options);
+    event.waitUntil(
+      self.registration.showNotification(data.title || 'تأويل', options)
+    );
+    
+  } catch (error) {
+    console.error('Service Worker: خطأ في معالجة إشعار Push', error);
+    
+    // محاولة إظهار إشعار بسيط في حالة وجود خطأ
+    event.waitUntil(
+      self.registration.showNotification('تأويل', {
+        body: 'تم استلام إشعار جديد',
+        icon: '/android-chrome-192x192.png'
+      })
+    );
   }
 });
 
 // عند النقر على الإشعار
 self.addEventListener('notificationclick', (event) => {
-  console.log('Service Worker: تم النقر على الإشعار');
+  console.log('Service Worker: تم النقر على الإشعار', event);
   event.notification.close();
   
-  const urlToOpen = event.notification.data?.url || '/';
-  
-  event.waitUntil(
-    self.clients.matchAll({ type: 'window' }).then((clientList) => {
-      // محاولة إيجاد نافذة مفتوحة بالفعل للتطبيق
-      for (const client of clientList) {
-        if (client.url === urlToOpen && 'focus' in client) {
-          return client.focus();
+  try {
+    // التعامل مع أزرار الإشعار
+    if (event.action === 'view') {
+      const url = event.notification.data.url;
+      event.waitUntil(clients.openWindow(url));
+      return;
+    }
+    
+    if (event.action === 'renew') {
+      event.waitUntil(clients.openWindow('/pricing'));
+      return;
+    }
+    
+    // التعامل مع النقرة العادية على الإشعار
+    event.waitUntil(
+      clients.matchAll({ type: 'window' }).then((clientList) => {
+        const url = event.notification.data?.url || '/';
+        
+        for (const client of clientList) {
+          if (client.url === url && 'focus' in client) {
+            return client.focus();
+          }
         }
-      }
-      
-      // إذا لم يتم العثور على نافذة مفتوحة، افتح نافذة جديدة
-      if (self.clients.openWindow) {
-        return self.clients.openWindow(urlToOpen);
-      }
-    })
-  );
+        
+        if (clients.openWindow) {
+          return clients.openWindow(url);
+        }
+      })
+    );
+  } catch (error) {
+    console.error('Service Worker: خطأ في معالجة النقر على الإشعار', error);
+    
+    // في حالة وجود خطأ، فتح الصفحة الرئيسية
+    event.waitUntil(clients.openWindow('/'));
+  }
+});
+
+// استقبال الرسائل من صفحات التطبيق
+self.addEventListener('message', (event) => {
+  console.log('Service Worker: تم استلام رسالة', event.data);
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });

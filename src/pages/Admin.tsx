@@ -28,7 +28,7 @@ const AdminDashboard = () => {
     // تعيين حالة التحميل إلى true لضمان إعادة التحميل
     setIsLoading(true);
     
-    // استدعاء الدالة لتحديث البيانات وإجبار التحديث
+    // استدعاء الدالة لتحديث البيانات
     refreshAdminData()
       .then(() => {
         console.log("Admin data refresh completed");
@@ -38,18 +38,6 @@ const AdminDashboard = () => {
         console.error("Error refreshing admin data:", error);
         setIsLoading(false);
       });
-
-    // إضافة مؤقت لتحديث البيانات كل دقيقة
-    const intervalId = setInterval(() => {
-      console.log("Auto-refreshing admin data");
-      refreshAdminData().catch(error => {
-        console.error("Error auto-refreshing admin data:", error);
-      });
-    }, 60000); // تحديث كل دقيقة
-
-    return () => {
-      clearInterval(intervalId); // تنظيف المؤقت عند إزالة المكون
-    };
   }, []);
 
   if (isLoading || dbLoading) {

@@ -90,14 +90,13 @@ export const initialActiveSections: ActiveSections = {
   interpretationSettings: false,
   pricingSettings: false,
   paymentSettings: false,
+  transactions: false,
   users: false,
   pages: false,
   navbar: false,
   tickets: false,
-  transactions: false,
   theme: false,
   seo: false,
   homeSections: false,
-  notifications: false,
-  dreams: false
+  notifications: false
 };

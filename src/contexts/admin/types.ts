@@ -1,4 +1,3 @@
-import { ReactNode } from 'react';
 import { User, CustomPage, NavLink } from '@/types/database';
 
 export type HomeSectionItem = {
@@ -84,20 +83,19 @@ export interface ActiveSections {
   interpretationSettings: boolean;
   pricingSettings: boolean;
   paymentSettings: boolean;
+  transactions: boolean;
   users: boolean;
   pages: boolean;
   navbar: boolean;
   tickets: boolean;
-  transactions: boolean;
   theme: boolean;
   seo: boolean;
   homeSections: boolean;
   notifications: boolean;
-  dreams: boolean;
 }
 
 export type AdminProviderProps = {
-  children: ReactNode;
+  children: React.ReactNode;
 };
 
 export type AdminContextType = {

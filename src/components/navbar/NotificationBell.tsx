@@ -7,7 +7,6 @@ import { Badge } from '@/components/ui/badge';
 import { useNotifications } from '@/hooks/useNotifications';
 import { supabase } from '@/integrations/supabase/client';
 import { useAdminCheck } from '@/hooks/useAdminCheck';
-import { toast } from 'sonner';
 import {
   Tooltip,
   TooltipContent,
@@ -21,20 +20,10 @@ interface NotificationBellProps {
 
 export const NotificationBell: React.FC<NotificationBellProps> = ({ className }) => {
   const navigate = useNavigate();
-  const { 
-    supported, 
-    granted, 
-    subscription, 
-    subscribing, 
-    isCheckingSubscription,
-    requestPermission,
-    subscribeToNotifications, 
-    unsubscribeFromNotifications 
-  } = useNotifications();
+  const { supported, granted, subscription, subscribing, subscribeToNotifications, unsubscribeFromNotifications } = useNotifications();
   const [openTicketsCount, setOpenTicketsCount] = useState<number>(0);
   const { isAdmin } = useAdminCheck();
   const [loading, setLoading] = useState<boolean>(false);
-  const [processingRequest, setProcessingRequest] = useState<boolean>(false);
 
   // جلب عدد التذاكر المفتوحة للمشرف
   useEffect(() => {
@@ -47,10 +36,7 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ className })
           .select('id', { count: 'exact', head: true })
           .eq('status', 'open');
 
-        if (error) {
-          console.error('خطأ في جلب عدد التذاكر المفتوحة:', error);
-          return;
-        }
+        if (error) throw error;
         
         setOpenTicketsCount(count || 0);
       } catch (error) {
@@ -82,51 +68,23 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ className })
 
   // معالج النقر على زر الإشعارات
   const handleToggleNotifications = async () => {
-    // تجنب معالجة طلبات متعددة في نفس الوقت
-    if (processingRequest || loading || subscribing || isCheckingSubscription) {
-      return;
-    }
-    
+    console.log("تبديل حالة الإشعارات:", subscription ? "إلغاء الاشتراك" : "الاشتراك");
     try {
-      setProcessingRequest(true);
       setLoading(true);
       
       if (subscription) {
-        console.log("بدء عملية إلغاء الاشتراك من الإشعارات");
         await unsubscribeFromNotifications();
-        toast.success('تم إلغاء تفعيل الإشعارات');
       } else {
-        console.log("بدء عملية الاشتراك في الإشعارات");
-        
-        // تحقق من الإذن أولاً إذا لم يكن ممنوحًا
-        if (!granted) {
-          console.log("طلب إذن الإشعارات...");
-          const permissionGranted = await requestPermission();
-          
-          if (!permissionGranted) {
-            console.log("تم رفض إذن الإشعارات");
-            toast.error('يجب السماح بالإشعارات لتفعيل هذه الخدمة');
-            setProcessingRequest(false);
-            setLoading(false);
-            return;
-          }
+        if (Notification.permission === 'denied') {
+          alert('تم رفض الإشعارات. يرجى السماح بالإشعارات من إعدادات المتصفح.');
+          return;
         }
-        
-        // إذا تم منح الإذن، قم بالاشتراك
-        const result = await subscribeToNotifications();
-        if (result) {
-          toast.success('تم تفعيل الإشعارات بنجاح');
-        }
+        await subscribeToNotifications();
       }
     } catch (err) {
       console.error("خطأ في تبديل حالة الإشعارات:", err);
-      toast.error('حدث خطأ أثناء تغيير إعدادات الإشعارات');
     } finally {
       setLoading(false);
-      // تأخير إعادة تعيين معالجة الطلبات للسماح بتحديث واجهة المستخدم
-      setTimeout(() => {
-        setProcessingRequest(false);
-      }, 500);
     }
   };
 
@@ -138,14 +96,6 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ className })
 
   if (!supported) return null;
 
-  // تحديد نص التلميح
-  const getTooltipText = () => {
-    if (loading || subscribing || isCheckingSubscription) {
-      return 'جاري المعالجة...';
-    }
-    return subscription ? 'إلغاء تفعيل الإشعارات' : 'تفعيل الإشعارات';
-  };
-
   return (
     <TooltipProvider>
       <Tooltip>
@@ -156,10 +106,9 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ className })
               size="icon"
               className={className}
               onClick={handleToggleNotifications}
-              disabled={loading || subscribing || isCheckingSubscription || processingRequest}
-              aria-label={subscription ? 'إلغاء تفعيل الإشعارات' : 'تفعيل الإشعارات'}
+              disabled={subscribing || loading}
             >
-              {loading || subscribing || isCheckingSubscription ? (
+              {loading ? (
                 <Loader2 className="h-5 w-5 animate-spin" />
               ) : subscription ? (
                 <Bell className="h-5 w-5" />
@@ -174,13 +123,13 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ className })
                 variant="destructive"
                 onClick={handleBadgeClick}
               >
-                {openTicketsCount > 99 ? '99+' : openTicketsCount}
+                {openTicketsCount}
               </Badge>
             )}
           </div>
         </TooltipTrigger>
         <TooltipContent>
-          <p>{getTooltipText()}</p>
+          <p>{subscription ? 'إلغاء تفعيل الإشعارات' : 'تفعيل الإشعارات'}</p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
