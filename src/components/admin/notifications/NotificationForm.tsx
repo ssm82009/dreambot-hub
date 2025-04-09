@@ -4,14 +4,13 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
-import { sendNotificationToAdmin } from '@/services/notificationService';
+import { sendNotificationToAdmin, sendNotificationToAllUsers } from '@/services/notificationService';
 import { Loader2, Send } from 'lucide-react';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { supabase } from '@/integrations/supabase/client';
 
 const formSchema = z.object({
   title: z.string().min(1, 'يجب إدخال عنوان الإشعار').max(100, 'العنوان طويل جدًا'),
@@ -20,10 +19,9 @@ const formSchema = z.object({
     required_error: 'يجب اختيار نوع الإشعار',
   }),
   url: z.string().optional(),
-  targetType: z.enum(['all', 'admin', 'specificUser'], {
+  targetType: z.enum(['all', 'admin'], {
     required_error: 'يجب اختيار نوع المستقبل',
   }),
-  userId: z.string().optional(),
 });
 
 type NotificationFormValues = z.infer<typeof formSchema>;
@@ -43,7 +41,6 @@ const NotificationForm: React.FC<NotificationFormProps> = ({ users }) => {
       type: 'general',
       url: '/',
       targetType: 'all',
-      userId: '',
     },
   });
 
@@ -52,7 +49,7 @@ const NotificationForm: React.FC<NotificationFormProps> = ({ users }) => {
   const onSubmit = async (values: NotificationFormValues) => {
     try {
       setSending(true);
-      const { title, body, type, url, targetType, userId } = values;
+      const { title, body, type, url, targetType } = values;
       
       const notification = {
         title,
@@ -68,39 +65,8 @@ const NotificationForm: React.FC<NotificationFormProps> = ({ users }) => {
       if (targetType === 'admin') {
         result = await sendNotificationToAdmin(notification);
         message = 'تم إرسال الإشعار للمشرفين بنجاح';
-      } else if (targetType === 'specificUser' && userId) {
-        console.log('إرسال إشعار لمستخدم محدد:', userId, notification);
-        
-        const { data, error } = await supabase.functions.invoke('send-notification', {
-          body: {
-            userId,
-            notification
-          }
-        });
-        
-        result = data;
-        
-        if (error) {
-          throw new Error(error.message || 'حدث خطأ في إرسال الإشعار للمستخدم');
-        }
-        
-        message = 'تم إرسال الإشعار للمستخدم بنجاح';
       } else if (targetType === 'all') {
-        console.log('إرسال إشعار لجميع المستخدمين', notification);
-        
-        const { data, error } = await supabase.functions.invoke('send-notification', {
-          body: {
-            allUsers: true,
-            notification
-          }
-        });
-        
-        result = data;
-        
-        if (error) {
-          throw new Error(error.message || 'حدث خطأ في إرسال الإشعار لجميع المستخدمين');
-        }
-        
+        result = await sendNotificationToAllUsers(notification);
         message = 'تم إرسال الإشعار لجميع المستخدمين بنجاح';
       }
 
@@ -229,43 +195,12 @@ const NotificationForm: React.FC<NotificationFormProps> = ({ users }) => {
                 <SelectContent>
                   <SelectItem value="all">جميع المستخدمين</SelectItem>
                   <SelectItem value="admin">المشرفين فقط</SelectItem>
-                  <SelectItem value="specificUser">مستخدم محدد</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />
             </FormItem>
           )}
         />
-
-        {targetType === 'specificUser' && (
-          <FormField
-            control={form.control}
-            name="userId"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>اختر المستخدم</FormLabel>
-                <Select 
-                  onValueChange={field.onChange} 
-                  defaultValue={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="اختر مستخدم" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {users.map(user => (
-                      <SelectItem key={user.id} value={user.id}>
-                        {user.email}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        )}
 
         <Button 
           type="submit" 

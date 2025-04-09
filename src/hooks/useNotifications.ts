@@ -1,7 +1,7 @@
 
 import { useEffect, useState } from 'react';
 import { useNotificationPermission } from './notifications/useNotificationPermission';
-import { initializeFirebase, registerForPushNotifications, deleteFcmToken } from '@/services/firebaseService';
+import { initializeFirebase, registerForPushNotifications } from '@/services/firebaseService';
 
 /**
  * هوك إدارة الإشعارات الرئيسي
@@ -50,9 +50,18 @@ export function useNotifications() {
         try {
           setSubscribing(true);
           console.log("التحقق من وجود رمز اشتراك Firebase...");
-          const newToken = await registerForPushNotifications();
-          console.log("نتيجة التحقق:", newToken ? "موجود" : "غير موجود");
-          setToken(newToken);
+          
+          // التحقق من وجود التوكن في التخزين المحلي
+          const savedToken = localStorage.getItem('fcm_token');
+          
+          if (savedToken) {
+            console.log("تم العثور على رمز محفوظ:", savedToken);
+            setToken(savedToken);
+          } else {
+            console.log("لم يتم العثور على رمز محفوظ، جاري طلب رمز جديد...");
+            const newToken = await registerForPushNotifications();
+            setToken(newToken);
+          }
         } catch (error) {
           console.error("خطأ في التحقق من رمز الإشعارات:", error);
         } finally {
@@ -129,8 +138,8 @@ export function useNotifications() {
       setSubscribing(true);
       
       console.log("جاري حذف رمز Firebase:", token);
-      // حذف الرمز من قاعدة البيانات
-      await deleteFcmToken(token);
+      // حذف الرمز من التخزين المحلي
+      localStorage.removeItem('fcm_token');
       
       setToken(null);
       

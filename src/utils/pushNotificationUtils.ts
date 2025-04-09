@@ -28,12 +28,8 @@ export function urlBase64ToUint8Array(base64String: string): Uint8Array {
 /**
  * الحصول على توكن Firebase Messaging وتخزينه
  * @param messaging كائن Firebase Messaging
- * @param saveTokenToDatabase دالة لحفظ التوكن في قاعدة البيانات
  */
-export async function getOrCreateFirebaseToken(
-  messaging: any, 
-  saveTokenToDatabase: (token: string) => Promise<void>
-): Promise<string | null> {
+export async function getOrCreateFirebaseToken(messaging: any): Promise<string | null> {
   let currentToken = null;
   
   try {
@@ -53,9 +49,8 @@ export async function getOrCreateFirebaseToken(
     
     if (currentToken) {
       console.log("تم الحصول على التوكن:", currentToken);
-      
-      // حفظ التوكن في قاعدة البيانات
-      await saveTokenToDatabase(currentToken);
+      // تخزين التوكن في localStorage بدلاً من قاعدة البيانات
+      localStorage.setItem('fcm_token', currentToken);
     } else {
       console.log("لم يتم الحصول على إذن للإشعارات");
     }
@@ -69,18 +64,15 @@ export async function getOrCreateFirebaseToken(
 /**
  * تسجيل مستمع لتغييرات التوكن
  * @param messaging كائن Firebase Messaging
- * @param saveTokenToDatabase دالة لحفظ التوكن في قاعدة البيانات
  */
-export function onFirebaseTokenRefresh(
-  messaging: any, 
-  saveTokenToDatabase: (token: string) => Promise<void>
-): void {
+export function onFirebaseTokenRefresh(messaging: any): void {
   // عند تجديد التوكن
   messaging.onTokenRefresh(async () => {
     try {
       const refreshedToken = await messaging.getToken({ vapidKey: FCM_VAPID_KEY });
       console.log("تم تجديد التوكن:", refreshedToken);
-      await saveTokenToDatabase(refreshedToken);
+      // تخزين التوكن المحدث في localStorage
+      localStorage.setItem('fcm_token', refreshedToken);
     } catch (error) {
       console.error("لم يتمكن من تجديد التوكن:", error);
     }

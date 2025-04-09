@@ -68,86 +68,24 @@ export async function registerForPushNotifications(): Promise<string | null> {
     return null;
   }
   
-  return await getOrCreateFirebaseToken(firebaseMessaging, saveTokenToDatabase);
-}
-
-/**
- * حفظ رمز FCM في قاعدة البيانات
- */
-async function saveTokenToDatabase(token: string): Promise<void> {
-  try {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user) {
-      console.log("المستخدم غير مسجل دخول، لن يتم حفظ الرمز");
-      return;
-    }
-    
-    console.log("حفظ رمز FCM في قاعدة البيانات...");
-    
-    const { error } = await supabase.functions.invoke('store-fcm-token', {
-      body: {
-        userId: session.user.id,
-        token: token
-      }
-    });
-    
-    if (error) {
-      throw error;
-    }
-    
-    console.log("تم حفظ رمز FCM بنجاح");
-  } catch (error) {
-    console.error("فشل في حفظ رمز FCM:", error);
-    throw error;
-  }
-}
-
-/**
- * حذف رمز FCM من قاعدة البيانات
- */
-export async function deleteFcmToken(token: string): Promise<void> {
-  try {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user) {
-      console.log("المستخدم غير مسجل دخول، لن يتم حذف الرمز");
-      return;
-    }
-    
-    console.log("حذف رمز FCM من قاعدة البيانات...");
-    
-    const { error } = await supabase.functions.invoke('remove-fcm-token', {
-      body: {
-        userId: session.user.id,
-        token: token
-      }
-    });
-    
-    if (error) {
-      throw error;
-    }
-    
-    console.log("تم حذف رمز FCM بنجاح");
-  } catch (error) {
-    console.error("فشل في حذف رمز FCM:", error);
-    throw error;
-  }
+  return await getOrCreateFirebaseToken(firebaseMessaging);
 }
 
 /**
  * إرسال إشعار إلى مستخدم
  */
-export async function sendNotification(userId: string, notification: {
+export async function sendNotification(tokens: string[], notification: {
   title: string;
   body: string;
   url?: string;
   type?: 'general' | 'ticket' | 'payment' | 'subscription';
 }) {
   try {
-    console.log(`محاولة إرسال إشعار للمستخدم ${userId}:`, notification);
+    console.log(`محاولة إرسال إشعار إلى الأجهزة:`, tokens);
     
     const { data, error } = await supabase.functions.invoke('send-notification', {
       body: {
-        userId,
+        tokens,
         notification
       }
     });
@@ -173,13 +111,13 @@ export async function sendNotificationToAdmin(notification: {
   body: string;
   url?: string;
   type?: 'general' | 'ticket' | 'payment' | 'subscription';
-}) {
+}, adminTokens: string[]) {
   try {
     console.log('محاولة إرسال إشعار للمشرفين:', notification);
     
     const { data, error } = await supabase.functions.invoke('send-notification', {
       body: {
-        adminOnly: true,
+        tokens: adminTokens,
         notification
       }
     });

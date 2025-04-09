@@ -1,8 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { 
-  sendNotification as sendFirebaseNotification, 
-  sendNotificationToAdmin as sendFirebaseNotificationToAdmin
+  sendNotification as sendFirebaseNotification
 } from './firebaseService';
 import { toast } from 'sonner';
 
@@ -13,25 +12,24 @@ interface NotificationPayload {
   type?: 'general' | 'ticket' | 'payment' | 'subscription';
 }
 
+// جمع رموز FCM المخزنة محليًا للمستخدم الحالي
+function getUserTokens(): string[] {
+  const token = localStorage.getItem('fcm_token');
+  return token ? [token] : [];
+}
+
 // استدعاء وظيفة Edge Function لإرسال الإشعار
 export async function sendNotification(userId: string, payload: NotificationPayload) {
   try {
-    // تسجيل الإشعار في قاعدة البيانات محلياً قبل إرساله
-    try {
-      await supabase.from('notification_logs').insert({
-        user_id: userId,
-        title: payload.title,
-        body: payload.body,
-        url: payload.url,
-        type: payload.type || 'general',
-        sent_at: new Date().toISOString()
-      });
-    } catch (logError) {
-      console.error('خطأ في تسجيل الإشعار في قاعدة البيانات:', logError);
-      // نستمر في تنفيذ العملية حتى لو فشل التسجيل
+    // تخزين رموز FCM للمستخدم
+    const tokens = getUserTokens();
+    
+    if (tokens.length === 0) {
+      toast.error('لا توجد أجهزة مسجلة لاستلام الإشعارات');
+      return { success: false, message: 'لا توجد أجهزة مسجلة' };
     }
     
-    const result = await sendFirebaseNotification(userId, payload);
+    const result = await sendFirebaseNotification(tokens, payload);
     
     if (result && result.success) {
       toast.success(`تم إرسال الإشعار بنجاح (${result.sentCount || 0} جهاز)`);
@@ -51,7 +49,12 @@ export async function sendNotificationToAdmin(payload: NotificationPayload) {
     // تسجيل محاولة إرسال الإشعار
     console.log('محاولة إرسال إشعار للمشرفين:', payload);
     
-    const result = await sendFirebaseNotificationToAdmin(payload);
+    // في بيئة حقيقية، يجب جمع رموز المشرفين
+    // لأغراض الاختبار، سنستخدم الرموز المحلية
+    const tokens = getUserTokens();
+    
+    // في بيئة حقيقية، يمكن تخزين رموز المشرفين في تخزين محلي أو في الذاكرة
+    const result = await sendFirebaseNotification(tokens, payload);
     
     if (result && result.success) {
       toast.success(`تم إرسال الإشعار للمشرفين (${result.sentCount || 0} جهاز)`);
@@ -70,9 +73,12 @@ export async function sendNotificationToAllUsers(payload: NotificationPayload) {
   try {
     console.log('محاولة إرسال إشعار لجميع المستخدمين:', payload);
     
+    // في بيئة الاختبار، نستخدم الرموز المحلية
+    const tokens = getUserTokens();
+    
     const { data, error } = await supabase.functions.invoke('send-notification', {
       body: {
-        allUsers: true,
+        tokens,
         notification: payload
       }
     });
