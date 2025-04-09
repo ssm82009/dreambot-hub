@@ -19,13 +19,13 @@ export async function initializeFirebaseKey() {
     // محاولة جلب المفتاح من قاعدة البيانات
     const { data, error } = await supabase
       .from('app_settings')
-      .select('*')
+      .select('key, value')
       .eq('key', 'fcm_server_key')
       .single();
 
     if (error) throw error;
     
-    if (data?.value) {
+    if (data && data.value) {
       FCM_SERVER_KEY = data.value;
       return true;
     } else {
