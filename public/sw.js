@@ -1,6 +1,6 @@
 
 // إصدار ذاكرة التخزين المؤقت - قم بتغييره عند تحديث ملفات التطبيق الرئيسية
-const CACHE_NAME = 'taweel-cache-v2';
+const CACHE_NAME = 'taweel-cache-v3';
 
 // قائمة الموارد التي سيتم تخزينها مؤقتًا
 const urlsToCache = [
@@ -25,6 +25,9 @@ self.addEventListener('install', (event) => {
       .then((cache) => {
         console.log('Service Worker: تم فتح ذاكرة التخزين المؤقت');
         return cache.addAll(urlsToCache);
+      })
+      .catch(err => {
+        console.error('خطأ في تخزين الموارد الأساسية:', err);
       })
   );
 });
@@ -59,12 +62,22 @@ self.addEventListener('fetch', (event) => {
     return;
   }
   
+  // تخطي طلبات الأصول ذات الهاش مثل index-k8ph8wwL.js
+  if (event.request.url.includes('index-') && event.request.url.includes('.js')) {
+    console.log('تخطي تخزين ملف الأصول مع هاش:', event.request.url);
+    return;
+  }
+  
   event.respondWith(
+    // محاولة جلب الطلب من الشبكة أولا
     fetch(event.request)
       .then((response) => {
         // تخزين الاستجابات الناجحة للطلبات GET فقط
         if (event.request.method === 'GET' && response.status === 200) {
+          // استنساخ النسخة للتخزين المؤقت
           const responseToCache = response.clone();
+          
+          // محاولة تخزين الاستجابة في الكاش
           caches.open(CACHE_NAME)
             .then((cache) => {
               cache.put(event.request, responseToCache);
@@ -77,11 +90,40 @@ self.addEventListener('fetch', (event) => {
         // محاولة استرداد من الكاش
         return caches.match(event.request)
           .then((cachedResponse) => {
-            // إذا كان الطلب لصفحة رئيسية وليس موجودًا في الكاش
-            if (event.request.mode === 'navigate' && !cachedResponse) {
-              return caches.match('/offline.html');
+            // إذا وجدنا استجابة في الكاش، نعيدها
+            if (cachedResponse) {
+              return cachedResponse;
             }
-            return cachedResponse;
+            
+            // إذا كان الطلب لصفحة رئيسية وليس موجودًا في الكاش
+            if (event.request.mode === 'navigate') {
+              return caches.match('/offline.html')
+                .then(offlineResponse => {
+                  return offlineResponse || new Response('أنت غير متصل بالإنترنت.', {
+                    headers: { 'Content-Type': 'text/html;charset=utf-8' }
+                  });
+                });
+            }
+            
+            // إذا كان طلب أصل وليس في الكاش، نعيد استجابة فارغة بدلاً من خطأ
+            if (event.request.destination === 'script' || 
+                event.request.destination === 'style' || 
+                event.request.destination === 'image') {
+              return new Response('', { 
+                status: 200, 
+                headers: new Headers({
+                  'Content-Type': event.request.destination === 'image' ? 
+                    'image/svg+xml' : 
+                    (event.request.destination === 'script' ? 'application/javascript' : 'text/css')
+                })
+              });
+            }
+            
+            // كإجراء أخير، نعيد رسالة خطأ
+            return new Response('المورد غير متوفر حاليا.', {
+              status: 404,
+              headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+            });
           });
       })
   );
