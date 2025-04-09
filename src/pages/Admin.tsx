@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import Navbar, { NAVBAR_HEIGHT } from '@/components/Navbar';
@@ -16,19 +15,15 @@ const AdminDashboard = () => {
   const { refreshAdminData } = useAdminData();
   const location = useLocation();
 
-  // إعادة تعيين موضع التمرير للأعلى عند تغيير المسار
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [location.pathname]);
 
-  // تحديث البيانات عند تحميل المكون
   useEffect(() => {
     console.log("Admin dashboard mounted - fetching fresh data");
     
-    // تعيين حالة التحميل إلى true لضمان إعادة التحميل
     setIsLoading(true);
     
-    // استدعاء الدالة لتحديث البيانات
     refreshAdminData()
       .then(() => {
         console.log("Admin data refresh completed");
@@ -60,18 +55,18 @@ const AdminDashboard = () => {
       <Navbar />
       <div className="flex-1 flex flex-col md:flex-row" style={{ paddingTop: `${NAVBAR_HEIGHT}px`, marginBottom: "1rem" }}>
         <SidebarProvider>
-          <div className="flex flex-row w-full dream-pattern" dir="rtl">
-            <AdminSidebar />
+          <div className="flex flex-row w-full dream-pattern">
             <main className="flex-1 p-6">
               <div className="w-full mb-16">
                 <AdminHeader />
                 <AdminContent />
               </div>
             </main>
+            <AdminSidebar />
           </div>
         </SidebarProvider>
       </div>
-      <Footer className="mt-auto" />
+      <Footer />
     </div>
   );
 };
