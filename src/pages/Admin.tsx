@@ -56,9 +56,9 @@ const AdminDashboard = () => {
       <Navbar />
       <div className="flex-1" style={{ paddingTop: `${NAVBAR_HEIGHT}px` }}>
         <SidebarProvider>
-          <div className="flex flex-row w-full dream-pattern min-h-[calc(100vh-var(--footer-height)-var(--navbar-height))]">
+          <div className="flex flex-row-reverse w-full dream-pattern min-h-[calc(100vh-var(--footer-height)-var(--navbar-height))]">
             <main className="flex-1 p-6">
-              <div className="w-full pb-8">
+              <div className="w-full pb-8 admin-content">
                 <AdminHeader />
                 <AdminContent />
               </div>

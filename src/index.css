@@ -130,6 +130,8 @@
 
 /* Fix admin content padding to prevent overlap with fixed sidebar */
 .admin-content {
-  padding-right: 1rem;
+  padding-right: 2rem;
   width: 100%;
+  overflow-x: hidden;
+  max-width: calc(100vw - 16rem - 2rem);
 }
