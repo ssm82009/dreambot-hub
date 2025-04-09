@@ -1,15 +1,9 @@
 
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
-import * as jose from 'https://deno.land/x/jose@v4.13.1/index.ts';
+// get-firebase-token Edge Function
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { google } from "https://esm.sh/googleapis@105.0.0";
 
-interface ServiceAccountPayload {
-  clientEmail: string;
-  privateKey: string;
-  projectId: string;
-}
-
-// تعريف رؤوس CORS - تأكد من شمولها لجميع الرؤوس المطلوبة
+// تعريف رؤوس CORS بشكل كامل
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'POST, OPTIONS, GET',
@@ -22,14 +16,14 @@ serve(async (req) => {
   console.log(`Received ${req.method} request to ${req.url}`);
   
   // معالجة طلبات CORS preflight بشكل صحيح
-  if (req.method === 'OPTIONS') {
+  if (req.method === "OPTIONS") {
     console.log('Handling CORS preflight request');
     return new Response(null, {
       status: 204,
       headers: corsHeaders
     });
   }
-
+  
   // التحقق من وجود جسم الطلب
   if (req.method !== 'POST') {
     console.log(`Method not allowed: ${req.method}`);
@@ -40,71 +34,79 @@ serve(async (req) => {
   }
 
   try {
-    console.log('Processing request body');
-    // استخراج البيانات من جسم الطلب
-    const payload = await req.json() as ServiceAccountPayload;
-    const { clientEmail, privateKey, projectId } = payload;
-
-    // التحقق من وجود جميع البيانات المطلوبة
-    if (!clientEmail || !privateKey || !projectId) {
-      console.log('Missing required fields in request');
-      return new Response(JSON.stringify({ error: 'بيانات مفقودة، يجب توفير clientEmail و privateKey و projectId' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
+    console.log('Processing request');
+    
+    // الحصول على مفتاح الحساب الخدمي من البيئة
+    let serviceAccount;
+    
+    // نحاول استخدام البيانات من متغير البيئة أولاً
+    const serviceAccountString = Deno.env.get("FIREBASE_SERVICE_ACCOUNT_KEY");
+    if (serviceAccountString) {
+      try {
+        console.log('Using service account from environment variable');
+        serviceAccount = JSON.parse(serviceAccountString);
+      } catch (error) {
+        console.error('Failed to parse service account from environment:', error);
+      }
+    }
+    
+    // إذا لم نجد متغير البيئة، نستخدم البيانات من الطلب
+    if (!serviceAccount) {
+      console.log('Using service account from request body');
+      const payload = await req.json();
+      const { clientEmail, privateKey, projectId } = payload;
+      
+      // التحقق من وجود جميع البيانات المطلوبة
+      if (!clientEmail || !privateKey || !projectId) {
+        console.log('Missing required fields in request');
+        return new Response(JSON.stringify({ error: 'بيانات مفقودة، يجب توفير clientEmail و privateKey و projectId' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      
+      // تحضير كائن الحساب الخدمي
+      serviceAccount = {
+        client_email: clientEmail,
+        private_key: privateKey.replace(/\\n/g, '\n'),
+        project_id: projectId
+      };
     }
 
-    console.log('Creating JWT for OAuth request');
-    // إنشاء JWT لتوقيع طلب الحصول على رمز الوصول
-    const now = Math.floor(Date.now() / 1000);
-    const expiry = now + 3600; // صلاحية لمدة ساعة
-
-    const privateKeyFixed = privateKey.replace(/\\n/g, '\n');
-
-    // إنشاء وتوقيع JWT
-    const jwt = await new jose.SignJWT({
-      scope: 'https://www.googleapis.com/auth/firebase.messaging'
-    })
-      .setProtectedHeader({ alg: 'RS256', typ: 'JWT' })
-      .setIssuer(clientEmail)
-      .setSubject(clientEmail)
-      .setAudience('https://oauth2.googleapis.com/token')
-      .setIssuedAt(now)
-      .setExpirationTime(expiry)
-      .sign(await jose.importPKCS8(privateKeyFixed, 'RS256'));
-
-    console.log('Sending request to Google OAuth');
-    // إرسال طلب للحصول على رمز الوصول من Google OAuth
-    const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
-      },
-      body: new URLSearchParams({
-        grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
-        assertion: jwt
-      })
+    console.log('Initializing JWT client');
+    
+    // إنشاء عميل JWT لمصادقة Google
+    const jwtClient = new google.auth.JWT({
+      email: serviceAccount.client_email,
+      key: serviceAccount.private_key,
+      scopes: ["https://www.googleapis.com/auth/firebase.messaging"],
     });
 
-    if (!tokenResponse.ok) {
-      const errorData = await tokenResponse.text();
-      console.error('خطأ في الحصول على رمز الوصول:', errorData);
-      return new Response(JSON.stringify({ error: `خطأ في الحصول على رمز الوصول: ${errorData}` }), {
-        status: tokenResponse.status,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
+    console.log('Requesting OAuth token');
+    
+    // الحصول على رمز الوصول
+    const tokenResponse = await jwtClient.authorize();
+    
+    if (!tokenResponse.access_token) {
+      throw new Error('لم يتم الحصول على رمز وصول من Google');
     }
-
-    const tokenData = await tokenResponse.json();
+    
     console.log('Successfully obtained access token');
     
-    return new Response(JSON.stringify(tokenData), {
+    // إرجاع رمز الوصول للعميل
+    return new Response(JSON.stringify({
+      access_token: tokenResponse.access_token,
+      expires_in: tokenResponse.expiry_date,
+    }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
   } catch (error) {
-    console.error('خطأ في معالجة الطلب:', error);
-    return new Response(JSON.stringify({ error: `خطأ في معالجة الطلب: ${error.message}` }), {
+    console.error('Error processing request:', error);
+    return new Response(JSON.stringify({ 
+      error: 'فشل الحصول على التوكن', 
+      details: error.message 
+    }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });

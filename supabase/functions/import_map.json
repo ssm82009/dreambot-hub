@@ -1,6 +1,7 @@
 
 {
   "imports": {
-    "web-push": "https://esm.sh/web-push@3.6.7"
+    "std/": "https://deno.land/std@0.168.0/",
+    "jose/": "https://deno.land/x/jose@v4.13.1/"
   }
 }
