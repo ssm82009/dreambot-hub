@@ -19,11 +19,27 @@ serve(async (req: Request) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     );
     
-    // Read the SQL file content
-    const createCountFunctionSql = await Deno.readTextFile('./sql/create_count_function.sql');
+    // Execute the SQL directly using pg_execute
+    // This will ensure the function is created even if it doesn't exist yet
+    const query = `
+    CREATE OR REPLACE FUNCTION public.count_push_subscriptions()
+    RETURNS INTEGER
+    LANGUAGE plpgsql
+    SECURITY DEFINER
+    AS $$
+    BEGIN
+      RETURN (
+        SELECT COUNT(*)::integer
+        FROM public.push_subscriptions
+      );
+    END;
+    $$;
+
+    -- Grant usage to authenticated users
+    GRANT EXECUTE ON FUNCTION public.count_push_subscriptions() TO authenticated;
+    `;
     
-    // Execute the SQL directly
-    const { error } = await supabaseAdmin.withSystems().rpc('exec_sql', { sql: createCountFunctionSql });
+    const { data, error } = await supabaseAdmin.rpc('pg_execute', { query });
     
     if (error) throw error;
     
@@ -37,7 +53,7 @@ serve(async (req: Request) => {
       }
     );
   } catch (error) {
-    console.error('Error:', error);
+    console.error('Error creating RPC function:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
       { 

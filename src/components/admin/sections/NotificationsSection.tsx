@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -60,8 +59,7 @@ const NotificationsSection: React.FC = () => {
         await supabase.functions.invoke('create-rpc');
         
         // استدعاء العدد مباشرة من قاعدة البيانات
-        // إصلاح: تحديد النوع كـ any لتجنب خطأ TypeScript
-        const { data: countData, error: countError } = await supabase.rpc('count_push_subscriptions' as any);
+        const { data: countData, error: countError } = await supabase.rpc('count_push_subscriptions');
 
         if (countError) {
           toast.error('حدث خطأ في جلب عدد المشتركين');

@@ -48,6 +48,8 @@ serve(async (req: Request) => {
       );
     }
 
+    console.log("VAPID keys configured correctly");
+
     // إعداد web-push
     webPush.setVapidDetails(
       'mailto:support@example.com',
@@ -57,6 +59,8 @@ serve(async (req: Request) => {
 
     // تحليل بيانات الطلب
     const requestData: RequestBody = await req.json();
+    console.log("Received request data:", JSON.stringify(requestData));
+    
     const { userId, adminOnly, allUsers, notification } = requestData;
 
     if (!notification?.title || !notification?.body) {
@@ -78,6 +82,8 @@ serve(async (req: Request) => {
         .from('users')
         .select('id')
         .eq('role', 'admin');
+      
+      console.log("Found admins:", admins?.length || 0);
 
       if (admins && admins.length > 0) {
         const adminIds = admins.map((admin) => admin.id);
@@ -87,6 +93,7 @@ serve(async (req: Request) => {
           .in('user_id', adminIds);
 
         subscriptions = data || [];
+        console.log("Found admin subscriptions:", subscriptions.length);
       }
     } else if (userId) {
       // إرسال الإشعار لمستخدم محدد
@@ -96,6 +103,7 @@ serve(async (req: Request) => {
         .eq('user_id', userId);
 
       subscriptions = data || [];
+      console.log("Found user subscriptions:", subscriptions.length);
     } else if (allUsers) {
       // إرسال الإشعار لجميع المستخدمين
       const { data } = await supabaseAdmin
@@ -103,6 +111,7 @@ serve(async (req: Request) => {
         .select('*');
 
       subscriptions = data || [];
+      console.log("Found all subscriptions:", subscriptions.length);
     } else {
       return new Response(
         JSON.stringify({ error: 'يجب تحديد المستخدم أو مجموعة المستخدمين المستهدفة' }),

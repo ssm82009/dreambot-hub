@@ -658,6 +658,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      count_push_subscriptions: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       get_latest_payment_invoices: {
         Args: Record<PropertyKey, never>
         Returns: {
