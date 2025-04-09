@@ -21,10 +21,18 @@ import DreamManagementSection from './sections/DreamManagementSection';
 const AdminContent: React.FC = () => {
   const { dbLoading, activeSections } = useAdmin();
   
-  // تحقق ما إذا كان أي قسم مفعل باستثناء لوحة التحكم
-  const isAnySectionActive = Object.entries(activeSections).some(
-    ([key, value]) => key !== 'dashboard' && value === true
-  );
+  // الحصول على القسم النشط الوحيد إن وجد
+  const getActiveSection = () => {
+    const activeSectionKey = Object.keys(activeSections).find(
+      key => activeSections[key as keyof typeof activeSections] === true
+    );
+    return activeSectionKey;
+  };
+  
+  const activeSection = getActiveSection();
+  
+  // عرض الإحصائيات إذا لم يكن هناك قسم نشط
+  const showDashboard = !activeSection || activeSection === 'dashboard';
 
   return (
     <div className="mt-4">
@@ -37,24 +45,24 @@ const AdminContent: React.FC = () => {
         </div>
       ) : (
         <div className="space-y-8">
-          {/* الإحصائيات تظهر فقط إذا لم يكن هناك أي قسم آخر مفعل */}
-          {!isAnySectionActive && <DashboardStatsSection />}
+          {/* عرض الإحصائيات فقط إذا لم يكن هناك قسم آخر نشط */}
+          {showDashboard && <DashboardStatsSection />}
           
           {/* عرض القسم المحدد فقط */}
-          {activeSections.aiSettings && <AiSettingsSection />}
-          {activeSections.interpretationSettings && <InterpretationSettingsSection />}
-          {activeSections.pricingSettings && <PricingSettingsSection />}
-          {activeSections.paymentSettings && <PaymentSettingsSection />}
-          {activeSections.users && <UserManagementSection />}
-          {activeSections.pages && <PageManagementSection />}
-          {activeSections.navbar && <NavbarManagementSection />}
-          {activeSections.transactions && <TransactionManagementSection />}
-          {activeSections.tickets && <TicketManagementSection />}
-          {activeSections.theme && <ThemeSettingsSection />}
-          {activeSections.seo && <SeoSettingsSection />}
-          {activeSections.homeSections && <HomeSectionsSection />}
-          {activeSections.notifications && <NotificationsSection />}
-          {activeSections.dreams && <DreamManagementSection />}
+          {activeSection === 'aiSettings' && <AiSettingsSection />}
+          {activeSection === 'interpretationSettings' && <InterpretationSettingsSection />}
+          {activeSection === 'pricingSettings' && <PricingSettingsSection />}
+          {activeSection === 'paymentSettings' && <PaymentSettingsSection />}
+          {activeSection === 'users' && <UserManagementSection />}
+          {activeSection === 'pages' && <PageManagementSection />}
+          {activeSection === 'navbar' && <NavbarManagementSection />}
+          {activeSection === 'transactions' && <TransactionManagementSection />}
+          {activeSection === 'tickets' && <TicketManagementSection />}
+          {activeSection === 'theme' && <ThemeSettingsSection />}
+          {activeSection === 'seo' && <SeoSettingsSection />}
+          {activeSection === 'homeSections' && <HomeSectionsSection />}
+          {activeSection === 'notifications' && <NotificationsSection />}
+          {activeSection === 'dreams' && <DreamManagementSection />}
         </div>
       )}
     </div>

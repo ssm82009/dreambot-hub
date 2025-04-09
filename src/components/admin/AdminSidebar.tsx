@@ -67,13 +67,32 @@ const initialSections = {
 };
 
 const AdminSidebar: React.FC = () => {
-  const { activeSections, toggleSection } = useAdmin();
+  const { activeSections, setActiveSections } = useAdmin();
   const location = useLocation();
   const navigate = useNavigate();
   const { open, toggleSidebar } = useSidebar();
 
+  // تحقق ما إذا كان القسم نشطًا
   const isActive = (section: keyof typeof initialSections): boolean => {
-    return activeSections[section as keyof typeof activeSections] || location.pathname.includes(section);
+    return activeSections[section as keyof typeof activeSections] || false;
+  };
+
+  // تبديل حالة القسم المحدد وضبط جميع الأقسام الأخرى على عدم النشاط
+  const selectSection = (section: keyof typeof initialSections) => {
+    const newSections = { ...initialSections };
+    
+    // إعادة تعيين جميع الأقسام إلى 'false'
+    Object.keys(newSections).forEach(key => {
+      newSections[key as keyof typeof initialSections] = false;
+    });
+    
+    // تفعيل القسم المحدد فقط
+    if (section !== 'dashboard') {
+      newSections[section] = true;
+    }
+    
+    setActiveSections(newSections);
+    navigate(`/admin?section=${section}`);
   };
 
   const menuItems: MenuCategory[] = [
@@ -192,10 +211,7 @@ const AdminSidebar: React.FC = () => {
                   <SidebarMenuButton
                     isActive={isActive(item.section)}
                     tooltip={item.name}
-                    onClick={() => {
-                      toggleSection(item.section as keyof typeof activeSections);
-                      navigate(`/admin?section=${item.section}`);
-                    }}
+                    onClick={() => selectSection(item.section)}
                   >
                     <item.icon className="h-4 w-4" />
                     <span>{item.name}</span>
