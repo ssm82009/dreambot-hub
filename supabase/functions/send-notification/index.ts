@@ -2,7 +2,10 @@
 // استخدام المسار الكامل لتجنب مشاكل الاستيراد في Deno
 import { serve } from "std/http/server.ts";
 import { createClient } from "@supabase/supabase-js";
-import webPush from "web-push";
+import * as webPushModule from "web-push";
+
+// تأكد من الحصول على كائن webPush بشكل صحيح
+const webPush = webPushModule.default || webPushModule;
 
 // تعريف رؤوس CORS
 const corsHeaders = {
