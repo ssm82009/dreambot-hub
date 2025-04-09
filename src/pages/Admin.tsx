@@ -28,7 +28,7 @@ const AdminDashboard = () => {
     // تعيين حالة التحميل إلى true لضمان إعادة التحميل
     setIsLoading(true);
     
-    // استدعاء الدالة لتحديث البيانات وإجبار التحديث عن طريق استخدام noCache
+    // استدعاء الدالة لتحديث البيانات وإجبار التحديث
     refreshAdminData()
       .then(() => {
         console.log("Admin data refresh completed");

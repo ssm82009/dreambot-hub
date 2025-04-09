@@ -44,11 +44,12 @@ export const useFetchDashboardStats = () => {
       setActiveSubscriptions(activeCount);
 
       // ✓ تحسين طريقة جلب إجمالي عدد الأحلام وضمان تحديثها
-      // Force cache refresh with .noCache() to ensure we get latest data
+      // Add timestamp to bypass cache
+      const timestamp = new Date().getTime();
       const { count: dreamsCount, error: dreamsError } = await supabase
         .from('dreams')
         .select('*', { count: 'exact', head: true })
-        .noCache();
+        .order('id', { ascending: true, nullsFirst: false, foreignTable: `timestamp_${timestamp}` });
 
       if (dreamsError) {
         throw new Error(`Error fetching dreams count: ${dreamsError.message}`);

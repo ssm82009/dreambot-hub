@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { 
   BarChart, 
@@ -43,13 +42,14 @@ const DashboardCharts: React.FC<DashboardChartsProps> = ({ timeRange }) => {
         // تحديد النطاق الزمني بناءً على الفلتر المحدد
         const startDate = getStartDateByRange(timeRange);
         
-        // تأكد من عدم استخدام الذاكرة المؤقتة للبيانات
+        // Add timestamp to bypass cache
+        const timestamp = new Date().getTime();
+        
         const { data: dreamsStats, error: dreamsError } = await supabase
           .from('dreams')
           .select('created_at')
           .gte('created_at', startDate.toISOString())
-          .order('created_at', { ascending: false })
-          .noCache();
+          .order('created_at', { ascending: false, foreignTable: `timestamp_${timestamp}` });
 
         if (dreamsError) {
           console.error('Error fetching dreams:', dreamsError);
@@ -66,8 +66,7 @@ const DashboardCharts: React.FC<DashboardChartsProps> = ({ timeRange }) => {
           .from('users')
           .select('created_at, subscription_type')
           .gte('created_at', startDate.toISOString())
-          .order('created_at', { ascending: false })
-          .noCache();
+          .order('created_at', { ascending: false, foreignTable: `timestamp_${timestamp}` });
 
         if (usersError) {
           console.error('Error fetching users:', usersError);
