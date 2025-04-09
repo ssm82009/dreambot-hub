@@ -6,12 +6,13 @@ import { useNotificationData } from '@/hooks/notifications/useNotificationData';
 
 interface NotificationHeaderProps {
   refreshData?: () => Promise<void>;
+  title?: string;
 }
 
-const NotificationHeader: React.FC<NotificationHeaderProps> = ({ refreshData }) => {
+const NotificationHeader: React.FC<NotificationHeaderProps> = ({ refreshData, title = "إدارة الإشعارات" }) => {
   return (
     <div className="flex justify-between items-center">
-      <h2 className="text-2xl font-bold">إدارة الإشعارات</h2>
+      <h2 className="text-2xl font-bold">{title}</h2>
       
       {refreshData && (
         <Button 

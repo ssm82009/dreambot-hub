@@ -5,7 +5,8 @@ export type HomeSectionItem = {
   title: string;
   order: number;
   visible: boolean;
-  content?: Record<string, string>;
+  content?: HomeSectionContent;
+  style?: HomeSectionStyle;
 };
 
 export type ThemeSettingsFormValues = {
@@ -139,3 +140,15 @@ export type AdminContextType = {
   setActiveSections: (sections: Partial<ActiveSections>) => void;
   toggleSection: (section: keyof ActiveSections) => void;
 };
+
+export interface HomeSectionStyle {
+  backgroundColor?: string;
+  textColor?: string;
+  // We can add more style properties here in the future
+}
+
+export interface HomeSectionContent {
+  title?: string;
+  subtitle?: string;
+  [key: string]: any;
+}

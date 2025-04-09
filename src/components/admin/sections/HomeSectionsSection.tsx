@@ -1,5 +1,6 @@
+
 import React, { useState } from 'react';
-import { LayoutDashboard, EditIcon } from 'lucide-react';
+import { LayoutDashboard, EditIcon, Palette } from 'lucide-react';
 import AdminSection from '@/components/admin/AdminSection';
 import { useAdmin } from '@/contexts/admin';
 import { HomeSectionItem } from '@/contexts/admin/types';
@@ -10,6 +11,8 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
+import ColorInput from '@/components/admin/theme/ColorInput';
+import NotificationHeader from '@/components/admin/notifications/NotificationHeader';
 
 const HomeSectionsSection = () => {
   const { homeSectionsForm, setHomeSectionsForm, activeSections, toggleSection, setDbLoading } = useAdmin();
@@ -78,9 +81,38 @@ const HomeSectionsSection = () => {
     }
   };
 
+  // تعديل خلفية القسم
+  const updateSectionBackground = (sectionId: string, backgroundColor: string) => {
+    const sectionsCopy = [...sections];
+    const index = sectionsCopy.findIndex(section => section.id === sectionId);
+    
+    if (index !== -1) {
+      if (!sectionsCopy[index].style) {
+        sectionsCopy[index].style = {};
+      }
+      sectionsCopy[index].style!.backgroundColor = backgroundColor;
+      setSections(sectionsCopy);
+    }
+  };
+
+  // تعديل خلفية النص
+  const updateSectionTextColor = (sectionId: string, textColor: string) => {
+    const sectionsCopy = [...sections];
+    const index = sectionsCopy.findIndex(section => section.id === sectionId);
+    
+    if (index !== -1) {
+      if (!sectionsCopy[index].style) {
+        sectionsCopy[index].style = {};
+      }
+      sectionsCopy[index].style!.textColor = textColor;
+      setSections(sectionsCopy);
+    }
+  };
+
   // Form components for different sections
   const renderHeroForm = (section: HomeSectionItem) => {
     const content = section.content || {};
+    const style = section.style || {};
     
     return (
       <div className="space-y-4 p-4">
@@ -101,12 +133,53 @@ const HomeSectionsSection = () => {
             className="min-h-[100px] rtl"
           />
         </div>
+
+        <div className="pt-4 border-t">
+          <h4 className="text-md font-medium mb-4">خصائص المظهر</h4>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">لون خلفية القسم</label>
+              <div className="flex items-center gap-2">
+                <Input 
+                  type="color" 
+                  className="w-12 h-10 p-1" 
+                  value={style.backgroundColor || '#ffffff'}
+                  onChange={(e) => updateSectionBackground(section.id, e.target.value)}
+                />
+                <Input 
+                  value={style.backgroundColor || '#ffffff'} 
+                  onChange={(e) => updateSectionBackground(section.id, e.target.value)}
+                  dir="ltr"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">لون النص</label>
+              <div className="flex items-center gap-2">
+                <Input 
+                  type="color" 
+                  className="w-12 h-10 p-1" 
+                  value={style.textColor || '#000000'}
+                  onChange={(e) => updateSectionTextColor(section.id, e.target.value)}
+                />
+                <Input 
+                  value={style.textColor || '#000000'} 
+                  onChange={(e) => updateSectionTextColor(section.id, e.target.value)}
+                  dir="ltr"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   };
 
   const renderTryItForm = (section: HomeSectionItem) => {
     const content = section.content || {};
+    const style = section.style || {};
     
     return (
       <div className="space-y-4 p-4">
@@ -127,12 +200,53 @@ const HomeSectionsSection = () => {
             className="min-h-[100px] rtl"
           />
         </div>
+
+        <div className="pt-4 border-t">
+          <h4 className="text-md font-medium mb-4">خصائص المظهر</h4>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">لون خلفية القسم</label>
+              <div className="flex items-center gap-2">
+                <Input 
+                  type="color" 
+                  className="w-12 h-10 p-1" 
+                  value={style.backgroundColor || '#f3f4f6'}
+                  onChange={(e) => updateSectionBackground(section.id, e.target.value)}
+                />
+                <Input 
+                  value={style.backgroundColor || '#f3f4f6'} 
+                  onChange={(e) => updateSectionBackground(section.id, e.target.value)}
+                  dir="ltr"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">لون النص</label>
+              <div className="flex items-center gap-2">
+                <Input 
+                  type="color" 
+                  className="w-12 h-10 p-1" 
+                  value={style.textColor || '#000000'}
+                  onChange={(e) => updateSectionTextColor(section.id, e.target.value)}
+                />
+                <Input 
+                  value={style.textColor || '#000000'} 
+                  onChange={(e) => updateSectionTextColor(section.id, e.target.value)}
+                  dir="ltr"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   };
 
   const renderHowItWorksForm = (section: HomeSectionItem) => {
     const content = section.content || {};
+    const style = section.style || {};
     
     return (
       <div className="space-y-4 p-4">
@@ -152,6 +266,46 @@ const HomeSectionsSection = () => {
             onChange={(e) => updateSectionContent(section.id, 'subtitle', e.target.value)}
             className="min-h-[100px] rtl"
           />
+        </div>
+
+        <div className="pt-4 border-t">
+          <h4 className="text-md font-medium mb-4">خصائص المظهر</h4>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">لون خلفية القسم</label>
+              <div className="flex items-center gap-2">
+                <Input 
+                  type="color" 
+                  className="w-12 h-10 p-1" 
+                  value={style.backgroundColor || '#ffffff'}
+                  onChange={(e) => updateSectionBackground(section.id, e.target.value)}
+                />
+                <Input 
+                  value={style.backgroundColor || '#ffffff'} 
+                  onChange={(e) => updateSectionBackground(section.id, e.target.value)}
+                  dir="ltr"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">لون النص</label>
+              <div className="flex items-center gap-2">
+                <Input 
+                  type="color" 
+                  className="w-12 h-10 p-1" 
+                  value={style.textColor || '#000000'}
+                  onChange={(e) => updateSectionTextColor(section.id, e.target.value)}
+                />
+                <Input 
+                  value={style.textColor || '#000000'} 
+                  onChange={(e) => updateSectionTextColor(section.id, e.target.value)}
+                  dir="ltr"
+                />
+              </div>
+            </div>
+          </div>
         </div>
 
         <div className="pt-4 border-t">
@@ -237,18 +391,38 @@ const HomeSectionsSection = () => {
     );
   };
 
+  // معاينة المظهر
+  const renderPreview = (section: HomeSectionItem) => {
+    const style = section.style || {};
+    
+    return (
+      <div 
+        className="mt-4 p-4 rounded-md shadow-sm border" 
+        style={{ 
+          backgroundColor: style.backgroundColor || '#ffffff',
+          color: style.textColor || '#000000' 
+        }}
+      >
+        <h3 className="font-semibold">معاينة المظهر</h3>
+        <p className="text-sm">هذا هو شكل الخلفية ولون النصوص المختارة للقسم.</p>
+      </div>
+    );
+  };
+
   return (
     <AdminSection 
       title="أقسام الصفحة الرئيسية" 
-      description="ترتيب وإظهار/إخفاء ��تعديل محتوى أقسام الصفحة الرئيسية"
+      description="ترتيب وإظهار/إخفاء وتعديل محتوى وخلفيات أقسام الصفحة الرئيسية"
       icon={LayoutDashboard}
       isOpen={activeSections.homeSections}
       onToggle={() => toggleSection('homeSections')}
     >
       <div className="space-y-4">
+        <NotificationHeader title="تخصيص أقسام الصفحة الرئيسية" />
+        
         <Card className="p-4">
           <p className="text-sm text-muted-foreground mb-4">
-            يمكنك ترتيب الأقسام في الصفحة الرئيسية من خلال تحريك القسم لأعلى أو لأسفل، كما يمكنك إظهار أو إخفاء القسم وتعديل محتواه.
+            يمكنك ترتيب الأقسام في الصفحة الرئيسية من خلال تحريك القسم لأعلى أو لأسفل، كما يمكنك إظهار أو إخفاء القسم وتعديل محتواه وخلفيته.
           </p>
           
           <div className="space-y-4">
@@ -313,6 +487,7 @@ const HomeSectionsSection = () => {
                     {section.id === 'hero' && renderHeroForm(section)}
                     {section.id === 'tryIt' && renderTryItForm(section)}
                     {section.id === 'howItWorks' && renderHowItWorksForm(section)}
+                    {renderPreview(section)}
                   </div>
                 )}
               </div>

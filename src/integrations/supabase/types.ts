@@ -36,6 +36,33 @@ export type Database = {
         }
         Relationships: []
       }
+      app_settings: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          key: string
+          updated_at: string | null
+          value: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          key: string
+          updated_at?: string | null
+          value?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          key?: string
+          updated_at?: string | null
+          value?: string | null
+        }
+        Relationships: []
+      }
       custom_pages: {
         Row: {
           content: string
@@ -111,6 +138,48 @@ export type Database = {
           interpretation?: string
           tags?: string[] | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      firebase_config: {
+        Row: {
+          api_key: string
+          app_id: string
+          auth_domain: string
+          created_at: string
+          id: string
+          measurement_id: string | null
+          messaging_sender_id: string
+          project_id: string
+          service_account_key: Json | null
+          storage_bucket: string
+          updated_at: string
+        }
+        Insert: {
+          api_key: string
+          app_id: string
+          auth_domain: string
+          created_at?: string
+          id?: string
+          measurement_id?: string | null
+          messaging_sender_id: string
+          project_id: string
+          service_account_key?: Json | null
+          storage_bucket: string
+          updated_at?: string
+        }
+        Update: {
+          api_key?: string
+          app_id?: string
+          auth_domain?: string
+          created_at?: string
+          id?: string
+          measurement_id?: string | null
+          messaging_sender_id?: string
+          project_id?: string
+          service_account_key?: Json | null
+          storage_bucket?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -616,6 +685,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      count_push_subscriptions: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       get_latest_payment_invoices: {
         Args: Record<PropertyKey, never>
         Returns: {

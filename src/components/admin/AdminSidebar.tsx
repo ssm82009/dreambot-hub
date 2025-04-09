@@ -1,196 +1,168 @@
-
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAdmin } from '@/contexts/admin';
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem
-} from '@/components/ui/sidebar';
-import {
-  Home,
-  Settings,
-  Users,
-  FileText,
-  Menu,
-  CreditCard,
-  PaintBucket,
-  Search,
-  LayoutDashboard,
-  TicketCheck,
-  CreditCard as TransactionIcon,
-  Bell
+import { cn } from '@/lib/utils';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { 
+  Settings, 
+  Brain, 
+  BookText, 
+  DollarSign, 
+  CreditCard, 
+  Users, 
+  FileText, 
+  Menu, 
+  ShoppingCart, 
+  TicketCheck, 
+  Palette, 
+  Search, 
+  LayoutDashboard, 
+  Bell,
+  Book
 } from 'lucide-react';
 
+interface MenuItem {
+  name: string;
+  section: string;
+  icon: React.ElementType;
+}
+
+interface MenuCategory {
+  category: string;
+  items: MenuItem[];
+}
+
 const AdminSidebar: React.FC = () => {
-  const { activeSections, setActiveSections, toggleSection } = useAdmin();
+  const { activeSections, toggleSection } = useAdmin();
+  const location = useLocation();
   const navigate = useNavigate();
 
-  // تحقق ما إذا كان أي قسم مفعل باستثناء لوحة التحكم
-  const isAnySectionActive = Object.entries(activeSections).some(
-    ([key, value]) => key !== 'dashboard' && value === true
-  );
-
-  // دالة للتبديل بين الأقسام
-  const handleSectionToggle = (sectionId: keyof typeof activeSections) => {
-    // تعيين جميع الأقسام إلى false أولاً
-    const resetSections: Record<string, boolean> = {};
-    Object.keys(activeSections).forEach(key => {
-      resetSections[key] = false;
-    });
-    
-    // تفعيل القسم المحدد فقط
-    setActiveSections({
-      ...resetSections,
-      [sectionId]: !activeSections[sectionId]
-    });
+  const isActive = (section: string): boolean => {
+    return location.pathname.includes(section);
   };
 
-  // دالة للعودة إلى لوحة القيادة الرئيسية
-  const handleDashboardClick = () => {
-    // تعيين جميع الأقسام إلى false
-    const resetSections: Record<string, boolean> = {};
-    Object.keys(activeSections).forEach(key => {
-      resetSections[key] = false;
-    });
-    
-    setActiveSections(resetSections);
-    navigate('/admin');
-  };
-
-  const menuSections = [
+  const menuItems: MenuCategory[] = [
     {
-      id: 'dashboard',
-      label: 'لوحة التحكم',
-      icon: Home,
-      action: handleDashboardClick
+      category: "الرئيسية",
+      items: [
+        { 
+          name: "لوحة التحكم", 
+          section: "dashboard", 
+          icon: LayoutDashboard 
+        },
+      ]
     },
     {
-      id: 'aiSettings',
-      label: 'إعدادات الذكاء الاصطناعي',
-      icon: Settings,
-      action: () => handleSectionToggle('aiSettings')
+      category: "المحتوى",
+      items: [
+        { 
+          name: "الأحلام", 
+          section: "dreams", 
+          icon: Book 
+        },
+        { 
+          name: "الإشعارات", 
+          section: "notifications", 
+          icon: Bell 
+        },
+        { 
+          name: "الصفحات", 
+          section: "pages", 
+          icon: FileText 
+        },
+        { 
+          name: "القائمة العلوية", 
+          section: "navbar", 
+          icon: Menu 
+        },
+        { 
+          name: "أقسام الصفحة الرئيسية", 
+          section: "homeSections", 
+          icon: LayoutDashboard 
+        },
+      ]
     },
     {
-      id: 'interpretationSettings',
-      label: 'إعدادات التفسير',
-      icon: FileText,
-      action: () => handleSectionToggle('interpretationSettings')
+      category: "الإعدادات",
+      items: [
+        { 
+          name: "إعدادات الذكاء الاصطناعي", 
+          section: "aiSettings", 
+          icon: Brain 
+        },
+        { 
+          name: "إعدادات التفسير", 
+          section: "interpretationSettings", 
+          icon: BookText 
+        },
+        { 
+          name: "إعدادات التسعير", 
+          section: "pricingSettings", 
+          icon: DollarSign 
+        },
+        { 
+          name: "إعدادات الدفع", 
+          section: "paymentSettings", 
+          icon: CreditCard 
+        },
+        { 
+          name: "إدارة المستخدمين", 
+          section: "users", 
+          icon: Users 
+        },
+        { 
+          name: "إدارة الاشتراكات", 
+          section: "transactions", 
+          icon: ShoppingCart 
+        },
+        { 
+          name: "إدارة التذاكر", 
+          section: "tickets", 
+          icon: TicketCheck 
+        },
+        { 
+          name: "إعدادات المظهر", 
+          section: "theme", 
+          icon: Palette 
+        },
+        { 
+          name: "إعدادات SEO", 
+          section: "seo", 
+          icon: Search 
+        },
+      ]
     },
-    {
-      id: 'pricingSettings',
-      label: 'إعدادات الاشتراكات',
-      icon: CreditCard,
-      action: () => handleSectionToggle('pricingSettings')
-    },
-    {
-      id: 'paymentSettings',
-      label: 'إعدادات الدفع',
-      icon: CreditCard,
-      action: () => handleSectionToggle('paymentSettings')
-    },
-    {
-      id: 'transactions',
-      label: 'إدارة المعاملات',
-      icon: TransactionIcon,
-      action: () => handleSectionToggle('transactions')
-    },
-    {
-      id: 'users',
-      label: 'إدارة المستخدمين',
-      icon: Users,
-      action: () => handleSectionToggle('users')
-    },
-    {
-      id: 'pages',
-      label: 'إدارة الصفحات',
-      icon: LayoutDashboard,
-      action: () => handleSectionToggle('pages')
-    },
-    {
-      id: 'navbar',
-      label: 'إدارة شريط التنقل',
-      icon: Menu,
-      action: () => handleSectionToggle('navbar')
-    },
-    {
-      id: 'tickets',
-      label: 'إدارة التذاكر',
-      icon: TicketCheck,
-      action: () => handleSectionToggle('tickets')
-    },
-    {
-      id: 'notifications',
-      label: 'إدارة الإشعارات',
-      icon: Bell,
-      action: () => handleSectionToggle('notifications')
-    },
-    {
-      id: 'theme',
-      label: 'إعدادات المظهر',
-      icon: PaintBucket,
-      action: () => handleSectionToggle('theme')
-    },
-    {
-      id: 'seo',
-      label: 'إعدادات تحسين محركات البحث',
-      icon: Search,
-      action: () => handleSectionToggle('seo')
-    },
-    {
-      id: 'homeSections',
-      label: 'أقسام الصفحة الرئيسية',
-      icon: LayoutDashboard,
-      action: () => handleSectionToggle('homeSections')
-    }
   ];
 
   return (
-    <Sidebar 
-      className="border-l bg-white w-64 fixed" 
-      variant="inset" 
-      side="right" 
-      dir="rtl"
-    >
-      <SidebarHeader>
-        <div className="flex items-center px-4 py-2">
-          <span className="text-lg font-semibold">لوحة التحكم</span>
-        </div>
-      </SidebarHeader>
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>الأقسام</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {menuSections.map((section) => (
-                <SidebarMenuItem key={section.id}>
-                  <SidebarMenuButton 
-                    onClick={section.action}
-                    isActive={section.id === 'dashboard' ? !isAnySectionActive : activeSections[section.id as keyof typeof activeSections]}
-                    tooltip={section.label}
-                  >
-                    <section.icon className="h-5 w-5" />
-                    <span>{section.label}</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarContent>
-      <SidebarFooter>
-        <div className="px-4 py-2 text-xs text-muted-foreground">
-          اصدار النظام: 1.0.0
-        </div>
-      </SidebarFooter>
-    </Sidebar>
+    <aside className="w-[16rem] h-screen bg-secondary border-l border-secondary-foreground/10 fixed top-0 right-0 z-20">
+      <div className="p-4">
+        <h2 className="text-lg font-bold">لوحة التحكم</h2>
+      </div>
+      <nav className="flex flex-col space-y-1">
+        {menuItems.map((category, index) => (
+          <div key={index} className="space-y-1">
+            <div className="px-4 py-2 text-sm font-semibold text-muted-foreground">{category.category}</div>
+            {category.items.map((item) => (
+              <button
+                key={item.section}
+                className={cn(
+                  "flex items-center w-full p-2 text-sm font-medium rounded-md transition-colors hover:bg-secondary-foreground/10",
+                  activeSections[item.section] && "bg-secondary-foreground/10",
+                  isActive(item.section) && "bg-secondary-foreground/10",
+                )}
+                onClick={() => {
+                  toggleSection(item.section);
+                  navigate(`/admin?section=${item.section}`);
+                }}
+              >
+                <item.icon className="w-4 h-4 ml-2" />
+                <span>{item.name}</span>
+              </button>
+            ))}
+          </div>
+        ))}
+      </nav>
+    </aside>
   );
 };
 
