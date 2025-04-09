@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bell, BellOff, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -24,7 +25,8 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ className })
   const [openTicketsCount, setOpenTicketsCount] = useState<number>(0);
   const { isAdmin } = useAdminCheck();
   const [loading, setLoading] = useState<boolean>(false);
-  const [processingAction, setProcessingAction] = useState<boolean>(false);
+  const processingRef = useRef<boolean>(false);
+  const timeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (!isAdmin) return;
@@ -66,12 +68,17 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ className })
   }, [isAdmin]);
 
   const handleToggleNotifications = async () => {
-    if (processingAction) return;
+    // منع النقرات المتكررة
+    if (processingRef.current || subscribing) {
+      console.log("تجاهل النقرة المتكررة على زر الإشعارات");
+      return;
+    }
 
     console.log("تبديل حالة الإشعارات:", subscription ? "إلغاء الاشتراك" : "الاشتراك");
+    
     try {
       setLoading(true);
-      setProcessingAction(true);
+      processingRef.current = true;
       
       if (!navigator.onLine) {
         toast.error('لا يوجد اتصال بالإنترنت. يرجى التحقق من اتصالك والمحاولة مرة أخرى.');
@@ -95,12 +102,28 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ className })
       }
     } catch (err) {
       console.error("خطأ في تبديل حالة الإشعارات:", err);
-      toast.error('حدث خطأ أثناء معالجة طلب الإشعارات');
     } finally {
       setLoading(false);
-      setTimeout(() => setProcessingAction(false), 1000);
+      
+      // إعادة تعيين حالة المعالجة بعد فترة
+      if (timeoutRef.current) {
+        window.clearTimeout(timeoutRef.current);
+      }
+      
+      timeoutRef.current = window.setTimeout(() => {
+        processingRef.current = false;
+      }, 2000);
     }
   };
+
+  // تنظيف المؤقت عند إزالة المكون
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        window.clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleBadgeClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -119,9 +142,9 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ className })
               size="icon"
               className={className}
               onClick={handleToggleNotifications}
-              disabled={subscribing || loading || processingAction}
+              disabled={loading}
             >
-              {loading ? (
+              {loading || subscribing ? (
                 <Loader2 className="h-5 w-5 animate-spin" />
               ) : subscription ? (
                 <Bell className="h-5 w-5" />

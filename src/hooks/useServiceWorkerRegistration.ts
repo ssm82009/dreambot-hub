@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 
 interface ServiceWorkerState {
@@ -14,6 +14,9 @@ export function useServiceWorkerRegistration() {
     registration: null,
     error: null
   });
+  
+  // استخدام مرجع لتتبع ما إذا كان قد تم بالفعل عرض رسالة التوست
+  const hasShownUpdateToast = useRef<boolean>(false);
   
   useEffect(() => {
     if (!('serviceWorker' in navigator)) {
@@ -40,18 +43,21 @@ export function useServiceWorkerRegistration() {
             newWorker.addEventListener('statechange', () => {
               if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
                 // هناك خدمة عامل جديدة جاهزة للاستخدام
-                toast.success(
-                  'تم تحديث التطبيق',
-                  {
-                    description: 'يرجى تحديث الصفحة لرؤية التغييرات الجديدة',
-                    action: {
-                      label: 'تحديث الصفحة',
-                      onClick: () => {
-                        window.location.reload();
+                if (!hasShownUpdateToast.current) {
+                  hasShownUpdateToast.current = true;
+                  toast.success(
+                    'تم تحديث التطبيق',
+                    {
+                      description: 'يرجى تحديث الصفحة لرؤية التغييرات الجديدة',
+                      action: {
+                        label: 'تحديث الصفحة',
+                        onClick: () => {
+                          window.location.reload();
+                        }
                       }
                     }
-                  }
-                );
+                  );
+                }
               }
             });
           }
@@ -67,6 +73,11 @@ export function useServiceWorkerRegistration() {
     };
     
     registerServiceWorker();
+    
+    // تنظيف عند إزالة المكون
+    return () => {
+      hasShownUpdateToast.current = false;
+    };
   }, []);
   
   // دالة لإرسال رسالة إلى خدمة العامل

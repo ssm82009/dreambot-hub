@@ -4,6 +4,13 @@
  */
 export const FCM_VAPID_KEY = 'BBy5W3xt8ZH4MIpLelj9GvzKu6Cc5DYdQRFrNsYL4m_p9lEO-K1GHL4ZnvcWe89MzB_U9CJ8Xm9QtbtC0lOG0LA';
 
+// معرفة ما إذا كانت هناك عملية استرداد توكن جارية
+let tokenRetrievalInProgress = false;
+const tokenPromises: Array<{
+  resolve: (value: string | null) => void;
+  reject: (reason: any) => void;
+}> = [];
+
 /**
  * تحويل المفتاح العام من Base64 إلى صفيف Uint8Array
  * @param base64String المفتاح بصيغة Base64
@@ -31,6 +38,15 @@ export function urlBase64ToUint8Array(base64String: string): Uint8Array {
  * @param getTokenFn وظيفة الحصول على التوكن من Firebase
  */
 export async function getOrCreateFirebaseToken(messaging: any, getTokenFn: (messaging: any, options: any) => Promise<string>): Promise<string | null> {
+  // منع العمليات المتزامنة المتعددة
+  if (tokenRetrievalInProgress) {
+    console.log("عملية استرداد التوكن جارية بالفعل، انتظار النتيجة...");
+    return new Promise<string | null>((resolve, reject) => {
+      tokenPromises.push({ resolve, reject });
+    });
+  }
+  
+  tokenRetrievalInProgress = true;
   let currentToken = null;
   
   try {
@@ -45,22 +61,35 @@ export async function getOrCreateFirebaseToken(messaging: any, getTokenFn: (mess
     
     console.log("تم منح إذن الإشعارات، جاري الحصول على التوكن...");
     
-    // التحقق من التسجيل الحالي للـ Service Worker
+    // محاولة استخدام تسجيلات Service Worker الموجودة
     try {
       const swRegistrations = await navigator.serviceWorker.getRegistrations();
       const fmRegistration = swRegistrations.find(reg => 
+        reg.scope.includes('firebase-cloud-messaging-push-scope') ||
         reg.active?.scriptURL.includes('firebase-messaging-sw.js')
       );
       
-      // استخدام وظيفة getToken المستقلة من Firebase v9+
-      currentToken = await getTokenFn(messaging, { 
-        vapidKey: FCM_VAPID_KEY,
-        serviceWorkerRegistration: fmRegistration
-      });
+      if (fmRegistration) {
+        console.log("تم العثور على تسجيل Firebase Service Worker:", fmRegistration.scope);
+        
+        // استخدام وظيفة getToken المستقلة من Firebase v9+
+        currentToken = await getTokenFn(messaging, { 
+          vapidKey: FCM_VAPID_KEY,
+          serviceWorkerRegistration: fmRegistration
+        });
+      } else {
+        console.log("لم يتم العثور على تسجيل Firebase Service Worker، محاولة الحصول على التوكن بدون تمرير التسجيل");
+        
+        // محاولة باستخدام getToken بدون تمرير تسجيل محدد
+        currentToken = await getTokenFn(messaging, { 
+          vapidKey: FCM_VAPID_KEY
+        });
+      }
     } catch (error) {
-      console.error("خطأ في استدعاء getToken:", error);
+      console.error("خطأ في استدعاء getToken مع تسجيل:", error);
       
       // محاولة مرة أخرى بدون تمرير التسجيل
+      console.log("محاولة الحصول على التوكن بدون تمرير التسجيل...");
       currentToken = await getTokenFn(messaging, { 
         vapidKey: FCM_VAPID_KEY
       });
@@ -75,6 +104,22 @@ export async function getOrCreateFirebaseToken(messaging: any, getTokenFn: (mess
     }
   } catch (error) {
     console.error("حدث خطأ أثناء استرداد التوكن:", error);
+    
+    // حل الوعود المعلقة مع الخطأ
+    while (tokenPromises.length > 0) {
+      const promise = tokenPromises.shift();
+      promise?.reject(error);
+    }
+    
+    throw error;
+  } finally {
+    tokenRetrievalInProgress = false;
+    
+    // حل جميع الوعود المعلقة مع نفس النتيجة
+    while (tokenPromises.length > 0) {
+      const promise = tokenPromises.shift();
+      promise?.resolve(currentToken);
+    }
   }
   
   return currentToken;

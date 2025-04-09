@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNotificationPermission } from './notifications/useNotificationPermission';
 import { initializeFirebase, registerForPushNotifications } from '@/services/firebaseService';
 import { toast } from 'sonner';
@@ -14,23 +14,37 @@ export function useNotifications() {
   const [initializing, setInitializing] = useState(true);
   const [subscribing, setSubscribing] = useState(false);
   const [initialized, setInitialized] = useState(false);
-  const [hasShownToast, setHasShownToast] = useState(false);
+  
+  // استخدام مراجع لتتبع حالة عرض رسائل التوست لمنع التكرار
+  const hasShownSuccessToast = useRef<boolean>(false);
+  const hasShownErrorToast = useRef<boolean>(false);
+  const initializationAttempts = useRef<number>(0);
+  const maxInitAttempts = 3;
 
   // تهيئة Firebase عند تحميل المكون
   useEffect(() => {
     async function init() {
       try {
-        // تجنب إعادة التهيئة إذا كانت قد تمت بالفعل
-        if (initialized) {
+        // تجنب إعادة التهيئة إذا كانت قد تمت بالفعل أو تجاوزت عدد المحاولات
+        if (initialized || initializationAttempts.current >= maxInitAttempts) {
           setInitializing(false);
           return;
         }
         
-        console.log("جاري تهيئة Firebase...");
+        initializationAttempts.current += 1;
+        console.log(`محاولة تهيئة Firebase (${initializationAttempts.current}/${maxInitAttempts})...`);
+        
         const firebaseInitialized = await initializeFirebase();
         
         if (!firebaseInitialized) {
           console.error("فشل في تهيئة Firebase");
+          
+          // إعادة المحاولة بعد فترة إذا لم نصل للحد الأقصى
+          if (initializationAttempts.current < maxInitAttempts) {
+            setTimeout(() => {
+              setInitialized(false); // إعادة تعيين الحالة لإعادة المحاولة
+            }, 2000);
+          }
         } else {
           console.log("تم تهيئة Firebase بنجاح");
           setInitialized(true);
@@ -75,16 +89,31 @@ export function useNotifications() {
     }
   }, [supported, granted, initializing, initialized]);
   
+  // إعادة تعيين حالة التوست عند تغير التوكن
+  useEffect(() => {
+    if (token !== null) {
+      hasShownSuccessToast.current = false;
+      hasShownErrorToast.current = false;
+    }
+  }, [token]);
+  
   // وظيفة الاشتراك في الإشعارات
   const subscribeToNotifications = async () => {
     if (!supported) {
       console.error("الإشعارات غير مدعومة");
+      if (!hasShownErrorToast.current) {
+        toast.error("متصفحك لا يدعم الإشعارات");
+        hasShownErrorToast.current = true;
+      }
       return null;
     }
 
     if (Notification.permission === 'denied') {
       console.error("تم رفض إذن الإشعارات");
-      toast.error("تم رفض الإشعارات من قبل المتصفح. يرجى تمكينها من الإعدادات");
+      if (!hasShownErrorToast.current) {
+        toast.error("تم رفض الإشعارات من قبل المتصفح. يرجى تمكينها من الإعدادات");
+        hasShownErrorToast.current = true;
+      }
       return null;
     }
     
@@ -94,6 +123,10 @@ export function useNotifications() {
       const firebaseInitialized = await initializeFirebase();
       if (!firebaseInitialized) {
         console.error("فشل في تهيئة Firebase");
+        if (!hasShownErrorToast.current) {
+          toast.error("فشل في الاتصال بخدمة الإشعارات");
+          hasShownErrorToast.current = true;
+        }
         return null;
       }
       setInitialized(true);
@@ -101,13 +134,16 @@ export function useNotifications() {
 
     try {
       setSubscribing(true);
-      setHasShownToast(false); // إعادة تعيين حالة عرض الإشعارات
 
       // إذا لم يكن هناك إذن، اطلب إذن الإشعارات
       if (Notification.permission !== 'granted') {
         const permissionGranted = await requestPermission();
         if (!permissionGranted) {
-          toast.error("تم رفض الإشعارات من قبل المتصفح");
+          if (!hasShownErrorToast.current) {
+            toast.error("تم رفض الإشعارات من قبل المتصفح");
+            hasShownErrorToast.current = true;
+          }
+          setSubscribing(false);
           return null;
         }
       }
@@ -120,26 +156,28 @@ export function useNotifications() {
         console.log("تم الحصول على رمز Firebase:", newToken);
         setToken(newToken);
         
-        if (!hasShownToast) {
+        if (!hasShownSuccessToast.current) {
           toast.success("تم تفعيل الإشعارات بنجاح");
-          setHasShownToast(true);
+          hasShownSuccessToast.current = true;
         }
+        
+        return newToken;
       } else {
         console.error("فشل في الحصول على رمز Firebase");
         
-        if (!hasShownToast) {
+        if (!hasShownErrorToast.current) {
           toast.error("فشل في تفعيل الإشعارات");
-          setHasShownToast(true);
+          hasShownErrorToast.current = true;
         }
+        
+        return null;
       }
-      
-      return newToken;
     } catch (error) {
       console.error("خطأ في الاشتراك في الإشعارات:", error);
       
-      if (!hasShownToast) {
+      if (!hasShownErrorToast.current) {
         toast.error("حدث خطأ أثناء تفعيل الإشعارات");
-        setHasShownToast(true);
+        hasShownErrorToast.current = true;
       }
       
       return null;
@@ -163,6 +201,9 @@ export function useNotifications() {
       localStorage.removeItem('fcm_token');
       
       setToken(null);
+      hasShownSuccessToast.current = false;
+      hasShownErrorToast.current = false;
+      
       toast.success("تم إلغاء تفعيل الإشعارات بنجاح");
       
       return true;
