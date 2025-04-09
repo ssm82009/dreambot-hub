@@ -1,6 +1,6 @@
 
 import { serve } from "std/http/server.ts";
-import { createClient } from "@supabase/supabase-js";
+import { createClient } from "npm:@supabase/supabase-js";
 
 // تعريف رؤوس CORS
 const corsHeaders = {

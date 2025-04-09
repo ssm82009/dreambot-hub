@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -10,6 +9,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { toast } from 'sonner';
 import { Save, Loader2 } from 'lucide-react';
+import { FirebaseConfig } from '@/types/database';
 
 // نموذج التحقق من صحة البيانات
 const firebaseConfigSchema = z.object({
@@ -52,7 +52,7 @@ const FirebaseConfigForm: React.FC = () => {
           .from('firebase_config')
           .select('*')
           .order('created_at', { ascending: false })
-          .limit(1);
+          .limit(1) as { data: FirebaseConfig[] | null, error: any };
 
         if (error) throw error;
 
@@ -102,7 +102,7 @@ const FirebaseConfigForm: React.FC = () => {
         messaging_sender_id: values.messagingSenderId,
         app_id: values.appId,
         measurement_id: values.measurementId,
-      });
+      } as Partial<FirebaseConfig>);
 
       if (error) throw error;
 

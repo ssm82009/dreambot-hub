@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { getOrCreateFirebaseToken } from '@/utils/pushNotificationUtils';
+import { FirebaseConfig } from '@/types/database';
 
 let firebaseApp: any;
 let firebaseMessaging: any;
@@ -20,7 +21,7 @@ export async function initializeFirebase() {
       .select('*')
       .order('created_at', { ascending: false })
       .limit(1)
-      .single();
+      .single() as { data: FirebaseConfig | null, error: any };
     
     if (error) {
       console.error("فشل في الحصول على تكوين Firebase:", error);
