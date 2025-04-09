@@ -14,14 +14,33 @@ export async function initializeFirebase() {
     const { initializeApp } = await import('firebase/app');
     const { getMessaging } = await import('firebase/messaging');
     
+    // استعلام عن تكوين Firebase من قاعدة البيانات
+    const { data, error } = await supabase
+      .from('firebase_config')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+    
+    if (error) {
+      console.error("فشل في الحصول على تكوين Firebase:", error);
+      return false;
+    }
+    
+    if (!data) {
+      console.error("لم يتم العثور على تكوين Firebase");
+      return false;
+    }
+    
     // تكوين Firebase
     const firebaseConfig = {
-      apiKey: "YOUR_API_KEY", // يجب استبدالها بقيمك الخاصة
-      authDomain: "YOUR_AUTH_DOMAIN",
-      projectId: "YOUR_PROJECT_ID",
-      storageBucket: "YOUR_STORAGE_BUCKET",
-      messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-      appId: "YOUR_APP_ID"
+      apiKey: data.api_key,
+      authDomain: data.auth_domain,
+      projectId: data.project_id,
+      storageBucket: data.storage_bucket,
+      messagingSenderId: data.messaging_sender_id,
+      appId: data.app_id,
+      measurementId: data.measurement_id
     };
     
     // تهيئة التطبيق

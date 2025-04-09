@@ -1,8 +1,7 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { urlBase64ToUint8Array, PUBLIC_VAPID_KEY } from '@/utils/pushNotificationUtils';
+import { urlBase64ToUint8Array, FCM_VAPID_KEY } from '@/utils/pushNotificationUtils';
 
 export interface PushSubscriptionState {
   subscription: PushSubscription | null;
@@ -85,7 +84,7 @@ export function usePushSubscription(supported: boolean, granted: boolean) {
       // إنشاء اشتراك جديد
       const options = {
         userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(PUBLIC_VAPID_KEY)
+        applicationServerKey: urlBase64ToUint8Array(FCM_VAPID_KEY)
       };
       
       console.log("محاولة الاشتراك في Push Manager...");

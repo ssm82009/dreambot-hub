@@ -5,6 +5,8 @@ import NotificationForm from '../notifications/NotificationForm';
 import NotificationStats from '../notifications/NotificationStats';
 import NotificationHeader from '../notifications/NotificationHeader';
 import { useNotificationData } from '@/hooks/notifications/useNotificationData';
+import FirebaseConfigForm from '../notifications/FirebaseConfigForm';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const NotificationsSection: React.FC = () => {
   const { subscribersCount, users, loading, error } = useNotificationData();
@@ -19,23 +21,38 @@ const NotificationsSection: React.FC = () => {
     <div className="space-y-6">
       <NotificationHeader refreshData={refreshData} />
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <NotificationStats 
-          subscribersCount={subscribersCount} 
-          loading={loading}
-          error={error}
-        />
+      <Tabs defaultValue="send">
+        <TabsList className="mb-4">
+          <TabsTrigger value="send">إرسال الإشعارات</TabsTrigger>
+          <TabsTrigger value="config">إعدادات Firebase</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="send">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <NotificationStats 
+              subscribersCount={subscribersCount} 
+              loading={loading}
+              error={error}
+            />
 
-        <Card className="col-span-1 md:col-span-2">
-          <CardHeader>
-            <CardTitle>إرسال إشعار جديد</CardTitle>
-            <CardDescription>أرسل إشعارات للمستخدمين والمشرفين</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <NotificationForm users={users} />
-          </CardContent>
-        </Card>
-      </div>
+            <Card className="col-span-1 md:col-span-2">
+              <CardHeader>
+                <CardTitle>إرسال إشعار جديد</CardTitle>
+                <CardDescription>أرسل إشعارات للمستخدمين والمشرفين</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <NotificationForm users={users} />
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="config">
+          <div className="grid grid-cols-1 gap-6">
+            <FirebaseConfigForm />
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
