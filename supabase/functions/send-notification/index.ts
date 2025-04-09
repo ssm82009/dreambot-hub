@@ -2,6 +2,7 @@
 // استخدام المسار الكامل لتجنب مشاكل الاستيراد في Deno
 import { serve } from "std/http/server.ts";
 import { createClient } from "@supabase/supabase-js";
+import webPush from "web-push";
 
 // تعريف رؤوس CORS
 const corsHeaders = {
@@ -22,44 +23,6 @@ interface RequestBody {
     url?: string;
     type?: 'general' | 'ticket' | 'payment' | 'subscription';
   };
-}
-
-// استدعاء مكتبة web-push بطريقة تتوافق مع Deno
-// استخدام import dynamically لتجنب مشاكل التهيئة
-async function initializeWebPush() {
-  try {
-    console.log("بدء تهيئة مكتبة web-push...");
-    
-    // استخدام دالة استيراد ديناميكي بدلاً من الاستيراد الثابت
-    const webPushModule = await import("web-push");
-    console.log("تم استيراد مكتبة web-push بنجاح");
-    
-    // في الإصدارات الحديثة، webPush هو المصدر الافتراضي للوحدة
-    const webPush = webPushModule.default || webPushModule;
-    
-    const vapidPublicKey = Deno.env.get('VAPID_PUBLIC_KEY') || '';
-    const vapidPrivateKey = Deno.env.get('VAPID_PRIVATE_KEY') || '';
-    
-    console.log("مفاتيح VAPID:", !!vapidPublicKey, !!vapidPrivateKey);
-    
-    if (!vapidPublicKey || !vapidPrivateKey) {
-      console.error("مفاتيح VAPID غير مهيأة");
-      throw new Error("مفاتيح VAPID غير مهيأة");
-    }
-    
-    console.log("جاري تعيين مفاتيح VAPID...");
-    webPush.setVapidDetails(
-      'mailto:support@example.com',
-      vapidPublicKey,
-      vapidPrivateKey
-    );
-    console.log("تم تعيين مفاتيح VAPID بنجاح");
-    
-    return webPush;
-  } catch (error) {
-    console.error("خطأ في تهيئة web-push:", error);
-    throw error;
-  }
 }
 
 serve(async (req: Request) => {
@@ -98,10 +61,26 @@ serve(async (req: Request) => {
     console.log("تم إنشاء عميل Supabase بنجاح");
 
     // تهيئة web-push
-    let webPush;
     try {
-      webPush = await initializeWebPush();
-      console.log("تم تهيئة مكتبة web-push بنجاح");
+      console.log("بدء تهيئة مكتبة web-push...");
+      
+      const vapidPublicKey = Deno.env.get('VAPID_PUBLIC_KEY') || '';
+      const vapidPrivateKey = Deno.env.get('VAPID_PRIVATE_KEY') || '';
+      
+      console.log("مفاتيح VAPID:", !!vapidPublicKey, !!vapidPrivateKey);
+      
+      if (!vapidPublicKey || !vapidPrivateKey) {
+        console.error("مفاتيح VAPID غير مهيأة");
+        throw new Error("مفاتيح VAPID غير مهيأة");
+      }
+      
+      console.log("جاري تعيين مفاتيح VAPID...");
+      webPush.setVapidDetails(
+        'mailto:support@example.com',
+        vapidPublicKey,
+        vapidPrivateKey
+      );
+      console.log("تم تعيين مفاتيح VAPID بنجاح");
     } catch (error) {
       console.error("فشل في تهيئة مكتبة web-push:", error);
       return new Response(
