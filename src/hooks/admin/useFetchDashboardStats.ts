@@ -43,30 +43,33 @@ export const useFetchDashboardStats = () => {
       }
       setActiveSubscriptions(activeCount);
 
-      // جلب عدد الأحلام بطريقة دقيقة مباشرة
-      console.log("Fetching dreams count directly using count method...");
-      const { count: exactDreamsCount, error: dreamsCountError } = await supabase
+      // Get accurate dreams count - try multiple methods if needed
+      // First attempt: Count directly using Supabase count
+      console.log("Fetching dreams count directly...");
+      const { count: dreamsCount, error: dreamsCountError } = await supabase
         .from('dreams')
         .select('*', { count: 'exact', head: true });
-
+      
       if (dreamsCountError) {
-        console.error("Error getting dreams count:", dreamsCountError);
+        console.error("Error getting dreams count via direct method:", dreamsCountError);
         
-        // إذا فشلت طريقة الجلب الأولى، نستخدم طريقة بديلة
-        console.log("Using fallback method to count dreams...");
-        const { data: dreamsData, error: dreamsDataError } = await supabase
+        // Second attempt: Get all dreams and count them
+        console.log("Trying alternative method to count dreams...");
+        const { data: allDreams, error: allDreamsError } = await supabase
           .from('dreams')
           .select('id');
         
-        if (dreamsDataError) {
-          throw new Error(`Error fetching dreams data: ${dreamsDataError.message}`);
+        if (allDreamsError) {
+          console.error("Error with alternative dreams count method:", allDreamsError);
+          throw new Error(`Failed to get dreams count: ${allDreamsError.message}`);
         }
         
-        console.log("Dreams count from fallback method:", dreamsData?.length || 0);
-        setTotalDreams(dreamsData?.length || 0);
+        const dreamsTotal = allDreams?.length || 0;
+        console.log(`Dreams count (alternative method): ${dreamsTotal}`);
+        setTotalDreams(dreamsTotal);
       } else {
-        console.log("Dreams count from direct method:", exactDreamsCount);
-        setTotalDreams(exactDreamsCount || 0);
+        console.log(`Dreams count (direct method): ${dreamsCount}`);
+        setTotalDreams(dreamsCount || 0);
       }
 
       // Fetch total tickets
@@ -81,7 +84,7 @@ export const useFetchDashboardStats = () => {
       console.log("Tickets data fetched:", ticketsCount, "tickets found");
       setTotalTickets(ticketsCount || 0);
 
-      // جلب عدد التذاكر المفتوحة
+      // Fetch open tickets
       const { data: openTicketsData, error: openTicketsError, count: openTicketsCount } = await supabase
         .from('tickets')
         .select('*', { count: 'exact', head: false })

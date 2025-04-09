@@ -33,28 +33,48 @@ const DreamManagementSection: React.FC = () => {
       
       console.log(`Fetching dreams from ${from} to ${to}, search term: "${searchTerm}"`);
       
-      // Create base query
-      let query = supabase
+      // First, get the total count for accurate pagination
+      const countQuery = supabase
         .from('dreams')
-        .select('*', { count: 'exact' });
+        .select('*', { count: 'exact', head: true });
       
-      // Add search filter if exists
       if (searchTerm) {
-        query = query.ilike('dream_text', `%${searchTerm}%`);
+        countQuery.ilike('dream_text', `%${searchTerm}%`);
       }
       
-      // Get paginated results
-      const { data, error, count } = await query
+      const { count: dreamsCount, error: countError } = await countQuery;
+      
+      if (countError) {
+        console.error('Error fetching dreams count:', countError);
+        throw countError;
+      }
+      
+      console.log(`Total dreams count: ${dreamsCount}`);
+      setTotalDreams(dreamsCount || 0);
+      
+      // Then get the actual data for this page
+      const dataQuery = supabase
+        .from('dreams')
+        .select('*');
+      
+      if (searchTerm) {
+        dataQuery.ilike('dream_text', `%${searchTerm}%`);
+      }
+      
+      // Get paginated results with newest first
+      const { data, error } = await dataQuery
         .order('created_at', { ascending: false })
         .range(from, to);
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching dreams data:', error);
+        throw error;
+      }
       
-      console.log(`Retrieved ${data?.length} dreams. Total count: ${count}`);
+      console.log(`Retrieved ${data?.length} dreams for page ${currentPage}`);
       console.log('Dreams data:', data);
       
       setDreams(data || []);
-      setTotalDreams(count || 0);
     } catch (error) {
       console.error('Error fetching dreams:', error);
       toast.error('حدث خطأ أثناء جلب الأحلام');
@@ -86,6 +106,7 @@ const DreamManagementSection: React.FC = () => {
   
   const handleRefresh = () => {
     fetchDreams();
+    toast.success('تم تحديث البيانات بنجاح');
   };
   
   return (
