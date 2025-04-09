@@ -127,3 +127,9 @@
 .dream-pattern {
   direction: rtl;
 }
+
+/* Fix admin content padding to prevent overlap with fixed sidebar */
+.admin-content {
+  padding-right: 1rem;
+  width: 100%;
+}

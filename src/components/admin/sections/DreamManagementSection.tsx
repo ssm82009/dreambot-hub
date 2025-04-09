@@ -50,16 +50,13 @@ const DreamManagementSection = () => {
   const fetchDreams = async (page = 1) => {
     setLoading(true);
     try {
-      // Fetch total count
       const count = await fetchDreamsCount();
       setTotalDreams(count);
       setTotalPages(Math.max(1, Math.ceil(count / pageSize)));
 
-      // Fetch paginated dreams
       const from = (page - 1) * pageSize;
       const to = from + pageSize - 1;
 
-      // Fetch dreams without the join
       const { data: dreamsData, error: dreamsError } = await supabase
         .from('dreams')
         .select('*')
@@ -72,10 +69,8 @@ const DreamManagementSection = () => {
         return;
       }
 
-      // Set the dreams data
       setDreams(dreamsData || []);
 
-      // If we have dreams with user_ids, fetch the user information separately
       const userIds = dreamsData
         ?.map(dream => dream.user_id)
         .filter(id => id !== null && id !== undefined) as string[];
@@ -90,7 +85,6 @@ const DreamManagementSection = () => {
         if (usersError) {
           console.error('Error fetching users:', usersError);
         } else if (usersData) {
-          // Create lookup objects for emails and names
           const emailLookup: Record<string, string> = {};
           const nameLookup: Record<string, string> = {};
           
@@ -219,7 +213,6 @@ const DreamManagementSection = () => {
   };
 
   const viewDream = (dreamId: string) => {
-    // Open dream details in a new tab
     window.open(`/dream/${dreamId}`, '_blank');
   };
 

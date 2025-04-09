@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import Navbar, { NAVBAR_HEIGHT } from '@/components/Navbar';
@@ -53,11 +54,11 @@ const AdminDashboard = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      <div className="flex-1 flex flex-col md:flex-row" style={{ paddingTop: `${NAVBAR_HEIGHT}px`, marginBottom: "1rem" }}>
+      <div className="flex-1" style={{ paddingTop: `${NAVBAR_HEIGHT}px` }}>
         <SidebarProvider>
-          <div className="flex flex-row w-full dream-pattern">
+          <div className="flex flex-row w-full dream-pattern min-h-[calc(100vh-var(--footer-height)-var(--navbar-height))]">
             <main className="flex-1 p-6">
-              <div className="w-full mb-16">
+              <div className="w-full pb-8">
                 <AdminHeader />
                 <AdminContent />
               </div>
