@@ -43,10 +43,12 @@ export const useFetchDashboardStats = () => {
       }
       setActiveSubscriptions(activeCount);
 
-      // ✓ تحسين طريقة جلب إجمالي عدد الأحلام باستخدام count مباشرة من Supabase
+      // ✓ تحسين طريقة جلب إجمالي عدد الأحلام وضمان تحديثها
+      // Force cache refresh with .noCache() to ensure we get latest data
       const { count: dreamsCount, error: dreamsError } = await supabase
         .from('dreams')
-        .select('*', { count: 'exact', head: true });
+        .select('*', { count: 'exact', head: true })
+        .noCache();
 
       if (dreamsError) {
         throw new Error(`Error fetching dreams count: ${dreamsError.message}`);

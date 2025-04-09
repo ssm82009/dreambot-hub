@@ -19,7 +19,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChartContainer } from '@/components/ui/chart';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
-import { format, subDays, subMonths, subYears, startOfDay, endOfDay, isAfter } from 'date-fns';
+import { format, subDays, subMonths, subYears } from 'date-fns';
 import { ArDisplay } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -43,12 +43,13 @@ const DashboardCharts: React.FC<DashboardChartsProps> = ({ timeRange }) => {
         // تحديد النطاق الزمني بناءً على الفلتر المحدد
         const startDate = getStartDateByRange(timeRange);
         
-        // أحضر بيانات الأحلام المقدمة حسب التاريخ
+        // تأكد من عدم استخدام الذاكرة المؤقتة للبيانات
         const { data: dreamsStats, error: dreamsError } = await supabase
           .from('dreams')
           .select('created_at')
           .gte('created_at', startDate.toISOString())
-          .order('created_at', { ascending: false });
+          .order('created_at', { ascending: false })
+          .noCache();
 
         if (dreamsError) {
           console.error('Error fetching dreams:', dreamsError);
@@ -65,7 +66,8 @@ const DashboardCharts: React.FC<DashboardChartsProps> = ({ timeRange }) => {
           .from('users')
           .select('created_at, subscription_type')
           .gte('created_at', startDate.toISOString())
-          .order('created_at', { ascending: false });
+          .order('created_at', { ascending: false })
+          .noCache();
 
         if (usersError) {
           console.error('Error fetching users:', usersError);
