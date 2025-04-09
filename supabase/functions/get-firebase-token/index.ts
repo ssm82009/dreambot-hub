@@ -9,12 +9,27 @@ interface ServiceAccountPayload {
   projectId: string;
 }
 
+// تعريف رؤوس CORS
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
 serve(async (req) => {
+  // معالجة طلبات CORS preflight
+  if (req.method === 'OPTIONS') {
+    return new Response(null, {
+      status: 204,
+      headers: corsHeaders
+    });
+  }
+
   // التحقق من وجود جسم الطلب
   if (req.method !== 'POST') {
     return new Response(JSON.stringify({ error: 'طريقة غير مدعومة، استخدم POST' }), { 
       status: 405,
-      headers: { 'Content-Type': 'application/json' }
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
   }
 
@@ -27,7 +42,7 @@ serve(async (req) => {
     if (!clientEmail || !privateKey || !projectId) {
       return new Response(JSON.stringify({ error: 'بيانات مفقودة، يجب توفير clientEmail و privateKey و projectId' }), {
         status: 400,
-        headers: { 'Content-Type': 'application/json' }
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
@@ -66,7 +81,7 @@ serve(async (req) => {
       console.error('خطأ في الحصول على رمز الوصول:', errorData);
       return new Response(JSON.stringify({ error: `خطأ في الحصول على رمز الوصول: ${errorData}` }), {
         status: tokenResponse.status,
-        headers: { 'Content-Type': 'application/json' }
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
@@ -74,13 +89,13 @@ serve(async (req) => {
     
     return new Response(JSON.stringify(tokenData), {
       status: 200,
-      headers: { 'Content-Type': 'application/json' }
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
   } catch (error) {
     console.error('خطأ في معالجة الطلب:', error);
     return new Response(JSON.stringify({ error: `خطأ في معالجة الطلب: ${error.message}` }), {
       status: 500,
-      headers: { 'Content-Type': 'application/json' }
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
   }
 });
