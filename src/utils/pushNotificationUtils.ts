@@ -44,8 +44,11 @@ export async function getOrCreateFirebaseToken(messaging: any): Promise<string |
     
     console.log("تم منح إذن الإشعارات، جاري الحصول على التوكن...");
     
-    // محاولة الحصول على التوكن الحالي
-    currentToken = await messaging.getToken({ vapidKey: FCM_VAPID_KEY });
+    // محاولة الحصول على التوكن الحالي - تصحيح الخطأ هنا
+    // استخدام الطريقة الصحيحة من Firebase v9+
+    currentToken = await messaging.getToken({ 
+      vapidKey: FCM_VAPID_KEY 
+    });
     
     if (currentToken) {
       console.log("تم الحصول على التوكن:", currentToken);
@@ -66,8 +69,9 @@ export async function getOrCreateFirebaseToken(messaging: any): Promise<string |
  * @param messaging كائن Firebase Messaging
  */
 export function onFirebaseTokenRefresh(messaging: any): void {
-  // عند تجديد التوكن
-  messaging.onTokenRefresh(async () => {
+  // تحديث الطريقة للتوافق مع Firebase v9+
+  // استخدام onTokenRefresh معدلة للإصدار الجديد
+  messaging.onTokenRefresh = async () => {
     try {
       const refreshedToken = await messaging.getToken({ vapidKey: FCM_VAPID_KEY });
       console.log("تم تجديد التوكن:", refreshedToken);
@@ -76,5 +80,5 @@ export function onFirebaseTokenRefresh(messaging: any): void {
     } catch (error) {
       console.error("لم يتمكن من تجديد التوكن:", error);
     }
-  });
+  };
 }
