@@ -46,15 +46,29 @@ self.addEventListener('install', (event) => {
 
 // معالجة الطلبات وتقديم الصفحة المناسبة
 self.addEventListener('fetch', (event) => {
+  // التحقق من أن URL الطلب صالح للتخزين المؤقت
+  // نتخطى مخططات URL غير المدعومة مثل chrome-extension و blob
+  const url = new URL(event.request.url);
+  const isValidScheme = url.protocol.startsWith('http');
+  
+  if (!isValidScheme) {
+    return; // تخطي الطلبات ذات المخططات غير المدعومة
+  }
+  
   event.respondWith(
     fetch(event.request)
       .then((response) => {
         // إذا كان الطلب ناجحا، قم بنسخه وتخزينه في الكاش
         if (event.request.method === 'GET') {
+          // تخزين مؤقت للاستجابات الناجحة فقط
           const responseToCache = response.clone();
           caches.open(CACHE_NAME)
             .then((cache) => {
-              cache.put(event.request, responseToCache);
+              try {
+                cache.put(event.request, responseToCache);
+              } catch (error) {
+                console.error('خطأ في تخزين الاستجابة في الكاش:', error);
+              }
             });
         }
         return response;
@@ -101,65 +115,81 @@ self.addEventListener('push', (event) => {
     return;
   }
   
-  let data = {};
   try {
-    data = event.data.json();
-    console.log('Service Worker: بيانات الإشعار', data);
-  } catch (e) {
-    data = {
-      title: 'تأويل',
-      body: event.data.text(),
-    };
-    console.log('Service Worker: نص الإشعار البسيط', event.data.text());
-  }
-  
-  const options = {
-    body: data.body || 'تم استلام إشعار جديد',
-    icon: '/android-chrome-192x192.png',
-    badge: '/favicon-32x32.png',
-    dir: 'rtl',
-    lang: 'ar',
-    vibrate: [100, 50, 100],
-    data: {
-      url: data.url || '/',
-      type: data.type || 'general'
-    },
-    actions: []
-  };
-  
-  // إضافة أزرار تفاعلية بناءً على نوع الإشعار
-  if (data.type === 'ticket') {
-    options.actions = [
-      {
-        action: 'view',
-        title: 'عرض التذكرة'
+    // محاولة تحليل بيانات الإشعار
+    let data = {};
+    try {
+      data = event.data.json();
+      console.log('Service Worker: بيانات الإشعار', data);
+    } catch (e) {
+      // إذا فشل التحليل، استخدم النص البسيط
+      data = {
+        title: 'تأويل',
+        body: event.data.text(),
+      };
+      console.log('Service Worker: نص الإشعار البسيط', event.data.text());
+    }
+    
+    // تكوين خيارات الإشعار
+    const options = {
+      body: data.body || 'تم استلام إشعار جديد',
+      icon: '/android-chrome-192x192.png',
+      badge: '/favicon-32x32.png',
+      dir: 'rtl',
+      lang: 'ar',
+      vibrate: [100, 50, 100],
+      data: {
+        url: data.url || '/',
+        type: data.type || 'general'
       },
-      {
-        action: 'close',
-        title: 'إغلاق'
-      }
-    ];
-  } else if (data.type === 'payment') {
-    options.actions = [
-      {
-        action: 'view',
-        title: 'عرض التفاصيل'
-      }
-    ];
-  } else if (data.type === 'subscription') {
-    options.actions = [
-      {
-        action: 'renew',
-        title: 'تجديد الاشتراك'
-      }
-    ];
+      actions: []
+    };
+    
+    // إضافة أزرار تفاعلية بناءً على نوع الإشعار
+    if (data.type === 'ticket') {
+      options.actions = [
+        {
+          action: 'view',
+          title: 'عرض التذكرة'
+        },
+        {
+          action: 'close',
+          title: 'إغلاق'
+        }
+      ];
+    } else if (data.type === 'payment') {
+      options.actions = [
+        {
+          action: 'view',
+          title: 'عرض التفاصيل'
+        }
+      ];
+    } else if (data.type === 'subscription') {
+      options.actions = [
+        {
+          action: 'renew',
+          title: 'تجديد الاشتراك'
+        }
+      ];
+    }
+    
+    // إظهار الإشعار
+    console.log('Service Worker: عرض الإشعار', data.title, options);
+    event.waitUntil(
+      self.registration.showNotification(data.title || 'تأويل', options)
+    );
+    
+  } catch (error) {
+    console.error('Service Worker: خطأ في معالجة إشعار Push', error);
+    
+    // محاولة إظهار إشعار بسيط في حالة وجود خطأ
+    event.waitUntil(
+      self.registration.showNotification('تأويل', {
+        body: 'تم استلام إشعار جديد',
+        icon: '/android-chrome-192x192.png'
+      })
+    );
   }
-  
-  // إظهار الإشعار
-  console.log('Service Worker: عرض الإشعار', data.title, options);
-  event.waitUntil(
-    self.registration.showNotification(data.title || 'تأويل', options)
-  );
 });
 
 // عند النقر على الإشعار
@@ -167,34 +197,41 @@ self.addEventListener('notificationclick', (event) => {
   console.log('Service Worker: تم النقر على الإشعار', event);
   event.notification.close();
   
-  // التعامل مع أزرار الإشعار
-  if (event.action === 'view') {
-    const url = event.notification.data.url;
-    event.waitUntil(clients.openWindow(url));
-    return;
-  }
-  
-  if (event.action === 'renew') {
-    event.waitUntil(clients.openWindow('/pricing'));
-    return;
-  }
-  
-  // التعامل مع النقرة العادية على الإشعار
-  event.waitUntil(
-    clients.matchAll({ type: 'window' }).then((clientList) => {
-      const url = event.notification.data.url || '/';
-      
-      for (const client of clientList) {
-        if (client.url === url && 'focus' in client) {
-          return client.focus();
+  try {
+    // التعامل مع أزرار الإشعار
+    if (event.action === 'view') {
+      const url = event.notification.data.url;
+      event.waitUntil(clients.openWindow(url));
+      return;
+    }
+    
+    if (event.action === 'renew') {
+      event.waitUntil(clients.openWindow('/pricing'));
+      return;
+    }
+    
+    // التعامل مع النقرة العادية على الإشعار
+    event.waitUntil(
+      clients.matchAll({ type: 'window' }).then((clientList) => {
+        const url = event.notification.data?.url || '/';
+        
+        for (const client of clientList) {
+          if (client.url === url && 'focus' in client) {
+            return client.focus();
+          }
         }
-      }
-      
-      if (clients.openWindow) {
-        return clients.openWindow(url);
-      }
-    })
-  );
+        
+        if (clients.openWindow) {
+          return clients.openWindow(url);
+        }
+      })
+    );
+  } catch (error) {
+    console.error('Service Worker: خطأ في معالجة النقر على الإشعار', error);
+    
+    // في حالة وجود خطأ، فتح الصفحة الرئيسية
+    event.waitUntil(clients.openWindow('/'));
+  }
 });
 
 // استقبال الرسائل من صفحات التطبيق

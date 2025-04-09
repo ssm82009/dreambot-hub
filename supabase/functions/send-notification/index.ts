@@ -1,6 +1,7 @@
 
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.4';
+import { webPush } from 'https://esm.sh/web-push@3.6.7';
 
 // تعريف رؤوس CORS
 const corsHeaders = {
@@ -12,6 +13,7 @@ const corsHeaders = {
 interface RequestBody {
   userId?: string;
   adminOnly?: boolean;
+  allUsers?: boolean;
   notification: {
     title: string;
     body: string;
@@ -32,9 +34,30 @@ serve(async (req: Request) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     );
 
+    // إعداد مفاتيح VAPID للإشعارات
+    const vapidPublicKey = Deno.env.get('VAPID_PUBLIC_KEY') || '';
+    const vapidPrivateKey = Deno.env.get('VAPID_PRIVATE_KEY') || '';
+    
+    if (!vapidPublicKey || !vapidPrivateKey) {
+      return new Response(
+        JSON.stringify({ error: 'مفاتيح VAPID غير مهيأة' }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
+    // إعداد web-push
+    webPush.setVapidDetails(
+      'mailto:support@example.com',
+      vapidPublicKey,
+      vapidPrivateKey
+    );
+
     // تحليل بيانات الطلب
     const requestData: RequestBody = await req.json();
-    const { userId, adminOnly, notification } = requestData;
+    const { userId, adminOnly, allUsers, notification } = requestData;
 
     if (!notification?.title || !notification?.body) {
       return new Response(
@@ -73,6 +96,13 @@ serve(async (req: Request) => {
         .eq('user_id', userId);
 
       subscriptions = data || [];
+    } else if (allUsers) {
+      // إرسال الإشعار لجميع المستخدمين
+      const { data } = await supabaseAdmin
+        .from('push_subscriptions')
+        .select('*');
+
+      subscriptions = data || [];
     } else {
       return new Response(
         JSON.stringify({ error: 'يجب تحديد المستخدم أو مجموعة المستخدمين المستهدفة' }),
@@ -105,20 +135,15 @@ serve(async (req: Request) => {
           type: notification.type || 'general'
         });
 
-        // في بيئة الإنتاج، هذا يجب أن يستخدم مفاتيح VAPID من الخادم
-        // هذا مثال مبسط لأغراض العرض
-        const response = await fetch(parsedSubscription.endpoint, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${Deno.env.get('PUSH_SERVICE_TOKEN') || 'dummy-token'}`
-          },
-          body: pushPayload
-        });
+        console.log(`محاولة إرسال إشعار للمشترك ${subscription.id}`);
 
-        if (!response.ok) {
-          throw new Error(`فشل إرسال الإشعار: ${response.status}`);
-        }
+        // إرسال الإشعار باستخدام web-push
+        await webPush.sendNotification(
+          parsedSubscription,
+          pushPayload
+        );
+
+        console.log(`تم إرسال الإشعار بنجاح للمشترك ${subscription.id}`);
 
         // تسجيل الإشعار في قاعدة البيانات
         await supabaseAdmin

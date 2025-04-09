@@ -25,7 +25,8 @@ import {
   Search,
   LayoutDashboard,
   TicketCheck,
-  CreditCard as TransactionIcon
+  CreditCard as TransactionIcon,
+  Bell
 } from 'lucide-react';
 
 const AdminSidebar: React.FC = () => {
@@ -124,6 +125,12 @@ const AdminSidebar: React.FC = () => {
       label: 'إدارة التذاكر',
       icon: TicketCheck,
       action: () => handleSectionToggle('tickets')
+    },
+    {
+      id: 'notifications',
+      label: 'إدارة الإشعارات',
+      icon: Bell,
+      action: () => handleSectionToggle('notifications')
     },
     {
       id: 'theme',

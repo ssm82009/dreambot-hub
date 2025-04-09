@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, BellOff } from 'lucide-react';
+import { Bell, BellOff, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useNotifications } from '@/hooks/useNotifications';
@@ -23,6 +23,7 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ className })
   const { supported, granted, subscription, subscribing, subscribeToNotifications, unsubscribeFromNotifications } = useNotifications();
   const [openTicketsCount, setOpenTicketsCount] = useState<number>(0);
   const { isAdmin } = useAdminCheck();
+  const [loading, setLoading] = useState<boolean>(false);
 
   // جلب عدد التذاكر المفتوحة للمشرف
   useEffect(() => {
@@ -69,6 +70,8 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ className })
   const handleToggleNotifications = async () => {
     console.log("تبديل حالة الإشعارات:", subscription ? "إلغاء الاشتراك" : "الاشتراك");
     try {
+      setLoading(true);
+      
       if (subscription) {
         await unsubscribeFromNotifications();
       } else {
@@ -80,6 +83,8 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ className })
       }
     } catch (err) {
       console.error("خطأ في تبديل حالة الإشعارات:", err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -101,9 +106,11 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ className })
               size="icon"
               className={className}
               onClick={handleToggleNotifications}
-              disabled={subscribing}
+              disabled={subscribing || loading}
             >
-              {subscription ? (
+              {loading ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : subscription ? (
                 <Bell className="h-5 w-5" />
               ) : (
                 <BellOff className="h-5 w-5" />

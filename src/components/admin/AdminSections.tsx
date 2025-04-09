@@ -1,35 +1,50 @@
 
 import React from 'react';
-import AiSettingsSection from '@/components/admin/sections/AiSettingsSection';
-import InterpretationSettingsSection from '@/components/admin/sections/InterpretationSettingsSection';
-import PricingSettingsSection from '@/components/admin/sections/PricingSettingsSection';
-import PaymentSettingsSection from '@/components/admin/sections/PaymentSettingsSection';
-import UserManagementSection from '@/components/admin/sections/UserManagementSection';
-import PageManagementSection from '@/components/admin/sections/PageManagementSection';
-import NavbarManagementSection from '@/components/admin/sections/NavbarManagementSection';
-import TransactionManagementSection from '@/components/admin/sections/TransactionManagementSection';
-import TicketManagementSection from '@/components/admin/sections/TicketManagementSection';
-import ThemeSettingsSection from '@/components/admin/sections/ThemeSettingsSection';
-import SeoSettingsSection from '@/components/admin/sections/SeoSettingsSection';
-import HomeSectionsSection from '@/components/admin/sections/HomeSectionsSection';
+import DashboardStatsSection from './sections/DashboardStats';
+import AiSettingsSection from './sections/AiSettingsSection';
+import InterpretationSettingsSection from './sections/InterpretationSettingsSection';
+import PricingSettingsSection from './sections/PricingSettingsSection';
+import PaymentSettingsSection from './sections/PaymentSettingsSection';
+import UserManagementSection from './sections/UserManagementSection';
+import PageManagementSection from './sections/PageManagementSection';
+import NavbarManagementSection from './sections/NavbarManagementSection';
+import TicketManagementSection from './sections/TicketManagementSection';
+import TransactionManagementSection from './sections/TransactionManagementSection';
+import ThemeSettingsSection from './sections/ThemeSettingsSection';
+import SeoSettingsSection from './sections/SeoSettingsSection';
+import HomeSectionsSection from './sections/HomeSectionsSection';
+import { useAdmin } from '@/contexts/admin';
+import NotificationsSection from './sections/NotificationsSection';
 
+// Inside the AdminSections component
 const AdminSections: React.FC = () => {
+  const { 
+    activeSections,
+    aiSettingsForm, 
+    interpretationSettingsForm,
+    pricingSettingsForm,
+    paymentSettingsForm,
+  } = useAdmin();
+  
   return (
-    <div className="rtl">
-      <h2 className="text-2xl font-bold mb-6">إعدادات النظام</h2>
+    <div className="w-full">
+      {/* Existing sections */}
+      {activeSections.aiSettings && <AiSettingsSection />}
+      {activeSections.interpretationSettings && <InterpretationSettingsSection />}
+      {activeSections.pricingSettings && <PricingSettingsSection />}
+      {activeSections.paymentSettings && <PaymentSettingsSection />}
+      {activeSections.users && <UserManagementSection />}
+      {activeSections.pages && <PageManagementSection />}
+      {activeSections.navbar && <NavbarManagementSection />}
+      {activeSections.tickets && <TicketManagementSection />}
+      {activeSections.transactions && <TransactionManagementSection />}
+      {activeSections.theme && <ThemeSettingsSection />}
+      {activeSections.seo && <SeoSettingsSection />}
+      {activeSections.homeSections && <HomeSectionsSection />}
+      {activeSections.notifications && <NotificationsSection />}
       
-      <AiSettingsSection />
-      <InterpretationSettingsSection />
-      <PricingSettingsSection />
-      <PaymentSettingsSection />
-      <TransactionManagementSection />
-      <UserManagementSection />
-      <PageManagementSection />
-      <NavbarManagementSection />
-      <TicketManagementSection />
-      <ThemeSettingsSection />
-      <SeoSettingsSection />
-      <HomeSectionsSection />
+      {/* If no section is active, show dashboard */}
+      {!Object.values(activeSections).some(Boolean) && <DashboardStatsSection />}
     </div>
   );
 };
