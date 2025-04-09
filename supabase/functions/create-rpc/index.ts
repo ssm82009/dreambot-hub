@@ -1,68 +1,113 @@
 
-import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.4';
+import { serve } from "std/http/server.ts";
+import { createClient } from "npm:@supabase/supabase-js";
+import { readFileSync } from "npm:fs";
+import path from "npm:path";
+import { dirname } from "npm:path";
+import { fileURLToPath } from "npm:url";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-serve(async (req: Request) => {
-  // Handle CORS preflight requests
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
-  
+
   try {
+    // Create a Supabase client with the Admin key
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      { auth: { persistSession: false } }
     );
-    
-    // Define the SQL for creating the count function
-    const createCountFunctionSql = `
-    -- Create a function to count push subscriptions
-    CREATE OR REPLACE FUNCTION public.count_push_subscriptions()
-    RETURNS INTEGER
-    LANGUAGE plpgsql
-    SECURITY DEFINER
-    AS $$
-    BEGIN
-      RETURN (
-        SELECT COUNT(*)::integer
-        FROM public.push_subscriptions
-      );
-    END;
-    $$;
 
-    -- Grant usage to authenticated users
-    GRANT EXECUTE ON FUNCTION public.count_push_subscriptions() TO authenticated;
-    `;
+    // Load SQL scripts
+    const createFcmTokensTableSql = readFileSync(
+      path.join(__dirname, 'sql', 'create_fcm_tokens_table.sql'),
+      'utf8'
+    );
+
+    const createFirebaseConfigTableSql = readFileSync(
+      path.join(__dirname, 'sql', 'create_firebase_config_table.sql'),
+      'utf8'
+    );
+
+    const createCountFunctionSql = readFileSync(
+      path.join(__dirname, 'sql', 'create_count_function.sql'),
+      'utf8'
+    );
+
+    const createCountFcmTokensFunctionSql = readFileSync(
+      path.join(__dirname, 'sql', 'create_count_fcm_tokens_function.sql'),
+      'utf8'
+    );
+
+    // Execute SQL
+    console.log('Creating FCM tokens table...');
+    const { error: fcmTokensError } = await supabaseAdmin.rpc('exec_sql', {
+      sql_query: createFcmTokensTableSql
+    });
     
-    // Execute the SQL directly
-    const { error } = await supabaseAdmin.withSystems().rpc('exec_sql', { sql: createCountFunctionSql });
+    if (fcmTokensError) {
+      console.error('Error creating FCM tokens table:', fcmTokensError);
+      throw fcmTokensError;
+    }
+
+    console.log('Creating Firebase config table...');
+    const { error: firebaseConfigError } = await supabaseAdmin.rpc('exec_sql', {
+      sql_query: createFirebaseConfigTableSql
+    });
     
-    if (error) throw error;
+    if (firebaseConfigError) {
+      console.error('Error creating Firebase config table:', firebaseConfigError);
+      throw firebaseConfigError;
+    }
+
+    console.log('Creating count function...');
+    const { error: countFunctionError } = await supabaseAdmin.rpc('exec_sql', {
+      sql_query: createCountFunctionSql
+    });
     
+    if (countFunctionError) {
+      console.error('Error creating count function:', countFunctionError);
+      throw countFunctionError;
+    }
+
+    console.log('Creating count_fcm_tokens function...');
+    const { error: countFcmTokensFunctionError } = await supabaseAdmin.rpc('exec_sql', {
+      sql_query: createCountFcmTokensFunctionSql
+    });
+    
+    if (countFcmTokensFunctionError) {
+      console.error('Error creating count_fcm_tokens function:', countFcmTokensFunctionError);
+      throw countFcmTokensFunctionError;
+    }
+
     return new Response(
-      JSON.stringify({ success: true, message: 'RPC function created successfully' }),
-      { 
-        headers: { 
-          ...corsHeaders, 
-          'Content-Type': 'application/json' 
-        } 
+      JSON.stringify({
+        success: true,
+        message: 'RPC functions and tables created successfully'
+      }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
       }
     );
   } catch (error) {
-    console.error('Error:', error);
+    console.error('Error in create-rpc function:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
-      { 
-        status: 500, 
-        headers: { 
-          ...corsHeaders, 
-          'Content-Type': 'application/json' 
-        } 
+      JSON.stringify({
+        success: false,
+        error: error.message
+      }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500,
       }
     );
   }

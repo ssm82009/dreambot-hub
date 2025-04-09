@@ -20,9 +20,11 @@ export function useNotificationData() {
         setError(null);
 
         // جلب عدد المشتركين في الإشعارات (من جدول fcm_tokens)
-        const { count: fcmCount, error: fcmError } = await supabase
-          .from('fcm_tokens')
-          .select('*', { count: 'exact', head: true });
+        const { count: fcmCount, error: fcmError } = await supabase.rpc(
+          'count_fcm_tokens',
+          {},
+          { count: 'exact' }
+        );
 
         if (fcmError) {
           console.error("خطأ في جلب عدد رموز FCM:", fcmError);
@@ -80,8 +82,7 @@ export function useNotificationData() {
           .on('postgres_changes', 
             { 
               event: '*', 
-              schema: 'public', 
-              table: 'fcm_tokens' 
+              schema: 'public'
             }, 
             () => {
               // تحديث العدد عند حدوث أي تغيير
@@ -106,9 +107,11 @@ export function useNotificationData() {
     const refreshSubscribersCount = async () => {
       try {
         // جلب عدد رموز FCM
-        const { count: fcmCount, error: fcmError } = await supabase
-          .from('fcm_tokens')
-          .select('*', { count: 'exact', head: true });
+        const { count: fcmCount, error: fcmError } = await supabase.rpc(
+          'count_fcm_tokens',
+          {},
+          { count: 'exact' }
+        );
         
         if (fcmError) {
           console.error("خطأ في تحديث عدد رموز FCM:", fcmError);
