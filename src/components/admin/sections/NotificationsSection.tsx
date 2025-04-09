@@ -67,7 +67,8 @@ const NotificationsSection: React.FC = () => {
           console.error('خطأ في جلب عدد المشتركين:', countError);
           setSubscribersCount(0);
         } else {
-          setSubscribersCount(countData || 0);
+          // تأكد من أن countData عدد صحيح
+          setSubscribersCount(typeof countData === 'number' ? countData : 0);
         }
 
         // جلب قائمة المستخدمين
