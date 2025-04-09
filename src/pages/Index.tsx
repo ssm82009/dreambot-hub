@@ -58,6 +58,16 @@ const Index = () => {
     return section && section.content && section.content[field] ? section.content[field] : defaultValue;
   };
 
+  // الحصول على نمط القسم (الألوان) إن وجد
+  const getSectionStyle = (sectionId: string) => {
+    const section = sections.find(s => s.id === sectionId);
+    return section && section.style ? section.style : {};
+  };
+
+  const heroStyle = getSectionStyle('hero');
+  const tryItStyle = getSectionStyle('tryIt');
+  const howItWorksStyle = getSectionStyle('howItWorks');
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -65,14 +75,22 @@ const Index = () => {
         {isVisible('hero') && <Hero 
           title={getSectionContent('hero', 'title', 'فَسِّرْ حُلْمَكَ الآنَ!')}
           subtitle={getSectionContent('hero', 'subtitle', '~')}
+          style={heroStyle}
         />}
         
         {isVisible('tryIt') && (
-          <section id="try-it" className="py-16 bg-muted">
+          <section 
+            id="try-it" 
+            className="py-16"
+            style={{
+              backgroundColor: tryItStyle.backgroundColor || '#f3f4f6',
+              color: tryItStyle.textColor || '#000000'
+            }}
+          >
             <div className="container mx-auto px-4 sm:px-6 lg:px-8">
               <div className="text-center mb-12 rtl">
                 <h2 className="text-3xl font-bold mb-4">{getSectionContent('tryIt', 'title', '.  .  .')}</h2>
-                <p className="text-foreground/80 max-w-2xl mx-auto">
+                <p className="max-w-2xl mx-auto" style={{ color: tryItStyle.textColor || '#000000' }}>
                   {getSectionContent('tryIt', 'subtitle', 'أدخل تفاصيل حلمك بالعربية الفصحى، واحصل على تفسير فوري باستخدام نموذج الذكاء الاصطناعي الخاص بنا "تأويل"')}
                 </p>
               </div>
@@ -82,11 +100,17 @@ const Index = () => {
         )}
         
         {isVisible('howItWorks') && (
-          <section className="py-20 rtl">
+          <section 
+            className="py-20 rtl"
+            style={{
+              backgroundColor: howItWorksStyle.backgroundColor || '#ffffff',
+              color: howItWorksStyle.textColor || '#000000'
+            }}
+          >
             <div className="container mx-auto px-4 sm:px-6 lg:px-8">
               <div className="text-center mb-16">
                 <h2 className="text-3xl font-bold mb-4">{getSectionContent('howItWorks', 'title', 'كيف يعمل تفسير الأحلام بالذكاء الاصطناعي؟')}</h2>
-                <p className="text-foreground/80 max-w-2xl mx-auto">
+                <p className="max-w-2xl mx-auto" style={{ color: howItWorksStyle.textColor || '#000000' }}>
                   {getSectionContent('howItWorks', 'subtitle', 'نستخدم تقنيات الذكاء الاصطناعي المتقدمة مع مراجع التفسير الإسلامية الموثوقة')}
                 </p>
               </div>
@@ -102,7 +126,7 @@ const Index = () => {
                     </svg>
                   </div>
                   <h3 className="text-xl font-semibold mb-2">{getSectionContent('howItWorks', 'step1_title', '1. أدخل تفاصيل حلمك')}</h3>
-                  <p className="text-foreground/70">{getSectionContent('howItWorks', 'step1_text', 'قم بكتابة جميع تفاصيل حلمك، كلما كانت التفاصيل أكثر كان التفسير أدق.')}</p>
+                  <p style={{ color: howItWorksStyle.textColor || '#000000' }}>{getSectionContent('howItWorks', 'step1_text', 'قم بكتابة جميع تفاصيل حلمك، كلما كانت التفاصيل أكثر كان التفسير أدق.')}</p>
                 </div>
                 
                 <div className="flex flex-col items-center text-center">
@@ -113,7 +137,7 @@ const Index = () => {
                     </svg>
                   </div>
                   <h3 className="text-xl font-semibold mb-2">{getSectionContent('howItWorks', 'step2_title', '2. معالجة الذكاء الاصطناعي')}</h3>
-                  <p className="text-foreground/70">{getSectionContent('howItWorks', 'step2_text', 'يقوم نظامنا بتحليل حلمك ومقارنته بآلاف التفسيرات من المراجع الموثوقة.')}</p>
+                  <p style={{ color: howItWorksStyle.textColor || '#000000' }}>{getSectionContent('howItWorks', 'step2_text', 'يقوم نظامنا بتحليل حلمك ومقارنته بآلاف التفسيرات من المراجع الموثوقة.')}</p>
                 </div>
                 
                 <div className="flex flex-col items-center text-center">
@@ -123,15 +147,15 @@ const Index = () => {
                     </svg>
                   </div>
                   <h3 className="text-xl font-semibold mb-2">{getSectionContent('howItWorks', 'step3_title', '3. احصل على التفسير')}</h3>
-                  <p className="text-foreground/70">{getSectionContent('howItWorks', 'step3_text', 'استلم تفسيراً دقيقاً لحلمك مع نصائح وتوجيهات مفيدة.')}</p>
+                  <p style={{ color: howItWorksStyle.textColor || '#000000' }}>{getSectionContent('howItWorks', 'step3_text', 'استلم تفسيراً دقيقاً لحلمك مع نصائح وتوجيهات مفيدة.')}</p>
                 </div>
               </div>
               
               <div className="text-center mt-16">
-                <p className="text-foreground/80 italic max-w-3xl mx-auto">
+                <p className="italic max-w-3xl mx-auto" style={{ color: howItWorksStyle.textColor || '#000000' }}>
                   {getSectionContent('howItWorks', 'quote', '"الرؤيا الصالحة من الله، والحلم من الشيطان، فإذا حلم أحدكم حلماً يخافه فليتفل عن يساره، وليستعذ بالله من شره، فإنه لا يضره"')}
                 </p>
-                <p className="mt-2 text-foreground/60">{getSectionContent('howItWorks', 'quote_author', '- حديث شريف')}</p>
+                <p className="mt-2" style={{ color: `${howItWorksStyle.textColor ? howItWorksStyle.textColor + '99' : '#00000099'}` }}>{getSectionContent('howItWorks', 'quote_author', '- حديث شريف')}</p>
               </div>
             </div>
           </section>
