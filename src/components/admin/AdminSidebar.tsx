@@ -170,15 +170,15 @@ const AdminSidebar: React.FC = () => {
   ];
 
   return (
-    <Sidebar>
+    <Sidebar className="bg-white" variant="sidebar">
       <SidebarHeader>
         <div className="flex items-center justify-between p-4">
           <h2 className="text-lg font-bold">لوحة التحكم</h2>
           <button 
             onClick={toggleSidebar} 
-            className="p-1.5 rounded-md hover:bg-sidebar-accent text-sidebar-foreground"
+            className="p-1.5 rounded-md hover:bg-gray-100 text-gray-700"
           >
-            {open ? <ChevronRight className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
+            {open ? <ChevronLeft className="h-5 w-5" /> : <ChevronRight className="h-5 w-5" />}
           </button>
         </div>
       </SidebarHeader>
