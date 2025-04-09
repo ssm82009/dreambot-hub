@@ -13,3 +13,7 @@ verify_jwt = true
 
 [functions.create-rpc]
 verify_jwt = true
+
+[functions.get-firebase-token]
+verify_jwt = true
+import_map = "./import_map.json"

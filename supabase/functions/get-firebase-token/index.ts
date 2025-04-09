@@ -9,16 +9,21 @@ interface ServiceAccountPayload {
   projectId: string;
 }
 
-// تعريف رؤوس CORS
+// تعريف رؤوس CORS - تأكد من شمولها لجميع الرؤوس المطلوبة
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS, GET',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, Accept',
+  'Access-Control-Allow-Credentials': 'true',
+  'Access-Control-Max-Age': '86400',
 };
 
 serve(async (req) => {
-  // معالجة طلبات CORS preflight
+  console.log(`Received ${req.method} request to ${req.url}`);
+  
+  // معالجة طلبات CORS preflight بشكل صحيح
   if (req.method === 'OPTIONS') {
+    console.log('Handling CORS preflight request');
     return new Response(null, {
       status: 204,
       headers: corsHeaders
@@ -27,6 +32,7 @@ serve(async (req) => {
 
   // التحقق من وجود جسم الطلب
   if (req.method !== 'POST') {
+    console.log(`Method not allowed: ${req.method}`);
     return new Response(JSON.stringify({ error: 'طريقة غير مدعومة، استخدم POST' }), { 
       status: 405,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -34,18 +40,21 @@ serve(async (req) => {
   }
 
   try {
+    console.log('Processing request body');
     // استخراج البيانات من جسم الطلب
     const payload = await req.json() as ServiceAccountPayload;
     const { clientEmail, privateKey, projectId } = payload;
 
     // التحقق من وجود جميع البيانات المطلوبة
     if (!clientEmail || !privateKey || !projectId) {
+      console.log('Missing required fields in request');
       return new Response(JSON.stringify({ error: 'بيانات مفقودة، يجب توفير clientEmail و privateKey و projectId' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
+    console.log('Creating JWT for OAuth request');
     // إنشاء JWT لتوقيع طلب الحصول على رمز الوصول
     const now = Math.floor(Date.now() / 1000);
     const expiry = now + 3600; // صلاحية لمدة ساعة
@@ -64,6 +73,7 @@ serve(async (req) => {
       .setExpirationTime(expiry)
       .sign(await jose.importPKCS8(privateKeyFixed, 'RS256'));
 
+    console.log('Sending request to Google OAuth');
     // إرسال طلب للحصول على رمز الوصول من Google OAuth
     const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
@@ -86,6 +96,7 @@ serve(async (req) => {
     }
 
     const tokenData = await tokenResponse.json();
+    console.log('Successfully obtained access token');
     
     return new Response(JSON.stringify(tokenData), {
       status: 200,
