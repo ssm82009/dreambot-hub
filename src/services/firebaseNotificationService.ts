@@ -19,7 +19,7 @@ export async function initializeFirebaseKey() {
     // محاولة جلب المفتاح من قاعدة البيانات
     const { data, error } = await supabase
       .from('app_settings')
-      .select('value')
+      .select('*')
       .eq('key', 'fcm_server_key')
       .single();
 
@@ -142,7 +142,7 @@ export async function sendNotificationToUser(userId: string, payload: Notificati
               body: payload.body,
               url: payload.url,
               type: payload.type,
-              sent_at: new Date()
+              sent_at: new Date().toISOString()
             });
         }
         
@@ -250,7 +250,7 @@ export async function sendNotificationToAllUsers(payload: NotificationPayload) {
                 body: payload.body,
                 url: payload.url,
                 type: payload.type,
-                sent_at: new Date()
+                sent_at: new Date().toISOString()
               });
           }
           

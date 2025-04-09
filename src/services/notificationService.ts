@@ -2,9 +2,9 @@
 import { supabase } from '@/integrations/supabase/client';
 import { 
   initializeFirebaseKey, 
-  sendNotificationToUser, 
-  sendNotificationToAdmin,
-  sendNotificationToAllUsers,
+  sendNotificationToUser as firebaseSendToUser, 
+  sendNotificationToAdmin as firebaseSendToAdmin,
+  sendNotificationToAllUsers as firebaseSendToAll,
   type NotificationPayload 
 } from './firebaseNotificationService';
 
@@ -20,7 +20,7 @@ interface PushSubscriptionData {
 export async function sendNotification(userId: string, payload: NotificationPayload) {
   try {
     // استخدام خدمة Firebase مباشرة
-    return await sendNotificationToUser(userId, payload);
+    return await firebaseSendToUser(userId, payload);
   } catch (error) {
     console.error('خطأ في إرسال الإشعار:', error);
     throw error;
@@ -31,7 +31,7 @@ export async function sendNotification(userId: string, payload: NotificationPayl
 export async function sendNotificationToAdmin(payload: NotificationPayload) {
   try {
     // استخدام خدمة Firebase مباشرة
-    return await sendNotificationToAdmin(payload);
+    return await firebaseSendToAdmin(payload);
   } catch (error) {
     console.error('خطأ في إرسال الإشعار للمشرفين:', error);
     throw error;
@@ -86,7 +86,7 @@ export async function removeSubscription(endpoint: string) {
 export async function sendNotificationToAllUsers(payload: NotificationPayload) {
   try {
     // استخدام خدمة Firebase مباشرة
-    return await sendNotificationToAllUsers(payload);
+    return await firebaseSendToAll(payload);
   } catch (error) {
     console.error('خطأ في إرسال الإشعار لجميع المستخدمين:', error);
     throw error;

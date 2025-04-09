@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -172,7 +173,7 @@ const NotificationsSection: React.FC = () => {
         <Card className="col-span-1 md:col-span-2">
           <CardHeader>
             <CardTitle>إرسال إشعار جديد</CardTitle>
-            <CardDescription>أرسل إشعارات للمست��دمين والمشرفين</CardDescription>
+            <CardDescription>أرسل إشعارات للمستخدمين والمشرفين</CardDescription>
           </CardHeader>
           <CardContent>
             <Form {...form}>
