@@ -1,22 +1,17 @@
 
-// استخدام المسار الكامل لتجنب مشاكل الاستيراد في Deno
-import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
-import * as firebaseAdmin from "npm:firebase-admin";
+import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.4';
 
 // تعريف رؤوس CORS
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Max-Age': '86400',
 };
 
 // تعريف واجهة البيانات
 interface RequestBody {
   userId?: string;
   adminOnly?: boolean;
-  allUsers?: boolean;
-  tokens?: string[]; // إضافة خاصية للرموز المباشرة
   notification: {
     title: string;
     body: string;
@@ -25,149 +20,144 @@ interface RequestBody {
   };
 }
 
-// تهيئة Firebase Admin SDK
-let initialized = false;
-function initializeFirebase() {
-  if (initialized) return;
-  
-  try {
-    const serviceAccount = JSON.parse(Deno.env.get('FIREBASE_SERVICE_ACCOUNT') || '{}');
-    
-    if (!serviceAccount.project_id) {
-      throw new Error('تكوين Firebase غير صالح أو مفقود');
-    }
-    
-    firebaseAdmin.initializeApp({
-      credential: firebaseAdmin.credential.cert(serviceAccount)
-    });
-    
-    initialized = true;
-    console.log("تم تهيئة Firebase Admin SDK بنجاح");
-  } catch (error) {
-    console.error("فشل في تهيئة Firebase Admin SDK:", error);
-    throw error;
-  }
-}
-
 serve(async (req: Request) => {
-  console.log("وظيفة send-notification تم استدعاؤها، طريقة الطلب:", req.method);
-  
   // معالجة طلبات CORS
   if (req.method === 'OPTIONS') {
-    console.log("تمت معالجة طلب OPTIONS لـ CORS");
-    return new Response(null, { 
-      headers: corsHeaders,
-      status: 204
-    });
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // التأكد من إضافة رؤوس CORS إلى جميع الاستجابات
-    const headers = { ...corsHeaders, 'Content-Type': 'application/json' };
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+    );
 
     // تحليل بيانات الطلب
-    let requestData: RequestBody;
-    try {
-      requestData = await req.json();
-      console.log("بيانات الطلب المستلمة:", JSON.stringify(requestData));
-    } catch (error) {
-      console.error("خطأ في تحليل بيانات الطلب JSON:", error);
-      return new Response(
-        JSON.stringify({ error: 'بيانات JSON غير صالحة' }),
-        {
-          status: 400,
-          headers: headers,
-        }
-      );
-    }
-    
-    const { tokens, notification } = requestData;
+    const requestData: RequestBody = await req.json();
+    const { userId, adminOnly, notification } = requestData;
 
     if (!notification?.title || !notification?.body) {
-      console.error("بيانات الإشعار غير كافية");
       return new Response(
         JSON.stringify({ error: 'يجب توفير عنوان ومحتوى للإشعار' }),
         {
           status: 400,
-          headers: headers,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         }
       );
     }
 
-    // تهيئة Firebase
-    try {
-      console.log("بدء تهيئة Firebase Admin SDK...");
-      initializeFirebase();
-    } catch (error) {
-      console.error("فشل في تهيئة Firebase Admin SDK:", error);
+    // البحث عن المشتركين
+    let subscriptions = [];
+
+    if (adminOnly) {
+      // إرسال الإشعار للمشرفين فقط
+      const { data: admins } = await supabaseAdmin
+        .from('users')
+        .select('id')
+        .eq('role', 'admin');
+
+      if (admins && admins.length > 0) {
+        const adminIds = admins.map((admin) => admin.id);
+        const { data } = await supabaseAdmin
+          .from('push_subscriptions')
+          .select('*')
+          .in('user_id', adminIds);
+
+        subscriptions = data || [];
+      }
+    } else if (userId) {
+      // إرسال الإشعار لمستخدم محدد
+      const { data } = await supabaseAdmin
+        .from('push_subscriptions')
+        .select('*')
+        .eq('user_id', userId);
+
+      subscriptions = data || [];
+    } else {
       return new Response(
-        JSON.stringify({ error: 'فشل في تهيئة Firebase Admin SDK', details: error.message }),
+        JSON.stringify({ error: 'يجب تحديد المستخدم أو مجموعة المستخدمين المستهدفة' }),
         {
-          status: 500,
-          headers: headers,
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         }
       );
     }
 
-    // إذا لم تم توفير رموز مباشرة، استخدم القائمة كما هي
-    let targetTokens = tokens || [];
-
-    // إذا لم يوجد رموز، لا يوجد داعي للمتابعة
-    if (targetTokens.length === 0) {
-      console.log("لا يوجد رموز لإرسال الإشعارات إليها");
+    // إذا لم يوجد مشتركين، لا يوجد داعي للمتابعة
+    if (!subscriptions.length) {
       return new Response(
-        JSON.stringify({ success: true, message: 'لا يوجد رموز مستهدفة', sentCount: 0 }),
+        JSON.stringify({ success: true, message: 'لا يوجد مشتركين', sentCount: 0 }),
         {
-          headers: headers,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         }
       );
     }
 
-    // إعداد رسالة الإشعار
-    const message = {
-      notification: {
-        title: notification.title,
-        body: notification.body
-      },
-      data: {
-        url: notification.url || '/',
-        type: notification.type || 'general'
-      },
-      tokens: targetTokens
-    };
-    
-    console.log(`محاولة إرسال الإشعارات إلى ${targetTokens.length} رمز...`);
-    
-    try {
-      // إرسال الإشعار باستخدام Firebase
-      const response = await firebaseAdmin.messaging().sendMulticast(message);
-      console.log(`تم إرسال الإشعار بنجاح: ${response.successCount} نجاح، ${response.failureCount} فشل`);
-      
-      return new Response(
-        JSON.stringify({
-          success: true,
-          message: `تم إرسال ${response.successCount} من ${targetTokens.length} إشعارات بنجاح`,
-          sentCount: response.successCount
-        }),
-        {
-          headers: headers,
+    // إرسال الإشعار لكل مشترك
+    const pushPromises = subscriptions.map(async (subscription) => {
+      try {
+        const parsedSubscription = JSON.parse(subscription.auth);
+        
+        const pushPayload = JSON.stringify({
+          title: notification.title,
+          body: notification.body,
+          url: notification.url || '/',
+          type: notification.type || 'general'
+        });
+
+        // في بيئة الإنتاج، هذا يجب أن يستخدم مفاتيح VAPID من الخادم
+        // هذا مثال مبسط لأغراض العرض
+        const response = await fetch(parsedSubscription.endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${Deno.env.get('PUSH_SERVICE_TOKEN') || 'dummy-token'}`
+          },
+          body: pushPayload
+        });
+
+        if (!response.ok) {
+          throw new Error(`فشل إرسال الإشعار: ${response.status}`);
         }
-      );
-    } catch (error) {
-      console.error('خطأ في إرسال الإشعارات عبر Firebase:', error);
-      return new Response(
-        JSON.stringify({ error: 'خطأ في إرسال الإشعارات', details: error.message }),
-        {
-          status: 500,
-          headers: headers,
-        }
-      );
-    }
+
+        // تسجيل الإشعار في قاعدة البيانات
+        await supabaseAdmin
+          .from('notification_logs')
+          .insert({
+            user_id: subscription.user_id,
+            title: notification.title,
+            body: notification.body,
+            url: notification.url,
+            type: notification.type,
+            sent_at: new Date()
+          });
+
+        return true;
+      } catch (error) {
+        console.error(`خطأ في إرسال الإشعار للمشترك ${subscription.id}:`, error);
+        return false;
+      }
+    });
+
+    // انتظار إكمال جميع عمليات الإرسال
+    const results = await Promise.all(pushPromises);
+    const successCount = results.filter(Boolean).length;
+
+    return new Response(
+      JSON.stringify({
+        success: true,
+        message: `تم إرسال ${successCount} من ${subscriptions.length} إشعارات بنجاح`,
+        sentCount: successCount
+      }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
+    );
   } catch (error) {
     console.error('خطأ في معالجة طلب الإشعار:', error);
     
     return new Response(
-      JSON.stringify({ error: 'حدث خطأ أثناء معالجة الطلب', details: error.message }),
+      JSON.stringify({ error: 'حدث خطأ أثناء معالجة الطلب' }),
       {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

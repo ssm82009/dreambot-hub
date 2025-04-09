@@ -122,18 +122,3 @@ export type NavLink = {
   created_at?: string;
   updated_at?: string;
 };
-
-// إضافة نوع جديد لتكوين Firebase
-export type FirebaseConfig = {
-  id: string;
-  api_key: string;
-  auth_domain: string;
-  project_id: string;
-  storage_bucket: string;
-  messaging_sender_id: string;
-  app_id: string;
-  measurement_id?: string;
-  service_account_key?: Record<string, any>;
-  created_at?: string;
-  updated_at?: string;
-};

@@ -37,57 +37,17 @@
     <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
     <script type="module" src="/src/main.tsx"></script>
     <script>
-      // محاولات تسجيل خدمة العامل
-      let fcmRegistrationAttempts = 0;
-      const maxRegistrationAttempts = 3;
-      
       // تسجيل خدمة العامل إذا كانت متوفرة في المتصفح
       if ('serviceWorker' in navigator) {
-        window.addEventListener('load', async () => {
-          try {
-            // تسجيل خدمة العامل الرئيسية أولاً
-            const swRegistration = await navigator.serviceWorker.register('/sw.js');
-            console.log('Service Worker registered successfully:', swRegistration.scope);
-            
-            // ثم سجل خدمة Firebase Messaging
-            registerFirebaseServiceWorker();
-          } catch (error) {
-            console.error('Service Worker registration failed:', error);
-          }
-        });
-      }
-      
-      // دالة لتسجيل Firebase Service Worker مع إعادة المحاولة
-      async function registerFirebaseServiceWorker() {
-        try {
-          if (fcmRegistrationAttempts >= maxRegistrationAttempts) {
-            console.warn('تم الوصول للحد الأقصى من محاولات تسجيل Firebase Service Worker');
-            return;
-          }
-          
-          fcmRegistrationAttempts++;
-          console.log(`محاولة تسجيل Firebase Service Worker (${fcmRegistrationAttempts}/${maxRegistrationAttempts})...`);
-          
-          const fmRegistration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
-          console.log('Firebase Messaging SW registered successfully:', fmRegistration.scope);
-          
-          // إرسال إشارة بنجاح التسجيل
-          if (navigator.serviceWorker.controller) {
-            navigator.serviceWorker.controller.postMessage({
-              type: 'FCM_SW_REGISTERED',
-              registration: fmRegistration.scope
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then(registration => {
+              console.log('Service Worker registered successfully:', registration.scope);
+            })
+            .catch(error => {
+              console.error('Service Worker registration failed:', error);
             });
-          }
-        } catch (error) {
-          console.error('Firebase Messaging SW registration failed:', error);
-          
-          // إعادة المحاولة بعد فترة قصيرة
-          if (fcmRegistrationAttempts < maxRegistrationAttempts) {
-            setTimeout(() => {
-              registerFirebaseServiceWorker();
-            }, 2000); // إعادة المحاولة بعد ثانيتين
-          }
-        }
+        });
       }
     </script>
   </body>

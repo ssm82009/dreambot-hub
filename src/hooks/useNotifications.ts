@@ -1,228 +1,300 @@
 
-import { useEffect, useState, useRef } from 'react';
-import { useNotificationPermission } from './notifications/useNotificationPermission';
-import { initializeFirebase, registerForPushNotifications } from '@/services/firebaseService';
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-/**
- * هوك إدارة الإشعارات الرئيسي
- * يجمع بين التحقق من الأذونات وإدارة الاشتراكات
- */
+interface NotificationPermission {
+  granted: boolean;
+  supported: boolean;
+  subscription: PushSubscription | null;
+  subscribing: boolean;
+}
+
 export function useNotifications() {
-  const { supported, granted, requestPermission } = useNotificationPermission();
-  const [token, setToken] = useState<string | null>(null);
-  const [initializing, setInitializing] = useState(true);
-  const [subscribing, setSubscribing] = useState(false);
-  const [initialized, setInitialized] = useState(false);
+  const [permission, setPermission] = useState<NotificationPermission>({
+    granted: false,
+    supported: false,
+    subscription: null,
+    subscribing: false
+  });
   
-  // استخدام مراجع لتتبع حالة عرض رسائل التوست لمنع التكرار
-  const hasShownSuccessToast = useRef<boolean>(false);
-  const hasShownErrorToast = useRef<boolean>(false);
-  const initializationAttempts = useRef<number>(0);
-  const maxInitAttempts = 3;
-
-  // تهيئة Firebase عند تحميل المكون
+  // تحقق من دعم الإشعارات
   useEffect(() => {
-    async function init() {
-      try {
-        // تجنب إعادة التهيئة إذا كانت قد تمت بالفعل أو تجاوزت عدد المحاولات
-        if (initialized || initializationAttempts.current >= maxInitAttempts) {
-          setInitializing(false);
-          return;
-        }
-        
-        initializationAttempts.current += 1;
-        console.log(`محاولة تهيئة Firebase (${initializationAttempts.current}/${maxInitAttempts})...`);
-        
-        const firebaseInitialized = await initializeFirebase();
-        
-        if (!firebaseInitialized) {
-          console.error("فشل في تهيئة Firebase");
-          
-          // إعادة المحاولة بعد فترة إذا لم نصل للحد الأقصى
-          if (initializationAttempts.current < maxInitAttempts) {
-            setTimeout(() => {
-              setInitialized(false); // إعادة تعيين الحالة لإعادة المحاولة
-            }, 2000);
-          }
-        } else {
-          console.log("تم تهيئة Firebase بنجاح");
-          setInitialized(true);
-        }
-      } catch (error) {
-        console.error("خطأ أثناء تهيئة Firebase:", error);
-      } finally {
-        setInitializing(false);
-      }
-    }
-
-    init();
-  }, [initialized]);
-
-  // التحقق من وجود اشتراك عند تحميل المكون
-  useEffect(() => {
-    if (supported && granted && !initializing && initialized) {
-      const checkToken = async () => {
-        try {
-          setSubscribing(true);
-          console.log("التحقق من وجود رمز اشتراك Firebase...");
-          
-          // التحقق من وجود التوكن في التخزين المحلي
-          const savedToken = localStorage.getItem('fcm_token');
-          
-          if (savedToken) {
-            console.log("تم العثور على رمز محفوظ:", savedToken);
-            setToken(savedToken);
-          } else {
-            console.log("لم يتم العثور على رمز محفوظ، جاري طلب رمز جديد...");
-            const newToken = await registerForPushNotifications();
-            setToken(newToken);
-          }
-        } catch (error) {
-          console.error("خطأ في التحقق من رمز الإشعارات:", error);
-        } finally {
-          setSubscribing(false);
-        }
-      };
+    const checkNotificationSupport = async () => {
+      const supported = 'Notification' in window && 'serviceWorker' in navigator && 'PushManager' in window;
       
-      checkToken();
+      if (supported) {
+        const permission = Notification.permission;
+        const granted = permission === 'granted';
+        
+        try {
+          // إذا كان التصريح ممنوحًا، تحقق من وجود اشتراك
+          let subscription = null;
+          if (granted) {
+            // تأكد من أن خدمة العامل مسجلة وجاهزة
+            const swRegistration = await navigator.serviceWorker.ready;
+            subscription = await swRegistration.pushManager.getSubscription();
+            console.log("تم العثور على اشتراك الإشعارات:", subscription);
+          }
+          
+          setPermission({
+            granted,
+            supported,
+            subscription,
+            subscribing: false
+          });
+        } catch (error) {
+          console.error("خطأ في التحقق من اشتراك الإشعارات:", error);
+          setPermission({
+            granted,
+            supported,
+            subscription: null,
+            subscribing: false
+          });
+        }
+      } else {
+        setPermission({
+          granted: false,
+          supported,
+          subscription: null,
+          subscribing: false
+        });
+      }
+    };
+    
+    // التأكد من تسجيل خدمة العامل قبل التحقق من دعم الإشعارات
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.ready.then(() => {
+        checkNotificationSupport();
+      }).catch(error => {
+        console.error("خطأ في انتظار جاهزية خدمة العامل:", error);
+        checkNotificationSupport(); // نحاول على أي حال
+      });
+    } else {
+      checkNotificationSupport();
     }
-  }, [supported, granted, initializing, initialized]);
+  }, []);
   
-  // إعادة تعيين حالة التوست عند تغير التوكن
-  useEffect(() => {
-    if (token !== null) {
-      hasShownSuccessToast.current = false;
-      hasShownErrorToast.current = false;
+  // طلب إذن الإشعارات
+  const requestPermission = async () => {
+    if (!permission.supported) {
+      toast.error('متصفحك لا يدعم الإشعارات');
+      return false;
     }
-  }, [token]);
+    
+    try {
+      console.log("طلب إذن الإشعارات...");
+      
+      if (Notification.permission === 'denied') {
+        toast.error('تم رفض الإشعارات من قبل المتصفح. يرجى تمكين الإشعارات من إعدادات المتصفح.');
+        console.log("الإشعارات مرفوضة من قبل المتصفح");
+        return false;
+      }
+      
+      const result = await Notification.requestPermission();
+      const granted = result === 'granted';
+      
+      console.log("نتيجة طلب إذن الإشعارات:", result);
+      
+      setPermission(prev => ({
+        ...prev,
+        granted
+      }));
+      
+      if (granted) {
+        toast.success('تم السماح بالإشعارات');
+        return true;
+      } else {
+        toast.error('لم يتم السماح بالإشعارات');
+        return false;
+      }
+    } catch (error) {
+      console.error('خطأ في طلب إذن الإشعارات:', error);
+      toast.error('حدث خطأ أثناء طلب إذن الإشعارات');
+      return false;
+    }
+  };
   
-  // وظيفة الاشتراك في الإشعارات
+  // الاشتراك في الإشعارات
   const subscribeToNotifications = async () => {
-    if (!supported) {
-      console.error("الإشعارات غير مدعومة");
-      if (!hasShownErrorToast.current) {
-        toast.error("متصفحك لا يدعم الإشعارات");
-        hasShownErrorToast.current = true;
-      }
-      return null;
-    }
-
-    if (Notification.permission === 'denied') {
-      console.error("تم رفض إذن الإشعارات");
-      if (!hasShownErrorToast.current) {
-        toast.error("تم رفض الإشعارات من قبل المتصفح. يرجى تمكينها من الإعدادات");
-        hasShownErrorToast.current = true;
-      }
+    if (!permission.supported) {
+      toast.error('متصفحك لا يدعم الإشعارات');
       return null;
     }
     
-    // التحقق من تهيئة Firebase
-    if (!initialized && !initializing) {
-      console.log("جاري محاولة إعادة تهيئة Firebase...");
-      const firebaseInitialized = await initializeFirebase();
-      if (!firebaseInitialized) {
-        console.error("فشل في تهيئة Firebase");
-        if (!hasShownErrorToast.current) {
-          toast.error("فشل في الاتصال بخدمة الإشعارات");
-          hasShownErrorToast.current = true;
-        }
-        return null;
-      }
-      setInitialized(true);
-    }
-
     try {
-      setSubscribing(true);
-
-      // إذا لم يكن هناك إذن، اطلب إذن الإشعارات
+      setPermission(prev => ({ ...prev, subscribing: true }));
+      
+      // طلب الإذن إذا لم يكن ممنوحًا بالفعل
       if (Notification.permission !== 'granted') {
-        const permissionGranted = await requestPermission();
-        if (!permissionGranted) {
-          if (!hasShownErrorToast.current) {
-            toast.error("تم رفض الإشعارات من قبل المتصفح");
-            hasShownErrorToast.current = true;
-          }
-          setSubscribing(false);
+        const granted = await requestPermission();
+        if (!granted) {
+          setPermission(prev => ({ ...prev, subscribing: false }));
           return null;
         }
       }
-
-      // تسجيل الإشعارات
-      console.log("جاري تسجيل الجهاز للإشعارات...");
-      const newToken = await registerForPushNotifications();
       
-      if (newToken) {
-        console.log("تم الحصول على رمز Firebase:", newToken);
-        setToken(newToken);
+      console.log("بدء عملية الاشتراك في الإشعارات...");
+      
+      // انتظار جاهزية service worker
+      const swRegistration = await navigator.serviceWorker.ready;
+      console.log("Service Worker جاهز:", swRegistration);
+      
+      // التحقق من وجود اشتراك حالي
+      let subscription = await swRegistration.pushManager.getSubscription();
+      
+      // إذا كان المتصفح مشتركًا بالفعل، ارجع الاشتراك الحالي
+      if (subscription) {
+        console.log("تم العثور على اشتراك موجود:", subscription);
+        setPermission(prev => ({
+          ...prev,
+          subscription,
+          subscribing: false,
+          granted: true
+        }));
         
-        if (!hasShownSuccessToast.current) {
-          toast.success("تم تفعيل الإشعارات بنجاح");
-          hasShownSuccessToast.current = true;
-        }
-        
-        return newToken;
-      } else {
-        console.error("فشل في الحصول على رمز Firebase");
-        
-        if (!hasShownErrorToast.current) {
-          toast.error("فشل في تفعيل الإشعارات");
-          hasShownErrorToast.current = true;
-        }
-        
-        return null;
+        toast.success('أنت مشترك بالفعل في الإشعارات');
+        return subscription;
       }
+      
+      // إنشاء مفتاح VAPID
+      const publicVapidKey = 'BLBz5HW9GU26px7aSGgqZR9xoA7Sj5Q8q0c7_KMgPgTcgccR9EkTuZAs5TmGpJ9liMPHvw4-l7-Ftm1Qz-5qvEs';
+      
+      const options = {
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(publicVapidKey)
+      };
+      
+      console.log("محاولة الاشتراك في Push Manager...");
+      try {
+        subscription = await swRegistration.pushManager.subscribe(options);
+        console.log("تم الاشتراك بنجاح:", subscription);
+      } catch (error) {
+        console.error("خطأ في الاشتراك في Push Manager:", error);
+        
+        if (error instanceof DOMException && error.name === "NotAllowedError") {
+          toast.error('تم رفض الإشعارات من قبل المتصفح. يرجى تمكين الإشعارات من إعدادات المتصفح.');
+          setPermission(prev => ({ ...prev, subscribing: false }));
+          return null;
+        }
+        
+        throw error;
+      }
+      
+      // تخزين اشتراك المستخدم في قاعدة البيانات عبر edge function
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        try {
+          console.log("تخزين الاشتراك في قاعدة البيانات...");
+          // استخدام Edge Function لتخزين الاشتراك
+          const { error } = await supabase.functions.invoke('store-subscription', {
+            body: {
+              userId: session.user.id,
+              endpoint: subscription.endpoint,
+              auth: JSON.stringify(subscription.toJSON())
+            }
+          });
+          
+          if (error) {
+            console.error("خطأ في تخزين الاشتراك:", error);
+            throw error;
+          }
+          
+          console.log("تم تخزين الاشتراك بنجاح");
+          
+        } catch (error) {
+          console.error('خطأ في تخزين اشتراك الإشعارات:', error);
+        }
+      }
+      
+      setPermission(prev => ({
+        ...prev,
+        subscription,
+        subscribing: false,
+        granted: true
+      }));
+      
+      toast.success('تم الاشتراك في الإشعارات بنجاح');
+      return subscription;
     } catch (error) {
-      console.error("خطأ في الاشتراك في الإشعارات:", error);
-      
-      if (!hasShownErrorToast.current) {
-        toast.error("حدث خطأ أثناء تفعيل الإشعارات");
-        hasShownErrorToast.current = true;
-      }
-      
+      console.error('خطأ في الاشتراك في الإشعارات:', error);
+      toast.error('حدث خطأ أثناء الاشتراك في الإشعارات');
+      setPermission(prev => ({ ...prev, subscribing: false }));
       return null;
-    } finally {
-      setSubscribing(false);
     }
   };
-
-  // وظيفة إلغاء الاشتراك من الإشعارات
+  
+  // إلغاء الاشتراك في الإشعارات
   const unsubscribeFromNotifications = async () => {
-    if (!token) {
-      console.error("لا يوجد رمز لإلغاء الاشتراك منه");
+    if (!permission.subscription) {
+      toast.error('لا يوجد اشتراك نشط للإشعارات');
       return false;
     }
-
+    
     try {
-      setSubscribing(true);
+      console.log("إلغاء الاشتراك من الإشعارات...");
+      await permission.subscription.unsubscribe();
+      console.log("تم إلغاء الاشتراك بنجاح");
       
-      console.log("جاري حذف رمز Firebase:", token);
-      // حذف الرمز من التخزين المحلي
-      localStorage.removeItem('fcm_token');
+      // حذف الاشتراك من قاعدة البيانات عبر edge function
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        try {
+          console.log("حذف الاشتراك من قاعدة البيانات...");
+          // استخدام Edge Function لحذف الاشتراك
+          const { error } = await supabase.functions.invoke('remove-subscription', {
+            body: {
+              userId: session.user.id,
+              endpoint: permission.subscription.endpoint
+            }
+          });
+          
+          if (error) {
+            console.error("خطأ في حذف الاشتراك:", error);
+            throw error;
+          }
+          console.log("تم حذف الاشتراك من قاعدة البيانات بنجاح");
+          
+        } catch (error) {
+          console.error('خطأ في حذف اشتراك الإشعارات:', error);
+        }
+      }
       
-      setToken(null);
-      hasShownSuccessToast.current = false;
-      hasShownErrorToast.current = false;
+      setPermission(prev => ({
+        ...prev,
+        subscription: null
+      }));
       
-      toast.success("تم إلغاء تفعيل الإشعارات بنجاح");
-      
+      toast.success('تم إلغاء الاشتراك من الإشعارات');
       return true;
     } catch (error) {
-      console.error("خطأ في إلغاء الاشتراك من الإشعارات:", error);
-      toast.error("فشل في إلغاء تفعيل الإشعارات");
+      console.error('خطأ في إلغاء الاشتراك من الإشعارات:', error);
+      toast.error('حدث خطأ أثناء إلغاء الاشتراك من الإشعارات');
       return false;
-    } finally {
-      setSubscribing(false);
     }
   };
   
   return {
-    supported,
-    granted,
-    subscription: token !== null,
-    subscribing: initializing || subscribing,
+    ...permission,
     requestPermission,
     subscribeToNotifications,
     unsubscribeFromNotifications
   };
+}
+
+// تحويل المفتاح العام من Base64 إلى صفيف Uint8Array
+function urlBase64ToUint8Array(base64String: string): Uint8Array {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding)
+    .replace(/-/g, '+')
+    .replace(/_/g, '/');
+  
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  
+  return outputArray;
 }

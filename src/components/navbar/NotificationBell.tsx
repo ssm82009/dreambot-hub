@@ -1,7 +1,7 @@
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, BellOff, Loader2 } from 'lucide-react';
+import { Bell, BellOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useNotifications } from '@/hooks/useNotifications';
@@ -13,7 +13,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { toast } from 'sonner';
 
 interface NotificationBellProps {
   className?: string;
@@ -24,10 +23,8 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ className })
   const { supported, granted, subscription, subscribing, subscribeToNotifications, unsubscribeFromNotifications } = useNotifications();
   const [openTicketsCount, setOpenTicketsCount] = useState<number>(0);
   const { isAdmin } = useAdminCheck();
-  const [loading, setLoading] = useState<boolean>(false);
-  const processingRef = useRef<boolean>(false);
-  const timeoutRef = useRef<number | null>(null);
 
+  // جلب عدد التذاكر المفتوحة للمشرف
   useEffect(() => {
     if (!isAdmin) return;
 
@@ -48,6 +45,7 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ className })
 
     fetchOpenTicketsCount();
 
+    // الاستماع للتغييرات في التذاكر في الوقت الفعلي
     const channel = supabase
       .channel('ticket-changes')
       .on('postgres_changes', 
@@ -67,66 +65,27 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ className })
     };
   }, [isAdmin]);
 
+  // معالج النقر على زر الإشعارات
   const handleToggleNotifications = async () => {
-    // منع النقرات المتكررة
-    if (processingRef.current || subscribing) {
-      console.log("تجاهل النقرة المتكررة على زر الإشعارات");
-      return;
-    }
-
     console.log("تبديل حالة الإشعارات:", subscription ? "إلغاء الاشتراك" : "الاشتراك");
-    
     try {
-      setLoading(true);
-      processingRef.current = true;
-      
-      if (!navigator.onLine) {
-        toast.error('لا يوجد اتصال بالإنترنت. يرجى التحقق من اتصالك والمحاولة مرة أخرى.');
-        return;
-      }
-      
       if (subscription) {
         await unsubscribeFromNotifications();
       } else {
-        if (!supported) {
-          toast.error('متصفحك لا يدعم الإشعارات');
-          return;
-        }
-        
         if (Notification.permission === 'denied') {
-          toast.error('تم رفض الإشعارات. يرجى السماح بالإشعارات من إعدادات المتصفح.');
+          alert('تم رفض الإشعارات. يرجى السماح بالإشعارات من إعدادات المتصفح.');
           return;
         }
-        
         await subscribeToNotifications();
       }
     } catch (err) {
       console.error("خطأ في تبديل حالة الإشعارات:", err);
-    } finally {
-      setLoading(false);
-      
-      // إعادة تعيين حالة المعالجة بعد فترة
-      if (timeoutRef.current) {
-        window.clearTimeout(timeoutRef.current);
-      }
-      
-      timeoutRef.current = window.setTimeout(() => {
-        processingRef.current = false;
-      }, 2000);
     }
   };
 
-  // تنظيف المؤقت عند إزالة المكون
-  useEffect(() => {
-    return () => {
-      if (timeoutRef.current) {
-        window.clearTimeout(timeoutRef.current);
-      }
-    };
-  }, []);
-
+  // معالج النقر على شارة العدد للانتقال إلى صفحة التذاكر
   const handleBadgeClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
+    e.stopPropagation(); // منع انتشار الحدث إلى زر الجرس
     navigate('/tickets');
   };
 
@@ -142,11 +101,9 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ className })
               size="icon"
               className={className}
               onClick={handleToggleNotifications}
-              disabled={loading}
+              disabled={subscribing}
             >
-              {loading || subscribing ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
-              ) : subscription ? (
+              {subscription ? (
                 <Bell className="h-5 w-5" />
               ) : (
                 <BellOff className="h-5 w-5" />

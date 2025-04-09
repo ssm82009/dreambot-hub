@@ -77,8 +77,7 @@ export type SeoSettingsFormValues = {
   enableSitemap: boolean;
 };
 
-export interface ActiveSections {
-  dashboard: boolean;
+export type ActiveSections = {
   aiSettings: boolean;
   interpretationSettings: boolean;
   pricingSettings: boolean;
@@ -91,8 +90,14 @@ export interface ActiveSections {
   theme: boolean;
   seo: boolean;
   homeSections: boolean;
-  notifications: boolean;
-}
+  navbarManagement: boolean;
+  pageManagement: boolean;
+  seoSettings: boolean;
+  themeSettings: boolean;
+  ticketManagement: boolean;
+  transactionManagement: boolean;
+  userManagement: boolean;
+};
 
 export type AdminProviderProps = {
   children: React.ReactNode;

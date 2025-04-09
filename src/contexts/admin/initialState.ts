@@ -85,7 +85,6 @@ export const initialHomeSections: HomeSectionItem[] = [
 ];
 
 export const initialActiveSections: ActiveSections = {
-  dashboard: false,
   aiSettings: false,
   interpretationSettings: false,
   pricingSettings: false,
@@ -98,5 +97,11 @@ export const initialActiveSections: ActiveSections = {
   theme: false,
   seo: false,
   homeSections: false,
-  notifications: false
+  navbarManagement: false,
+  pageManagement: false,
+  seoSettings: false,
+  themeSettings: false,
+  ticketManagement: false,
+  transactionManagement: false,
+  userManagement: false
 };

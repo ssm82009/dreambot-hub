@@ -114,48 +114,6 @@ export type Database = {
         }
         Relationships: []
       }
-      firebase_config: {
-        Row: {
-          api_key: string
-          app_id: string
-          auth_domain: string
-          created_at: string
-          id: string
-          measurement_id: string | null
-          messaging_sender_id: string
-          project_id: string
-          service_account_key: Json | null
-          storage_bucket: string
-          updated_at: string
-        }
-        Insert: {
-          api_key: string
-          app_id: string
-          auth_domain: string
-          created_at?: string
-          id?: string
-          measurement_id?: string | null
-          messaging_sender_id: string
-          project_id: string
-          service_account_key?: Json | null
-          storage_bucket: string
-          updated_at?: string
-        }
-        Update: {
-          api_key?: string
-          app_id?: string
-          auth_domain?: string
-          created_at?: string
-          id?: string
-          measurement_id?: string | null
-          messaging_sender_id?: string
-          project_id?: string
-          service_account_key?: Json | null
-          storage_bucket?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
       interpretation_settings: {
         Row: {
           created_at: string | null
@@ -213,39 +171,6 @@ export type Database = {
           title?: string
           updated_at?: string | null
           url?: string
-        }
-        Relationships: []
-      }
-      notification_logs: {
-        Row: {
-          body: string
-          id: string
-          read_at: string | null
-          sent_at: string
-          title: string
-          type: string | null
-          url: string | null
-          user_id: string
-        }
-        Insert: {
-          body: string
-          id?: string
-          read_at?: string | null
-          sent_at?: string
-          title: string
-          type?: string | null
-          url?: string | null
-          user_id: string
-        }
-        Update: {
-          body?: string
-          id?: string
-          read_at?: string | null
-          sent_at?: string
-          title?: string
-          type?: string | null
-          url?: string | null
-          user_id?: string
         }
         Relationships: []
       }
@@ -417,33 +342,6 @@ export type Database = {
           pro_plan_name?: string
           pro_plan_price?: number
           updated_at?: string | null
-        }
-        Relationships: []
-      }
-      push_subscriptions: {
-        Row: {
-          auth: string
-          created_at: string
-          endpoint: string
-          id: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          auth: string
-          created_at?: string
-          endpoint: string
-          id?: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          auth?: string
-          created_at?: string
-          endpoint?: string
-          id?: string
-          updated_at?: string
-          user_id?: string
         }
         Relationships: []
       }

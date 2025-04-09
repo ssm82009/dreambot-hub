@@ -1,9 +1,5 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { 
-  sendNotification as sendFirebaseNotification
-} from './firebaseService';
-import { toast } from 'sonner';
 
 interface NotificationPayload {
   title: string;
@@ -12,33 +8,26 @@ interface NotificationPayload {
   type?: 'general' | 'ticket' | 'payment' | 'subscription';
 }
 
-// جمع رموز FCM المخزنة محليًا للمستخدم الحالي
-function getUserTokens(): string[] {
-  const token = localStorage.getItem('fcm_token');
-  return token ? [token] : [];
+interface PushSubscriptionData {
+  endpoint: string;
+  auth: string; // JSON string of subscription
 }
 
 // استدعاء وظيفة Edge Function لإرسال الإشعار
 export async function sendNotification(userId: string, payload: NotificationPayload) {
   try {
-    // تخزين رموز FCM للمستخدم
-    const tokens = getUserTokens();
-    
-    if (tokens.length === 0) {
-      toast.error('لا توجد أجهزة مسجلة لاستلام الإشعارات');
-      return { success: false, message: 'لا توجد أجهزة مسجلة' };
-    }
-    
-    const result = await sendFirebaseNotification(tokens, payload);
-    
-    if (result && result.success) {
-      toast.success(`تم إرسال الإشعار بنجاح (${result.sentCount || 0} جهاز)`);
-    }
-    
-    return result;
+    // استدعاء وظيفة Edge Function لإرسال الإشعار
+    const { data, error } = await supabase.functions.invoke('send-notification', {
+      body: {
+        userId,
+        notification: payload
+      }
+    });
+
+    if (error) throw error;
+    return data;
   } catch (error) {
     console.error('خطأ في إرسال الإشعار:', error);
-    toast.error('فشل في إرسال الإشعار');
     throw error;
   }
 }
@@ -46,59 +35,61 @@ export async function sendNotification(userId: string, payload: NotificationPayl
 // إرسال إشعار لجميع المشرفين
 export async function sendNotificationToAdmin(payload: NotificationPayload) {
   try {
-    // تسجيل محاولة إرسال الإشعار
-    console.log('محاولة إرسال إشعار للمشرفين:', payload);
-    
-    // في بيئة حقيقية، يجب جمع رموز المشرفين
-    // لأغراض الاختبار، سنستخدم الرموز المحلية
-    const tokens = getUserTokens();
-    
-    // في بيئة حقيقية، يمكن تخزين رموز المشرفين في تخزين محلي أو في الذاكرة
-    const result = await sendFirebaseNotification(tokens, payload);
-    
-    if (result && result.success) {
-      toast.success(`تم إرسال الإشعار للمشرفين (${result.sentCount || 0} جهاز)`);
-    }
-    
-    return result;
-  } catch (error) {
-    console.error('خطأ في إرسال الإشعار للمشرفين:', error);
-    toast.error('فشل في إرسال الإشعار للمشرفين');
-    throw error;
-  }
-}
-
-// إرسال إشعار لجميع المستخدمين
-export async function sendNotificationToAllUsers(payload: NotificationPayload) {
-  try {
-    console.log('محاولة إرسال إشعار لجميع المستخدمين:', payload);
-    
-    // في بيئة الاختبار، نستخدم الرموز المحلية
-    const tokens = getUserTokens();
-    
+    // استدعاء وظيفة Edge Function لإرسال الإشعار لجميع المشرفين
     const { data, error } = await supabase.functions.invoke('send-notification', {
       body: {
-        tokens,
+        adminOnly: true,
         notification: payload
       }
     });
 
-    if (error) {
-      console.error('خطأ في استدعاء وظيفة Edge Function:', error);
-      toast.error('فشل في إرسال الإشعار لجميع المستخدمين');
-      throw error;
-    }
-    
-    console.log('نتيجة إرسال الإشعار لجميع المستخدمين:', data);
-    
-    if (data && data.success) {
-      toast.success(`تم إرسال الإشعار لجميع المستخدمين (${data.sentCount || 0} جهاز)`);
-    }
-    
+    if (error) throw error;
     return data;
   } catch (error) {
-    console.error('خطأ في إرسال الإشعار لجميع المستخدمين:', error);
-    toast.error('فشل في إرسال الإشعار لجميع المستخدمين');
+    console.error('خطأ في إرسال الإشعار للمشرفين:', error);
+    throw error;
+  }
+}
+
+// تخزين اشتراك الإشعارات الجديد
+export async function storeSubscription(subscription: PushSubscription) {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) throw new Error('المستخدم غير مسجل دخول');
+
+    const { data, error } = await supabase.functions.invoke('store-subscription', {
+      body: {
+        userId: session.user.id,
+        endpoint: subscription.endpoint,
+        auth: JSON.stringify(subscription)
+      }
+    });
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('خطأ في تخزين اشتراك الإشعارات:', error);
+    throw error;
+  }
+}
+
+// حذف اشتراك الإشعارات
+export async function removeSubscription(endpoint: string) {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) throw new Error('المستخدم غير مسجل دخول');
+
+    const { data, error } = await supabase.functions.invoke('remove-subscription', {
+      body: {
+        userId: session.user.id,
+        endpoint
+      }
+    });
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('خطأ في حذف اشتراك الإشعارات:', error);
     throw error;
   }
 }
