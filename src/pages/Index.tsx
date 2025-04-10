@@ -58,6 +58,12 @@ const Index = () => {
     return section && section.content && section.content[field] ? section.content[field] : defaultValue;
   };
 
+  // الحصول على نمط القسم إن وجد
+  const getSectionStyle = (sectionId: string, property: string, defaultValue: string = '') => {
+    const section = sections.find(s => s.id === sectionId);
+    return section && section.style && section.style[property] ? section.style[property] : defaultValue;
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -68,7 +74,14 @@ const Index = () => {
         />}
         
         {isVisible('tryIt') && (
-          <section id="try-it" className="py-16 bg-muted">
+          <section 
+            id="try-it" 
+            className="py-16" 
+            style={{
+              backgroundColor: getSectionStyle('tryIt', 'backgroundColor', '#f3f4f6'),
+              color: getSectionStyle('tryIt', 'textColor', '#000000')
+            }}
+          >
             <div className="container mx-auto px-4 sm:px-6 lg:px-8">
               <div className="text-center mb-12 rtl">
                 <h2 className="text-3xl font-bold mb-4">{getSectionContent('tryIt', 'title', '.  .  .')}</h2>
@@ -82,7 +95,13 @@ const Index = () => {
         )}
         
         {isVisible('howItWorks') && (
-          <section className="py-20 rtl">
+          <section 
+            className="py-20 rtl" 
+            style={{
+              backgroundColor: getSectionStyle('howItWorks', 'backgroundColor', '#ffffff'),
+              color: getSectionStyle('howItWorks', 'textColor', '#000000')
+            }}
+          >
             <div className="container mx-auto px-4 sm:px-6 lg:px-8">
               <div className="text-center mb-16">
                 <h2 className="text-3xl font-bold mb-4">{getSectionContent('howItWorks', 'title', 'كيف يعمل تفسير الأحلام بالذكاء الاصطناعي؟')}</h2>
