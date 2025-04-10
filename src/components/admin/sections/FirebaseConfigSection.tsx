@@ -1,295 +1,241 @@
 
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from '@/components/ui/form';
 import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Loader2, Save } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, Save } from 'lucide-react';
 
-const firebaseConfigSchema = z.object({
-  project_id: z.string().min(1, 'حقل مطلوب'),
-  api_key: z.string().min(1, 'حقل مطلوب'),
-  auth_domain: z.string().min(1, 'حقل مطلوب'),
-  storage_bucket: z.string().min(1, 'حقل مطلوب'),
-  messaging_sender_id: z.string().min(1, 'حقل مطلوب'),
-  app_id: z.string().min(1, 'حقل مطلوب'),
-  measurement_id: z.string().optional(),
-});
+interface FirebaseConfig {
+  id?: string;
+  api_key: string;
+  auth_domain: string;
+  project_id: string;
+  storage_bucket: string;
+  messaging_sender_id: string;
+  app_id: string;
+  measurement_id?: string;
+}
 
-type FirebaseFormValues = z.infer<typeof firebaseConfigSchema>;
-
-const FirebaseConfigSection: React.FC = () => {
+const FirebaseConfigSection = () => {
   const [loading, setLoading] = useState(false);
-  const [configExists, setConfigExists] = useState(false);
-  const [configId, setConfigId] = useState<string | null>(null);
 
-  const form = useForm<FirebaseFormValues>({
-    resolver: zodResolver(firebaseConfigSchema),
+  const form = useForm<FirebaseConfig>({
     defaultValues: {
-      project_id: '',
       api_key: '',
       auth_domain: '',
+      project_id: '',
       storage_bucket: '',
       messaging_sender_id: '',
       app_id: '',
       measurement_id: '',
-    },
+    }
   });
 
-  // جلب إعدادات Firebase الحالية
   useEffect(() => {
-    const fetchFirebaseConfig = async () => {
+    const fetchConfig = async () => {
+      setLoading(true);
       try {
-        setLoading(true);
         const { data, error } = await supabase
           .from('firebase_config')
           .select('*')
-          .limit(1);
+          .limit(1)
+          .single();
 
-        if (error) throw error;
+        if (error && error.code !== 'PGRST116') { // PGRST116 is no rows returned
+          throw error;
+        }
 
-        if (data && data.length > 0) {
-          const config = data[0];
-          setConfigExists(true);
-          setConfigId(config.id);
-          
-          form.reset({
-            project_id: config.project_id,
-            api_key: config.api_key,
-            auth_domain: config.auth_domain,
-            storage_bucket: config.storage_bucket,
-            messaging_sender_id: config.messaging_sender_id,
-            app_id: config.app_id,
-            measurement_id: config.measurement_id || '',
-          });
+        if (data) {
+          form.reset(data);
         }
       } catch (error) {
-        console.error('خطأ في جلب إعدادات Firebase:', error);
-        toast.error('فشل في جلب إعدادات Firebase');
+        console.error('Error fetching Firebase config:', error);
+        toast.error('خطأ في جلب بيانات Firebase');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchFirebaseConfig();
+    fetchConfig();
   }, [form]);
 
-  // حفظ إعدادات Firebase
-  const onSubmit = async (values: FirebaseFormValues) => {
+  const onSubmit = async (values: FirebaseConfig) => {
+    setLoading(true);
     try {
-      setLoading(true);
+      const configToSave: FirebaseConfig = {
+        api_key: values.api_key,
+        auth_domain: values.auth_domain,
+        project_id: values.project_id,
+        storage_bucket: values.storage_bucket,
+        messaging_sender_id: values.messaging_sender_id,
+        app_id: values.app_id,
+        measurement_id: values.measurement_id || ''
+      };
 
-      if (configExists && configId) {
-        // تحديث الإعدادات الموجودة
-        const { error } = await supabase
-          .from('firebase_config')
-          .update({
-            project_id: values.project_id,
-            api_key: values.api_key,
-            auth_domain: values.auth_domain,
-            storage_bucket: values.storage_bucket, 
-            messaging_sender_id: values.messaging_sender_id,
-            app_id: values.app_id,
-            measurement_id: values.measurement_id,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', configId);
+      const { data, error } = await supabase
+        .from('firebase_config')
+        .select('id')
+        .limit(1)
+        .single();
 
-        if (error) throw error;
-        
-        toast.success('تم تحديث إعدادات Firebase بنجاح');
-      } else {
-        // إنشاء إعدادات جديدة
-        const { data, error } = await supabase
-          .from('firebase_config')
-          .insert({
-            project_id: values.project_id,
-            api_key: values.api_key,
-            auth_domain: values.auth_domain,
-            storage_bucket: values.storage_bucket,
-            messaging_sender_id: values.messaging_sender_id,
-            app_id: values.app_id,
-            measurement_id: values.measurement_id,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          })
-          .select();
-
-        if (error) throw error;
-        
-        if (data && data.length > 0) {
-          setConfigId(data[0].id);
-          setConfigExists(true);
-        }
-        
-        toast.success('تم حفظ إعدادات Firebase بنجاح');
+      if (error && error.code !== 'PGRST116') {
+        throw error;
       }
 
-      // إعادة تحميل الصفحة لتفعيل الإعدادات الجديدة
-      setTimeout(() => {
-        window.location.reload();
-      }, 1500);
+      if (data) {
+        // Update existing config
+        const { error: updateError } = await supabase
+          .from('firebase_config')
+          .update(configToSave)
+          .eq('id', data.id);
+
+        if (updateError) throw updateError;
+      } else {
+        // Insert new config
+        const { error: insertError } = await supabase
+          .from('firebase_config')
+          .insert([configToSave]);
+
+        if (insertError) throw insertError;
+      }
+
+      toast.success('تم حفظ إعدادات Firebase بنجاح');
     } catch (error) {
-      console.error('خطأ في حفظ إعدادات Firebase:', error);
-      toast.error('فشل في حفظ إعدادات Firebase');
+      console.error('Error saving Firebase config:', error);
+      toast.error('خطأ في حفظ إعدادات Firebase');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Card>
+    <Card className="mb-6">
       <CardHeader>
         <CardTitle>إعدادات Firebase</CardTitle>
         <CardDescription>
-          قم بإعداد خدمة Firebase Cloud Messaging (FCM) لإرسال الإشعارات
+          قم بتكوين إعدادات Firebase لدعم الإشعارات
         </CardDescription>
       </CardHeader>
-      <CardContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <div className="grid grid-cols-1 gap-6">
-              <FormField
-                control={form.control}
-                name="project_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>معرف المشروع (Project ID)</FormLabel>
-                    <FormControl>
-                      <Input placeholder="my-project-12345" {...field} />
-                    </FormControl>
-                    <FormDescription>
-                      معرف المشروع من إعدادات Firebase
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="api_key"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>مفتاح API (API Key)</FormLabel>
-                    <FormControl>
-                      <Input placeholder="AIzaSyA-EXAMPLE-KEY" {...field} />
-                    </FormControl>
-                    <FormDescription>
-                      مفتاح API من إعدادات Firebase
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="auth_domain"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>نطاق المصادقة (Auth Domain)</FormLabel>
-                    <FormControl>
-                      <Input placeholder="my-project-12345.firebaseapp.com" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="storage_bucket"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>خانة التخزين (Storage Bucket)</FormLabel>
-                      <FormControl>
-                        <Input placeholder="my-project-12345.appspot.com" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="messaging_sender_id"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>معرف المرسل (Messaging Sender ID)</FormLabel>
-                      <FormControl>
-                        <Input placeholder="123456789012" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="app_id"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>معرف التطبيق (App ID)</FormLabel>
-                      <FormControl>
-                        <Input placeholder="1:123456789012:web:abcdef1234567890" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="measurement_id"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>معرف القياس (Measurement ID) - اختياري</FormLabel>
-                      <FormControl>
-                        <Input placeholder="G-XXXXXXXXXX" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </div>
-
-            <div className="flex justify-end">
-              <Button type="submit" disabled={loading}>
-                {loading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    جاري الحفظ...
-                  </>
-                ) : (
-                  <>
-                    <Save className="mr-2 h-4 w-4" />
-                    حفظ الإعدادات
-                  </>
-                )}
-              </Button>
-            </div>
-          </form>
-        </Form>
-
-        <div className="mt-6 p-4 border rounded-lg bg-amber-50 border-amber-200">
-          <h3 className="text-sm font-medium text-amber-800 mb-2">تذكير مهم</h3>
-          <p className="text-xs text-amber-700">
-            لا تنسَ إضافة سر خادم FCM (FCM Server Key) في الإعدادات السرية للوظائف الطرفية (Edge Functions).
-            يمكنك الحصول على هذا المفتاح من لوحة تحكم Firebase عبر Project settings &gt; Cloud Messaging &gt; Server key.
-          </p>
-        </div>
-      </CardContent>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)}>
+          <CardContent className="space-y-4">
+            <FormField
+              control={form.control}
+              name="api_key"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>API Key</FormLabel>
+                  <FormControl>
+                    <Input placeholder="AIza..." {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="auth_domain"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Auth Domain</FormLabel>
+                  <FormControl>
+                    <Input placeholder="project-id.firebaseapp.com" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="project_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Project ID</FormLabel>
+                  <FormControl>
+                    <Input placeholder="project-id" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="storage_bucket"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Storage Bucket</FormLabel>
+                  <FormControl>
+                    <Input placeholder="project-id.appspot.com" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="messaging_sender_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Messaging Sender ID</FormLabel>
+                  <FormControl>
+                    <Input placeholder="123456789012" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="app_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>App ID</FormLabel>
+                  <FormControl>
+                    <Input placeholder="1:123456789012:web:abc123def456" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="measurement_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Measurement ID (optional)</FormLabel>
+                  <FormControl>
+                    <Input placeholder="G-ABCDEF1234" {...field} />
+                  </FormControl>
+                  <FormDescription>
+                    يستخدم لتتبع Google Analytics (اختياري)
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </CardContent>
+          <CardFooter className="flex justify-end">
+            <Button type="submit" disabled={loading}>
+              {loading ? (
+                <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="ml-2 h-4 w-4" />
+              )}
+              حفظ الإعدادات
+            </Button>
+          </CardFooter>
+        </form>
+      </Form>
     </Card>
   );
 };

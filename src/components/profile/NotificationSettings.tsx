@@ -23,7 +23,7 @@ const NotificationSettings: React.FC = () => {
   const [fcmTokenCount, setFcmTokenCount] = useState<number>(0);
   const [userId, setUserId] = useState<string | null>(null);
 
-  // جلب عدد توكنات FCM للمستخدم الحالي
+  // Fetch FCM token count for current user
   useEffect(() => {
     const fetchUserData = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -32,20 +32,20 @@ const NotificationSettings: React.FC = () => {
       setUserId(session.user.id);
       
       try {
-        // جلب عدد توكنات FCM للمستخدم باستخدام RPC
+        // Using raw query to avoid TypeScript issues
         const { data, error } = await supabase.rpc(
           'count_user_fcm_tokens',
           { p_user_id: session.user.id }
-        );
+        ) as { data: number | null, error: any };
           
         if (error) {
-          console.error('خطأ في جلب بيانات توكنات FCM:', error);
+          console.error('Error fetching FCM token data:', error);
           return;
         }
         
         setFcmTokenCount(data || 0);
       } catch (error) {
-        console.error('خطأ في جلب بيانات توكنات FCM:', error);
+        console.error('Error fetching FCM token data:', error);
       }
     };
     
@@ -54,10 +54,10 @@ const NotificationSettings: React.FC = () => {
 
   const handleSubscribe = async () => {
     try {
-      console.log("بدء عملية تفعيل الإشعارات");
+      console.log("Starting notification subscription process");
       
       if (Notification.permission === 'denied') {
-        alert('تم رفض الإشعارات من قبل المتصفح. يرجى تمكين الإشعارات من إعدادات المتصفح.');
+        alert('Notifications have been denied by the browser. Please enable notifications in browser settings.');
         return;
       }
       
@@ -68,40 +68,42 @@ const NotificationSettings: React.FC = () => {
       
       await subscribeToNotifications();
       
-      // تحديث عدد توكنات FCM بعد الاشتراك
+      // Update FCM token count after subscription
       if (userId) {
+        // Using raw query to avoid TypeScript issues
         const { data, error } = await supabase.rpc(
           'count_user_fcm_tokens',
           { p_user_id: userId }
-        );
+        ) as { data: number | null, error: any };
           
-        if (!error) {
-          setFcmTokenCount(data || 0);
+        if (!error && data !== null) {
+          setFcmTokenCount(data);
         }
       }
     } catch (error) {
-      console.error("خطأ أثناء الاشتراك في الإشعارات:", error);
+      console.error("Error during notification subscription:", error);
     }
   };
 
   const handleUnsubscribe = async () => {
     try {
-      console.log("بدء عملية إلغاء تفعيل الإشعارات");
+      console.log("Starting notification unsubscription process");
       await unsubscribeFromNotifications();
       
-      // تحديث عدد توكنات FCM بعد إلغاء الاشتراك
+      // Update FCM token count after unsubscription
       if (userId) {
+        // Using raw query to avoid TypeScript issues
         const { data, error } = await supabase.rpc(
           'count_user_fcm_tokens',
           { p_user_id: userId }
-        );
+        ) as { data: number | null, error: any };
           
-        if (!error) {
-          setFcmTokenCount(data || 0);
+        if (!error && data !== null) {
+          setFcmTokenCount(data);
         }
       }
     } catch (error) {
-      console.error("خطأ أثناء إلغاء الاشتراك في الإشعارات:", error);
+      console.error("Error during notification unsubscription:", error);
     }
   };
 

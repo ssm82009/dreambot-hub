@@ -10,45 +10,45 @@ type FcmToken = {
   created_at: string;
 };
 
-// تسجيل توكن FCM في قاعدة بيانات Supabase
+// Register FCM token in Supabase database
 export const registerFCMToken = async (userId: string): Promise<boolean> => {
   try {
     if (!userId) {
-      console.error('لم يتم توفير معرف المستخدم');
+      console.error('User ID not provided');
       return false;
     }
 
-    console.log('جاري الحصول على توكن FCM للمستخدم:', userId);
+    console.log('Getting FCM token for user:', userId);
     const token = await getFCMToken();
     
     if (!token) {
-      console.error('فشل الحصول على توكن FCM');
+      console.error('Failed to get FCM token');
       return false;
     }
 
-    // التحقق من وجود التوكن في قاعدة البيانات
-    // استخدام rpc لتجنب مشاكل TypeScript مع الجداول الديناميكية
-    const { data: existingTokens, error: checkError } = await supabase.rpc(
+    // Check if token exists in database
+    // Using raw query to avoid TypeScript issues
+    const { data: existingTokenCount, error: checkError } = await supabase.rpc(
       'check_fcm_token_exists',
       { 
         p_token: token,
         p_user_id: userId
       }
-    );
+    ) as { data: number | null, error: any };
 
     if (checkError) {
-      console.error('خطأ في التحقق من وجود التوكن:', checkError);
+      console.error('Error checking token existence:', checkError);
       return false;
     }
 
-    // إذا كان التوكن موجودًا بالفعل، نخرج
-    if (existingTokens && existingTokens > 0) {
-      console.log('التوكن مسجل بالفعل');
+    // If token already exists, exit
+    if (existingTokenCount && existingTokenCount > 0) {
+      console.log('Token already registered');
       return true;
     }
 
-    // إضافة التوكن الجديد
-    // استخدام rpc لتجنب مشاكل TypeScript مع الجداول الديناميكية
+    // Add new token
+    // Using raw query to avoid TypeScript issues
     const { error: insertError } = await supabase.rpc(
       'insert_fcm_token',
       {
@@ -58,36 +58,36 @@ export const registerFCMToken = async (userId: string): Promise<boolean> => {
     );
 
     if (insertError) {
-      console.error('خطأ في تسجيل توكن FCM:', insertError);
+      console.error('Error registering FCM token:', insertError);
       return false;
     }
 
-    console.log('تم تسجيل توكن FCM بنجاح');
+    console.log('FCM token registered successfully');
     return true;
   } catch (error) {
-    console.error('خطأ في تسجيل توكن FCM:', error);
+    console.error('Error registering FCM token:', error);
     return false;
   }
 };
 
-// إلغاء تسجيل توكن FCM
+// Unregister FCM token
 export const unregisterFCMToken = async (userId: string): Promise<boolean> => {
   try {
     const token = await getFCMToken();
     
     if (!token) {
-      // إذا لم نستطع الحصول على التوكن الحالي، نحاول حذف جميع توكنات المستخدم
+      // If we can't get current token, try to delete all user tokens
       const { error: deleteError } = await supabase.rpc(
         'delete_all_user_fcm_tokens',
         { p_user_id: userId }
       );
 
       if (deleteError) {
-        console.error('خطأ في حذف كل توكنات المستخدم:', deleteError);
+        console.error('Error deleting all user tokens:', deleteError);
         return false;
       }
     } else {
-      // حذف توكن معين
+      // Delete specific token
       const { error: deleteError } = await supabase.rpc(
         'delete_fcm_token',
         { 
@@ -97,18 +97,18 @@ export const unregisterFCMToken = async (userId: string): Promise<boolean> => {
       );
 
       if (deleteError) {
-        console.error('خطأ في حذف توكن معين:', deleteError);
+        console.error('Error deleting specific token:', deleteError);
         return false;
       }
 
-      // حذف التوكن من Firebase
+      // Delete token from Firebase
       await deleteFCMToken();
     }
 
-    console.log('تم إلغاء تسجيل توكن FCM بنجاح');
+    console.log('FCM token unregistered successfully');
     return true;
   } catch (error) {
-    console.error('خطأ في إلغاء تسجيل توكن FCM:', error);
+    console.error('Error unregistering FCM token:', error);
     return false;
   }
 };
