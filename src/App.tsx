@@ -27,6 +27,8 @@ import { AdminProvider } from './contexts/admin/AdminProvider';
 import { usePageMeta } from './hooks/usePageMeta';
 import { useScrollToTop } from './hooks/useScrollToTop';
 import { useServiceWorkerRegistration } from './hooks/useServiceWorkerRegistration';
+import { useEffect } from 'react';
+import { setupFirebase } from './services/firebase/firebaseClient';
 
 // Setup query client
 const queryClient = new QueryClient();
@@ -40,6 +42,19 @@ const AdminRoutes = () => {
 
 // Main App component
 const App = () => {
+  // إعداد Firebase عند بدء التطبيق
+  useEffect(() => {
+    const initFirebase = async () => {
+      try {
+        await setupFirebase();
+      } catch (error) {
+        console.error('Error initializing Firebase:', error);
+      }
+    };
+    
+    initFirebase();
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <AdminProvider>

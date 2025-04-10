@@ -1,5 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
+import { registerFCMToken } from './firebase/fcmTokenService';
 
 interface NotificationPayload {
   title: string;
@@ -89,6 +90,14 @@ export async function storeSubscription(subscription: PushSubscription) {
     if (error) {
       console.error('خطأ في استدعاء وظيفة Edge Function لتخزين الاشتراك:', error);
       throw error;
+    }
+    
+    // تسجيل توكن FCM أيضًا إذا كان المستخدم مسجل الدخول
+    try {
+      await registerFCMToken(session.user.id);
+    } catch (fcmError) {
+      console.error('خطأ في تسجيل توكن FCM:', fcmError);
+      // نستمر حتى في حال فشل تسجيل توكن FCM
     }
     
     console.log('نتيجة تخزين اشتراك الإشعارات:', data);

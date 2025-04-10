@@ -1,11 +1,12 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Bell, BellOff, Loader2, AlertCircle } from 'lucide-react';
 import { useNotifications } from '@/hooks/useNotifications';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { supabase } from '@/integrations/supabase/client';
 
 const NotificationSettings: React.FC = () => {
   const { 
@@ -13,10 +14,40 @@ const NotificationSettings: React.FC = () => {
     granted, 
     subscription, 
     subscribing,
+    firebaseReady,
     requestPermission, 
     subscribeToNotifications, 
     unsubscribeFromNotifications 
   } = useNotifications();
+
+  const [fcmTokenCount, setFcmTokenCount] = useState<number>(0);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  // جلب عدد توكنات FCM للمستخدم الحالي
+  useEffect(() => {
+    const fetchUserData = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) return;
+      
+      setUserId(session.user.id);
+      
+      try {
+        // جلب عدد توكنات FCM للمستخدم
+        const { count, error } = await supabase
+          .from('fcm_tokens')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', session.user.id);
+          
+        if (!error && count !== null) {
+          setFcmTokenCount(count);
+        }
+      } catch (error) {
+        console.error('خطأ في جلب بيانات توكنات FCM:', error);
+      }
+    };
+    
+    fetchUserData();
+  }, []);
 
   const handleSubscribe = async () => {
     try {
@@ -33,6 +64,18 @@ const NotificationSettings: React.FC = () => {
       }
       
       await subscribeToNotifications();
+      
+      // تحديث عدد توكنات FCM بعد الاشتراك
+      if (userId) {
+        const { count } = await supabase
+          .from('fcm_tokens')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', userId);
+          
+        if (count !== null) {
+          setFcmTokenCount(count);
+        }
+      }
     } catch (error) {
       console.error("خطأ أثناء الاشتراك في الإشعارات:", error);
     }
@@ -42,6 +85,18 @@ const NotificationSettings: React.FC = () => {
     try {
       console.log("بدء عملية إلغاء تفعيل الإشعارات");
       await unsubscribeFromNotifications();
+      
+      // تحديث عدد توكنات FCM بعد إلغاء الاشتراك
+      if (userId) {
+        const { count } = await supabase
+          .from('fcm_tokens')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', userId);
+          
+        if (count !== null) {
+          setFcmTokenCount(count);
+        }
+      }
     } catch (error) {
       console.error("خطأ أثناء إلغاء الاشتراك في الإشعارات:", error);
     }
@@ -103,6 +158,13 @@ const NotificationSettings: React.FC = () => {
               <p className="text-sm text-muted-foreground">
                 استلام إشعارات حول حالة الاشتراك، التذاكر، والمدفوعات
               </p>
+              {firebaseReady && (
+                <p className="text-xs text-emerald-600 mt-1">
+                  <span className="inline-block w-2 h-2 bg-emerald-500 rounded-full mr-1"></span>
+                  دعم Firebase نشط
+                  {fcmTokenCount > 0 && ` (${fcmTokenCount} جهاز)`}
+                </p>
+              )}
             </div>
             {subscription ? (
               <Button

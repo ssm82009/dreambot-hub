@@ -192,6 +192,32 @@ self.addEventListener('push', (event) => {
   }
 });
 
+// استقبال رسائل Firebase Cloud Messaging
+self.addEventListener('firebase-messaging-sw-message', (event) => {
+  console.log('Service Worker: تم استلام رسالة FCM', event.data);
+  
+  const { notification } = event.data;
+  if (!notification) {
+    return;
+  }
+  
+  // عرض الإشعار باستخدام واجهة برمجة التطبيقات showNotification
+  const options = {
+    body: notification.body || 'تم استلام إشعار جديد',
+    icon: notification.icon || '/android-chrome-192x192.png',
+    badge: '/favicon-32x32.png',
+    dir: 'rtl',
+    lang: 'ar',
+    vibrate: [100, 50, 100],
+    data: {
+      url: notification.click_action || '/',
+      type: notification.type || 'general'
+    }
+  };
+  
+  self.registration.showNotification(notification.title || 'تأويل', options);
+});
+
 // عند النقر على الإشعار
 self.addEventListener('notificationclick', (event) => {
   console.log('Service Worker: تم النقر على الإشعار', event);
@@ -241,3 +267,11 @@ self.addEventListener('message', (event) => {
     self.skipWaiting();
   }
 });
+
+// دعم Firebase Cloud Messaging
+// يجب إضافة هذا التعليق البرمجي لتفعيل دعم FCM في خدمة العامل
+importScripts('https://www.gstatic.com/firebasejs/9.19.1/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/9.19.1/firebase-messaging-compat.js');
+
+// سيتم تهيئة Firebase من قبل FCM تلقائيًا
+// لا نحتاج إلى تعيين التكوين هنا
