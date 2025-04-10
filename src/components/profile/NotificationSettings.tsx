@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -32,18 +31,18 @@ const NotificationSettings: React.FC = () => {
       setUserId(session.user.id);
       
       try {
-        // Using raw query to avoid TypeScript issues
-        const { data, error } = await supabase.rpc(
-          'count_user_fcm_tokens',
-          { p_user_id: session.user.id }
-        ) as { data: number | null, error: any };
+        // Use direct query instead of RPC
+        const { data, error } = await supabase
+          .from('fcm_tokens')
+          .select('id')
+          .eq('user_id', session.user.id);
           
         if (error) {
           console.error('Error fetching FCM token data:', error);
           return;
         }
         
-        setFcmTokenCount(data || 0);
+        setFcmTokenCount(data?.length || 0);
       } catch (error) {
         console.error('Error fetching FCM token data:', error);
       }
@@ -70,14 +69,13 @@ const NotificationSettings: React.FC = () => {
       
       // Update FCM token count after subscription
       if (userId) {
-        // Using raw query to avoid TypeScript issues
-        const { data, error } = await supabase.rpc(
-          'count_user_fcm_tokens',
-          { p_user_id: userId }
-        ) as { data: number | null, error: any };
+        const { data, error } = await supabase
+          .from('fcm_tokens')
+          .select('id')
+          .eq('user_id', userId);
           
-        if (!error && data !== null) {
-          setFcmTokenCount(data);
+        if (!error) {
+          setFcmTokenCount(data?.length || 0);
         }
       }
     } catch (error) {
@@ -92,14 +90,13 @@ const NotificationSettings: React.FC = () => {
       
       // Update FCM token count after unsubscription
       if (userId) {
-        // Using raw query to avoid TypeScript issues
-        const { data, error } = await supabase.rpc(
-          'count_user_fcm_tokens',
-          { p_user_id: userId }
-        ) as { data: number | null, error: any };
+        const { data, error } = await supabase
+          .from('fcm_tokens')
+          .select('id')
+          .eq('user_id', userId);
           
-        if (!error && data !== null) {
-          setFcmTokenCount(data);
+        if (!error) {
+          setFcmTokenCount(data?.length || 0);
         }
       }
     } catch (error) {

@@ -26,15 +26,12 @@ export const registerFCMToken = async (userId: string): Promise<boolean> => {
       return false;
     }
 
-    // Check if token exists in database
-    // Using raw query to avoid TypeScript issues
-    const { data: existingTokenCount, error: checkError } = await supabase.rpc(
-      'check_fcm_token_exists',
-      { 
-        p_token: token,
-        p_user_id: userId
-      }
-    ) as { data: number | null, error: any };
+    // Check if token exists in database using raw query
+    const { data: existingTokens, error: checkError } = await supabase
+      .from('fcm_tokens')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('token', token);
 
     if (checkError) {
       console.error('Error checking token existence:', checkError);
@@ -42,20 +39,18 @@ export const registerFCMToken = async (userId: string): Promise<boolean> => {
     }
 
     // If token already exists, exit
-    if (existingTokenCount && existingTokenCount > 0) {
+    if (existingTokens && existingTokens.length > 0) {
       console.log('Token already registered');
       return true;
     }
 
-    // Add new token
-    // Using raw query to avoid TypeScript issues
-    const { error: insertError } = await supabase.rpc(
-      'insert_fcm_token',
-      {
-        p_user_id: userId,
-        p_token: token
-      }
-    );
+    // Add new token using insert
+    const { error: insertError } = await supabase
+      .from('fcm_tokens')
+      .insert([{
+        user_id: userId,
+        token: token
+      }]);
 
     if (insertError) {
       console.error('Error registering FCM token:', insertError);
@@ -77,10 +72,10 @@ export const unregisterFCMToken = async (userId: string): Promise<boolean> => {
     
     if (!token) {
       // If we can't get current token, try to delete all user tokens
-      const { error: deleteError } = await supabase.rpc(
-        'delete_all_user_fcm_tokens',
-        { p_user_id: userId }
-      );
+      const { error: deleteError } = await supabase
+        .from('fcm_tokens')
+        .delete()
+        .eq('user_id', userId);
 
       if (deleteError) {
         console.error('Error deleting all user tokens:', deleteError);
@@ -88,13 +83,11 @@ export const unregisterFCMToken = async (userId: string): Promise<boolean> => {
       }
     } else {
       // Delete specific token
-      const { error: deleteError } = await supabase.rpc(
-        'delete_fcm_token',
-        { 
-          p_token: token,
-          p_user_id: userId
-        }
-      );
+      const { error: deleteError } = await supabase
+        .from('fcm_tokens')
+        .delete()
+        .eq('user_id', userId)
+        .eq('token', token);
 
       if (deleteError) {
         console.error('Error deleting specific token:', deleteError);
