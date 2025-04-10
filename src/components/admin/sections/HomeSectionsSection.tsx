@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { LayoutDashboard, EditIcon, Palette } from 'lucide-react';
 import AdminSection from '@/components/admin/AdminSection';
@@ -16,6 +17,8 @@ import NotificationHeader from '@/components/admin/notifications/NotificationHea
 const HomeSectionsSection = () => {
   const { homeSectionsForm, setHomeSectionsForm, activeSections, toggleSection, setDbLoading } = useAdmin();
   const [sections, setSections] = useState<HomeSectionItem[]>(homeSectionsForm || []);
+  // Add the missing editingSection state variable
+  const [editingSection, setEditingSection] = useState<string | null>(null);
 
   // Handle section order change
   const moveSection = (id: string, direction: 'up' | 'down') => {
