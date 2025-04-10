@@ -3,6 +3,13 @@ import { supabase } from '@/integrations/supabase/client';
 import { getFCMToken, deleteFCMToken } from './firebaseClient';
 import { toast } from 'sonner';
 
+type FcmToken = {
+  id: string;
+  user_id: string;
+  token: string;
+  created_at: string;
+};
+
 // تسجيل توكن FCM في قاعدة بيانات Supabase
 export const registerFCMToken = async (userId: string): Promise<boolean> => {
   try {
@@ -20,32 +27,39 @@ export const registerFCMToken = async (userId: string): Promise<boolean> => {
     }
 
     // التحقق من وجود التوكن في قاعدة البيانات
-    const { data: existingTokens, error: checkError } = await supabase
-      .from('fcm_tokens')
-      .select('*')
-      .eq('token', token)
-      .eq('user_id', userId);
+    // استخدام rpc لتجنب مشاكل TypeScript مع الجداول الديناميكية
+    const { data: existingTokens, error: checkError } = await supabase.rpc(
+      'check_fcm_token_exists',
+      { 
+        p_token: token,
+        p_user_id: userId
+      }
+    );
 
     if (checkError) {
-      throw checkError;
+      console.error('خطأ في التحقق من وجود التوكن:', checkError);
+      return false;
     }
 
     // إذا كان التوكن موجودًا بالفعل، نخرج
-    if (existingTokens && existingTokens.length > 0) {
+    if (existingTokens && existingTokens > 0) {
       console.log('التوكن مسجل بالفعل');
       return true;
     }
 
     // إضافة التوكن الجديد
-    const { error: insertError } = await supabase
-      .from('fcm_tokens')
-      .insert({
-        user_id: userId,
-        token: token
-      });
+    // استخدام rpc لتجنب مشاكل TypeScript مع الجداول الديناميكية
+    const { error: insertError } = await supabase.rpc(
+      'insert_fcm_token',
+      {
+        p_user_id: userId,
+        p_token: token
+      }
+    );
 
     if (insertError) {
-      throw insertError;
+      console.error('خطأ في تسجيل توكن FCM:', insertError);
+      return false;
     }
 
     console.log('تم تسجيل توكن FCM بنجاح');
@@ -63,24 +77,28 @@ export const unregisterFCMToken = async (userId: string): Promise<boolean> => {
     
     if (!token) {
       // إذا لم نستطع الحصول على التوكن الحالي، نحاول حذف جميع توكنات المستخدم
-      const { error: deleteError } = await supabase
-        .from('fcm_tokens')
-        .delete()
-        .eq('user_id', userId);
+      const { error: deleteError } = await supabase.rpc(
+        'delete_all_user_fcm_tokens',
+        { p_user_id: userId }
+      );
 
       if (deleteError) {
-        throw deleteError;
+        console.error('خطأ في حذف كل توكنات المستخدم:', deleteError);
+        return false;
       }
     } else {
       // حذف توكن معين
-      const { error: deleteError } = await supabase
-        .from('fcm_tokens')
-        .delete()
-        .eq('token', token)
-        .eq('user_id', userId);
+      const { error: deleteError } = await supabase.rpc(
+        'delete_fcm_token',
+        { 
+          p_token: token,
+          p_user_id: userId
+        }
+      );
 
       if (deleteError) {
-        throw deleteError;
+        console.error('خطأ في حذف توكن معين:', deleteError);
+        return false;
       }
 
       // حذف التوكن من Firebase

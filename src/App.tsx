@@ -1,4 +1,3 @@
-
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';
@@ -29,6 +28,7 @@ import { useScrollToTop } from './hooks/useScrollToTop';
 import { useServiceWorkerRegistration } from './hooks/useServiceWorkerRegistration';
 import { useEffect } from 'react';
 import { setupFirebase } from './services/firebase/firebaseClient';
+import { runFcmMigrations } from './services/runFcmMigrations';
 
 // Setup query client
 const queryClient = new QueryClient();
@@ -42,17 +42,21 @@ const AdminRoutes = () => {
 
 // Main App component
 const App = () => {
-  // إعداد Firebase عند بدء التطبيق
+  // إعداد Firebase وتهيئة قاعدة البيانات عند بدء التطبيق
   useEffect(() => {
-    const initFirebase = async () => {
+    const initServices = async () => {
       try {
+        // تهيئة Firebase
         await setupFirebase();
+        
+        // إنشاء الوظائف اللازمة في قاعدة البيانات
+        await runFcmMigrations();
       } catch (error) {
-        console.error('Error initializing Firebase:', error);
+        console.error('Error initializing services:', error);
       }
     };
     
-    initFirebase();
+    initServices();
   }, []);
 
   return (

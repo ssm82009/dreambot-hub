@@ -32,15 +32,18 @@ const NotificationSettings: React.FC = () => {
       setUserId(session.user.id);
       
       try {
-        // جلب عدد توكنات FCM للمستخدم
-        const { count, error } = await supabase
-          .from('fcm_tokens')
-          .select('*', { count: 'exact', head: true })
-          .eq('user_id', session.user.id);
+        // جلب عدد توكنات FCM للمستخدم باستخدام RPC
+        const { data, error } = await supabase.rpc(
+          'count_user_fcm_tokens',
+          { p_user_id: session.user.id }
+        );
           
-        if (!error && count !== null) {
-          setFcmTokenCount(count);
+        if (error) {
+          console.error('خطأ في جلب بيانات توكنات FCM:', error);
+          return;
         }
+        
+        setFcmTokenCount(data || 0);
       } catch (error) {
         console.error('خطأ في جلب بيانات توكنات FCM:', error);
       }
@@ -67,13 +70,13 @@ const NotificationSettings: React.FC = () => {
       
       // تحديث عدد توكنات FCM بعد الاشتراك
       if (userId) {
-        const { count } = await supabase
-          .from('fcm_tokens')
-          .select('*', { count: 'exact', head: true })
-          .eq('user_id', userId);
+        const { data, error } = await supabase.rpc(
+          'count_user_fcm_tokens',
+          { p_user_id: userId }
+        );
           
-        if (count !== null) {
-          setFcmTokenCount(count);
+        if (!error) {
+          setFcmTokenCount(data || 0);
         }
       }
     } catch (error) {
@@ -88,13 +91,13 @@ const NotificationSettings: React.FC = () => {
       
       // تحديث عدد توكنات FCM بعد إلغاء الاشتراك
       if (userId) {
-        const { count } = await supabase
-          .from('fcm_tokens')
-          .select('*', { count: 'exact', head: true })
-          .eq('user_id', userId);
+        const { data, error } = await supabase.rpc(
+          'count_user_fcm_tokens',
+          { p_user_id: userId }
+        );
           
-        if (count !== null) {
-          setFcmTokenCount(count);
+        if (!error) {
+          setFcmTokenCount(data || 0);
         }
       }
     } catch (error) {

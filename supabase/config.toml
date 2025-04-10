@@ -1,18 +1,29 @@
 
 project_id = "kshciumqqwvbaicdlzkz"
+[api]
+enabled = true
+port = 54321
+schemas = [ "public", "storage", "graphql_public" ]
 
-[functions.send-notification]
-verify_jwt = true
-import_map = "./import_map.json"
+[db]
+port = 54322
 
-[functions.store-subscription]
-verify_jwt = true
-import_map = "./import_map.json"
+[studio]
+port = 54323
 
-[functions.remove-subscription]
-verify_jwt = true
-import_map = "./import_map.json"
+[inbucket]
+port = 54324
 
-[functions.create-rpc]
+[auth]
+enabled = true
+site_url = "http://localhost:3000"
+
+[storage]
+enabled = true
+
+[realtime]
+enabled = true
+
+[edge_functions]
+[edge_functions.send-notification]
 verify_jwt = true
-import_map = "./import_map.json"

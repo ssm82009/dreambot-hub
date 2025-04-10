@@ -90,7 +90,13 @@ const FirebaseConfigSection: React.FC = () => {
         const { error } = await supabase
           .from('firebase_config')
           .update({
-            ...values,
+            project_id: values.project_id,
+            api_key: values.api_key,
+            auth_domain: values.auth_domain,
+            storage_bucket: values.storage_bucket, 
+            messaging_sender_id: values.messaging_sender_id,
+            app_id: values.app_id,
+            measurement_id: values.measurement_id,
             updated_at: new Date().toISOString(),
           })
           .eq('id', configId);
@@ -103,7 +109,13 @@ const FirebaseConfigSection: React.FC = () => {
         const { data, error } = await supabase
           .from('firebase_config')
           .insert({
-            ...values,
+            project_id: values.project_id,
+            api_key: values.api_key,
+            auth_domain: values.auth_domain,
+            storage_bucket: values.storage_bucket,
+            messaging_sender_id: values.messaging_sender_id,
+            app_id: values.app_id,
+            measurement_id: values.measurement_id,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
           })
