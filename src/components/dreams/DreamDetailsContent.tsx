@@ -21,6 +21,15 @@ interface DreamDetailsContentProps {
   dreamId?: string;
 }
 
+const renderBoldText = (text: string) => {
+  return text.split(/(\*\*.*?\*\*)/).map((part, index) => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return <strong key={index}>{part.slice(2, -2)}</strong>;
+    }
+    return part;
+  });
+};
+
 const DreamDetailsContent: React.FC<DreamDetailsContentProps> = ({ dreamId }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -182,7 +191,7 @@ const DreamDetailsContent: React.FC<DreamDetailsContentProps> = ({ dreamId }) =>
                        selection:bg-primary/20 prose prose-sm max-w-none
                        dark:bg-primary/10 dark:border-primary/20"
           >
-            {dream.interpretation}
+            {renderBoldText(dream.interpretation)}
           </div>
         </div>
         

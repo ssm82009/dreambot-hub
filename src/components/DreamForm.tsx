@@ -11,6 +11,15 @@ import { Progress } from "@/components/ui/progress";
 import { useNavigate } from 'react-router-dom';
 import { getTotalInterpretations } from '@/utils/subscription';
 
+const renderBoldText = (text: string) => {
+  return text.split(/(\*\*.*?\*\*)/).map((part, index) => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return <strong key={index}>{part.slice(2, -2)}</strong>;
+    }
+    return part;
+  });
+};
+
 const DreamForm = () => {
   const [dreamText, setDreamText] = useState('');
   const [interpretation, setInterpretation] = useState<string | null>(null);
@@ -522,7 +531,7 @@ const DreamForm = () => {
                            prose prose-sm max-w-none tracking-wide 
                            dark:bg-primary/10 dark:border-primary/20"
               >
-                {interpretation}
+                {renderBoldText(interpretation)}
               </p>
               
               <Alert className="w-full border border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-800">
