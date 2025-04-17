@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { 
@@ -31,7 +30,6 @@ const DreamDetailsContent: React.FC<DreamDetailsContentProps> = ({ dreamId }) =>
   const [isFromAdmin, setIsFromAdmin] = useState(false);
   
   useEffect(() => {
-    // تحديد ما إذا كان المستخدم قادمًا من لوحة المشرف
     const checkIfFromAdmin = () => {
       const referrer = document.referrer;
       const adminPath = location.state?.from === 'admin';
@@ -51,7 +49,6 @@ const DreamDetailsContent: React.FC<DreamDetailsContentProps> = ({ dreamId }) =>
       try {
         setIsLoading(true);
         
-        // التحقق من المستخدم الحالي
         const { data: session } = await supabase.auth.getSession();
         const userId = session.session?.user.id;
         
@@ -61,7 +58,6 @@ const DreamDetailsContent: React.FC<DreamDetailsContentProps> = ({ dreamId }) =>
           return;
         }
         
-        // جلب تفاصيل الحلم
         const { data, error } = await supabase
           .from('dreams')
           .select('*')
@@ -81,7 +77,6 @@ const DreamDetailsContent: React.FC<DreamDetailsContentProps> = ({ dreamId }) =>
           return;
         }
         
-        // التحقق من أن الحلم ينتمي للمستخدم الحالي أو أن المستخدم مشرف
         const { data: userData } = await supabase
           .from('users')
           .select('role')
@@ -181,7 +176,12 @@ const DreamDetailsContent: React.FC<DreamDetailsContentProps> = ({ dreamId }) =>
         
         <div>
           <h3 className="text-lg font-semibold mb-2">التفسير:</h3>
-          <div className="p-4 bg-primary/5 rounded-md whitespace-pre-line border border-primary/10">
+          <div 
+            className="p-4 bg-primary/5 rounded-md whitespace-pre-line border border-primary/10 
+                       text-foreground/80 leading-relaxed tracking-wide 
+                       selection:bg-primary/20 prose prose-sm max-w-none
+                       dark:bg-primary/10 dark:border-primary/20"
+          >
             {dream.interpretation}
           </div>
         </div>

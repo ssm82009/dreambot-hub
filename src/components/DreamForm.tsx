@@ -281,7 +281,7 @@ const DreamForm = () => {
       'زراعة', 'حصاد', 'بذرة', 'تربة', 'سقي', 'نمو',  
       'بيع', 'شراء', 'تجارة', 'سوق', 'ربح', 'خسارة',  
       'هدية', 'مفاجأة', 'سر', 'وعد', 'كذبة', 'حقيقة',  
-      'بداية', 'نهاية', 'تغيير', 'ثبات', 'تقدم', 'تراجع',  
+      'بداية', 'نهاية', 'تغيير', '��بات', 'تقدم', 'تراجع',  
       'قديم', 'جديد', 'عتيق', 'حديث', 'تقليدي', 'عصري',  
       'كبير', 'صغير', 'طويل', 'قصير', 'سمين', 'نحيف',  
       'ثقيل', 'خفيف', 'قاس', 'لين', 'سريع', 'بطيء',  
@@ -516,7 +516,14 @@ const DreamForm = () => {
           {interpretation && (
             <CardFooter className="flex flex-col items-start border-t border-border/50 pt-6">
               <h3 className="text-lg font-semibold mb-2">تفسير الحلم:</h3>
-              <p className="text-foreground/80 leading-relaxed whitespace-pre-line mb-6">{interpretation}</p>
+              <p 
+                className="text-foreground/80 leading-relaxed whitespace-pre-line mb-6 
+                           p-4 bg-primary/5 rounded-md border border-primary/10 
+                           prose prose-sm max-w-none tracking-wide 
+                           dark:bg-primary/10 dark:border-primary/20"
+              >
+                {interpretation}
+              </p>
               
               <Alert className="w-full border border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-800">
                 <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-500" />
