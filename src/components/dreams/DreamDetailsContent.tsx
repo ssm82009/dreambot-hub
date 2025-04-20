@@ -76,7 +76,7 @@ const DreamDetailsContent: React.FC<DreamDetailsContentProps> = ({ dreamId }) =>
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [isFromAdmin, setIsFromAdmin] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
-  const interpretationRef = useRef<HTMLDivElement>(null);
+  const [interpretationRef] = useState<React.RefObject<HTMLDivElement>>(null);
 
   useEffect(() => {
     const checkIfFromAdmin = () => {
@@ -319,7 +319,7 @@ const DreamDetailsContent: React.FC<DreamDetailsContentProps> = ({ dreamId }) =>
                 <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-500" />
                 <AlertDescription className="text-amber-800 dark:text-amber-400 mt-2 text-sm leading-relaxed">
                   <strong className="block mb-2">تنبيه وإخلاء مسؤولية:</strong>
-                  تم تفسير هذا الحلم عبر تطبيق Taweel.app باستخدام خوارزميات الذكاء الاصطناعي لأغراض تعليمية ولا يُمكن اتخاذ أي قرارات حياتية بناءً عليه. 
+                  تم تفسير هذا الحلم عبر تطبيق Taweel.app باستخدام خوارزميات الذكاء الاصطناعي لأغراض تعليمية ولا يُمكن اتخاذ أي قرارات حياتية بناءً عليه.
                 </AlertDescription>
               </Alert>
             </div>
