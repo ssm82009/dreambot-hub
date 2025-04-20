@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, ArrowRight, Calendar, Tag, Copy, Printer, Share, AlertTriangle } from 'lucide-react';
+import { Loader2, ArrowRight, Calendar, Tag, Copy, Printer, AlertTriangle } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -162,9 +162,9 @@ const DreamDetailsContent: React.FC<DreamDetailsContentProps> = ({ dreamId }) =>
         <head>
           <title>تفسير الحلم</title>
           <style>
-            @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;700&display=swap');
+            @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap');
             body {
-              font-family: 'Cairo', Arial, sans-serif;
+              font-family: 'Tajawal', Arial, sans-serif;
               padding: 20px;
               line-height: 1.6;
               direction: rtl;
@@ -207,10 +207,8 @@ const DreamDetailsContent: React.FC<DreamDetailsContentProps> = ({ dreamId }) =>
           <h3>التفسير:</h3>
           <div class="interpretation">${dream.interpretation}</div>
           <div class="disclaimer">
-            <strong>تنبيه مهم:</strong> هذا التفسير ناتج عن الذكاء الاصطناعي ويقدم لأغراض الترفيه والمعلومات فقط.
-            لا ينبغي اتخاذ أي قرارات أو إجراءات في الحياة الواقعية بناءً على هذا التفسير.
-            تطبيق "تاويل" والقائمين عليه يخلون مسؤوليتهم بشكل كامل عن محتوى التفسير وأي نتائج قد تترتب على الاعتماد عليه.
-            يرجى استشارة المختصين المؤهلين قبل اتخاذ أي قرارات مهمة.
+            تنبيه وإخلاء مسؤولية:
+            تم تفسير هذا الحلم عبر تطبيق Taweel.app باستخدام خوارزميات الذكاء الاصطناعي لأغراض تعليمية ولا يُمكن اتخاذ أي قرارات حياتية بناءً عليه. 
           </div>
         </body>
       </html>
@@ -221,26 +219,6 @@ const DreamDetailsContent: React.FC<DreamDetailsContentProps> = ({ dreamId }) =>
       printWindow.print();
       printWindow.close();
     }, 500);
-  };
-
-  const handleShare = async () => {
-    if (!interpretationRef.current || !dream?.interpretation) return;
-
-    setIsSharing(true);
-    try {
-      const result = await captureAndShare(interpretationRef, 'تفسير الحلم - تأويل');
-
-      if (result === "shared") {
-        toast.success("تمت مشاركة التفسير بنجاح");
-      } else if (result === "downloaded") {
-        toast.success("تم حفظ صورة التفسير بنجاح");
-      }
-    } catch (error) {
-      console.error('Error sharing:', error);
-      toast.error("حدث خطأ أثناء المشاركة");
-    } finally {
-      setIsSharing(false);
-    }
   };
 
   if (isLoading) {
@@ -279,14 +257,14 @@ const DreamDetailsContent: React.FC<DreamDetailsContentProps> = ({ dreamId }) =>
   const canShare = 'share' in navigator;
 
   return (
-    <Card className="max-w-4xl mx-auto shadow-md dream-card" style={{ fontFamily: "'Cairo', 'Arial', sans-serif", direction: 'rtl' }}>
-      <CardHeader className="space-y-2">
+    <Card className="max-w-4xl mx-auto shadow-lg dream-card bg-white/95 backdrop-blur" style={{ fontFamily: "'Cairo', 'Arial', sans-serif", direction: 'rtl' }}>
+      <CardHeader className="space-y-2 border-b bg-gradient-to-r from-primary/5 to-transparent">
         <div className="flex justify-between items-center">
           <div className="space-y-1">
             <CardTitle className="text-2xl font-bold text-primary">تفاصيل الحلم</CardTitle>
             <CardDescription className="flex items-center text-muted-foreground">
               <Calendar className="h-4 w-4 ml-1" />
-              {formatDate(dream.created_at)}
+              {formatDate(dream?.created_at)}
             </CardDescription>
           </div>
           <Button variant="outline" size="sm" onClick={handleBack}>
@@ -296,11 +274,11 @@ const DreamDetailsContent: React.FC<DreamDetailsContentProps> = ({ dreamId }) =>
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-6 p-6">
         <div className="space-y-3">
           <h3 className="text-lg font-semibold text-primary/90">نص الحلم:</h3>
-          <div className="p-4 bg-muted/30 rounded-lg whitespace-pre-line text-foreground/80 leading-relaxed">
-            {dream.dream_text}
+          <div className="p-4 bg-muted/30 rounded-lg whitespace-pre-line text-foreground/80 leading-relaxed border border-muted">
+            {dream?.dream_text}
           </div>
         </div>
 
@@ -328,42 +306,27 @@ const DreamDetailsContent: React.FC<DreamDetailsContentProps> = ({ dreamId }) =>
                 <Printer className="h-4 w-4" />
                 طباعة
               </Button>
-              {canShare && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleShare}
-                  disabled={isSharing}
-                  className="flex items-center gap-2"
-                >
-                  <Share className="h-4 w-4" />
-                  {isSharing ? "جارٍ المشاركة..." : "مشاركة"}
-                </Button>
-              )}
             </div>
           </div>
 
-          <div ref={interpretationRef} className="rounded-lg overflow-hidden">
-            <div className="bg-white p-6 space-y-6">
+          <div className="rounded-lg overflow-hidden">
+            <div className="bg-white p-6 space-y-6 border rounded-lg">
               <div className="whitespace-pre-line text-foreground/90 leading-relaxed tracking-wide selection:bg-primary/20 prose prose-sm max-w-none">
-                {renderBoldText(dream.interpretation)}
+                {dream?.interpretation && renderBoldText(dream.interpretation)}
               </div>
 
-              <Alert className="border border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-800">
+              <Alert className="border border-amber-200 bg-amber-50/50 dark:bg-amber-900/20 dark:border-amber-800">
                 <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-500" />
-                <AlertDescription className="text-amber-800 dark:text-amber-400 mt-2 text-sm">
-                  <strong className="block mb-2">تنبيه مهم من تأويل | Taweel.app</strong>
-                  هذا التفسير ناتج عن الذكاء الاصطناعي ويقدم لأغراض الترفيه والمعلومات فقط. 
-                  لا ينبغي اتخاذ أي قرارات أو إجراءات في الحياة الواقعية بناءً على هذا التفسير. 
-                  تطبيق "تاويل" والقائمين عليه يخلون مسؤوليتهم بشكل كامل عن محتوى التفسير وأي نتائج قد تترتب على الاعتماد عليه. 
-                  يرجى استشارة المختصين المؤهلين قبل اتخاذ أي قرارات مهمة.
+                <AlertDescription className="text-amber-800 dark:text-amber-400 mt-2 text-sm leading-relaxed">
+                  <strong className="block mb-2">تنبيه وإخلاء مسؤولية:</strong>
+                  تم تفسير هذا الحلم عبر تطبيق Taweel.app باستخدام خوارزميات الذكاء الاصطناعي لأغراض تعليمية ولا يُمكن اتخاذ أي قرارات حياتية بناءً عليه. 
                 </AlertDescription>
               </Alert>
             </div>
           </div>
         </div>
 
-        {dream.tags && dream.tags.length > 0 && (
+        {dream?.tags && dream.tags.length > 0 && (
           <div className="pt-4">
             <h3 className="text-lg font-semibold flex items-center text-primary/90 mb-3">
               <Tag className="h-4 w-4 ml-1" />
