@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Copy, Printer, Share, AlertTriangle, Lock } from 'lucide-react';
+import { Loader2, Copy, Printer, AlertTriangle, Lock } from 'lucide-react';
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { DreamSymbol, InterpretationSettings } from '@/types/database';
@@ -363,8 +363,9 @@ const DreamForm = () => {
         <head>
           <title>تفسير الحلم</title>
           <style>
+            @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;700&display=swap');
             body { 
-              font-family: Arial, sans-serif; 
+              font-family: 'Cairo', Arial, sans-serif; 
               padding: 20px; 
               line-height: 1.6; 
               direction: rtl;
@@ -407,10 +408,8 @@ const DreamForm = () => {
           <h3>التفسير:</h3>
           <div class="interpretation">${interpretation}</div>
           <div class="disclaimer">
-            <strong>تنبيه مهم:</strong> هذا التفسير ناتج عن الذكاء الاصطناعي ويقدم لأغراض الترفيه والمعلومات فقط. 
-            لا ينبغي اتخاذ أي قرارات أو إجراءات في الحياة الواقعية بناءً على هذا التفسير. 
-            تطبيق "تاويل" والقائمين عليه يخلون مسؤوليتهم بشكل كامل عن محتوى التفسير وأي نتائج قد تترتب على الاعتماد عليه. 
-            يرجى استشارة المختصين المؤهلين قبل اتخاذ أي قرارات مهمة.
+            <strong>تنبيه وإخلاء مسؤولية:</strong>
+            تم تفسير هذا الحلم عبر تطبيق Taweel.app باستخدام خوارزميات الذكاء الاصطناعي لأغراض تعليمية ولا يُمكن اتخاذ أي قرارات حياتية بناءً عليه.
           </div>
         </body>
       </html>
@@ -421,44 +420,6 @@ const DreamForm = () => {
       printWindow.print();
       printWindow.close();
     }, 500);
-  };
-
-  const handleShare = async () => {
-    if (!resultCardRef.current || !interpretation) return;
-
-    try {
-      const options = {
-        backgroundColor: '#ffffff',
-        useCORS: true,
-        scrollY: -window.scrollY,
-        scale: 2,
-        foreignObjectRendering: true
-      };
-      
-      const canvas = await html2canvas(resultCardRef.current, options);
-      const imageData = canvas.toDataURL('image/png');
-
-      if (navigator.share) {
-        const blob = await (await fetch(imageData)).blob();
-        const file = new File([blob], 'dream-interpretation.png', { type: 'image/png' });
-        
-        await navigator.share({
-          title: 'تفسير حلمي',
-          text: 'شاهد تفسير حلمي من تطبيق تأويل',
-          files: [file]
-        });
-      } else {
-        // Fallback for browsers that don't support Web Share API
-        const link = document.createElement('a');
-        link.download = 'dream-interpretation.png';
-        link.href = imageData;
-        link.click();
-        toast.success("تم حفظ الصورة");
-      }
-    } catch (error) {
-      console.error('Error sharing:', error);
-      toast.error("حدث خطأ أثناء المشاركة");
-    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -558,24 +519,24 @@ const DreamForm = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-12 rtl" id="dream-form-section">
+    <div className="container mx-auto px-4 py-12 rtl">
       <div className="max-w-3xl mx-auto">
-        <Card className="shadow-lg border-border/50">
-          <CardHeader>
-            <CardTitle className="text-2xl">فسّر حلمك الآن</CardTitle>
-            <CardDescription>
+        <Card className="shadow-lg border-border/40 bg-white/95 backdrop-blur">
+          <CardHeader className="space-y-2 border-b bg-gradient-to-r from-primary/5 to-transparent">
+            <CardTitle className="text-2xl font-bold text-primary">فسّر حلمك الآن</CardTitle>
+            <CardDescription className="text-muted-foreground/90">
               اكتب حلمك بلغة عربية فصيحة وباختصار لكي تحصل على تفسير دقيق
             </CardDescription>
             {renderAuthenticationStatus()}
             {renderInterpretationLimitStatus()}
           </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit}>
+          <CardContent className="p-6">
+            <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-4">
                 <Textarea
                   id="dream-form-textarea"
                   placeholder="اكتب حلمك هنا . . ."
-                  className="min-h-[150px] resize-none"
+                  className="min-h-[150px] resize-none border-2 border-gray-100 focus:border-primary/20"
                   value={dreamText}
                   onChange={(e) => setDreamText(e.target.value)}
                   required
@@ -585,18 +546,18 @@ const DreamForm = () => {
                   {interpretationSettings && (
                     <>
                       <div className="flex justify-between text-xs text-muted-foreground">
-                        <div>
+                        <div className="space-x-1">
                           <span>{wordCount}</span>
-                          <span> / </span>
+                          <span>/</span>
                           <span>{interpretationSettings.max_input_words}</span>
-                          <span> كلمة</span>
+                          <span>كلمة</span>
                           {wordCount < 10 && (
                             <span className="text-amber-500 mr-2">(الحد الأدنى: 10 كلمات)</span>
                           )}
                         </div>
                         <div>
                           <span>{charCount}</span>
-                          <span> حرف</span>
+                          <span>حرف</span>
                         </div>
                       </div>
                       <Progress 
@@ -607,42 +568,42 @@ const DreamForm = () => {
                   )}
                 </div>
               </div>
-              <div className="mt-6">
-                <Button
-                  type="submit"
-                  className="w-full"
-                  disabled={isLoading || !dreamText.trim() || wordCount < 10 || (interpretationSettings && wordCount > interpretationSettings.max_input_words) || hasReachedLimit}
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      جاري التفسير...
-                    </>
-                  ) : (
-                    hasReachedLimit ? 'قم بترقية اشتراكك للمتابعة' : 'فسّر الحلم'
-                  )}
-                </Button>
-                {renderAiSettingsStatus()}
-              </div>
+              <Button
+                type="submit"
+                className="w-full shadow-sm"
+                disabled={isLoading || !dreamText.trim() || wordCount < 10 || (interpretationSettings && wordCount > interpretationSettings.max_input_words) || hasReachedLimit}
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    جاري التفسير...
+                  </>
+                ) : (
+                  hasReachedLimit ? 'قم بترقية اشتراكك للمتابعة' : 'فسّر الحلم'
+                )}
+              </Button>
+              {renderAiSettingsStatus()}
             </form>
           </CardContent>
           
           {error && (
             <CardContent className="pt-0">
-              <div className="bg-red-50 border border-red-300 rounded-md p-3 text-red-800 text-sm">
-                <p><strong>حدث خطأ:</strong> {error}</p>
-                {error.includes('API') || error.includes('مفتاح') ? (
-                  <p className="mt-2">يرجى التأكد من الإعدادات في لوحة التحكم وضبط مفتاح API لمزود الذكاء الاصطناعي.</p>
-                ) : (
-                  <p className="mt-2">يرجى المحاولة مرة أخرى أو الاتصال بمسؤول النظام للمساعدة.</p>
-                )}
-              </div>
+              <Alert variant="destructive">
+                <AlertDescription>
+                  <p><strong>حدث خطأ:</strong> {error}</p>
+                  {error.includes('API') || error.includes('مفتاح') ? (
+                    <p className="mt-2">يرجى التأكد من الإعدادات في لوحة التحكم وضبط مفتاح API لمزود الذكاء الاصطناعي.</p>
+                  ) : (
+                    <p className="mt-2">يرجى المحاولة مرة أخرى أو الاتصال بمسؤول النظام للمساعدة.</p>
+                  )}
+                </AlertDescription>
+              </Alert>
             </CardContent>
           )}
           
           {interpretation && (
             <CardFooter className="flex flex-col items-start border-t border-border/50 pt-6">
-              <div ref={resultCardRef} className="w-full bg-white p-6 rounded-md border border-gray-200">
+              <div className="w-full bg-white p-6 rounded-md border border-gray-200">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-lg font-semibold">تفسير الحلم:</h3>
                   <div className="flex gap-2">
@@ -664,15 +625,6 @@ const DreamForm = () => {
                       <Printer className="h-4 w-4" />
                       طباعة
                     </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleShare}
-                      className="flex items-center gap-2"
-                    >
-                      <Share className="h-4 w-4" />
-                      مشاركة
-                    </Button>
                   </div>
                 </div>
                 
@@ -683,17 +635,13 @@ const DreamForm = () => {
                   {renderBoldText(interpretation)}
                 </div>
                 
-                <div className="mt-6 border border-amber-200 bg-amber-50 p-4 rounded-md">
-                  <div className="flex items-start gap-2">
-                    <AlertTriangle className="h-4 w-4 text-amber-600 mt-1" />
-                    <div className="text-amber-800 text-sm">
-                      <strong>تنبيه مهم:</strong> هذا التفسير ناتج عن الذكاء الاصطناعي ويقدم لأغراض الترفيه والمعلومات فقط. 
-                      لا ينبغي اتخاذ أي قرارات أو إجراءات في الحياة الواقعية بناءً على هذا التفسير. 
-                      تطبيق "تاويل" والقائمين عليه يخلون مسؤوليتهم بشكل كامل عن محتوى التفسير وأي نتائج قد تترتب على الاعتماد عليه. 
-                      يرجى استشارة المختصين المؤهلين قبل اتخاذ أي قرارات مهمة.
-                    </div>
-                  </div>
-                </div>
+                <Alert className="mt-6 border-amber-200 bg-amber-50/50">
+                  <AlertTriangle className="h-4 w-4 text-amber-600" />
+                  <AlertDescription className="text-amber-800 text-sm mt-2">
+                    <strong className="block mb-2">تنبيه وإخلاء مسؤولية:</strong>
+                    تم تفسير هذا الحلم عبر تطبيق Taweel.app باستخدام خوارزميات الذكاء الاصطناعي لأغراض تعليمية ولا يُمكن اتخاذ أي قرارات حياتية بناءً عليه.
+                  </AlertDescription>
+                </Alert>
               </div>
             </CardFooter>
           )}
