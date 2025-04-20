@@ -1,15 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Lock, AlertTriangle } from 'lucide-react';
+import { Loader2, Copy, Printer, Share, AlertTriangle, Lock } from 'lucide-react';
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { DreamSymbol, InterpretationSettings } from '@/types/database';
 import { Progress } from "@/components/ui/progress";
 import { useNavigate } from 'react-router-dom';
 import { getTotalInterpretations } from '@/utils/subscription';
+import html2canvas from 'html2canvas';
 
 const renderBoldText = (text: string) => {
   return text.split(/(\*\*.*?\*\*)/).map((part, index) => {
@@ -38,7 +39,8 @@ const DreamForm = () => {
   const [userSubscription, setUserSubscription] = useState<any>(null);
   const [usedInterpretations, setUsedInterpretations] = useState(0);
   const [hasReachedLimit, setHasReachedLimit] = useState(false);
-
+  const resultCardRef = useRef<HTMLDivElement>(null);
+  
   useEffect(() => {
     fetchDreamSymbols();
     fetchSettings();
@@ -290,7 +292,7 @@ const DreamForm = () => {
       'زراعة', 'حصاد', 'بذرة', 'تربة', 'سقي', 'نمو',  
       'بيع', 'شراء', 'تجارة', 'سوق', 'ربح', 'خسارة',  
       'هدية', 'مفاجأة', 'سر', 'وعد', 'كذبة', 'حقيقة',  
-      'بداية', 'نهاية', 'تغيير', '��بات', 'تقدم', 'تراجع',  
+      'بداية', 'نهاية', 'تغيير', 'ثبات', 'تقدم', 'تراجع',  
       'قديم', 'جديد', 'عتيق', 'حديث', 'تقليدي', 'عصري',  
       'كبير', 'صغير', 'طويل', 'قصير', 'سمين', 'نحيف',  
       'ثقيل', 'خفيف', 'قاس', 'لين', 'سريع', 'بطيء',  
@@ -341,6 +343,47 @@ const DreamForm = () => {
     ];
     
     return commonKeywords.filter(keyword => text.includes(keyword));
+  };
+
+  const handleCopyToClipboard = () => {
+    if (interpretation) {
+      navigator.clipboard.writeText(interpretation);
+      toast.success("تم نسخ التفسير إلى الحافظة");
+    }
+  };
+
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const handleShare = async () => {
+    if (!resultCardRef.current || !interpretation) return;
+
+    try {
+      const canvas = await html2canvas(resultCardRef.current);
+      const imageData = canvas.toDataURL('image/png');
+
+      if (navigator.share) {
+        const blob = await (await fetch(imageData)).blob();
+        const file = new File([blob], 'dream-interpretation.png', { type: 'image/png' });
+        
+        await navigator.share({
+          title: 'تفسير حلمي',
+          text: 'شاهد تفسير حلمي من تطبيق تأويل',
+          files: [file]
+        });
+      } else {
+        // Fallback for browsers that don't support Web Share API
+        const link = document.createElement('a');
+        link.download = 'dream-interpretation.png';
+        link.href = imageData;
+        link.click();
+        toast.success("تم حفظ الصورة");
+      }
+    } catch (error) {
+      console.error('Error sharing:', error);
+      toast.error("حدث خطأ أثناء المشاركة");
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -524,15 +567,49 @@ const DreamForm = () => {
           
           {interpretation && (
             <CardFooter className="flex flex-col items-start border-t border-border/50 pt-6">
-              <h3 className="text-lg font-semibold mb-2">تفسير الحلم:</h3>
-              <p 
-                className="text-foreground/80 leading-relaxed whitespace-pre-line mb-6 
-                           p-4 bg-primary/5 rounded-md border border-primary/10 
-                           prose prose-sm max-w-none tracking-wide 
-                           dark:bg-primary/10 dark:border-primary/20"
-              >
-                {renderBoldText(interpretation)}
-              </p>
+              <div ref={resultCardRef} className="w-full">
+                <h3 className="text-lg font-semibold mb-2">تفسير الحلم:</h3>
+                <div className="relative">
+                  <p 
+                    className="text-foreground/80 leading-relaxed whitespace-pre-line mb-6 
+                             p-4 bg-primary/5 rounded-md border border-primary/10 
+                             prose prose-sm max-w-none tracking-wide 
+                             dark:bg-primary/10 dark:border-primary/20"
+                  >
+                    {renderBoldText(interpretation)}
+                  </p>
+                  
+                  <div className="flex gap-2 justify-end mt-4 mb-6">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleCopyToClipboard}
+                      className="flex items-center gap-2"
+                    >
+                      <Copy className="h-4 w-4" />
+                      نسخ
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handlePrint}
+                      className="flex items-center gap-2"
+                    >
+                      <Printer className="h-4 w-4" />
+                      طباعة
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleShare}
+                      className="flex items-center gap-2"
+                    >
+                      <Share className="h-4 w-4" />
+                      مشاركة
+                    </Button>
+                  </div>
+                </div>
+              </div>
               
               <Alert className="w-full border border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-800">
                 <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-500" />

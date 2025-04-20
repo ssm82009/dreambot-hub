@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   Card, 
@@ -11,11 +11,12 @@ import {
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, ArrowRight, Calendar, Tag, AlertTriangle } from 'lucide-react';
+import { Loader2, ArrowRight, Calendar, Tag, AlertTriangle, Copy, Printer, Share } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Dream } from '@/types/database';
+import html2canvas from 'html2canvas';
 
 interface DreamDetailsContentProps {
   dreamId?: string;
@@ -37,7 +38,8 @@ const DreamDetailsContent: React.FC<DreamDetailsContentProps> = ({ dreamId }) =>
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [isFromAdmin, setIsFromAdmin] = useState(false);
-  
+  const interpretationRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     const checkIfFromAdmin = () => {
       const referrer = document.referrer;
@@ -121,7 +123,47 @@ const DreamDetailsContent: React.FC<DreamDetailsContentProps> = ({ dreamId }) =>
       navigate('/profile');
     }
   };
-  
+
+  const handleCopyToClipboard = () => {
+    if (dream?.interpretation) {
+      navigator.clipboard.writeText(dream.interpretation);
+      toast.success("تم نسخ التفسير إلى الحافظة");
+    }
+  };
+
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const handleShare = async () => {
+    if (!interpretationRef.current || !dream?.interpretation) return;
+
+    try {
+      const canvas = await html2canvas(interpretationRef.current);
+      const imageData = canvas.toDataURL('image/png');
+
+      if (navigator.share) {
+        const blob = await (await fetch(imageData)).blob();
+        const file = new File([blob], 'dream-interpretation.png', { type: 'image/png' });
+        
+        await navigator.share({
+          title: 'تفسير حلمي',
+          text: 'شاهد تفسير حلمي من تطبيق تأويل',
+          files: [file]
+        });
+      } else {
+        const link = document.createElement('a');
+        link.download = 'dream-interpretation.png';
+        link.href = imageData;
+        link.click();
+        toast.success("تم حفظ الصورة");
+      }
+    } catch (error) {
+      console.error('Error sharing:', error);
+      toast.error("حدث خطأ أثناء المشاركة");
+    }
+  };
+
   if (isLoading) {
     return (
       <Card>
@@ -183,7 +225,7 @@ const DreamDetailsContent: React.FC<DreamDetailsContentProps> = ({ dreamId }) =>
         
         <Separator />
         
-        <div>
+        <div ref={interpretationRef}>
           <h3 className="text-lg font-semibold mb-2">التفسير:</h3>
           <div 
             className="p-4 bg-primary/5 rounded-md whitespace-pre-line border border-primary/10 
@@ -192,6 +234,36 @@ const DreamDetailsContent: React.FC<DreamDetailsContentProps> = ({ dreamId }) =>
                        dark:bg-primary/10 dark:border-primary/20"
           >
             {renderBoldText(dream.interpretation)}
+          </div>
+          
+          <div className="flex gap-2 justify-end mt-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleCopyToClipboard}
+              className="flex items-center gap-2"
+            >
+              <Copy className="h-4 w-4" />
+              نسخ
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handlePrint}
+              className="flex items-center gap-2"
+            >
+              <Printer className="h-4 w-4" />
+              طباعة
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleShare}
+              className="flex items-center gap-2"
+            >
+              <Share className="h-4 w-4" />
+              مشاركة
+            </Button>
           </div>
         </div>
         
