@@ -52,7 +52,7 @@ const captureAndShare = async (elementRef: React.RefObject<HTMLDivElement>, titl
       windowWidth: cardHtmlElement.offsetWidth,
       windowHeight: cardHtmlElement.offsetHeight,
       fontStyle: "normal",
-      fontFamily: "'Tajawal', 'Cairo', 'Arial', sans-serif"
+      fontFamily: "'Tajawal', 'Cairo', 'Arial', sans-serif" // تحديث الخط هنا
     };
     
     const canvas = await html2canvas(cardHtmlElement, options);
@@ -234,7 +234,7 @@ const DreamDetailsContent: React.FC<DreamDetailsContentProps> = ({ dreamId }) =>
         </head>
         <body>
           <h2>تفسير الحلم</h2>
-          <h3>نص ال��لم:</h3>
+          <h3>نص الحلم:</h3>
           <div class="dream-content">${dream.dream_text}</div>
           <h3>التفسير:</h3>
           <div class="interpretation">${dream.interpretation}</div>
@@ -311,7 +311,7 @@ const DreamDetailsContent: React.FC<DreamDetailsContentProps> = ({ dreamId }) =>
   const canShare = 'share' in navigator;
   
   return (
-    <Card className="max-w-4xl mx-auto shadow-md dream-card arabic-text" style={{ direction: 'rtl' }}>
+    <Card className="max-w-4xl mx-auto shadow-md dream-card arabic-text" style={{ direction: 'rtl', fontFamily: "'Tajawal', 'Cairo', 'Arial', sans-serif" }}>
       <CardHeader className="space-y-2">
         <div className="flex justify-between items-center">
           <div className="space-y-1">
