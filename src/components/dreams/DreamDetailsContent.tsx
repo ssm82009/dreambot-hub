@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { 
@@ -207,25 +206,26 @@ const DreamDetailsContent: React.FC<DreamDetailsContentProps> = ({ dreamId }) =>
     if (!interpretationRef.current || !dream?.interpretation) return;
     
     try {
-      // Wait for any state updates to be reflected in the DOM
+      const cardElement = interpretationRef.current.closest('.dream-card');
+      if (!cardElement) return;
+      
       await new Promise(resolve => setTimeout(resolve, 100));
       
-      const element = interpretationRef.current;
       const options = {
         backgroundColor: '#ffffff',
         useCORS: true,
         scrollY: -window.scrollY,
         scale: 2,
-        width: element.offsetWidth,
-        height: element.offsetHeight,
-        windowWidth: element.offsetWidth,
-        windowHeight: element.offsetHeight
+        width: cardElement.offsetWidth,
+        height: cardElement.offsetHeight,
+        windowWidth: cardElement.offsetWidth,
+        windowHeight: cardElement.offsetHeight
       };
       
-      const canvas = await html2canvas(element, options);
+      const canvas = await html2canvas(cardElement as HTMLElement, options);
       const imageData = canvas.toDataURL('image/png');
       
-      if (navigator.share) {
+      if ('share' in navigator) {
         const blob = await (await fetch(imageData)).blob();
         const file = new File([blob], 'dream-interpretation.png', { type: 'image/png' });
         
@@ -280,13 +280,15 @@ const DreamDetailsContent: React.FC<DreamDetailsContentProps> = ({ dreamId }) =>
     );
   }
   
+  const canShare = 'share' in navigator;
+  
   return (
-    <Card className="max-w-4xl mx-auto shadow-md">
-      <CardHeader>
+    <Card className="max-w-4xl mx-auto shadow-md dream-card">
+      <CardHeader className="space-y-2">
         <div className="flex justify-between items-center">
-          <div>
-            <CardTitle className="text-2xl">تفاصيل الحلم</CardTitle>
-            <CardDescription className="flex items-center mt-2">
+          <div className="space-y-1">
+            <CardTitle className="text-2xl font-bold text-primary">تفاصيل الحلم</CardTitle>
+            <CardDescription className="flex items-center text-muted-foreground">
               <Calendar className="h-4 w-4 ml-1" />
               {formatDate(dream.created_at)}
             </CardDescription>
@@ -299,18 +301,18 @@ const DreamDetailsContent: React.FC<DreamDetailsContentProps> = ({ dreamId }) =>
       </CardHeader>
       
       <CardContent className="space-y-6">
-        <div>
-          <h3 className="text-lg font-semibold mb-2">نص الحلم:</h3>
-          <div className="p-4 bg-muted/30 rounded-md whitespace-pre-line">
+        <div className="space-y-3">
+          <h3 className="text-lg font-semibold text-primary/90">نص الحلم:</h3>
+          <div className="p-4 bg-muted/30 rounded-lg whitespace-pre-line text-foreground/80 leading-relaxed">
             {dream.dream_text}
           </div>
         </div>
         
-        <Separator />
+        <Separator className="my-6" />
         
-        <div>
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold">التفسير:</h3>
+        <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h3 className="text-lg font-semibold text-primary/90">التفسير:</h3>
             <div className="flex gap-2">
               <Button
                 variant="outline"
@@ -330,45 +332,49 @@ const DreamDetailsContent: React.FC<DreamDetailsContentProps> = ({ dreamId }) =>
                 <Printer className="h-4 w-4" />
                 طباعة
               </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleShare}
-                className="flex items-center gap-2"
-              >
-                <Share className="h-4 w-4" />
-                مشاركة
-              </Button>
+              {canShare && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleShare}
+                  className="flex items-center gap-2"
+                >
+                  <Share className="h-4 w-4" />
+                  مشاركة
+                </Button>
+              )}
             </div>
           </div>
           
-          <div ref={interpretationRef} className="space-y-6 bg-white p-6 rounded-md border border-gray-200">
-            <div className="whitespace-pre-line border-primary/10 text-foreground/80 leading-relaxed tracking-wide selection:bg-primary/20 prose prose-sm max-w-none">
-              {renderBoldText(dream.interpretation)}
+          <div ref={interpretationRef} className="rounded-lg overflow-hidden">
+            <div className="bg-white p-6 space-y-6">
+              <div className="whitespace-pre-line text-foreground/90 leading-relaxed tracking-wide selection:bg-primary/20 prose prose-sm max-w-none">
+                {renderBoldText(dream.interpretation)}
+              </div>
+              
+              <Alert className="border border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-800">
+                <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-500" />
+                <AlertDescription className="text-amber-800 dark:text-amber-400 mt-2 text-sm">
+                  <strong className="block mb-2">تنبيه مهم من تأويل | Taweel.app</strong>
+                  هذا التفسير ناتج عن الذكاء الاصطناعي ويقدم لأغراض الترفيه والمعلومات فقط. 
+                  لا ينبغي اتخاذ أي قرارات أو إجراءات في الحياة الواقعية بناءً على هذا التفسير. 
+                  تطبيق "تاويل" والقائمين عليه يخلون مسؤوليتهم بشكل كامل عن محتوى التفسير وأي نتائج قد تترتب على الاعتماد عليه. 
+                  يرجى استشارة المختصين المؤهلين قبل اتخاذ أي قرارات مهمة.
+                </AlertDescription>
+              </Alert>
             </div>
-            
-            <Alert className="border border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-800">
-              <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-500" />
-              <AlertDescription className="text-amber-800 dark:text-amber-400 mt-2 text-sm">
-                <strong className="block mb-2">تنبيه مهم من تأويل | Taweel.app</strong>
-                هذا التفسير ناتج عن الذكاء الاصطناعي ويقدم لأغراض الترفيه والمعلومات فقط. 
-                لا ينبغي اتخاذ أي قرارات أو إجراءات في الحياة الواقعية بناءً على هذا التفسير. 
-                تطبيق "تاويل" والقائمين عليه يخلون مسؤوليتهم بشكل كامل عن محتوى التفسير وأي نتائج قد تترتب على الاعتماد عليه. 
-                يرجى استشارة المختصين المؤهلين قبل اتخاذ أي قرارات مهمة.
-              </AlertDescription>
-            </Alert>
           </div>
         </div>
         
         {dream.tags && dream.tags.length > 0 && (
-          <div>
-            <h3 className="text-lg font-semibold mb-2 flex items-center">
+          <div className="pt-4">
+            <h3 className="text-lg font-semibold flex items-center text-primary/90 mb-3">
               <Tag className="h-4 w-4 ml-1" />
               الوسوم:
             </h3>
             <div className="flex flex-wrap gap-2">
               {dream.tags.map((tag, index) => (
-                <span key={index} className="px-3 py-1 bg-muted rounded-full text-sm">
+                <span key={index} className="px-3 py-1 bg-primary/5 text-primary/70 rounded-full text-sm">
                   {tag}
                 </span>
               ))}
