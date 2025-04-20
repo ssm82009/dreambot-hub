@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, ArrowRight, Calendar, Tag, Copy, Printer, Share } from 'lucide-react';
+import { Loader2, ArrowRight, Calendar, Tag, Copy, Printer, Share, AlertTriangle } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
