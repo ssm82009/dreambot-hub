@@ -142,8 +142,29 @@ const DreamDetailsContent: React.FC<DreamDetailsContentProps> = ({ dreamId }) =>
         <head>
           <title>تفسير الحلم</title>
           <style>
-            body { font-family: Arial, sans-serif; padding: 20px; line-height: 1.6; }
-            .interpretation { margin: 20px 0; white-space: pre-line; }
+            body { 
+              font-family: Arial, sans-serif; 
+              padding: 20px; 
+              line-height: 1.6; 
+              direction: rtl;
+              text-align: right;
+            }
+            .dream-content { 
+              margin: 20px 0; 
+              white-space: pre-line; 
+              border: 1px solid #eee;
+              padding: 15px;
+              background-color: #f9f9f9;
+              border-radius: 8px;
+            }
+            .interpretation { 
+              margin: 20px 0; 
+              white-space: pre-line; 
+              border: 1px solid #e0f2ff;
+              padding: 15px;
+              background-color: #f0f9ff;
+              border-radius: 8px;
+            }
             .disclaimer { 
               margin-top: 30px;
               padding: 15px;
@@ -151,10 +172,18 @@ const DreamDetailsContent: React.FC<DreamDetailsContentProps> = ({ dreamId }) =>
               background-color: #fcf8e3;
               border-radius: 4px;
             }
+            h2, h3 {
+              color: #333;
+              border-bottom: 1px solid #eee;
+              padding-bottom: 10px;
+            }
           </style>
         </head>
         <body>
           <h2>تفسير الحلم</h2>
+          <h3>نص الحلم:</h3>
+          <div class="dream-content">${dream.dream_text}</div>
+          <h3>التفسير:</h3>
           <div class="interpretation">${dream.interpretation}</div>
           <div class="disclaimer">
             <strong>تنبيه مهم:</strong> هذا التفسير ناتج عن الذكاء الاصطناعي ويقدم لأغراض الترفيه والمعلومات فقط. 
@@ -167,15 +196,25 @@ const DreamDetailsContent: React.FC<DreamDetailsContentProps> = ({ dreamId }) =>
     `);
     printWindow.document.close();
     printWindow.focus();
-    printWindow.print();
-    printWindow.close();
+    setTimeout(() => {
+      printWindow.print();
+      printWindow.close();
+    }, 500);
   };
 
   const handleShare = async () => {
     if (!interpretationRef.current || !dream?.interpretation) return;
 
     try {
-      const canvas = await html2canvas(interpretationRef.current);
+      const options = {
+        backgroundColor: '#ffffff',
+        useCORS: true,
+        scrollY: -window.scrollY,
+        scale: 2,
+        foreignObjectRendering: true
+      };
+      
+      const canvas = await html2canvas(interpretationRef.current, options);
       const imageData = canvas.toDataURL('image/png');
 
       if (navigator.share) {
@@ -219,7 +258,7 @@ const DreamDetailsContent: React.FC<DreamDetailsContentProps> = ({ dreamId }) =>
       <Card>
         <CardHeader>
           <CardTitle>خطأ في الوصول</CardTitle>
-          <CardDescription>لا يمكن عرض تفاصيل هذا الحلم</CardDescription>
+          <CardDescription>لا يمكن عرض تفاصيل هذا ال��لم</CardDescription>
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground">
@@ -261,7 +300,7 @@ const DreamDetailsContent: React.FC<DreamDetailsContentProps> = ({ dreamId }) =>
         
         <Separator />
         
-        <div ref={interpretationRef}>
+        <div>
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-semibold">التفسير:</h3>
             <div className="flex gap-2">
@@ -295,13 +334,26 @@ const DreamDetailsContent: React.FC<DreamDetailsContentProps> = ({ dreamId }) =>
             </div>
           </div>
           
-          <div 
-            className="p-4 bg-primary/5 rounded-md whitespace-pre-line border border-primary/10 
+          <div ref={interpretationRef} className="bg-white p-6 rounded-md border border-gray-200">
+            <div 
+              className="whitespace-pre-line border-primary/10 
                        text-foreground/80 leading-relaxed tracking-wide 
-                       selection:bg-primary/20 prose prose-sm max-w-none
-                       dark:bg-primary/10 dark:border-primary/20"
-          >
-            {renderBoldText(dream.interpretation)}
+                       selection:bg-primary/20 prose prose-sm max-w-none"
+            >
+              {renderBoldText(dream.interpretation)}
+            </div>
+            
+            <div className="mt-6 border border-amber-200 bg-amber-50 p-4 rounded-md">
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="h-4 w-4 text-amber-600 mt-1" />
+                <div className="text-amber-800 text-sm">
+                  <strong>تنبيه مهم:</strong> هذا التفسير ناتج عن الذكاء الاصطناعي ويقدم لأغراض الترفيه والمعلومات فقط. 
+                  لا ينبغي اتخاذ أي قرارات أو إجراءات في الحياة الواقعية بناءً على هذا التفسير. 
+                  تطبيق "تاويل" والقائمين عليه يخلون مسؤوليتهم بشكل كامل عن محتوى التفسير وأي نتائج قد تترتب على الاعتماد عليه. 
+                  يرجى استشارة المختصين المؤهلين قبل اتخاذ أي قرارات مهمة.
+                </div>
+              </div>
+            </div>
           </div>
         </div>
         
@@ -337,7 +389,6 @@ const DreamDetailsContent: React.FC<DreamDetailsContentProps> = ({ dreamId }) =>
           <Button variant="outline" onClick={handleBack}>
             {isFromAdmin ? 'العودة للوحة المشرف' : 'العودة للملف الشخصي'}
           </Button>
-          {/* يمكن إضافة أزرار إضافية هنا مثل زر الطباعة أو المشاركة */}
         </div>
       </CardFooter>
     </Card>
