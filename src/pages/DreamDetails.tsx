@@ -10,7 +10,6 @@ const DreamDetails = () => {
   const { id } = useParams<{ id: string }>();
   const location = useLocation();
   
-  // إعادة تعيين موضع التمرير للأعلى عند تغيير المسار
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [location.pathname]);
@@ -18,7 +17,7 @@ const DreamDetails = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      <main className="flex-1 rtl" style={{ paddingTop: `${NAVBAR_HEIGHT}px` }}>
+      <main className="flex-1 rtl arabic-text" style={{ paddingTop: `${NAVBAR_HEIGHT}px` }}>
         <div className="container mx-auto px-4 py-6">
           <DreamDetailsContent dreamId={id} />
         </div>

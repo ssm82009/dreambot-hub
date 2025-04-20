@@ -311,7 +311,7 @@ const DreamDetailsContent: React.FC<DreamDetailsContentProps> = ({ dreamId }) =>
   const canShare = 'share' in navigator;
   
   return (
-    <Card className="max-w-4xl mx-auto shadow-md dream-card" style={{ fontFamily: "'Tajawal', 'Cairo', sans-serif", direction: 'rtl' }}>
+    <Card className="max-w-4xl mx-auto shadow-md dream-card arabic-text" style={{ direction: 'rtl' }}>
       <CardHeader className="space-y-2">
         <div className="flex justify-between items-center">
           <div className="space-y-1">
@@ -331,7 +331,7 @@ const DreamDetailsContent: React.FC<DreamDetailsContentProps> = ({ dreamId }) =>
       <CardContent className="space-y-6">
         <div className="space-y-3">
           <h3 className="text-lg font-semibold text-primary/90">نص الحلم:</h3>
-          <div className="p-4 bg-muted/30 rounded-lg whitespace-pre-line text-foreground/80 leading-relaxed">
+          <div className="p-4 bg-muted/30 rounded-lg whitespace-pre-line text-foreground/80 leading-relaxed arabic-text">
             {dream.dream_text}
           </div>
         </div>
@@ -376,7 +376,7 @@ const DreamDetailsContent: React.FC<DreamDetailsContentProps> = ({ dreamId }) =>
           </div>
           
           <div ref={interpretationRef} className="rounded-lg overflow-hidden">
-            <div className="bg-white p-6 space-y-6">
+            <div className="bg-white p-6 space-y-6 arabic-text">
               <div className="whitespace-pre-line text-foreground/90 leading-relaxed tracking-wide selection:bg-primary/20 prose prose-sm max-w-none">
                 {renderBoldText(dream.interpretation)}
               </div>
