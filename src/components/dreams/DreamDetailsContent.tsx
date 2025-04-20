@@ -107,15 +107,8 @@ const DreamDetailsContent: React.FC<DreamDetailsContentProps> = ({ dreamId }) =>
 
         const { data, error } = await supabase.from('dreams').select('*').eq('id', dreamId).maybeSingle();
 
-        if (error) {
-          console.error('Error fetching dream details:', error);
+        if (error || !data) {
           toast.error("حدث خطأ أثناء تحميل تفاصيل الحلم");
-          setIsLoading(false);
-          return;
-        }
-
-        if (!data) {
-          toast.error("لم يتم العثور على الحلم المطلوب");
           navigate('/profile');
           return;
         }
