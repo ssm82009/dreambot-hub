@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { 
@@ -258,7 +259,7 @@ const DreamDetailsContent: React.FC<DreamDetailsContentProps> = ({ dreamId }) =>
       <Card>
         <CardHeader>
           <CardTitle>خطأ في الوصول</CardTitle>
-          <CardDescription>لا يمكن عرض تفاصيل هذا ال��لم</CardDescription>
+          <CardDescription>لا يمكن عرض تفاصيل هذا الحلم</CardDescription>
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground">

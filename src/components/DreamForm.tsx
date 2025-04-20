@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -699,4 +700,18 @@ const DreamForm = () => {
               <Alert className="w-full mt-6 border border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-800">
                 <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-500" />
                 <AlertDescription className="text-amber-800 dark:text-amber-400 mt-2 text-sm">
-                  <strong>تنبيه مهم:</strong> هذا التفسير ناتج عن الذكاء الاصطناعي ويقدم لأغراض الترفيه
+                  <strong>تنبيه مهم:</strong> هذا التفسير ناتج عن الذكاء الاصطناعي ويقدم لأغراض الترفيه والمعلومات فقط. 
+                  لا ينبغي اتخاذ أي قرارات أو إجراءات في الحياة الواقعية بناءً على هذا التفسير. 
+                  تطبيق "تاويل" والقائمين عليه يخلون مسؤوليتهم بشكل كامل عن محتوى التفسير وأي نتائج قد تترتب على الاعتماد عليه. 
+                  يرجى استشارة المختصين المؤهلين قبل اتخاذ أي قرارات مهمة.
+                </AlertDescription>
+              </Alert>
+            </CardFooter>
+          )}
+        </Card>
+      </div>
+    </div>
+  );
+};
+
+export default DreamForm;
