@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { 
@@ -32,6 +31,57 @@ const renderBoldText = (text: string) => {
   });
 };
 
+const captureAndShare = async (elementRef: React.RefObject<HTMLDivElement>, title: string) => {
+  if (!elementRef.current) return;
+  
+  const element = elementRef.current;
+  
+  try {
+    const cardElement = element.closest('.dream-card') || element;
+    const cardHtmlElement = cardElement as HTMLElement;
+    
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    const options = {
+      backgroundColor: '#ffffff',
+      useCORS: true,
+      scrollY: -window.scrollY,
+      scale: 2,
+      width: cardHtmlElement.offsetWidth,
+      height: cardHtmlElement.offsetHeight,
+      windowWidth: cardHtmlElement.offsetWidth,
+      windowHeight: cardHtmlElement.offsetHeight,
+      fontStyle: "normal",
+      fontFamily: "'Tajawal', 'Cairo', 'Arial', sans-serif"
+    };
+    
+    const canvas = await html2canvas(cardHtmlElement, options);
+    const imageData = canvas.toDataURL('image/png');
+    
+    if ('share' in navigator) {
+      const blob = await (await fetch(imageData)).blob();
+      const file = new File([blob], 'dream-interpretation.png', { type: 'image/png' });
+      
+      await navigator.share({
+        title: title,
+        text: 'شاهد تفسير حلمي من تطبيق تأويل',
+        files: [file]
+      });
+    } else {
+      const link = document.createElement('a');
+      link.download = 'dream-interpretation.png';
+      link.href = imageData;
+      link.click();
+      return "downloaded";
+    }
+    
+    return "shared";
+  } catch (error) {
+    console.error('Error during capture and share:', error);
+    throw error;
+  }
+};
+
 const DreamDetailsContent: React.FC<DreamDetailsContentProps> = ({ dreamId }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -39,6 +89,7 @@ const DreamDetailsContent: React.FC<DreamDetailsContentProps> = ({ dreamId }) =>
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [isFromAdmin, setIsFromAdmin] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
   const interpretationRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -143,8 +194,9 @@ const DreamDetailsContent: React.FC<DreamDetailsContentProps> = ({ dreamId }) =>
         <head>
           <title>تفسير الحلم</title>
           <style>
+            @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap');
             body { 
-              font-family: Arial, sans-serif; 
+              font-family: 'Tajawal', Arial, sans-serif; 
               padding: 20px; 
               line-height: 1.6; 
               direction: rtl;
@@ -182,7 +234,7 @@ const DreamDetailsContent: React.FC<DreamDetailsContentProps> = ({ dreamId }) =>
         </head>
         <body>
           <h2>تفسير الحلم</h2>
-          <h3>نص الحلم:</h3>
+          <h3>نص ال��لم:</h3>
           <div class="dream-content">${dream.dream_text}</div>
           <h3>التفسير:</h3>
           <div class="interpretation">${dream.interpretation}</div>
@@ -206,49 +258,20 @@ const DreamDetailsContent: React.FC<DreamDetailsContentProps> = ({ dreamId }) =>
   const handleShare = async () => {
     if (!interpretationRef.current || !dream?.interpretation) return;
     
+    setIsSharing(true);
     try {
-      // Find the dream card element
-      const cardElement = interpretationRef.current.closest('.dream-card');
-      if (!cardElement) return;
+      const result = await captureAndShare(interpretationRef, 'تفسير الحلم - تأويل');
       
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
-      // Fix: Cast the element to HTMLElement to access offsetWidth and offsetHeight
-      const cardHtmlElement = cardElement as HTMLElement;
-      
-      const options = {
-        backgroundColor: '#ffffff',
-        useCORS: true,
-        scrollY: -window.scrollY,
-        scale: 2,
-        width: cardHtmlElement.offsetWidth,
-        height: cardHtmlElement.offsetHeight,
-        windowWidth: cardHtmlElement.offsetWidth,
-        windowHeight: cardHtmlElement.offsetHeight
-      };
-      
-      const canvas = await html2canvas(cardHtmlElement, options);
-      const imageData = canvas.toDataURL('image/png');
-      
-      if ('share' in navigator) {
-        const blob = await (await fetch(imageData)).blob();
-        const file = new File([blob], 'dream-interpretation.png', { type: 'image/png' });
-        
-        await navigator.share({
-          title: 'تفسير حلمي',
-          text: 'شاهد تفسير حلمي من تطبيق تأويل',
-          files: [file]
-        });
-      } else {
-        const link = document.createElement('a');
-        link.download = 'dream-interpretation.png';
-        link.href = imageData;
-        link.click();
-        toast.success("تم حفظ الصورة");
+      if (result === "shared") {
+        toast.success("تمت مشاركة التفسير بنجاح");
+      } else if (result === "downloaded") {
+        toast.success("تم حفظ صورة التفسير بنجاح");
       }
     } catch (error) {
       console.error('Error sharing:', error);
       toast.error("حدث خطأ أثناء المشاركة");
+    } finally {
+      setIsSharing(false);
     }
   };
 
@@ -288,7 +311,7 @@ const DreamDetailsContent: React.FC<DreamDetailsContentProps> = ({ dreamId }) =>
   const canShare = 'share' in navigator;
   
   return (
-    <Card className="max-w-4xl mx-auto shadow-md dream-card">
+    <Card className="max-w-4xl mx-auto shadow-md dream-card" style={{ fontFamily: "'Tajawal', 'Cairo', sans-serif", direction: 'rtl' }}>
       <CardHeader className="space-y-2">
         <div className="flex justify-between items-center">
           <div className="space-y-1">
@@ -342,10 +365,11 @@ const DreamDetailsContent: React.FC<DreamDetailsContentProps> = ({ dreamId }) =>
                   variant="outline"
                   size="sm"
                   onClick={handleShare}
+                  disabled={isSharing}
                   className="flex items-center gap-2"
                 >
                   <Share className="h-4 w-4" />
-                  مشاركة
+                  {isSharing ? "جارٍ المشاركة..." : "مشاركة"}
                 </Button>
               )}
             </div>

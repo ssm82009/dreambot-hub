@@ -4,6 +4,7 @@ import Navbar, { NAVBAR_HEIGHT } from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useParams, useLocation } from 'react-router-dom';
 import DreamDetailsContent from '@/components/dreams/DreamDetailsContent';
+import '@/styles/arabic-text.css';
 
 const DreamDetails = () => {
   const { id } = useParams<{ id: string }>();
