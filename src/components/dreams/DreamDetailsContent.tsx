@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { 
@@ -206,23 +207,27 @@ const DreamDetailsContent: React.FC<DreamDetailsContentProps> = ({ dreamId }) =>
     if (!interpretationRef.current || !dream?.interpretation) return;
     
     try {
+      // Find the dream card element
       const cardElement = interpretationRef.current.closest('.dream-card');
       if (!cardElement) return;
       
       await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Fix: Cast the element to HTMLElement to access offsetWidth and offsetHeight
+      const cardHtmlElement = cardElement as HTMLElement;
       
       const options = {
         backgroundColor: '#ffffff',
         useCORS: true,
         scrollY: -window.scrollY,
         scale: 2,
-        width: cardElement.offsetWidth,
-        height: cardElement.offsetHeight,
-        windowWidth: cardElement.offsetWidth,
-        windowHeight: cardElement.offsetHeight
+        width: cardHtmlElement.offsetWidth,
+        height: cardHtmlElement.offsetHeight,
+        windowWidth: cardHtmlElement.offsetWidth,
+        windowHeight: cardHtmlElement.offsetHeight
       };
       
-      const canvas = await html2canvas(cardElement as HTMLElement, options);
+      const canvas = await html2canvas(cardHtmlElement, options);
       const imageData = canvas.toDataURL('image/png');
       
       if ('share' in navigator) {
