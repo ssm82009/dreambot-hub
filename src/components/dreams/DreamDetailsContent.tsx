@@ -1,17 +1,10 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle, 
-  CardFooter 
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, ArrowRight, Calendar, Tag, AlertTriangle, Copy, Printer, Share } from 'lucide-react';
+import { Loader2, ArrowRight, Calendar, Tag, Copy, Printer, Share } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -33,15 +26,11 @@ const renderBoldText = (text: string) => {
 
 const captureAndShare = async (elementRef: React.RefObject<HTMLDivElement>, title: string) => {
   if (!elementRef.current) return;
-  
+
   const element = elementRef.current;
-  
   try {
-    const cardElement = element.closest('.dream-card') || element;
-    const cardHtmlElement = cardElement as HTMLElement;
-    
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
+    const cardHtmlElement = (element.closest('.dream-card') || element) as HTMLElement;
+
     const options = {
       backgroundColor: '#ffffff',
       useCORS: true,
@@ -49,19 +38,16 @@ const captureAndShare = async (elementRef: React.RefObject<HTMLDivElement>, titl
       scale: 2,
       width: cardHtmlElement.offsetWidth,
       height: cardHtmlElement.offsetHeight,
-      windowWidth: cardHtmlElement.offsetWidth,
-      windowHeight: cardHtmlElement.offsetHeight,
-      fontStyle: "normal",
       fontFamily: "'Tajawal', 'Cairo', 'Arial', sans-serif"
     };
-    
+
     const canvas = await html2canvas(cardHtmlElement, options);
     const imageData = canvas.toDataURL('image/png');
-    
+
     if ('share' in navigator) {
       const blob = await (await fetch(imageData)).blob();
       const file = new File([blob], 'dream-interpretation.png', { type: 'image/png' });
-      
+
       await navigator.share({
         title: title,
         text: 'شاهد تفسير حلمي من تطبيق تأويل',
@@ -74,7 +60,7 @@ const captureAndShare = async (elementRef: React.RefObject<HTMLDivElement>, titl
       link.click();
       return "downloaded";
     }
-    
+
     return "shared";
   } catch (error) {
     console.error('Error during capture and share:', error);
@@ -97,64 +83,53 @@ const DreamDetailsContent: React.FC<DreamDetailsContentProps> = ({ dreamId }) =>
       const referrer = document.referrer;
       const adminPath = location.state?.from === 'admin';
       const adminReferrer = referrer.includes('/admin');
-      
       setIsFromAdmin(adminPath || adminReferrer);
     };
 
     checkIfFromAdmin();
-    
+
     const fetchDreamDetails = async () => {
       if (!dreamId) {
         setIsLoading(false);
         return;
       }
-      
+
       try {
         setIsLoading(true);
-        
         const { data: session } = await supabase.auth.getSession();
         const userId = session.session?.user.id;
-        
+
         if (!userId) {
           toast.error("يجب تسجيل الدخول لعرض تفاصيل الحلم");
           navigate('/login');
           return;
         }
-        
-        const { data, error } = await supabase
-          .from('dreams')
-          .select('*')
-          .eq('id', dreamId)
-          .maybeSingle();
-          
+
+        const { data, error } = await supabase.from('dreams').select('*').eq('id', dreamId).maybeSingle();
+
         if (error) {
           console.error('Error fetching dream details:', error);
           toast.error("حدث خطأ أثناء تحميل تفاصيل الحلم");
           setIsLoading(false);
           return;
         }
-        
+
         if (!data) {
           toast.error("لم يتم العثور على الحلم المطلوب");
           navigate('/profile');
           return;
         }
-        
-        const { data: userData } = await supabase
-          .from('users')
-          .select('role')
-          .eq('id', userId)
-          .maybeSingle();
-        
+
+        const { data: userData } = await supabase.from('users').select('role').eq('id', userId).maybeSingle();
         const isAdmin = userData?.role === 'admin';
-        
+
         if (data.user_id !== userId && !isAdmin) {
           setIsAuthorized(false);
           toast.error("لا يمكنك عرض تفاصيل هذا الحلم");
           navigate('/profile');
           return;
         }
-        
+
         setDream(data);
         setIsAuthorized(true);
       } catch (error) {
@@ -164,10 +139,10 @@ const DreamDetailsContent: React.FC<DreamDetailsContentProps> = ({ dreamId }) =>
         setIsLoading(false);
       }
     };
-    
+
     fetchDreamDetails();
   }, [dreamId, navigate, location.state]);
-  
+
   const handleBack = () => {
     if (isFromAdmin) {
       navigate('/admin', { state: { activeSection: 'dreams' } });
@@ -185,7 +160,7 @@ const DreamDetailsContent: React.FC<DreamDetailsContentProps> = ({ dreamId }) =>
 
   const handlePrint = () => {
     if (!dream?.interpretation) return;
-    
+
     const printWindow = window.open('', '', 'height=600,width=800');
     if (!printWindow) return;
 
@@ -195,30 +170,30 @@ const DreamDetailsContent: React.FC<DreamDetailsContentProps> = ({ dreamId }) =>
           <title>تفسير الحلم</title>
           <style>
             @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap');
-            body { 
-              font-family: 'Tajawal', Arial, sans-serif; 
-              padding: 20px; 
-              line-height: 1.6; 
+            body {
+              font-family: 'Tajawal', Arial, sans-serif;
+              padding: 20px;
+              line-height: 1.6;
               direction: rtl;
               text-align: right;
             }
-            .dream-content { 
-              margin: 20px 0; 
-              white-space: pre-line; 
+            .dream-content {
+              margin: 20px 0;
+              white-space: pre-line;
               border: 1px solid #eee;
               padding: 15px;
               background-color: #f9f9f9;
               border-radius: 8px;
             }
-            .interpretation { 
-              margin: 20px 0; 
-              white-space: pre-line; 
+            .interpretation {
+              margin: 20px 0;
+              white-space: pre-line;
               border: 1px solid #e0f2ff;
               padding: 15px;
               background-color: #f0f9ff;
               border-radius: 8px;
             }
-            .disclaimer { 
+            .disclaimer {
               margin-top: 30px;
               padding: 15px;
               border: 1px solid #f0ad4e;
@@ -234,14 +209,14 @@ const DreamDetailsContent: React.FC<DreamDetailsContentProps> = ({ dreamId }) =>
         </head>
         <body>
           <h2>تفسير الحلم</h2>
-          <h3>نص ال��لم:</h3>
+          <h3>نص الحلم:</h3>
           <div class="dream-content">${dream.dream_text}</div>
           <h3>التفسير:</h3>
           <div class="interpretation">${dream.interpretation}</div>
           <div class="disclaimer">
-            <strong>تنبيه مهم:</strong> هذا التفسير ناتج عن الذكاء الاصطناعي ويقدم لأغراض الترفيه والمعلومات فقط. 
-            لا ينبغي اتخاذ أي قرارات أو إجراءات في الحياة الواقعية بناءً على هذا التفسير. 
-            تطبيق "تاويل" والقائمين عليه يخلون مسؤوليتهم بشكل كامل عن محتوى التفسير وأي نتائج قد تترتب على الاعتماد عليه. 
+            <strong>تنبيه مهم:</strong> هذا التفسير ناتج عن الذكاء الاصطناعي ويقدم لأغراض الترفيه والمعلومات فقط.
+            لا ينبغي اتخاذ أي قرارات أو إجراءات في الحياة الواقعية بناءً على هذا التفسير.
+            تطبيق "تاويل" والقائمين عليه يخلون مسؤوليتهم بشكل كامل عن محتوى التفسير وأي نتائج قد تترتب على الاعتماد عليه.
             يرجى استشارة المختصين المؤهلين قبل اتخاذ أي قرارات مهمة.
           </div>
         </body>
@@ -257,11 +232,11 @@ const DreamDetailsContent: React.FC<DreamDetailsContentProps> = ({ dreamId }) =>
 
   const handleShare = async () => {
     if (!interpretationRef.current || !dream?.interpretation) return;
-    
+
     setIsSharing(true);
     try {
       const result = await captureAndShare(interpretationRef, 'تفسير الحلم - تأويل');
-      
+
       if (result === "shared") {
         toast.success("تمت مشاركة التفسير بنجاح");
       } else if (result === "downloaded") {
@@ -288,7 +263,7 @@ const DreamDetailsContent: React.FC<DreamDetailsContentProps> = ({ dreamId }) =>
       </Card>
     );
   }
-  
+
   if (!isAuthorized || !dream) {
     return (
       <Card>
@@ -307,9 +282,9 @@ const DreamDetailsContent: React.FC<DreamDetailsContentProps> = ({ dreamId }) =>
       </Card>
     );
   }
-  
+
   const canShare = 'share' in navigator;
-  
+
   return (
     <Card className="max-w-4xl mx-auto shadow-md dream-card" style={{ fontFamily: "'Tajawal', 'Cairo', sans-serif", direction: 'rtl' }}>
       <CardHeader className="space-y-2">
@@ -327,7 +302,7 @@ const DreamDetailsContent: React.FC<DreamDetailsContentProps> = ({ dreamId }) =>
           </Button>
         </div>
       </CardHeader>
-      
+
       <CardContent className="space-y-6">
         <div className="space-y-3">
           <h3 className="text-lg font-semibold text-primary/90">نص الحلم:</h3>
@@ -335,9 +310,9 @@ const DreamDetailsContent: React.FC<DreamDetailsContentProps> = ({ dreamId }) =>
             {dream.dream_text}
           </div>
         </div>
-        
+
         <Separator className="my-6" />
-        
+
         <div className="space-y-4">
           <div className="flex justify-between items-center">
             <h3 className="text-lg font-semibold text-primary/90">التفسير:</h3>
@@ -374,13 +349,13 @@ const DreamDetailsContent: React.FC<DreamDetailsContentProps> = ({ dreamId }) =>
               )}
             </div>
           </div>
-          
+
           <div ref={interpretationRef} className="rounded-lg overflow-hidden">
             <div className="bg-white p-6 space-y-6">
               <div className="whitespace-pre-line text-foreground/90 leading-relaxed tracking-wide selection:bg-primary/20 prose prose-sm max-w-none">
                 {renderBoldText(dream.interpretation)}
               </div>
-              
+
               <Alert className="border border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-800">
                 <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-500" />
                 <AlertDescription className="text-amber-800 dark:text-amber-400 mt-2 text-sm">
@@ -394,7 +369,7 @@ const DreamDetailsContent: React.FC<DreamDetailsContentProps> = ({ dreamId }) =>
             </div>
           </div>
         </div>
-        
+
         {dream.tags && dream.tags.length > 0 && (
           <div className="pt-4">
             <h3 className="text-lg font-semibold flex items-center text-primary/90 mb-3">
@@ -411,7 +386,7 @@ const DreamDetailsContent: React.FC<DreamDetailsContentProps> = ({ dreamId }) =>
           </div>
         )}
       </CardContent>
-      
+
       <CardFooter className="border-t p-6">
         <div className="w-full flex justify-between">
           <Button variant="outline" onClick={handleBack}>
