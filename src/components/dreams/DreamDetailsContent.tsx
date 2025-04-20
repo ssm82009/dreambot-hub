@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { 
@@ -10,6 +11,7 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, ArrowRight, Calendar, Tag, AlertTriangle, Copy, Printer, Share } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
@@ -203,19 +205,26 @@ const DreamDetailsContent: React.FC<DreamDetailsContentProps> = ({ dreamId }) =>
 
   const handleShare = async () => {
     if (!interpretationRef.current || !dream?.interpretation) return;
-
+    
     try {
+      // Wait for any state updates to be reflected in the DOM
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      const element = interpretationRef.current;
       const options = {
         backgroundColor: '#ffffff',
         useCORS: true,
         scrollY: -window.scrollY,
         scale: 2,
-        foreignObjectRendering: true
+        width: element.offsetWidth,
+        height: element.offsetHeight,
+        windowWidth: element.offsetWidth,
+        windowHeight: element.offsetHeight
       };
       
-      const canvas = await html2canvas(interpretationRef.current, options);
+      const canvas = await html2canvas(element, options);
       const imageData = canvas.toDataURL('image/png');
-
+      
       if (navigator.share) {
         const blob = await (await fetch(imageData)).blob();
         const file = new File([blob], 'dream-interpretation.png', { type: 'image/png' });
@@ -333,14 +342,21 @@ const DreamDetailsContent: React.FC<DreamDetailsContentProps> = ({ dreamId }) =>
             </div>
           </div>
           
-          <div ref={interpretationRef} className="bg-white p-6 rounded-md border border-gray-200">
-            <div 
-              className="whitespace-pre-line border-primary/10 
-                       text-foreground/80 leading-relaxed tracking-wide 
-                       selection:bg-primary/20 prose prose-sm max-w-none"
-            >
+          <div ref={interpretationRef} className="space-y-6 bg-white p-6 rounded-md border border-gray-200">
+            <div className="whitespace-pre-line border-primary/10 text-foreground/80 leading-relaxed tracking-wide selection:bg-primary/20 prose prose-sm max-w-none">
               {renderBoldText(dream.interpretation)}
             </div>
+            
+            <Alert className="border border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-800">
+              <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-500" />
+              <AlertDescription className="text-amber-800 dark:text-amber-400 mt-2 text-sm">
+                <strong className="block mb-2">تنبيه مهم من تأويل | Taweel.app</strong>
+                هذا التفسير ناتج عن الذكاء الاصطناعي ويقدم لأغراض الترفيه والمعلومات فقط. 
+                لا ينبغي اتخاذ أي قرارات أو إجراءات في الحياة الواقعية بناءً على هذا التفسير. 
+                تطبيق "تاويل" والقائمين عليه يخلون مسؤوليتهم بشكل كامل عن محتوى التفسير وأي نتائج قد تترتب على الاعتماد عليه. 
+                يرجى استشارة المختصين المؤهلين قبل اتخاذ أي قرارات مهمة.
+              </AlertDescription>
+            </Alert>
           </div>
         </div>
         
