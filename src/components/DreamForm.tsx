@@ -353,7 +353,43 @@ const DreamForm = () => {
   };
 
   const handlePrint = () => {
-    window.print();
+    if (!interpretation) return;
+    
+    const printWindow = window.open('', '', 'height=600,width=800');
+    if (!printWindow) return;
+
+    printWindow.document.write(`
+      <html dir="rtl">
+        <head>
+          <title>تفسير الحلم</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 20px; line-height: 1.6; }
+            .interpretation { margin: 20px 0; white-space: pre-line; }
+            .disclaimer { 
+              margin-top: 30px;
+              padding: 15px;
+              border: 1px solid #f0ad4e;
+              background-color: #fcf8e3;
+              border-radius: 4px;
+            }
+          </style>
+        </head>
+        <body>
+          <h2>تفسير الحلم</h2>
+          <div class="interpretation">${interpretation}</div>
+          <div class="disclaimer">
+            <strong>تنبيه مهم:</strong> هذا التفسير ناتج عن الذكاء الاصطناعي ويقدم لأغراض الترفيه والمعلومات فقط. 
+            لا ينبغي اتخاذ أي قرارات أو إجراءات في الحياة الواقعية بناءً على هذا التفسير. 
+            تطبيق "تاويل" والقائمين عليه يخلون مسؤوليتهم بشكل كامل عن محتوى التفسير وأي نتائج قد تترتب على الاعتماد عليه. 
+            يرجى استشارة المختصين المؤهلين قبل اتخاذ أي قرارات مهمة.
+          </div>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
+    printWindow.close();
   };
 
   const handleShare = async () => {
@@ -568,18 +604,9 @@ const DreamForm = () => {
           {interpretation && (
             <CardFooter className="flex flex-col items-start border-t border-border/50 pt-6">
               <div ref={resultCardRef} className="w-full">
-                <h3 className="text-lg font-semibold mb-2">تفسير الحلم:</h3>
-                <div className="relative">
-                  <p 
-                    className="text-foreground/80 leading-relaxed whitespace-pre-line mb-6 
-                             p-4 bg-primary/5 rounded-md border border-primary/10 
-                             prose prose-sm max-w-none tracking-wide 
-                             dark:bg-primary/10 dark:border-primary/20"
-                  >
-                    {renderBoldText(interpretation)}
-                  </p>
-                  
-                  <div className="flex gap-2 justify-end mt-4 mb-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-semibold">تفسير الحلم:</h3>
+                  <div className="flex gap-2">
                     <Button
                       variant="outline"
                       size="sm"
@@ -609,6 +636,14 @@ const DreamForm = () => {
                     </Button>
                   </div>
                 </div>
+                
+                <p className="text-foreground/80 leading-relaxed whitespace-pre-line mb-6 
+                             p-4 bg-primary/5 rounded-md border border-primary/10 
+                             prose prose-sm max-w-none tracking-wide 
+                             dark:bg-primary/10 dark:border-primary/20"
+                >
+                  {renderBoldText(interpretation)}
+                </p>
               </div>
               
               <Alert className="w-full border border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-800">

@@ -132,7 +132,43 @@ const DreamDetailsContent: React.FC<DreamDetailsContentProps> = ({ dreamId }) =>
   };
 
   const handlePrint = () => {
-    window.print();
+    if (!dream?.interpretation) return;
+    
+    const printWindow = window.open('', '', 'height=600,width=800');
+    if (!printWindow) return;
+
+    printWindow.document.write(`
+      <html dir="rtl">
+        <head>
+          <title>تفسير الحلم</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 20px; line-height: 1.6; }
+            .interpretation { margin: 20px 0; white-space: pre-line; }
+            .disclaimer { 
+              margin-top: 30px;
+              padding: 15px;
+              border: 1px solid #f0ad4e;
+              background-color: #fcf8e3;
+              border-radius: 4px;
+            }
+          </style>
+        </head>
+        <body>
+          <h2>تفسير الحلم</h2>
+          <div class="interpretation">${dream.interpretation}</div>
+          <div class="disclaimer">
+            <strong>تنبيه مهم:</strong> هذا التفسير ناتج عن الذكاء الاصطناعي ويقدم لأغراض الترفيه والمعلومات فقط. 
+            لا ينبغي اتخاذ أي قرارات أو إجراءات في الحياة الواقعية بناءً على هذا التفسير. 
+            تطبيق "تاويل" والقائمين عليه يخلون مسؤوليتهم بشكل كامل عن محتوى التفسير وأي نتائج قد تترتب على الاعتماد عليه. 
+            يرجى استشارة المختصين المؤهلين قبل اتخاذ أي قرارات مهمة.
+          </div>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
+    printWindow.close();
   };
 
   const handleShare = async () => {
@@ -226,7 +262,39 @@ const DreamDetailsContent: React.FC<DreamDetailsContentProps> = ({ dreamId }) =>
         <Separator />
         
         <div ref={interpretationRef}>
-          <h3 className="text-lg font-semibold mb-2">التفسير:</h3>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold">التفسير:</h3>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleCopyToClipboard}
+                className="flex items-center gap-2"
+              >
+                <Copy className="h-4 w-4" />
+                نسخ
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handlePrint}
+                className="flex items-center gap-2"
+              >
+                <Printer className="h-4 w-4" />
+                طباعة
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleShare}
+                className="flex items-center gap-2"
+              >
+                <Share className="h-4 w-4" />
+                مشاركة
+              </Button>
+            </div>
+          </div>
+          
           <div 
             className="p-4 bg-primary/5 rounded-md whitespace-pre-line border border-primary/10 
                        text-foreground/80 leading-relaxed tracking-wide 
@@ -234,36 +302,6 @@ const DreamDetailsContent: React.FC<DreamDetailsContentProps> = ({ dreamId }) =>
                        dark:bg-primary/10 dark:border-primary/20"
           >
             {renderBoldText(dream.interpretation)}
-          </div>
-          
-          <div className="flex gap-2 justify-end mt-4">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleCopyToClipboard}
-              className="flex items-center gap-2"
-            >
-              <Copy className="h-4 w-4" />
-              نسخ
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handlePrint}
-              className="flex items-center gap-2"
-            >
-              <Printer className="h-4 w-4" />
-              طباعة
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleShare}
-              className="flex items-center gap-2"
-            >
-              <Share className="h-4 w-4" />
-              مشاركة
-            </Button>
           </div>
         </div>
         
