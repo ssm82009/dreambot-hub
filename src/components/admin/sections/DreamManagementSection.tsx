@@ -37,10 +37,12 @@ const DreamManagementSection = () => {
       const { count, error } = await supabase
         .from('dreams')
         .select('*', { count: 'exact', head: true });
+      
       if (error) {
         console.error('Error fetching dreams count:', error);
         return 0;
       }
+      
       return count || 0;
     } catch (error) {
       console.error('Error in fetchDreamsCount:', error);
@@ -60,7 +62,7 @@ const DreamManagementSection = () => {
       const from = (page - 1) * pageSize;
       const to = from + pageSize - 1;
 
-      // Fetch dreams for current page
+      // Fetch dreams for current page - ensuring we get all dreams regardless of user_id
       const { data: dreamsData, error: dreamsError } = await supabase
         .from('dreams')
         .select('*')
@@ -75,11 +77,13 @@ const DreamManagementSection = () => {
 
       console.log('Fetched dreams:', dreamsData?.length);
       setDreams(dreamsData || []);
-
-      // Collect unique user IDs (filtering out null/undefined)
+      
+      // تجميع جميع معرفات المستخدمين، بما في ذلك التعامل مع القيم الفارغة
       const userIds = dreamsData
         ?.map(dream => dream.user_id)
         .filter(id => id !== null && id !== undefined) as string[];
+      
+      console.log('Collected user IDs:', userIds);
 
       if (userIds && userIds.length > 0) {
         const uniqueUserIds = [...new Set(userIds)];
@@ -93,18 +97,25 @@ const DreamManagementSection = () => {
 
         if (usersError) {
           console.error('Error fetching users:', usersError);
+          toast.error('حدث خطأ أثناء جلب بيانات المستخدمين');
         } else if (usersData) {
           console.log('Fetched users:', usersData.length);
+          
           const emailLookup: Record<string, string> = {};
           const nameLookup: Record<string, string> = {};
           
           usersData.forEach(user => {
-            emailLookup[user.id] = user.email;
-            nameLookup[user.id] = user.full_name || '';
+            if (user.id) {
+              emailLookup[user.id] = user.email || '';
+              nameLookup[user.id] = user.full_name || '';
+            }
           });
           
           setUserEmails(emailLookup);
           setUserNames(nameLookup);
+          
+          console.log('User emails lookup:', emailLookup);
+          console.log('User names lookup:', nameLookup);
         }
       } else {
         console.log('No user IDs found in dreams');
@@ -135,8 +146,15 @@ const DreamManagementSection = () => {
     text.length > maxLength ? `${text.substring(0, maxLength)}...` : text;
 
   const getUserDisplayName = (userId: string | null) => {
-    if (!userId) return 'غير معروف';
-    return userNames[userId] || userEmails[userId] || 'غير معروف';
+    if (!userId) return 'مستخدم مجهول';
+    
+    const userName = userNames[userId];
+    const userEmail = userEmails[userId];
+    
+    if (userName) return userName;
+    if (userEmail) return userEmail;
+    
+    return 'مستخدم غير معروف';
   };
 
   const renderPagination = () => {
@@ -245,7 +263,7 @@ const DreamManagementSection = () => {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-gray-50 dark:bg-gray-800">
-                    <TableHead className="w-32 text-center font-bold text-primary">المستخدم</TableHead>
+                    <TableHead className="w-32 text-right font-bold text-primary">المستخدم</TableHead>
                     <TableHead className="font-bold text-primary">الحلم</TableHead>
                     <TableHead className="font-bold text-primary">تاريخ الإنشاء</TableHead>
                     <TableHead className="text-left font-bold text-primary">الإجراءات</TableHead>
@@ -283,7 +301,6 @@ const DreamManagementSection = () => {
               </Table>
             </div>
             
-            {/* نص التنبيه */}
             <div className="p-4 border-t bg-yellow-100 dark:bg-yellow-800/30 mt-0">
               <p className="text-xs text-yellow-900 dark:text-yellow-100 text-right font-medium leading-relaxed">
                 <span className="font-bold block mb-1">تنبيه وإخلاء مسؤولية:</span>
