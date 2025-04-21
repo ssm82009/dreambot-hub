@@ -51,13 +51,16 @@ const DreamManagementSection = () => {
   const fetchDreams = async (page = 1) => {
     setLoading(true);
     try {
+      // Fetch total count of dreams
       const count = await fetchDreamsCount();
+      console.log('Total dreams count:', count);
       setTotalDreams(count);
       setTotalPages(Math.max(1, Math.ceil(count / pageSize)));
 
       const from = (page - 1) * pageSize;
       const to = from + pageSize - 1;
 
+      // Fetch dreams for current page
       const { data: dreamsData, error: dreamsError } = await supabase
         .from('dreams')
         .select('*')
@@ -70,14 +73,19 @@ const DreamManagementSection = () => {
         return;
       }
 
+      console.log('Fetched dreams:', dreamsData?.length);
       setDreams(dreamsData || []);
 
+      // Collect unique user IDs (filtering out null/undefined)
       const userIds = dreamsData
         ?.map(dream => dream.user_id)
         .filter(id => id !== null && id !== undefined) as string[];
 
-      if (userIds.length > 0) {
+      if (userIds && userIds.length > 0) {
         const uniqueUserIds = [...new Set(userIds)];
+        console.log('Unique user IDs:', uniqueUserIds.length);
+        
+        // Fetch user details for the collected user IDs
         const { data: usersData, error: usersError } = await supabase
           .from('users')
           .select('id, email, full_name')
@@ -86,15 +94,20 @@ const DreamManagementSection = () => {
         if (usersError) {
           console.error('Error fetching users:', usersError);
         } else if (usersData) {
+          console.log('Fetched users:', usersData.length);
           const emailLookup: Record<string, string> = {};
           const nameLookup: Record<string, string> = {};
+          
           usersData.forEach(user => {
             emailLookup[user.id] = user.email;
             nameLookup[user.id] = user.full_name || '';
           });
+          
           setUserEmails(emailLookup);
           setUserNames(nameLookup);
         }
+      } else {
+        console.log('No user IDs found in dreams');
       }
     } catch (error) {
       console.error('Error in fetchDreams:', error);
@@ -123,9 +136,7 @@ const DreamManagementSection = () => {
 
   const getUserDisplayName = (userId: string | null) => {
     if (!userId) return 'غير معروف';
-    if (userNames[userId]) return userNames[userId];
-    if (userEmails[userId]) return userEmails[userId];
-    return 'غير معروف';
+    return userNames[userId] || userEmails[userId] || 'غير معروف';
   };
 
   const renderPagination = () => {
@@ -230,44 +241,49 @@ const DreamManagementSection = () => {
           </div>
         ) : (
           <div className="shadow border rounded-xl overflow-hidden bg-white dark:bg-gray-800">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-gray-50 dark:bg-gray-800">
-                  <TableHead className="w-32 text-center font-bold text-primary">المستخدم</TableHead>
-                  <TableHead className="font-bold text-primary">الحلم</TableHead>
-                  <TableHead className="font-bold text-primary">تاريخ الإنشاء</TableHead>
-                  <TableHead className="text-left font-bold text-primary">الإجراءات</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {dreams.map((dream) => (
-                  <TableRow key={dream.id} className="hover:bg-primary/5 transition rounded group">
-                    <TableCell className="text-right font-medium text-gray-900 dark:text-white">
-                      {getUserDisplayName(dream.user_id)}
-                    </TableCell>
-                    <TableCell>
-                      <div className="max-w-md truncate text-gray-800 dark:text-gray-200">{truncateText(dream.dream_text, 80)}</div>
-                    </TableCell>
-                    <TableCell>
-                      <span className="inline-block px-3 py-1 rounded bg-gray-100 dark:bg-gray-700 text-xs font-semibold text-gray-700 dark:text-gray-100">
-                        {formatDate(dream.created_at)}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={() => viewDream(dream.id)}
-                        className="hover:bg-primary/10"
-                      >
-                        عرض
-                      </Button>
-                    </TableCell>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-gray-50 dark:bg-gray-800">
+                    <TableHead className="w-32 text-center font-bold text-primary">المستخدم</TableHead>
+                    <TableHead className="font-bold text-primary">الحلم</TableHead>
+                    <TableHead className="font-bold text-primary">تاريخ الإنشاء</TableHead>
+                    <TableHead className="text-left font-bold text-primary">الإجراءات</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-            {/* نص التنبيه الجديد */}
+                </TableHeader>
+                <TableBody>
+                  {dreams.map((dream) => (
+                    <TableRow key={dream.id} className="hover:bg-primary/5 transition rounded group">
+                      <TableCell className="text-right font-medium text-gray-900 dark:text-white">
+                        <div className="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded text-sm">
+                          {getUserDisplayName(dream.user_id)}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="max-w-md truncate text-gray-800 dark:text-gray-200">{truncateText(dream.dream_text, 80)}</div>
+                      </TableCell>
+                      <TableCell>
+                        <span className="inline-block px-3 py-1 rounded bg-gray-100 dark:bg-gray-700 text-xs font-semibold text-gray-700 dark:text-gray-100">
+                          {formatDate(dream.created_at)}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => viewDream(dream.id)}
+                          className="hover:bg-primary/10"
+                        >
+                          عرض
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+            
+            {/* نص التنبيه */}
             <div className="p-4 border-t bg-yellow-100 dark:bg-yellow-800/30 mt-0">
               <p className="text-xs text-yellow-900 dark:text-yellow-100 text-right font-medium leading-relaxed">
                 <span className="font-bold block mb-1">تنبيه وإخلاء مسؤولية:</span>
@@ -283,4 +299,3 @@ const DreamManagementSection = () => {
 };
 
 export default DreamManagementSection;
-
