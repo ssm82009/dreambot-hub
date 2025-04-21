@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Book, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -36,12 +37,10 @@ const DreamManagementSection = () => {
       const { count, error } = await supabase
         .from('dreams')
         .select('*', { count: 'exact', head: true });
-      
       if (error) {
         console.error('Error fetching dreams count:', error);
         return 0;
       }
-      
       return count || 0;
     } catch (error) {
       console.error('Error in fetchDreamsCount:', error);
@@ -89,12 +88,10 @@ const DreamManagementSection = () => {
         } else if (usersData) {
           const emailLookup: Record<string, string> = {};
           const nameLookup: Record<string, string> = {};
-          
           usersData.forEach(user => {
             emailLookup[user.id] = user.email;
             nameLookup[user.id] = user.full_name || '';
           });
-          
           setUserEmails(emailLookup);
           setUserNames(nameLookup);
         }
@@ -116,65 +113,48 @@ const DreamManagementSection = () => {
     if (activeSections.dreams) {
       fetchDreams(currentPage);
     }
+    // eslint-disable-next-line
   }, [activeSections.dreams, currentPage]);
 
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-  };
+  const handlePageChange = (page: number) => setCurrentPage(page);
 
-  const truncateText = (text: string, maxLength = 50) => {
-    return text.length > maxLength ? `${text.substring(0, maxLength)}...` : text;
-  };
+  const truncateText = (text: string, maxLength = 50) =>
+    text.length > maxLength ? `${text.substring(0, maxLength)}...` : text;
 
   const getUserDisplayName = (userId: string | null) => {
     if (!userId) return 'غير معروف';
-    
-    if (userNames[userId]) {
-      return userNames[userId];
-    }
-    
-    if (userEmails[userId]) {
-      return userEmails[userId];
-    }
-    
+    if (userNames[userId]) return userNames[userId];
+    if (userEmails[userId]) return userEmails[userId];
     return 'غير معروف';
   };
 
   const renderPagination = () => {
     const pages = [];
     const maxVisiblePages = 5;
-    
     let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
     let endPage = startPage + maxVisiblePages - 1;
-    
     if (endPage > totalPages) {
       endPage = totalPages;
       startPage = Math.max(1, endPage - maxVisiblePages + 1);
     }
-    
     for (let i = startPage; i <= endPage; i++) {
       pages.push(
         <PaginationItem key={i}>
-          <PaginationLink 
-            onClick={() => handlePageChange(i)}
-            isActive={currentPage === i}
-          >
+          <PaginationLink onClick={() => handlePageChange(i)} isActive={currentPage === i}>
             {i}
           </PaginationLink>
         </PaginationItem>
       );
     }
-    
     return (
       <Pagination className="mt-4">
         <PaginationContent>
           <PaginationItem>
-            <PaginationPrevious 
+            <PaginationPrevious
               onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
               className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
             />
           </PaginationItem>
-          
           {startPage > 1 && (
             <>
               <PaginationItem>
@@ -187,9 +167,7 @@ const DreamManagementSection = () => {
               )}
             </>
           )}
-          
           {pages}
-          
           {endPage < totalPages && (
             <>
               {endPage < totalPages - 1 && (
@@ -202,9 +180,8 @@ const DreamManagementSection = () => {
               </PaginationItem>
             </>
           )}
-          
           <PaginationItem>
-            <PaginationNext 
+            <PaginationNext
               onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
               className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}
             />
@@ -226,10 +203,10 @@ const DreamManagementSection = () => {
       isOpen={activeSections.dreams}
       onToggle={() => toggleSection('dreams')}
     >
-      <div className="space-y-4">
-        <div className="flex justify-between items-center">
-          <div className="text-sm text-muted-foreground">
-            إجمالي عدد الأحلام: {totalDreams}
+      <div className="space-y-6">
+        <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-3">
+          <div className="text-sm text-gray-600 dark:text-gray-300">
+            إجمالي عدد الأحلام: <span className="font-bold text-primary">{totalDreams}</span>
           </div>
           <Button 
             variant="outline" 
@@ -244,37 +221,44 @@ const DreamManagementSection = () => {
         </div>
 
         {loading ? (
-          <div className="flex justify-center py-8">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <div className="flex justify-center py-20">
+            <Loader2 className="h-10 w-10 animate-spin text-primary" />
           </div>
         ) : dreams.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
+          <div className="text-center py-20 text-muted-foreground rounded-md bg-gray-100 dark:bg-gray-900">
             لا توجد أحلام مسجلة
           </div>
         ) : (
-          <div className="border rounded-md">
+          <div className="shadow border rounded-xl overflow-hidden bg-white dark:bg-gray-800">
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>المستخدم</TableHead>
-                  <TableHead>محتوى الحلم</TableHead>
-                  <TableHead>تاريخ الإنشاء</TableHead>
-                  <TableHead className="text-left">الإجراءات</TableHead>
+                <TableRow className="bg-gray-50 dark:bg-gray-800">
+                  <TableHead className="w-32 text-center font-bold text-primary">المستخدم</TableHead>
+                  <TableHead className="font-bold text-primary">الحلم</TableHead>
+                  <TableHead className="font-bold text-primary">تاريخ الإنشاء</TableHead>
+                  <TableHead className="text-left font-bold text-primary">الإجراءات</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {dreams.map((dream) => (
-                  <TableRow key={dream.id}>
-                    <TableCell>
+                  <TableRow key={dream.id} className="hover:bg-primary/5 transition rounded group">
+                    <TableCell className="text-right font-medium text-gray-900 dark:text-white">
                       {getUserDisplayName(dream.user_id)}
                     </TableCell>
-                    <TableCell>{truncateText(dream.dream_text)}</TableCell>
-                    <TableCell>{formatDate(dream.created_at)}</TableCell>
+                    <TableCell>
+                      <div className="max-w-md truncate text-gray-800 dark:text-gray-200">{truncateText(dream.dream_text, 80)}</div>
+                    </TableCell>
+                    <TableCell>
+                      <span className="inline-block px-3 py-1 rounded bg-gray-100 dark:bg-gray-700 text-xs font-semibold text-gray-700 dark:text-gray-100">
+                        {formatDate(dream.created_at)}
+                      </span>
+                    </TableCell>
                     <TableCell>
                       <Button 
                         variant="ghost" 
                         size="sm"
                         onClick={() => viewDream(dream.id)}
+                        className="hover:bg-primary/10"
                       >
                         عرض
                       </Button>
@@ -283,9 +267,15 @@ const DreamManagementSection = () => {
                 ))}
               </TableBody>
             </Table>
+            {/* نص التنبيه الجديد */}
+            <div className="p-4 border-t bg-yellow-100 dark:bg-yellow-800/30 mt-0">
+              <p className="text-xs text-yellow-900 dark:text-yellow-100 text-right font-medium leading-relaxed">
+                <span className="font-bold block mb-1">تنبيه وإخلاء مسؤولية:</span>
+                تم تفسير هذا الحلم عبر تطبيق Taweel.app باستخدام خوارزميات الذكاء الاصطناعي لأغراض تعليمية ولا يُمكن اتخاذ أي قرارات حياتية بناءً عليه.
+              </p>
+            </div>
           </div>
         )}
-        
         {totalPages > 1 && renderPagination()}
       </div>
     </AdminSection>
@@ -293,3 +283,4 @@ const DreamManagementSection = () => {
 };
 
 export default DreamManagementSection;
+
