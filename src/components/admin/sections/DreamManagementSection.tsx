@@ -66,6 +66,9 @@ const DreamManagementSection = () => {
       const from = (page - 1) * pageSize;
       const to = from + pageSize - 1;
 
+      // طباعة معلومات الصفحة لأغراض التصحيح
+      console.log(`فحص الأحلام: صفحة ${page}, من ${from} إلى ${to}`);
+
       // Fetch dreams for current page - ensuring we get all dreams regardless of user_id
       const { data: dreamsData, error: dreamsError } = await supabase
         .from('dreams')
@@ -79,7 +82,8 @@ const DreamManagementSection = () => {
         return;
       }
 
-      console.log('Fetched dreams:', dreamsData?.length);
+      console.log('تم العثور على الأحلام:', dreamsData?.length);
+      console.log('بيانات الأحلام:', dreamsData);
       setDreams(dreamsData || []);
       
       // تجميع جميع معرفات المستخدمين، بما في ذلك التعامل مع القيم الفارغة
@@ -87,9 +91,11 @@ const DreamManagementSection = () => {
         ?.map(dream => dream.user_id)
         .filter(id => id !== null && id !== undefined) as string[];
       
-      console.log('Collected user IDs:', userIds);
+      console.log('معرفات المستخدمين المجمعة:', userIds);
 
-      await fetchUserDetails(userIds);
+      if (userIds && userIds.length > 0) {
+        await fetchUserDetails(userIds);
+      }
     } catch (error) {
       console.error('Error in fetchDreams:', error);
       toast.error('حدث خطأ غير متوقع');
@@ -100,13 +106,13 @@ const DreamManagementSection = () => {
 
   const fetchUserDetails = async (userIds: string[]) => {
     if (!userIds || userIds.length === 0) {
-      console.log('No user IDs to fetch details for');
+      console.log('لا توجد معرفات مستخدمين لجلب تفاصيلها');
       return;
     }
 
     try {
       const uniqueUserIds = [...new Set(userIds)];
-      console.log('Unique user IDs:', uniqueUserIds.length);
+      console.log('معرفات المستخدمين الفريدة:', uniqueUserIds.length);
       
       // Fetch user details for the collected user IDs
       const { data: usersData, error: usersError } = await supabase
@@ -118,7 +124,7 @@ const DreamManagementSection = () => {
         console.error('Error fetching users:', usersError);
         toast.error('حدث خطأ أثناء جلب بيانات المستخدمين');
       } else if (usersData) {
-        console.log('Fetched users:', usersData.length);
+        console.log('تم جلب بيانات المستخدمين:', usersData.length);
         
         const emailLookup: Record<string, string> = {};
         const nameLookup: Record<string, string> = {};
@@ -133,8 +139,8 @@ const DreamManagementSection = () => {
         setUserEmails(emailLookup);
         setUserNames(nameLookup);
         
-        console.log('User emails lookup:', emailLookup);
-        console.log('User names lookup:', nameLookup);
+        console.log('قاموس بريد المستخدمين:', emailLookup);
+        console.log('قاموس أسماء المستخدمين:', nameLookup);
       }
     } catch (error) {
       console.error('Error fetching user details:', error);
@@ -152,26 +158,45 @@ const DreamManagementSection = () => {
     setSearchResults(null);
 
     try {
+      // تنظيف معرف الحلم من أي مسافات
+      const cleanId = searchId.trim();
+      console.log(`بحث عن الحلم بالمعرف: "${cleanId}"`);
+
+      // فحص إذا كان المعرف صالحًا بتنسيق UUID
+      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cleanId)) {
+        console.log('معرف الحلم غير صحيح بتنسيق UUID');
+        setSearchError('معرف الحلم غير صحيح. يجب أن يكون بتنسيق UUID.');
+        toast.error('معرف الحلم غير صحيح');
+        setLoading(false);
+        return;
+      }
+
+      // جلب الحلم باستخدام معرف UUID
       const { data, error } = await supabase
         .from('dreams')
         .select('*')
-        .eq('id', searchId.trim())
-        .single();
+        .eq('id', cleanId);
+
+      console.log('نتيجة البحث عن الحلم:', data, 'خطأ:', error);
 
       if (error) {
         console.error('Error searching for dream:', error);
-        setSearchError('لم يتم العثور على الحلم بهذا المعرف');
-        toast.error('لم يتم العثور على الحلم بهذا المعرف');
-      } else if (data) {
-        console.log('Dream found:', data);
-        setSearchResults(data);
+        setSearchError('حدث خطأ أثناء البحث عن الحلم');
+        toast.error('حدث خطأ أثناء البحث عن الحلم');
+      } else if (data && data.length > 0) {
+        console.log('تم العثور على الحلم:', data[0]);
+        setSearchResults(data[0]);
         
-        // Fetch user details if dream has a user_id
-        if (data.user_id) {
-          await fetchUserDetails([data.user_id]);
+        // جلب بيانات المستخدم إذا كان الحلم له معرف مستخدم
+        if (data[0].user_id) {
+          await fetchUserDetails([data[0].user_id]);
         }
         
         toast.success('تم العثور على الحلم بنجاح');
+      } else {
+        console.log('لم يتم العثور على الحلم بهذا المعرف');
+        setSearchError('لم يتم العثور على الحلم بهذا المعرف');
+        toast.error('لم يتم العثور على الحلم بهذا المعرف');
       }
     } catch (error) {
       console.error('Error in searchDreamById:', error);
