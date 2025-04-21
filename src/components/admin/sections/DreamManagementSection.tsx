@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Book, RefreshCw } from 'lucide-react';
+import { Book, RefreshCw, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import AdminSection from '@/components/admin/AdminSection';
 import { useAdmin } from '@/contexts/admin';
@@ -19,6 +19,7 @@ import {
   PaginationPrevious 
 } from '@/components/ui/pagination';
 import { Loader2 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 
 const DreamManagementSection = () => {
   const { activeSections, toggleSection } = useAdmin();
@@ -29,6 +30,9 @@ const DreamManagementSection = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [userEmails, setUserEmails] = useState<Record<string, string>>({});
   const [userNames, setUserNames] = useState<Record<string, string>>({});
+  const [searchId, setSearchId] = useState('');
+  const [searchResults, setSearchResults] = useState<Dream | null>(null);
+  const [searchError, setSearchError] = useState<string | null>(null);
   const pageSize = 10;
   const navigate = useNavigate();
 
@@ -85,41 +89,7 @@ const DreamManagementSection = () => {
       
       console.log('Collected user IDs:', userIds);
 
-      if (userIds && userIds.length > 0) {
-        const uniqueUserIds = [...new Set(userIds)];
-        console.log('Unique user IDs:', uniqueUserIds.length);
-        
-        // Fetch user details for the collected user IDs
-        const { data: usersData, error: usersError } = await supabase
-          .from('users')
-          .select('id, email, full_name')
-          .in('id', uniqueUserIds);
-
-        if (usersError) {
-          console.error('Error fetching users:', usersError);
-          toast.error('حدث خطأ أثناء جلب بيانات المستخدمين');
-        } else if (usersData) {
-          console.log('Fetched users:', usersData.length);
-          
-          const emailLookup: Record<string, string> = {};
-          const nameLookup: Record<string, string> = {};
-          
-          usersData.forEach(user => {
-            if (user.id) {
-              emailLookup[user.id] = user.email || '';
-              nameLookup[user.id] = user.full_name || '';
-            }
-          });
-          
-          setUserEmails(emailLookup);
-          setUserNames(nameLookup);
-          
-          console.log('User emails lookup:', emailLookup);
-          console.log('User names lookup:', nameLookup);
-        }
-      } else {
-        console.log('No user IDs found in dreams');
-      }
+      await fetchUserDetails(userIds);
     } catch (error) {
       console.error('Error in fetchDreams:', error);
       toast.error('حدث خطأ غير متوقع');
@@ -128,7 +98,94 @@ const DreamManagementSection = () => {
     }
   };
 
+  const fetchUserDetails = async (userIds: string[]) => {
+    if (!userIds || userIds.length === 0) {
+      console.log('No user IDs to fetch details for');
+      return;
+    }
+
+    try {
+      const uniqueUserIds = [...new Set(userIds)];
+      console.log('Unique user IDs:', uniqueUserIds.length);
+      
+      // Fetch user details for the collected user IDs
+      const { data: usersData, error: usersError } = await supabase
+        .from('users')
+        .select('id, email, full_name')
+        .in('id', uniqueUserIds);
+
+      if (usersError) {
+        console.error('Error fetching users:', usersError);
+        toast.error('حدث خطأ أثناء جلب بيانات المستخدمين');
+      } else if (usersData) {
+        console.log('Fetched users:', usersData.length);
+        
+        const emailLookup: Record<string, string> = {};
+        const nameLookup: Record<string, string> = {};
+        
+        usersData.forEach(user => {
+          if (user.id) {
+            emailLookup[user.id] = user.email || '';
+            nameLookup[user.id] = user.full_name || '';
+          }
+        });
+        
+        setUserEmails(emailLookup);
+        setUserNames(nameLookup);
+        
+        console.log('User emails lookup:', emailLookup);
+        console.log('User names lookup:', nameLookup);
+      }
+    } catch (error) {
+      console.error('Error fetching user details:', error);
+    }
+  };
+
+  const searchDreamById = async () => {
+    if (!searchId.trim()) {
+      toast.error('الرجاء إدخال معرف الحلم للبحث');
+      return;
+    }
+
+    setLoading(true);
+    setSearchError(null);
+    setSearchResults(null);
+
+    try {
+      const { data, error } = await supabase
+        .from('dreams')
+        .select('*')
+        .eq('id', searchId.trim())
+        .single();
+
+      if (error) {
+        console.error('Error searching for dream:', error);
+        setSearchError('لم يتم العثور على الحلم بهذا المعرف');
+        toast.error('لم يتم العثور على الحلم بهذا المعرف');
+      } else if (data) {
+        console.log('Dream found:', data);
+        setSearchResults(data);
+        
+        // Fetch user details if dream has a user_id
+        if (data.user_id) {
+          await fetchUserDetails([data.user_id]);
+        }
+        
+        toast.success('تم العثور على الحلم بنجاح');
+      }
+    } catch (error) {
+      console.error('Error in searchDreamById:', error);
+      setSearchError('حدث خطأ أثناء البحث عن الحلم');
+      toast.error('حدث خطأ أثناء البحث عن الحلم');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const refreshData = async () => {
+    setSearchResults(null);
+    setSearchId('');
+    setSearchError(null);
     await fetchDreams(currentPage);
     toast.success('تم تحديث قائمة الأحلام بنجاح');
   };
@@ -224,6 +281,58 @@ const DreamManagementSection = () => {
     navigate(`/dream/${dreamId}`, { state: { from: 'admin' } });
   };
 
+  const renderDreamTable = (dreamsList: Dream[]) => {
+    return (
+      <div className="overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-gray-50 dark:bg-gray-800">
+              <TableHead className="w-32 text-right font-bold text-primary">المستخدم</TableHead>
+              <TableHead className="font-bold text-primary">معرف الحلم</TableHead>
+              <TableHead className="font-bold text-primary">الحلم</TableHead>
+              <TableHead className="font-bold text-primary">تاريخ الإنشاء</TableHead>
+              <TableHead className="text-left font-bold text-primary">الإجراءات</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {dreamsList.map((dream) => (
+              <TableRow key={dream.id} className="hover:bg-primary/5 transition rounded group">
+                <TableCell className="text-right font-medium text-gray-900 dark:text-white">
+                  <div className="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded text-sm">
+                    {getUserDisplayName(dream.user_id)}
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <div className="max-w-[150px] truncate text-xs bg-gray-50 dark:bg-gray-800 p-1 rounded">
+                    {dream.id}
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <div className="max-w-md truncate text-gray-800 dark:text-gray-200">{truncateText(dream.dream_text, 80)}</div>
+                </TableCell>
+                <TableCell>
+                  <span className="inline-block px-3 py-1 rounded bg-gray-100 dark:bg-gray-700 text-xs font-semibold text-gray-700 dark:text-gray-100">
+                    {formatDate(dream.created_at)}
+                  </span>
+                </TableCell>
+                <TableCell>
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => viewDream(dream.id)}
+                    className="hover:bg-primary/10"
+                  >
+                    عرض
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    );
+  };
+
   return (
     <AdminSection 
       title="إدارة الأحلام" 
@@ -233,25 +342,79 @@ const DreamManagementSection = () => {
       onToggle={() => toggleSection('dreams')}
     >
       <div className="space-y-6">
-        <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-3">
+        <div className="flex flex-col md:flex-row gap-3 items-center justify-between">
           <div className="text-sm text-gray-600 dark:text-gray-300">
             إجمالي عدد الأحلام: <span className="font-bold text-primary">{totalDreams}</span>
           </div>
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={refreshData}
-            className="flex items-center gap-1"
-            disabled={loading}
-          >
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-            <span>تحديث البيانات</span>
-          </Button>
+          
+          <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+            <div className="flex items-center gap-2 w-full md:w-auto">
+              <Input
+                placeholder="أدخل معرف الحلم للبحث"
+                value={searchId}
+                onChange={(e) => setSearchId(e.target.value)}
+                className="w-full md:w-72"
+              />
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={searchDreamById}
+                disabled={loading || !searchId.trim()}
+                className="shrink-0"
+              >
+                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+              </Button>
+            </div>
+            
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={refreshData}
+              className="flex items-center gap-1 shrink-0"
+              disabled={loading}
+            >
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+              <span>تحديث البيانات</span>
+            </Button>
+          </div>
         </div>
 
-        {loading ? (
+        {loading && !searchResults ? (
           <div className="flex justify-center py-20">
             <Loader2 className="h-10 w-10 animate-spin text-primary" />
+          </div>
+        ) : searchResults ? (
+          <div className="shadow border rounded-xl overflow-hidden bg-white dark:bg-gray-800">
+            <div className="bg-blue-50 dark:bg-blue-900/20 p-3 border-b">
+              <h3 className="font-bold">نتيجة البحث عن الحلم</h3>
+            </div>
+            {renderDreamTable([searchResults])}
+            <div className="p-4 text-center">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => {
+                  setSearchResults(null);
+                  setSearchId('');
+                }}
+              >
+                العودة إلى قائمة الأحلام
+              </Button>
+            </div>
+          </div>
+        ) : searchError ? (
+          <div className="text-center py-10 text-muted-foreground rounded-md bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+            <p className="mb-4 text-red-600 dark:text-red-400">{searchError}</p>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => {
+                setSearchError(null);
+                setSearchId('');
+              }}
+            >
+              العودة إلى قائمة الأحلام
+            </Button>
           </div>
         ) : dreams.length === 0 ? (
           <div className="text-center py-20 text-muted-foreground rounded-md bg-gray-100 dark:bg-gray-900">
@@ -259,47 +422,7 @@ const DreamManagementSection = () => {
           </div>
         ) : (
           <div className="shadow border rounded-xl overflow-hidden bg-white dark:bg-gray-800">
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-gray-50 dark:bg-gray-800">
-                    <TableHead className="w-32 text-right font-bold text-primary">المستخدم</TableHead>
-                    <TableHead className="font-bold text-primary">الحلم</TableHead>
-                    <TableHead className="font-bold text-primary">تاريخ الإنشاء</TableHead>
-                    <TableHead className="text-left font-bold text-primary">الإجراءات</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {dreams.map((dream) => (
-                    <TableRow key={dream.id} className="hover:bg-primary/5 transition rounded group">
-                      <TableCell className="text-right font-medium text-gray-900 dark:text-white">
-                        <div className="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded text-sm">
-                          {getUserDisplayName(dream.user_id)}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="max-w-md truncate text-gray-800 dark:text-gray-200">{truncateText(dream.dream_text, 80)}</div>
-                      </TableCell>
-                      <TableCell>
-                        <span className="inline-block px-3 py-1 rounded bg-gray-100 dark:bg-gray-700 text-xs font-semibold text-gray-700 dark:text-gray-100">
-                          {formatDate(dream.created_at)}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() => viewDream(dream.id)}
-                          className="hover:bg-primary/10"
-                        >
-                          عرض
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+            {renderDreamTable(dreams)}
             
             <div className="p-4 border-t bg-yellow-100 dark:bg-yellow-800/30 mt-0">
               <p className="text-xs text-yellow-900 dark:text-yellow-100 text-right font-medium leading-relaxed">
@@ -309,7 +432,7 @@ const DreamManagementSection = () => {
             </div>
           </div>
         )}
-        {totalPages > 1 && renderPagination()}
+        {!searchResults && !searchError && totalPages > 1 && renderPagination()}
       </div>
     </AdminSection>
   );
