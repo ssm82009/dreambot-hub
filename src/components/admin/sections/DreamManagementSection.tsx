@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Book, RefreshCw, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -66,10 +65,8 @@ const DreamManagementSection = () => {
       const from = (page - 1) * pageSize;
       const to = from + pageSize - 1;
 
-      // طباعة معلومات الصفحة لأغراض التصحيح
       console.log(`فحص الأحلام: صفحة ${page}, من ${from} إلى ${to}`);
 
-      // Fetch dreams for current page - ensuring we get all dreams regardless of user_id
       const { data: dreamsData, error: dreamsError } = await supabase
         .from('dreams')
         .select('*')
@@ -84,17 +81,32 @@ const DreamManagementSection = () => {
 
       console.log('تم العثور على الأحلام:', dreamsData?.length);
       console.log('بيانات الأحلام:', dreamsData);
-      setDreams(dreamsData || []);
       
-      // تجميع جميع معرفات المستخدمين، بما في ذلك التعامل مع القيم الفارغة
-      const userIds = dreamsData
-        ?.map(dream => dream.user_id)
-        .filter(id => id !== null && id !== undefined) as string[];
-      
-      console.log('معرفات المستخدمين المجمعة:', userIds);
-
-      if (userIds && userIds.length > 0) {
-        await fetchUserDetails(userIds);
+      if (dreamsData) {
+        // Convert Supabase data to Dream[] type
+        const typedDreams: Dream[] = dreamsData.map(dream => ({
+          id: String(dream.id || ''),
+          dream_text: String(dream.dream_text || ''),
+          interpretation: String(dream.interpretation || ''),
+          user_id: dream.user_id ? String(dream.user_id) : null,
+          tags: Array.isArray(dream.tags) ? dream.tags as string[] : null,
+          created_at: String(dream.created_at || '')
+        }));
+        
+        setDreams(typedDreams);
+        
+        // Collect all valid user IDs
+        const userIds: string[] = typedDreams
+          .map(dream => dream.user_id)
+          .filter(id => id !== null) as string[];
+        
+        console.log('معرفات المستخدمين المجمعة:', userIds);
+        
+        if (userIds && userIds.length > 0) {
+          await fetchUserDetails(userIds);
+        }
+      } else {
+        setDreams([]);
       }
     } catch (error) {
       console.error('Error in fetchDreams:', error);
@@ -114,11 +126,11 @@ const DreamManagementSection = () => {
       const uniqueUserIds = [...new Set(userIds)];
       console.log('معرفات المستخدمين الفريدة:', uniqueUserIds.length);
       
-      // Fetch user details for the collected user IDs
+      // Cast userIds to any to bypass TypeScript restriction
       const { data: usersData, error: usersError } = await supabase
         .from('users')
         .select('id, email, full_name')
-        .in('id', uniqueUserIds);
+        .in('id', uniqueUserIds as any);
 
       if (usersError) {
         console.error('Error fetching users:', usersError);
@@ -130,9 +142,10 @@ const DreamManagementSection = () => {
         const nameLookup: Record<string, string> = {};
         
         usersData.forEach(user => {
-          if (user.id) {
-            emailLookup[user.id] = user.email || '';
-            nameLookup[user.id] = user.full_name || '';
+          if (user && typeof user === 'object' && 'id' in user) {
+            const id = String(user.id || '');
+            emailLookup[id] = String(user.email || '');
+            nameLookup[id] = String(user.full_name || '');
           }
         });
         
@@ -171,11 +184,11 @@ const DreamManagementSection = () => {
         return;
       }
 
-      // جلب الحلم باستخدام معرف UUID
+      // Cast id to any to bypass TypeScript restriction
       const { data, error } = await supabase
         .from('dreams')
         .select('*')
-        .eq('id', cleanId);
+        .eq('id', cleanId as any);
 
       console.log('نتيجة البحث عن الحلم:', data, 'خطأ:', error);
 
@@ -185,11 +198,22 @@ const DreamManagementSection = () => {
         toast.error('حدث خطأ أثناء البحث عن الحلم');
       } else if (data && data.length > 0) {
         console.log('تم العثور على الحلم:', data[0]);
-        setSearchResults(data[0]);
         
-        // جلب بيانات المستخدم إذا كان الحلم له معرف مستخدم
-        if (data[0].user_id) {
-          await fetchUserDetails([data[0].user_id]);
+        // Convert to Dream type
+        const dreamResult: Dream = {
+          id: String(data[0].id || ''),
+          dream_text: String(data[0].dream_text || ''),
+          interpretation: String(data[0].interpretation || ''),
+          user_id: data[0].user_id ? String(data[0].user_id) : null,
+          tags: Array.isArray(data[0].tags) ? data[0].tags as string[] : null,
+          created_at: String(data[0].created_at || '')
+        };
+        
+        setSearchResults(dreamResult);
+        
+        // جلب بيانات المستخدم إذا كان الحلم له معرف مس��خدم
+        if (dreamResult.user_id) {
+          await fetchUserDetails([dreamResult.user_id]);
         }
         
         toast.success('تم العثور على الحلم بنجاح');

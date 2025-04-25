@@ -75,8 +75,11 @@ const DashboardCharts: React.FC = () => {
           const processedUsers = processDateData(usersStats as any[]);
           setUsersData(processedUsers);
 
-          // Cast to appropriate type with type safety
-          const typedUsersStats = usersStats as unknown as UserData[];
+          // Process user data with type safety
+          const typedUsersStats: UserData[] = usersStats.map((user: any) => ({
+            created_at: user.created_at || '',
+            subscription_type: user.subscription_type || undefined
+          }));
           
           // معالجة بيانات الاشتراكات
           const subscriptions = [

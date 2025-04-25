@@ -32,11 +32,18 @@ const TicketManagement: React.FC = () => {
         }
 
         if (data) {
-          // Cast the data to the expected type explicitly
-          setTickets(data?.map(ticket => ({
-            ...ticket,
-            status: ticket.status as 'open' | 'closed'
-          })) || []);
+          // Use explicit type check and mapping to transform data to expected type
+          const typedTickets: Ticket[] = data.map(ticket => ({
+            id: String(ticket.id),
+            title: String(ticket.title || ''),
+            description: String(ticket.description || ''),
+            status: (ticket.status as 'open' | 'closed') || 'open',
+            user_id: String(ticket.user_id || ''),
+            created_at: String(ticket.created_at || ''),
+            updated_at: String(ticket.updated_at || '')
+          }));
+          
+          setTickets(typedTickets);
         } else {
           setTickets([]);
         }
@@ -70,8 +77,8 @@ const TicketManagement: React.FC = () => {
         .update({
           status: newStatus,
           updated_at: new Date().toISOString()
-        } as any)
-        .eq('id', ticket.id as any);
+        })
+        .eq('id', ticket.id);
 
       if (error) throw error;
 

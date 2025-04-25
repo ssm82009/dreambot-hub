@@ -28,8 +28,17 @@ const NavLinks: React.FC<NavLinksProps> = ({ isAdmin, isLoggedIn }) => {
         }
 
         if (data) {
-          // Explicitly cast the data to the expected type
-          setLinks(data as unknown as NavLinkType[] || []);
+          // Convert data to NavLinkType
+          const typedLinks: NavLinkType[] = data.map(link => ({
+            id: String(link.id || ''),
+            title: String(link.title || ''),
+            url: String(link.url || ''),
+            order: Number(link.order || 0),
+            is_admin_only: Boolean(link.is_admin_only),
+            created_at: String(link.created_at || new Date().toISOString())
+          }));
+          
+          setLinks(typedLinks);
         } else {
           // Fallback to default links if there's an error
           setLinks([

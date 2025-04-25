@@ -50,7 +50,18 @@ const FirebaseConfigSection = () => {
         }
 
         if (data) {
-          form.reset(data);
+          // Convert to FirebaseConfig type
+          const config: FirebaseConfig = {
+            id: String(data.id || ''),
+            api_key: String(data.api_key || ''),
+            auth_domain: String(data.auth_domain || ''),
+            project_id: String(data.project_id || ''),
+            storage_bucket: String(data.storage_bucket || ''),
+            messaging_sender_id: String(data.messaging_sender_id || ''),
+            app_id: String(data.app_id || ''),
+            measurement_id: data.measurement_id ? String(data.measurement_id) : '',
+          };
+          form.reset(config);
         }
       } catch (error) {
         console.error('Error fetching Firebase config:', error);
@@ -66,7 +77,7 @@ const FirebaseConfigSection = () => {
   const onSubmit = async (values: FirebaseConfig) => {
     setLoading(true);
     try {
-      const configToSave: FirebaseConfig = {
+      const configToSave: any = {
         api_key: values.api_key,
         auth_domain: values.auth_domain,
         project_id: values.project_id,
@@ -86,7 +97,7 @@ const FirebaseConfigSection = () => {
         throw error;
       }
 
-      if (data) {
+      if (data && typeof data === 'object' && 'id' in data) {
         // Update existing config
         const { error: updateError } = await supabase
           .from('firebase_config')
