@@ -23,10 +23,21 @@ import { ArDisplay } from '@/lib/utils';
 
 const COLORS = ['#9b87f5', '#64B5F6', '#81C784', '#FFB74D'];
 
+interface UserData {
+  created_at: string;
+  subscription_type?: string;
+}
+
+interface ChartDataItem {
+  name: string;
+  count: number;
+  displayName: string;
+}
+
 const DashboardCharts: React.FC = () => {
-  const [dreamsData, setDreamsData] = useState<any[]>([]);
-  const [usersData, setUsersData] = useState<any[]>([]);
-  const [subscriptionData, setSubscriptionData] = useState<any[]>([]);
+  const [dreamsData, setDreamsData] = useState<ChartDataItem[]>([]);
+  const [usersData, setUsersData] = useState<ChartDataItem[]>([]);
+  const [subscriptionData, setSubscriptionData] = useState<{name: string, value: number}[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -45,7 +56,7 @@ const DashboardCharts: React.FC = () => {
 
         if (dreamsStats) {
           // معالجة البيانات لتجميع الأحلام حسب اليوم
-          const processedDreams = processDateData(dreamsStats);
+          const processedDreams = processDateData(dreamsStats as any[]);
           setDreamsData(processedDreams);
         }
 
@@ -61,15 +72,18 @@ const DashboardCharts: React.FC = () => {
 
         if (usersStats) {
           // معالجة البيانات لتجميع المستخدمين حسب اليوم
-          const processedUsers = processDateData(usersStats);
+          const processedUsers = processDateData(usersStats as any[]);
           setUsersData(processedUsers);
 
+          // Cast to appropriate type with type safety
+          const typedUsersStats = usersStats as unknown as UserData[];
+          
           // معالجة بيانات الاشتراكات
           const subscriptions = [
-            { name: 'مجاني', value: usersStats.filter(u => u.subscription_type === 'free').length },
-            { name: 'مميز', value: usersStats.filter(u => u.subscription_type === 'premium').length },
-            { name: 'احترافي', value: usersStats.filter(u => u.subscription_type === 'pro').length },
-            { name: 'غير محدد', value: usersStats.filter(u => !u.subscription_type).length }
+            { name: 'مجاني', value: typedUsersStats.filter(u => u.subscription_type === 'free').length },
+            { name: 'مميز', value: typedUsersStats.filter(u => u.subscription_type === 'premium').length },
+            { name: 'احترافي', value: typedUsersStats.filter(u => u.subscription_type === 'pro').length },
+            { name: 'غير محدد', value: typedUsersStats.filter(u => !u.subscription_type).length }
           ];
           setSubscriptionData(subscriptions);
         }
@@ -84,7 +98,7 @@ const DashboardCharts: React.FC = () => {
   }, []);
 
   // معالجة البيانات حسب التاريخ
-  const processDateData = (data: any[]) => {
+  const processDateData = (data: any[]): ChartDataItem[] => {
     // أنشئ مجموعة البيانات للأيام السبعة الماضية
     const last7Days = Array.from({ length: 7 }, (_, i) => {
       const date = subDays(new Date(), i);
@@ -97,6 +111,8 @@ const DashboardCharts: React.FC = () => {
     
     // عدّ البيانات لكل يوم
     data.forEach(item => {
+      if (!item || !item.created_at) return;
+      
       const itemDate = format(new Date(item.created_at), 'yyyy-MM-dd');
       const dayData = last7Days.find(day => day.name === itemDate);
       if (dayData) {

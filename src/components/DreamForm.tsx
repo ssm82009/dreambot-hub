@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -90,7 +91,7 @@ const DreamForm = () => {
       const { data: userData, error: userError } = await supabase
         .from('users')
         .select('*')
-        .eq('id', userId)
+        .eq('id', userId as any)
         .single();
 
       if (userError) {
@@ -112,7 +113,7 @@ const DreamForm = () => {
           count: 'exact',
           head: true
         })
-        .eq('user_id', userId);
+        .eq('user_id', userId as any);
 
       if (error) {
         console.error("Error fetching dreams count:", error);
@@ -165,7 +166,8 @@ const DreamForm = () => {
       if (interpretationError) {
         console.error("خطأ في جلب إعدادات التفسير:", interpretationError);
       } else if (interpretationData) {
-        setInterpretationSettings(interpretationData as InterpretationSettings);
+        // Explicitly cast the data to the expected type
+        setInterpretationSettings(interpretationData as unknown as InterpretationSettings);
       }
     } catch (error) {
       console.error("خطأ في الاتصال بقاعدة البيانات:", error);
@@ -178,7 +180,8 @@ const DreamForm = () => {
       if (error) {
         console.error("خطأ في جلب رموز الأحلام:", error);
       } else if (data) {
-        setDreamSymbols(data as DreamSymbol[]);
+        // Explicitly cast the data to the expected type
+        setDreamSymbols(data as unknown as DreamSymbol[]);
       }
     } catch (error) {
       console.error("خطأ في الاتصال بقاعدة البيانات:", error);
@@ -225,7 +228,7 @@ const DreamForm = () => {
             .insert({
               dream_text: dream,
               interpretation: generatedInterpretation,
-              user_id: userId,
+              user_id: userId as any,
               tags: extractedTags
             } as any);
 

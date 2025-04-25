@@ -28,6 +28,7 @@ const NavLinks: React.FC<NavLinksProps> = ({ isAdmin, isLoggedIn }) => {
         }
 
         if (data) {
+          // Explicitly cast the data to the expected type
           setLinks(data as unknown as NavLinkType[] || []);
         } else {
           // Fallback to default links if there's an error

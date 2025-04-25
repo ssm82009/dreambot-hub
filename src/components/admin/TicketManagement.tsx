@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -30,10 +31,15 @@ const TicketManagement: React.FC = () => {
           throw error;
         }
 
-        setTickets(data?.map(ticket => ({
-          ...ticket,
-          status: ticket.status as 'open' | 'closed'
-        })) || []);
+        if (data) {
+          // Cast the data to the expected type explicitly
+          setTickets(data?.map(ticket => ({
+            ...ticket,
+            status: ticket.status as 'open' | 'closed'
+          })) || []);
+        } else {
+          setTickets([]);
+        }
       } catch (error) {
         console.error('Error fetching tickets:', error);
         toast.error('حدث خطأ في جلب بيانات التذاكر');
@@ -64,8 +70,8 @@ const TicketManagement: React.FC = () => {
         .update({
           status: newStatus,
           updated_at: new Date().toISOString()
-        })
-        .eq('id', ticket.id);
+        } as any)
+        .eq('id', ticket.id as any);
 
       if (error) throw error;
 
