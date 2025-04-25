@@ -36,7 +36,11 @@ const NavbarManagement = () => {
       }
 
       // Cast the data to NavLink type
-      setNavLinks(data as NavLink[] || []);
+      if (data) {
+        setNavLinks(data as unknown as NavLink[]);
+      } else {
+        setNavLinks([]);
+      }
     } catch (error) {
       console.error('Error fetching navbar links:', error);
       toast.error('حدث خطأ أثناء جلب روابط شريط التنقل');
@@ -61,12 +65,12 @@ const NavbarManagement = () => {
       await Promise.all([
         supabase
           .from('navbar_links')
-          .update({ order: prevLink.order })
-          .eq('id', link.id),
+          .update({ order: prevLink.order } as any)
+          .eq('id', link.id as any),
         supabase
           .from('navbar_links')
-          .update({ order: link.order })
-          .eq('id', prevLink.id)
+          .update({ order: link.order } as any)
+          .eq('id', prevLink.id as any)
       ]);
       
       // Update state to reflect changes
@@ -96,12 +100,12 @@ const NavbarManagement = () => {
       await Promise.all([
         supabase
           .from('navbar_links')
-          .update({ order: nextLink.order })
-          .eq('id', link.id),
+          .update({ order: nextLink.order } as any)
+          .eq('id', link.id as any),
         supabase
           .from('navbar_links')
-          .update({ order: link.order })
-          .eq('id', nextLink.id)
+          .update({ order: link.order } as any)
+          .eq('id', nextLink.id as any)
       ]);
       
       // Update state to reflect changes
@@ -125,7 +129,7 @@ const NavbarManagement = () => {
       await supabase
         .from('navbar_links')
         .delete()
-        .eq('id', id);
+        .eq('id', id as any);
       
       setNavLinks(navLinks.filter(link => link.id !== id));
       toast.success('تم حذف الرابط بنجاح');
@@ -156,13 +160,13 @@ const NavbarManagement = () => {
           url: newLink.url,
           order: maxOrder + 1,
           is_admin_only: newLink.is_admin_only
-        })
+        } as any)
         .select();
       
       if (error) throw error;
       
       if (data && data.length > 0) {
-        setNavLinks([...navLinks, data[0] as NavLink]);
+        setNavLinks([...navLinks, data[0] as unknown as NavLink]);
         // Reset form
         setNewLink({
           title: "",

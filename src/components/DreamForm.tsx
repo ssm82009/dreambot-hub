@@ -11,6 +11,7 @@ import { Progress } from "@/components/ui/progress";
 import { useNavigate } from 'react-router-dom';
 import { getTotalInterpretations } from '@/utils/subscription';
 import html2canvas from 'html2canvas';
+
 const renderBoldText = (text: string) => {
   return text.split(/(\*\*.*?\*\*)/).map((part, index) => {
     if (part.startsWith('**') && part.endsWith('**')) {
@@ -19,6 +20,7 @@ const renderBoldText = (text: string) => {
     return part;
   });
 };
+
 const DreamForm = () => {
   const [dreamText, setDreamText] = useState('');
   const [interpretation, setInterpretation] = useState<string | null>(null);
@@ -37,15 +39,18 @@ const DreamForm = () => {
   const [usedInterpretations, setUsedInterpretations] = useState(0);
   const [hasReachedLimit, setHasReachedLimit] = useState(false);
   const resultCardRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     fetchDreamSymbols();
     fetchSettings();
     checkAuth();
   }, []);
+
   useEffect(() => {
     setCharCount(dreamText.length);
     setWordCount(dreamText.trim() ? dreamText.trim().split(/\s+/).length : 0);
   }, [dreamText]);
+
   useEffect(() => {
     if (userId) {
       fetchUserSubscription();
@@ -53,17 +58,17 @@ const DreamForm = () => {
       fetchPricingSettings();
     }
   }, [userId]);
+
   useEffect(() => {
     if (userSubscription && pricingSettings && usedInterpretations >= 0) {
       const totalAllowed = getTotalInterpretations(userSubscription, pricingSettings);
       setHasReachedLimit(totalAllowed !== -1 && usedInterpretations >= totalAllowed);
     }
   }, [userSubscription, pricingSettings, usedInterpretations]);
+
   const checkAuth = async () => {
     try {
-      const {
-        data
-      } = await supabase.auth.getSession();
+      const { data } = await supabase.auth.getSession();
       if (data.session?.user) {
         setUserId(data.session.user.id);
         setIsAuthenticated(true);
@@ -78,12 +83,16 @@ const DreamForm = () => {
       setIsAuthenticated(false);
     }
   };
+
   const fetchUserSubscription = async () => {
     try {
-      const {
-        data: userData,
-        error: userError
-      } = await supabase.from('users').select('*').eq('id', userId).single();
+      if (!userId) return;
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
       if (userError) {
         console.error("Error fetching user subscription:", userError);
         return;
@@ -93,15 +102,18 @@ const DreamForm = () => {
       console.error("Error fetching user subscription:", error);
     }
   };
+
   const fetchUsedInterpretations = async () => {
     try {
-      const {
-        count,
-        error
-      } = await supabase.from('dreams').select('*', {
-        count: 'exact',
-        head: true
-      }).eq('user_id', userId);
+      if (!userId) return;
+      const { count, error } = await supabase
+        .from('dreams')
+        .select('*', {
+          count: 'exact',
+          head: true
+        })
+        .eq('user_id', userId);
+
       if (error) {
         console.error("Error fetching dreams count:", error);
         return;
@@ -111,12 +123,15 @@ const DreamForm = () => {
       console.error("Error counting dreams:", error);
     }
   };
+
   const fetchPricingSettings = async () => {
     try {
-      const {
-        data,
-        error
-      } = await supabase.from('pricing_settings').select('*').limit(1).single();
+      const { data, error } = await supabase
+        .from('pricing_settings')
+        .select('*')
+        .limit(1)
+        .single();
+
       if (error) {
         console.error("Error fetching pricing settings:", error);
         return;
@@ -126,58 +141,61 @@ const DreamForm = () => {
       console.error("Error fetching pricing settings:", error);
     }
   };
+
   const fetchSettings = async () => {
     try {
-      const {
-        data: aiData,
-        error: aiError
-      } = await supabase.from('ai_settings').select('*').limit(1).maybeSingle();
+      const { data: aiData, error: aiError } = await supabase
+        .from('ai_settings')
+        .select('*')
+        .limit(1)
+        .maybeSingle();
+
       if (aiError) {
         console.error("خطأ في جلب إعدادات الذكاء الاصطناعي:", aiError);
-      } else {
+      } else if (aiData) {
         setAiSettings(aiData);
       }
-      const {
-        data: interpretationData,
-        error: interpretationError
-      } = await supabase.from('interpretation_settings').select('*').limit(1).maybeSingle();
+
+      const { data: interpretationData, error: interpretationError } = await supabase
+        .from('interpretation_settings')
+        .select('*')
+        .limit(1)
+        .maybeSingle();
+
       if (interpretationError) {
         console.error("خطأ في جلب إعدادات التفسير:", interpretationError);
-      } else {
-        setInterpretationSettings(interpretationData);
+      } else if (interpretationData) {
+        setInterpretationSettings(interpretationData as InterpretationSettings);
       }
     } catch (error) {
       console.error("خطأ في الاتصال بقاعدة البيانات:", error);
     }
   };
+
   const fetchDreamSymbols = async () => {
     try {
-      const {
-        data,
-        error
-      } = await supabase.from('dream_symbols').select('*');
+      const { data, error } = await supabase.from('dream_symbols').select('*');
       if (error) {
         console.error("خطأ في جلب رموز الأحلام:", error);
-      } else {
-        setDreamSymbols(data || []);
+      } else if (data) {
+        setDreamSymbols(data as DreamSymbol[]);
       }
     } catch (error) {
       console.error("خطأ في الاتصال بقاعدة البيانات:", error);
     }
   };
+
   const interpretDream = async (dream: string) => {
     setIsLoading(true);
     setError(null);
     try {
       console.log("Calling interpret-dream function with dream text:", dream.substring(0, 50) + "...");
-      const {
-        data: aiResponse,
-        error: invokeError
-      } = await supabase.functions.invoke('interpret-dream', {
+      const { data: aiResponse, error: invokeError } = await supabase.functions.invoke('interpret-dream', {
         body: {
           dreamText: dream
         }
       });
+
       if (invokeError) {
         console.error("خطأ في استدعاء وظيفة تفسير الحلم:", invokeError);
         setError(invokeError.message || "فشل في استدعاء وظيفة تفسير الحلم");
@@ -185,6 +203,7 @@ const DreamForm = () => {
         setIsLoading(false);
         return;
       }
+
       if (aiResponse.error) {
         console.error("خطأ من وظيفة تفسير الحلم:", aiResponse.error);
         setError(aiResponse.error);
@@ -192,29 +211,36 @@ const DreamForm = () => {
         setIsLoading(false);
         return;
       }
+
       const generatedInterpretation = aiResponse?.interpretation || "لم نتمكن من الحصول على تفسير في هذا الوقت.";
       console.log("Received interpretation successfully");
+
       try {
-        const extractedTags = extractKeywords(dream);
-        console.log("Extracted tags:", extractedTags);
-        const {
-          error: insertError
-        } = await supabase.from('dreams').insert({
-          dream_text: dream,
-          interpretation: generatedInterpretation,
-          user_id: userId,
-          tags: extractedTags
-        });
-        if (insertError) {
-          console.error("خطأ في حفظ الحلم:", insertError);
-          toast.error("حدث خطأ عند حفظ الحلم، ولكن تم الحصول على التفسير");
-        } else {
-          toast.success("تم حفظ الحلم وتفسيره بنجاح");
+        if (userId) {
+          const extractedTags = extractKeywords(dream);
+          console.log("Extracted tags:", extractedTags);
+          
+          const { error: insertError } = await supabase
+            .from('dreams')
+            .insert({
+              dream_text: dream,
+              interpretation: generatedInterpretation,
+              user_id: userId,
+              tags: extractedTags
+            } as any);
+
+          if (insertError) {
+            console.error("خطأ في حفظ الحلم:", insertError);
+            toast.error("حدث خطأ عند حفظ الحلم، ولكن تم الحصول على التفسير");
+          } else {
+            toast.success("تم حفظ الحلم وتفسيره بنجاح");
+          }
         }
       } catch (saveError) {
         console.error("خطأ في حفظ الحلم في قاعدة البيانات:", saveError);
         toast.error("تم تفسير الحلم ولكن لم يتم حفظه في سجلاتك");
       }
+
       setInterpretation(generatedInterpretation);
     } catch (error) {
       console.error("خطأ في تفسير الحلم:", error);
@@ -224,16 +250,19 @@ const DreamForm = () => {
       setIsLoading(false);
     }
   };
+
   const extractKeywords = (text: string): string[] => {
     const commonKeywords = ['ماء', 'طيران', 'سقوط', 'موت', 'مطاردة', 'سفر', 'بيت', 'أسنان', 'فقدان', 'قطة', 'كلب', 'ثعبان', 'طفل', 'امتحان', 'تأخر', 'نجاح', 'فشل', 'زواج', 'مطر', 'شمس', 'ريح', 'سماء', 'نجوم', 'قمر', 'كتاب', 'قلم', 'ورقة', 'مدرسة', 'جامعة', 'تعلم', 'صديق', 'عائلة', 'أم', 'أب', 'أخ', 'أخت', 'طعام', 'خبز', 'فواكه', 'تفاح', 'موز', 'عنب', 'سيارة', 'دراجة', 'طريق', 'سفر', 'رحلة', 'بحر', 'جبل', 'صحراء', 'نهر', 'شجرة', 'زهرة', 'عشب', 'ليل', 'نهار', 'صباح', 'مساء', 'وقت', 'ساعة', 'فرح', 'حزن', 'ضحك', 'بكاء', 'قلب', 'روح', 'يد', 'رجل', 'عين', 'أذن', 'فم', 'رأس', 'ملابس', 'قميص', 'حذاء', 'بنطال', 'فستان', 'قبعة', 'عمل', 'وظيفة', 'مشروع', 'مال', 'فقر', 'غنى', 'حرب', 'سلام', 'أمان', 'خوف', 'حلم', 'حقيقة', 'حرية', 'سجن', 'عدل', 'ظلم', 'قوة', 'ضعف', 'صحة', 'مرض', 'دواء', 'مستشفى', 'طبيب', 'تمريض', 'رياضة', 'كرة', 'سباحة', 'جري', 'قفز', 'تسلق', 'فن', 'رسم', 'موسيقى', 'غناء', 'رقص', 'مسرح', 'تكنولوجيا', 'هاتف', 'كمبيوتر', 'إنترنت', 'برمجة', 'ذكاء', 'حيوان', 'أسد', 'نمر', 'فيل', 'زرافة', 'دب', 'طائر', 'عصفور', 'نسر', 'ببغاء', 'حمامة', 'بومة', 'سمك', 'قرش', 'دلفين', 'حوت', 'جمبري', 'سلحفاة', 'لون', 'أحمر', 'أزرق', 'أخضر', 'أصفر', 'أسود', 'طقس', 'برد', 'حر', 'ثلج', 'ضباب', 'عاصفة', 'مدينة', 'قرية', 'شارع', 'حديقة', 'مبنى', 'جسر', 'حقيبة', 'مفتاح', 'ساعة', 'نظارة', 'خاتم', 'سلسلة', 'ضوء', 'ظلام', 'ظل', 'شعلة', 'شمعة', 'مصباح', 'صوت', 'صمت', 'ضجة', 'همس', 'صراخ', 'غناء', 'رائحة', 'عطر', 'دخان', 'طعام', 'زهر', 'تراب', 'طعم', 'حلو', 'مر', 'مالح', 'حامض', 'لاذع', 'لمس', 'ناعم', 'خشن', 'بارد', 'ساخن', 'مبلل', 'ملمس', 'حرير', 'قطن', 'صوف', 'جلد', 'بلاستيك', 'قراءة', 'كتابة', 'حساب', 'تفكير', 'تخيل', 'تذكر', 'ابتكار', 'اختراع', 'اكتشاف', 'بحث', 'دراسة', 'تحليل', 'بناء', 'هدم', 'إصلاح', 'تركيب', 'صنع', 'تدمير', 'زراعة', 'حصاد', 'بذرة', 'تربة', 'سقي', 'نمو', 'بيع', 'شراء', 'تجارة', 'سوق', 'ربح', 'خسارة', 'هدية', 'مفاجأة', 'سر', 'وعد', 'كذبة', 'حقيقة', 'بداية', 'نهاية', 'تغيير', 'ثبات', 'تقدم', 'تراجع', 'قديم', 'جديد', 'عتيق', 'حديث', 'تقليدي', 'عصري', 'كبير', 'صغير', 'طويل', 'قصير', 'سمين', 'نحيف', 'ثقيل', 'خفيف', 'قاس', 'لين', 'سريع', 'بطيء', 'غريب', 'مألوف', 'مختلف', 'متشابه', 'بسيط', 'معقد', 'نظيف', 'وسخ', 'مرتب', 'فوضوي', 'جذاب', 'منفر', 'سعيد', 'غاضب', 'متفائل', 'متشائم', 'هادئ', 'قلق', 'شجاع', 'جبان', 'صبور', 'عجول', 'كريم', 'بخيل', 'ذكي', 'غبي', 'ماهر', 'غير كفء', 'صادق', 'كاذب', 'ودود', 'عدائي', 'اجتماعي', 'انطوائي', 'مرح', 'جاد', 'مستقبل', 'ماضي', 'حاضر', 'ذكرى', 'أمل', 'ندم', 'خيال', 'واقع', 'حلم', 'كابوس', 'رؤية', 'وهم', 'سحر', 'سحابة', 'قوس قزح', 'برق', 'رعد', 'ندى', 'غروب', 'شروق', 'شفق', 'فجر', 'ظهيرة', 'عتمة', 'صخرة', 'رمل', 'ذهب', 'فضة', 'حديد', 'نحاس', 'زجاج', 'خشب', 'حجر', 'معدن', 'بلاستيك', 'ورق', 'نار', 'جليد', 'بخار', 'هواء', 'تراب', 'ضباب', 'قارب', 'سفينة', 'طائرة', 'قطار', 'باص', 'دراجة', 'جريدة', 'مجلة', 'كتاب', 'قصة', 'رواية', 'شعر', 'فيلم', 'مسلسل', 'برنامج', 'وثائقي', 'كرتون', 'أغنية', 'لعبة', 'كرة قدم', 'سلة', 'تنس', 'سباق', 'منافسة', 'جائزة', 'كأس', 'ميدالية', 'فوز', 'خسارة', 'تعادل', 'مطبخ', 'فرن', 'ثلاجة', 'سكين', 'ملعقة', 'شوكة', 'طبق', 'كوب', 'صحن', 'ابريق', 'سكر', 'ملح', 'قهوة', 'شاي', 'حليب', 'عسل', 'زبادي', 'جبن', 'خبز', 'أرز', 'لحم', 'دجاج', 'سمك', 'سلطة', 'شوربة', 'حساء', 'مقبلات', 'حلوى', 'آيس كريم', 'مطعم', 'مقهى', 'فندق', 'سوق', 'متجر', 'مركز', 'حديقة', 'ملعب', 'مسبح', 'نادي', 'مكتبة', 'متحف', 'بنك', 'شركة', 'مصنع', 'مزرعة', 'ميناء', 'مطار', 'شارع', 'ميدان', 'جسر', 'نفق', 'إشارة', 'زحام', 'إصلاح', 'بناء', 'هدم', 'حفر', 'طلاء', 'تنظيف', 'حريق', 'فيضان', 'زلزال', 'عاصفة', 'جفاف', 'أمطار', 'إنقاذ', 'مساعدة', 'دعم', 'تبرع', 'عمل خير', 'تطوع', 'ابتسامة', 'دموع', 'عناق', 'قبلة', 'وداع', 'لقاء', 'مصافحة', 'ترحيب', 'احتفال', 'تهنئة', 'تعزية', 'اعتذار', 'نصيحة', 'توجيه', 'تعليم', 'تدريب', 'إرشاد', 'توجيه', 'استماع', 'حديث', 'نقاش', 'حوار', 'جدال', 'اتفاق', 'اختلاف', 'تنافس', 'تعاون', 'منافسة', 'تحالف', 'صراع', 'سلام', 'حرب', 'هدنة', 'عداوة', 'صداقة', 'حب', 'كراهية', 'غفران', 'ثأر', 'عدل', 'ظلم', 'إنصاف', 'قانون', 'شرطة', 'محكمة', 'قاضي', 'محامي', 'سجن', 'جريمة', 'سرقة', 'قتل', 'تحقيق', 'شهادة', 'براءة', 'حكومة', 'رئيس', 'وزير', 'برلمان', 'انتخاب', 'تصويت', 'بلد', 'وطن', 'مواطن', 'هجرة', 'لجوء', 'جنسية', 'لغة', 'كلمة', 'جملة', 'معنى', 'ترجمة', 'لهجة', 'ثقافة', 'تراث', 'عادات', 'تقاليد', 'فلكلور', 'طفل', 'امتحان', 'تأخر', 'نجاح', 'فشل', 'القيامة'];
     return commonKeywords.filter(keyword => text.includes(keyword));
   };
+
   const handleCopyToClipboard = () => {
     if (interpretation) {
       navigator.clipboard.writeText(interpretation);
       toast.success("تم نسخ التفسير إلى الحافظة");
     }
   };
+
   const handlePrint = () => {
     if (!interpretation) return;
     const printWindow = window.open('', '', 'height=600,width=800');
@@ -289,7 +318,7 @@ const DreamForm = () => {
           <div class="interpretation">${interpretation}</div>
           <div class="disclaimer">
             <strong>تنبيه وإخلاء مسؤولية:</strong>
-            تم تفسير هذا الحلم عبر تطبيق Taweel.app باستخدام خوارزميات الذكاء الاصطناعي لأغراض تعليمية ولا يُمكن اتخاذ أي قرارات حياتية بناءً عليه.
+            تم تفسير هذا الحلم عبر تطبيق Taweel.app باستخدام خوارزميات الذكاء الاصطناعي لأغراض تعليمية ولا يُمكن اتخا�� أي قرارات حياتية بناءً عليه.
           </div>
         </body>
       </html>
@@ -301,6 +330,7 @@ const DreamForm = () => {
       printWindow.close();
     }, 500);
   };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isAuthenticated === null) {
@@ -331,17 +361,20 @@ const DreamForm = () => {
       interpretDream(dreamText);
     }
   };
+
   const calculateWordPercentage = (): number => {
     if (!interpretationSettings || !wordCount) return 0;
     const percentage = wordCount / interpretationSettings.max_input_words * 100;
     return Math.min(percentage, 100);
   };
+
   const getProgressColor = (): string => {
     const percentage = calculateWordPercentage();
     if (percentage < 60) return "bg-green-500";
     if (percentage < 80) return "bg-yellow-500";
     return "bg-red-500";
   };
+
   const renderAuthenticationStatus = () => {
     if (isAuthenticated === false) {
       return <div className="flex items-center justify-center gap-2 text-amber-500 mb-2">
@@ -351,6 +384,7 @@ const DreamForm = () => {
     }
     return null;
   };
+
   const renderAiSettingsStatus = () => {
     if (!error) return null;
     const isApiKeyIssue = error.includes('API') || error.includes('مفتاح') || error.includes('quota');
@@ -363,6 +397,7 @@ const DreamForm = () => {
     }
     return null;
   };
+
   const renderInterpretationLimitStatus = () => {
     if (hasReachedLimit) {
       return <div className="flex items-center justify-center gap-2 text-red-500 mb-2">
@@ -372,6 +407,7 @@ const DreamForm = () => {
     }
     return null;
   };
+
   return <div className="container mx-auto px-4 py-12 rtl">
       <div className="max-w-3xl mx-auto">
         <Card className="shadow-lg border-border/40 bg-white/95 backdrop-blur">
@@ -394,7 +430,7 @@ const DreamForm = () => {
                           <span>{wordCount}</span>
                           <span>/</span>
                           <span>{interpretationSettings.max_input_words}</span>
-                          <span> كلمة</span>
+                          <span> كلمة</span>
                           {wordCount < 10 && <span className="text-amber-500 mr-2">(الحد الأدنى: 10 كلمات)</span>}
                         </div>
                         <div>
@@ -451,7 +487,7 @@ const DreamForm = () => {
                   <AlertTriangle className="h-4 w-4 text-amber-600" />
                   <AlertDescription className="text-amber-800 text-sm mt-2">
                     <strong className="block mb-2">تنبيه وإخلاء مسؤولية:</strong>
-                    تم تفسير هذا الحلم عبر تطبيق Taweel.app باستخدام خوارزميات الذكاء الاصطناعي لأغراض تعليمية ولا يُمكن اتخاذ أي قرارات حياتية بناءً عليه.
+                    تم تفسير هذا الحلم عبر تطبيق Taweel.app باستخدام خوارزميات الذكاء الاصطناعي لأغراض تعليمية ولا يُمكن اتخا�� أي قرارات حياتية بناءً عليه.
                   </AlertDescription>
                 </Alert>
               </div>
@@ -460,4 +496,5 @@ const DreamForm = () => {
       </div>
     </div>;
 };
+
 export default DreamForm;
