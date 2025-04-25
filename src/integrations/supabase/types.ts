@@ -710,6 +710,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: number
       }
+      get_current_user_role: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       get_latest_payment_invoices: {
         Args: Record<PropertyKey, never>
         Returns: {

@@ -7,6 +7,10 @@ schemas = [ "public", "storage", "graphql_public" ]
 
 [db]
 port = 54322
+host = "173.249.0.2"
+port_external = 35432
+name = "taweel1"
+user = "taweel1"
 
 [studio]
 port = 54323

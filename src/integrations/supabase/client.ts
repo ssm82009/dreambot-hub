@@ -3,10 +3,34 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
+// Configuring the Supabase client to connect to the external database
 const SUPABASE_URL = "https://kshciumqqwvbaicdlzkz.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtzaGNpdW1xcXd2YmFpY2Rsemt6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM1MDk2OTEsImV4cCI6MjA1OTA4NTY5MX0.pNBCAVBmPRDhawWZqVbd4vNB-5KmTVbCJ_QbwRaPfpA";
+
+// Database connection options for external database
+const databaseConnectionOptions = {
+  db: {
+    schema: 'public',
+    // External database connection details
+    host: '173.249.0.2',
+    port: 35432,
+    database: 'taweel1',
+    user: 'taweel1',
+    password: 'S_1405salzS_1405salz'
+  }
+};
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
-export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+export const supabase = createClient<Database>(
+  SUPABASE_URL, 
+  SUPABASE_PUBLISHABLE_KEY, 
+  { 
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+    },
+    db: databaseConnectionOptions.db
+  }
+);
