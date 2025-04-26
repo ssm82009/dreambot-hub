@@ -516,6 +516,39 @@ export type Database = {
         }
         Relationships: []
       }
+      subscription_usage: {
+        Row: {
+          created_at: string
+          id: string
+          interpretations_used: number
+          subscription_expires_at: string | null
+          subscription_started_at: string
+          subscription_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          interpretations_used?: number
+          subscription_expires_at?: string | null
+          subscription_started_at?: string
+          subscription_type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          interpretations_used?: number
+          subscription_expires_at?: string | null
+          subscription_started_at?: string
+          subscription_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       theme_settings: {
         Row: {
           background_color: string
@@ -709,6 +742,14 @@ export type Database = {
       count_push_subscriptions: {
         Args: Record<PropertyKey, never>
         Returns: number
+      }
+      get_current_subscription_usage: {
+        Args: { user_id: string }
+        Returns: {
+          interpretations_used: number
+          subscription_type: string
+          subscription_expires_at: string
+        }[]
       }
       get_current_user_role: {
         Args: Record<PropertyKey, never>

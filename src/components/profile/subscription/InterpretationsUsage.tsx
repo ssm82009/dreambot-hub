@@ -1,8 +1,9 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Progress } from '@/components/ui/progress';
 import { User } from '@/types/database';
 import { getTotalInterpretations } from '@/utils/subscription';
+import { supabase } from '@/integrations/supabase/client';
 
 interface InterpretationsUsageProps {
   userData: User & {
@@ -14,10 +15,40 @@ interface InterpretationsUsageProps {
 
 const InterpretationsUsage: React.FC<InterpretationsUsageProps> = ({ 
   userData, 
-  pricingSettings, 
-  usedInterpretations 
+  pricingSettings
 }) => {
+  const [subscriptionUsage, setSubscriptionUsage] = useState<{
+    interpretations_used: number;
+  } | null>(null);
+  
+  useEffect(() => {
+    const fetchSubscriptionUsage = async () => {
+      if (!userData?.id) return;
+      
+      try {
+        const { data, error } = await supabase
+          .rpc('get_current_subscription_usage', {
+            user_id: userData.id
+          });
+
+        if (error) {
+          console.error("Error fetching subscription usage:", error);
+          return;
+        }
+
+        if (data) {
+          setSubscriptionUsage(data[0]);
+        }
+      } catch (error) {
+        console.error("Error in subscription usage check:", error);
+      }
+    };
+
+    fetchSubscriptionUsage();
+  }, [userData?.id]);
+  
   const totalInterpretations = getTotalInterpretations(userData, pricingSettings);
+  const usedInterpretations = subscriptionUsage?.interpretations_used || 0;
   
   // If total is -1, it means unlimited
   const isUnlimited = totalInterpretations === -1;
@@ -32,7 +63,7 @@ const InterpretationsUsage: React.FC<InterpretationsUsageProps> = ({
     <div className="space-y-4">
       <div>
         <div className="flex justify-between mb-2">
-          <span className="text-muted-foreground">التفسيرات المستخدمة:</span>
+          <span className="text-muted-foreground">التفسيرات المستخدمة في الدورة الحالية:</span>
           <span className="font-medium">
             {isUnlimited ? 
               `${usedInterpretations} / غير محدود` : 
