@@ -19,22 +19,55 @@ serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
-    const { error: check_fcm_error } = await supabaseAdmin.rpc('create_check_fcm_token_exists');
-    const { error: insert_fcm_error } = await supabaseAdmin.rpc('create_insert_fcm_token');
-    const { error: delete_fcm_error } = await supabaseAdmin.rpc('create_delete_fcm_token');
-    const { error: delete_all_error } = await supabaseAdmin.rpc('create_delete_all_user_fcm_tokens');
-
-    if (check_fcm_error || insert_fcm_error || delete_fcm_error || delete_all_error) {
-      throw new Error('Error creating FCM functions');
+    // Check each function individually and create only if missing
+    // This prevents errors when functions already exist
+    
+    const functions = [
+      { name: 'check_fcm_token_exists', rpcName: 'create_check_fcm_token_exists' },
+      { name: 'insert_fcm_token', rpcName: 'create_insert_fcm_token' },
+      { name: 'delete_fcm_token', rpcName: 'create_delete_fcm_token' },
+      { name: 'delete_all_user_fcm_tokens', rpcName: 'create_delete_all_user_fcm_tokens' }
+    ];
+    
+    const results = [];
+    
+    for (const func of functions) {
+      try {
+        const { data: checkData } = await supabaseAdmin.rpc('check_function_exists', { 
+          function_name: func.name 
+        }).maybeSingle();
+        
+        if (!checkData?.exists) {
+          console.log(`Creating function: ${func.name}`);
+          const { error } = await supabaseAdmin.rpc(func.rpcName);
+          
+          if (error) {
+            console.warn(`Warning creating ${func.name}: ${error.message}`);
+            results.push({ function: func.name, status: 'error', message: error.message });
+          } else {
+            results.push({ function: func.name, status: 'created' });
+          }
+        } else {
+          console.log(`Function ${func.name} already exists, skipping`);
+          results.push({ function: func.name, status: 'exists' });
+        }
+      } catch (funcError) {
+        console.warn(`Error checking/creating ${func.name}:`, funcError);
+        results.push({ function: func.name, status: 'error', message: funcError.message });
+      }
     }
 
     return new Response(
-      JSON.stringify({ success: true, message: 'FCM functions created successfully' }),
+      JSON.stringify({ success: true, message: 'FCM functions creation completed', results }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
+    console.error("Error in create-fcm-functions:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined 
+      }),
       { 
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 

@@ -1,3 +1,4 @@
+
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';
@@ -27,8 +28,7 @@ import { usePageMeta } from './hooks/usePageMeta';
 import { useScrollToTop } from './hooks/useScrollToTop';
 import { useServiceWorkerRegistration } from './hooks/useServiceWorkerRegistration';
 import { useEffect } from 'react';
-import { setupFirebase } from './services/firebase/firebaseClient';
-import { runFcmMigrations } from './services/runFcmMigrations';
+import { initializeServices } from './services/initializeServices';
 
 // Setup query client
 const queryClient = new QueryClient();
@@ -44,19 +44,15 @@ const AdminRoutes = () => {
 const App = () => {
   // إعداد Firebase وتهيئة قاعدة البيانات عند بدء التطبيق
   useEffect(() => {
-    const initServices = async () => {
-      try {
-        // تهيئة Firebase
-        await setupFirebase();
-        
-        // إنشاء الوظائف اللازمة في قاعدة البيانات
-        await runFcmMigrations();
-      } catch (error) {
-        console.error('Error initializing services:', error);
-      }
-    };
-    
-    initServices();
+    // Launch service initialization without blocking the app render
+    initializeServices()
+      .then(results => {
+        console.log("App services initialization completed:", results);
+      })
+      .catch(error => {
+        // This should never happen due to internal error handling in initializeServices
+        console.error("Unexpected error during service initialization:", error);
+      });
   }, []);
 
   return (

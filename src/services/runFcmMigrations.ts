@@ -1,21 +1,38 @@
 
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 export const runFcmMigrations = async () => {
   try {
-    // Creating database functions for FCM tokens
-    console.log("Setting up FCM database functions...");
+    console.log("Starting FCM database migrations...");
     
-    // First create the count function
-    await supabase.functions.invoke('create-fcm-migrations');
+    // Simplified error handling approach - try each migration independently
+    try {
+      console.log("Creating FCM count function...");
+      await supabase.functions.invoke('create-fcm-migrations');
+      console.log("FCM count function created successfully");
+    } catch (countError) {
+      console.warn("Count function may already exist:", countError);
+      // Continue execution, don't break the flow
+    }
     
-    // Then create the token management functions
-    await supabase.functions.invoke('create-fcm-functions');
+    try {
+      console.log("Creating FCM management functions...");
+      await supabase.functions.invoke('create-fcm-functions');
+      console.log("FCM management functions created successfully");
+    } catch (functionsError) {
+      console.warn("FCM functions may already exist:", functionsError);
+      // Continue execution, don't break the flow
+    }
     
-    console.log("FCM database functions created successfully");
+    console.log("FCM database setup completed");
     return true;
   } catch (error) {
-    console.error("Error setting up FCM database functions:", error);
+    console.error("Error in FCM migration process:", error);
+    // Show toast only in development environment
+    if (process.env.NODE_ENV === 'development') {
+      toast.error('Error setting up FCM functions. App will continue without notification features.');
+    }
     return false;
   }
 };

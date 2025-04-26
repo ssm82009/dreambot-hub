@@ -19,11 +19,21 @@ serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
-    // Create all the database functions
-    const { error: countFnError } = await supabaseAdmin.rpc('create_count_user_fcm_tokens');
+    // Check if function already exists to avoid errors
+    const { data: checkData } = await supabaseAdmin.rpc('check_function_exists', { 
+      function_name: 'count_user_fcm_tokens' 
+    }).maybeSingle();
     
-    if (countFnError) {
-      throw new Error(`Error creating count function: ${countFnError.message}`);
+    // Only create function if it doesn't exist
+    if (!checkData?.exists) {
+      // Create the count function
+      const { error: countFnError } = await supabaseAdmin.rpc('create_count_user_fcm_tokens');
+      
+      if (countFnError) {
+        throw new Error(`Error creating count function: ${countFnError.message}`);
+      }
+    } else {
+      console.log("Count function already exists, skipping creation");
     }
 
     return new Response(
@@ -31,8 +41,12 @@ serve(async (req) => {
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
+    console.error("Error in create-fcm-migrations:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined 
+      }),
       { 
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
