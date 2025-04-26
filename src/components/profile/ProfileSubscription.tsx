@@ -69,8 +69,7 @@ const ProfileSubscription: React.FC<ProfileSubscriptionProps> = ({ userData }) =
             <h3 className="text-lg font-medium">التفسيرات المتاحة</h3>
             
             <InterpretationsUsage 
-              userData={userData} 
-              pricingSettings={pricingSettings} 
+              userData={userData}
             />
             
             <UpgradeSection userData={userData} />

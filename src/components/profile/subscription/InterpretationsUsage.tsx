@@ -3,17 +3,15 @@ import React, { useState, useEffect } from 'react';
 import { Progress } from '@/components/ui/progress';
 import { User } from '@/types/database';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface InterpretationsUsageProps {
   userData: User & {
     dreams_count: number;
   };
-  pricingSettings: any;
 }
 
-const InterpretationsUsage: React.FC<InterpretationsUsageProps> = ({ 
-  userData
-}) => {
+const InterpretationsUsage: React.FC<InterpretationsUsageProps> = ({ userData }) => {
   const [subscriptionUsage, setSubscriptionUsage] = useState<{
     interpretations_used: number;
     subscription_type: string;
@@ -52,9 +50,12 @@ const InterpretationsUsage: React.FC<InterpretationsUsageProps> = ({
             setSubscriptionUsage(usageData);
           } else {
             console.log("Subscription data is expired, not updating state");
+            // If we have expired data, we should clear our state to avoid showing old data
+            setSubscriptionUsage(null);
           }
         } else {
           console.log("No subscription usage data found");
+          setSubscriptionUsage(null);
         }
       } catch (error) {
         console.error("Error in subscription usage check:", error);
@@ -63,44 +64,66 @@ const InterpretationsUsage: React.FC<InterpretationsUsageProps> = ({
 
     fetchSubscriptionUsage();
     
-    // Set up real-time subscription to catch updates
-    const channel = supabase
-      .channel('subscription_updates')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'subscription_usage',
-          filter: `user_id=eq.${userData.id}`
-        },
-        (payload) => {
-          console.log("Received subscription update:", payload);
-          fetchSubscriptionUsage();
-        }
-      )
-      .subscribe();
+    // Set up real-time subscription with proper error handling
+    let channel;
+    try {
+      channel = supabase
+        .channel('subscription-updates')  // Changed channel name to avoid potential conflicts
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'subscription_usage',
+            filter: `user_id=eq.${userData.id}`
+          },
+          (payload) => {
+            console.log("Received subscription update:", payload);
+            fetchSubscriptionUsage();
+          }
+        )
+        .subscribe((status) => {
+          console.log("Subscription status:", status);
+          if (status === 'SUBSCRIBED') {
+            console.log("Successfully subscribed to subscription_usage changes");
+          } else if (status === 'TIMED_OUT' || status === 'CLOSED' || status === 'CHANNEL_ERROR') {
+            console.error("Error in subscription channel, status:", status);
+          }
+        });
+    } catch (error) {
+      console.error("Error setting up realtime subscription:", error);
+    }
 
     return () => {
-      supabase.removeChannel(channel);
+      if (channel) {
+        console.log("Cleaning up subscription channel");
+        supabase.removeChannel(channel).then(
+          () => console.log("Channel removed successfully"),
+          (err) => console.error("Error removing channel:", err)
+        );
+      }
     };
   }, [userData?.id]);
   
   // Determine if the subscription is unlimited
   const isUnlimited = subscriptionUsage?.subscription_type === 'pro' || 
-                     subscriptionUsage?.subscription_type === 'premium';
+                     subscriptionUsage?.subscription_type === 'المميز' || 
+                     subscriptionUsage?.subscription_type === 'premium' ||
+                     subscriptionUsage?.subscription_type === 'الاحترافي';
   
   // Calculate total available interpretations based on subscription type
   const getTotalInterpretations = () => {
     if (!subscriptionUsage?.subscription_type) return 0;
-    switch (subscriptionUsage.subscription_type) {
-      case 'premium':
-      case 'pro':
-        return -1; // Unlimited
-      case 'free':
-        return 3;
-      default:
-        return 19; // Default for other subscription types
+    
+    const subType = subscriptionUsage.subscription_type.toLowerCase();
+    
+    if (subType === 'premium' || subType === 'المميز' || 
+        subType === 'pro' || subType === 'الاحترافي') {
+      return -1; // Unlimited
+    } else if (subType === 'free' || subType === 'مجاني') {
+      return 3;
+    } else {
+      return 19; // Default for other subscription types
     }
   };
   
