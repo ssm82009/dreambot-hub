@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 import { Progress } from '@/components/ui/progress';
 import { User } from '@/types/database';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
 
 interface InterpretationsUsageProps {
   userData: User & {
@@ -68,7 +67,7 @@ const InterpretationsUsage: React.FC<InterpretationsUsageProps> = ({ userData })
     let channel;
     try {
       channel = supabase
-        .channel('subscription-updates')  // Changed channel name to avoid potential conflicts
+        .channel('subscription-updates')
         .on(
           'postgres_changes',
           {
