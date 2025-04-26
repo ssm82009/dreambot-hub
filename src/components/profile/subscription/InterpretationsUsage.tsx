@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Progress } from '@/components/ui/progress';
 import { User } from '@/types/database';
@@ -40,8 +39,12 @@ const InterpretationsUsage: React.FC<InterpretationsUsageProps> = ({ userData })
           const usageData = data[0];
           console.log("Raw subscription usage data:", usageData);
           
-          // Only update if the data is for a valid subscription
-          const expiryDate = usageData.subscription_expires_at ? new Date(usageData.subscription_expires_at) : null;
+          // التحقق من صلاحية الاشتراك مع دعم infinity
+          const expiryDate = usageData.subscription_expires_at ? 
+            usageData.subscription_expires_at === 'infinity' ? 
+              null : new Date(usageData.subscription_expires_at) 
+            : null;
+            
           const isValid = !expiryDate || expiryDate > new Date();
           
           if (isValid) {
@@ -49,7 +52,6 @@ const InterpretationsUsage: React.FC<InterpretationsUsageProps> = ({ userData })
             setSubscriptionUsage(usageData);
           } else {
             console.log("Subscription data is expired, not updating state");
-            // If we have expired data, we should clear our state to avoid showing old data
             setSubscriptionUsage(null);
           }
         } else {

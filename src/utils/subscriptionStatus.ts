@@ -5,28 +5,28 @@ import { normalizePlanType } from '@/utils/payment/statusNormalizer';
 export const getSubscriptionStatus = (user: User) => {
   console.log("Getting subscription status for user:", user);
   
-  // Check subscription type
+  // التحقق من نوع الاشتراك
   if (!user.subscription_type || user.subscription_type === 'free') {
     return { 
       name: 'مجاني', 
       color: 'outline' as const,
-      isActive: false
+      isActive: true // الباقة المجانية دائماً نشطة
     };
   }
   
-  // Check if subscription has expiry date
+  // التحقق من تاريخ انتهاء الاشتراك
   if (user.subscription_expires_at) {
     const expiryDate = new Date(user.subscription_expires_at);
     const now = new Date();
     
     console.log("Subscription expiry date:", expiryDate, "Current date:", now);
     
-    // If expiry date is in the future, subscription is active
-    if (expiryDate > now) {
-      // Normalize the subscription type
+    // إذا كان التاريخ infinity أو في المستقبل، الاشتراك نشط
+    if (user.subscription_expires_at === 'infinity' || expiryDate > now) {
+      // تطبيع نوع الاشتراك
       const normalizedType = normalizePlanType(user.subscription_type);
       
-      // Map normalized plan type to badge color and simple display name
+      // تعيين لون الشارة واسم العرض البسيط
       let displayName = 'مميز';
       let badgeColor: 'default' | 'secondary' = 'secondary';
       
@@ -41,7 +41,7 @@ export const getSubscriptionStatus = (user: User) => {
         isActive: true
       };
     } else {
-      // If expiry date is in the past, subscription has expired
+      // إذا كان تاريخ الانتهاء في الماضي، الاشتراك منتهي
       return { 
         name: 'منتهي', 
         color: 'destructive' as const,
@@ -50,10 +50,9 @@ export const getSubscriptionStatus = (user: User) => {
     }
   }
   
-  // If there's a subscription type but no expiry date, consider it active
+  // إذا كان هناك نوع اشتراك ولكن بدون تاريخ انتهاء، اعتبره نشطاً
   const normalizedType = normalizePlanType(user.subscription_type);
   
-  // Map normalized plan type to badge color and simple display name
   let displayName = 'مميز';
   let badgeColor: 'default' | 'secondary' = 'secondary';
   

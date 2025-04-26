@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Check, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -24,8 +23,20 @@ const EditableExpiryDateCell: React.FC<EditableExpiryDateCellProps> = ({ value, 
     setIsEditing(true);
   };
 
+  const handleDateSelect = (newDate: Date | undefined) => {
+    setDate(newDate);
+    setIsCalendarOpen(false);
+  };
+
   const handleSave = async () => {
-    const newValue = date ? date.toISOString() : null;
+    let newValue: string | null;
+    
+    if (!date) {
+      newValue = 'infinity';
+    } else {
+      newValue = date.toISOString();
+    }
+
     const oldValue = value;
     
     if (newValue !== oldValue) {
@@ -47,11 +58,6 @@ const EditableExpiryDateCell: React.FC<EditableExpiryDateCellProps> = ({ value, 
   const handleCancel = () => {
     setIsEditing(false);
     setDate(value ? new Date(value) : undefined);
-  };
-
-  const handleDateSelect = (newDate: Date | undefined) => {
-    setDate(newDate);
-    setIsCalendarOpen(false);
   };
 
   if (isEditing) {
@@ -107,9 +113,9 @@ const EditableExpiryDateCell: React.FC<EditableExpiryDateCellProps> = ({ value, 
   );
 };
 
-// دالة لعرض تاريخ انتهاء الاشتراك بتنسيق مناسب
 const displayExpiryDate = (dateString: string | null) => {
   if (!dateString) return 'غير محدد';
+  if (dateString === 'infinity') return 'غير محدود';
   
   try {
     const date = new Date(dateString);
