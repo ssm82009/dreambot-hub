@@ -10,7 +10,6 @@ interface InterpretationsUsageProps {
     dreams_count: number;
   };
   pricingSettings: any;
-  usedInterpretations: number;
 }
 
 const InterpretationsUsage: React.FC<InterpretationsUsageProps> = ({ 

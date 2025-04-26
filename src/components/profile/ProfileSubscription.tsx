@@ -19,7 +19,6 @@ interface ProfileSubscriptionProps {
 const ProfileSubscription: React.FC<ProfileSubscriptionProps> = ({ userData }) => {
   const [pricingSettings, setPricingSettings] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [usedInterpretations, setUsedInterpretations] = useState(0);
   const subscriptionStatus = getSubscriptionStatus(userData);
   
   useEffect(() => {
@@ -40,26 +39,10 @@ const ProfileSubscription: React.FC<ProfileSubscriptionProps> = ({ userData }) =
       }
     };
     
-    const fetchDreamsCount = async () => {
-      if (!userData?.id) return;
-      try {
-        const { count, error } = await supabase
-          .from('dreams')
-          .select('*', { count: 'exact', head: true })
-          .eq('user_id', userData.id);
-          
-        if (error) throw error;
-        setUsedInterpretations(count || 0);
-      } catch (error) {
-        console.error('Error fetching dreams count:', error);
-      }
-    };
-    
-    fetchPricingSettings();
-    fetchDreamsCount();
-    
     // Debug log
     console.log("ProfileSubscription - User data:", userData);
+    
+    fetchPricingSettings();
   }, [userData?.id]);
   
   if (loading) {
@@ -88,7 +71,6 @@ const ProfileSubscription: React.FC<ProfileSubscriptionProps> = ({ userData }) =
             <InterpretationsUsage 
               userData={userData} 
               pricingSettings={pricingSettings} 
-              usedInterpretations={usedInterpretations} 
             />
             
             <UpgradeSection userData={userData} />
