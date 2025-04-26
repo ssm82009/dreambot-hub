@@ -769,6 +769,10 @@ export type Database = {
           user_id: string | null
         }[]
       }
+      safe_timestamp_compare: {
+        Args: { ts1: string; ts2: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never

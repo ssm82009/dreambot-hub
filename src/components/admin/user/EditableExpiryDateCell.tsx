@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Check, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -5,6 +6,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
+import { Button } from '@/components/ui/button';
 
 interface EditableExpiryDateCellProps {
   value: string | null;
@@ -13,7 +15,10 @@ interface EditableExpiryDateCellProps {
 
 const EditableExpiryDateCell: React.FC<EditableExpiryDateCellProps> = ({ value, onSave }) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [date, setDate] = useState<Date | undefined>(value ? new Date(value) : undefined);
+  const [date, setDate] = useState<Date | undefined>(
+    value && value !== 'infinity' ? new Date(value) : undefined
+  );
+  const [isInfinity, setIsInfinity] = useState(value === 'infinity');
   const [isLoading, setIsLoading] = useState(false);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
@@ -26,13 +31,22 @@ const EditableExpiryDateCell: React.FC<EditableExpiryDateCellProps> = ({ value, 
   const handleDateSelect = (newDate: Date | undefined) => {
     setDate(newDate);
     setIsCalendarOpen(false);
+    setIsInfinity(false);
+  };
+
+  const handleSetInfinity = () => {
+    setDate(undefined);
+    setIsInfinity(true);
+    setIsCalendarOpen(false);
   };
 
   const handleSave = async () => {
     let newValue: string | null;
     
-    if (!date) {
+    if (isInfinity) {
       newValue = 'infinity';
+    } else if (!date) {
+      newValue = null;
     } else {
       newValue = date.toISOString();
     }
@@ -48,7 +62,14 @@ const EditableExpiryDateCell: React.FC<EditableExpiryDateCellProps> = ({ value, 
       } catch (error) {
         console.error('Error saving date:', error);
         setIsLoading(false);
-        setDate(oldValue ? new Date(oldValue) : undefined);
+        // Restore previous values
+        if (oldValue === 'infinity') {
+          setIsInfinity(true);
+          setDate(undefined);
+        } else {
+          setIsInfinity(false);
+          setDate(oldValue ? new Date(oldValue) : undefined);
+        }
       }
     } else {
       setIsEditing(false);
@@ -57,32 +78,50 @@ const EditableExpiryDateCell: React.FC<EditableExpiryDateCellProps> = ({ value, 
 
   const handleCancel = () => {
     setIsEditing(false);
-    setDate(value ? new Date(value) : undefined);
+    if (value === 'infinity') {
+      setIsInfinity(true);
+      setDate(undefined);
+    } else {
+      setIsInfinity(false);
+      setDate(value ? new Date(value) : undefined);
+    }
   };
 
   if (isEditing) {
     return (
-      <div className="flex items-center space-x-2 rtl:space-x-reverse">
-        <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
-          <PopoverTrigger asChild>
-            <Input
-              value={formattedDate || ''}
-              readOnly
-              className="h-8 w-full cursor-pointer"
-              onClick={() => setIsCalendarOpen(true)}
-              placeholder="اختر التاريخ"
-            />
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="start">
-            <Calendar
-              mode="single"
-              selected={date}
-              onSelect={handleDateSelect}
-              locale={ar}
-              initialFocus
-            />
-          </PopoverContent>
-        </Popover>
+      <div className="space-y-2">
+        <div className="flex items-center space-x-2 rtl:space-x-reverse">
+          <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+            <PopoverTrigger asChild>
+              <Input
+                value={isInfinity ? 'غير محدود' : formattedDate || ''}
+                readOnly
+                className="h-8 w-full cursor-pointer"
+                onClick={() => setIsCalendarOpen(true)}
+                placeholder="اختر التاريخ"
+              />
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <div className="p-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full mb-2" 
+                  onClick={handleSetInfinity}
+                >
+                  اشتراك غير محدود
+                </Button>
+                <Calendar
+                  mode="single"
+                  selected={date}
+                  onSelect={handleDateSelect}
+                  locale={ar}
+                  initialFocus
+                />
+              </div>
+            </PopoverContent>
+          </Popover>
+        </div>
         <div className="flex items-center space-x-1 rtl:space-x-reverse">
           <button
             onClick={handleSave}

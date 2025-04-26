@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Progress } from '@/components/ui/progress';
 import { User } from '@/types/database';
@@ -40,12 +41,12 @@ const InterpretationsUsage: React.FC<InterpretationsUsageProps> = ({ userData })
           console.log("Raw subscription usage data:", usageData);
           
           // التحقق من صلاحية الاشتراك مع دعم infinity
-          const expiryDate = usageData.subscription_expires_at ? 
-            usageData.subscription_expires_at === 'infinity' ? 
-              null : new Date(usageData.subscription_expires_at) 
-            : null;
-            
-          const isValid = !expiryDate || expiryDate > new Date();
+          let isValid = true;
+          
+          if (usageData.subscription_expires_at && usageData.subscription_expires_at !== 'infinity') {
+            const expiryDate = new Date(usageData.subscription_expires_at);
+            isValid = expiryDate > new Date();
+          }
           
           if (isValid) {
             console.log("Setting valid subscription usage data");
@@ -110,7 +111,8 @@ const InterpretationsUsage: React.FC<InterpretationsUsageProps> = ({ userData })
   const isUnlimited = subscriptionUsage?.subscription_type === 'pro' || 
                      subscriptionUsage?.subscription_type === 'المميز' || 
                      subscriptionUsage?.subscription_type === 'premium' ||
-                     subscriptionUsage?.subscription_type === 'الاحترافي';
+                     subscriptionUsage?.subscription_type === 'الاحترافي' ||
+                     subscriptionUsage?.subscription_expires_at === 'infinity';
   
   // Calculate total available interpretations based on subscription type
   const getTotalInterpretations = () => {
@@ -119,7 +121,8 @@ const InterpretationsUsage: React.FC<InterpretationsUsageProps> = ({ userData })
     const subType = subscriptionUsage.subscription_type.toLowerCase();
     
     if (subType === 'premium' || subType === 'المميز' || 
-        subType === 'pro' || subType === 'الاحترافي') {
+        subType === 'pro' || subType === 'الاحترافي' || 
+        subscriptionUsage.subscription_expires_at === 'infinity') {
       return -1; // Unlimited
     } else if (subType === 'free' || subType === 'مجاني') {
       return 3;
@@ -138,12 +141,13 @@ const InterpretationsUsage: React.FC<InterpretationsUsageProps> = ({ userData })
   // Debug logs
   console.log("Current subscription state:", {
     type: subscriptionUsage?.subscription_type,
+    expiryDate: subscriptionUsage?.subscription_expires_at,
+    isInfinity: subscriptionUsage?.subscription_expires_at === 'infinity',
     total: totalInterpretations,
     used: usedInterpretations,
     remaining: remainingInterpretations,
     isUnlimited,
-    progress: progressPercentage,
-    expiryDate: subscriptionUsage?.subscription_expires_at
+    progress: progressPercentage
   });
   
   return (
