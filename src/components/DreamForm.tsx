@@ -208,7 +208,7 @@ const DreamForm = () => {
         setIsLoading(false);
         return;
       }
-      const generatedInterpretation = aiResponse?.interpretation || "لم نتم��ن من الحصول على تفسير في هذا الوقت.";
+      const generatedInterpretation = aiResponse?.interpretation || "لم نتمكن من الحصول على تفسير في هذا الوقت.";
       console.log("Received interpretation successfully");
       try {
         if (userId) {
@@ -307,7 +307,7 @@ const DreamForm = () => {
           <div class="interpretation">${interpretation}</div>
           <div class="disclaimer">
             <strong>تنبيه وإخلاء مسؤولية:</strong>
-            تم تفسير هذا الحلم عبر تطبيق Taweel.app باستخدام خوارزميات الذكاء الاصطناعي لأغراض تعليمية ولا يُمكن اتخا�� أي قرارات حياتية بناءً عليه.
+            تم تفسير هذا الحلم عبر تطبيق Taweel.app باستخدام خوارزميات الذكاء الاصطناعي لأغراض تعليمية ولا يُمكن اتخاذ أي قرارات حياتية بناءً عليه.
           </div>
         </body>
       </html>
@@ -503,7 +503,7 @@ const DreamForm = () => {
                   <AlertTriangle className="h-4 w-4 text-amber-600" />
                   <AlertDescription className="text-amber-800 text-sm mt-2">
                     <strong className="block mb-2">تنبيه وإخلاء مسؤولية:</strong>
-                    تم تفسير هذا الحلم ع��ر تطبيق Taweel.app باستخدام خوارزميات الذكاء الاصطناعي لأغراض تعليمية ولا يُمكن اتخا�� أي قرارات حياتية بناءً عليه.
+                    تم تفسير هذا الحلم عبر تطبيق Taweel.app باستخدام خوارزميات الذكاء الاصطناعي لأغراض تعليمية ولا يُمكن اتخاذ أي قرارات حياتية بناءً عليه.
                   </AlertDescription>
                 </Alert>
               </div>
