@@ -1,3 +1,4 @@
+
 import { User } from '@/types/database';
 import { getSubscriptionStatus } from '@/utils/subscriptionStatus';
 import { supabase } from '@/integrations/supabase/client';
@@ -59,6 +60,7 @@ export const getSubscriptionName = async (subscriptionType: string | null, prici
 
 /**
  * Calculate total interpretations based on subscription type
+ * Now fetches pricing settings as part of the function instead of expecting it as an argument
  */
 export const getTotalInterpretations = async (userData: User | null): Promise<number> => {
   try {
