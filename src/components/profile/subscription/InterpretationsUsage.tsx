@@ -35,8 +35,11 @@ const InterpretationsUsage: React.FC<InterpretationsUsageProps> = ({
           return;
         }
 
-        if (data) {
+        if (data && data[0]) {
+          console.log("Subscription usage data:", data[0]);
           setSubscriptionUsage(data[0]);
+        } else {
+          console.log("No subscription usage data found");
         }
       } catch (error) {
         console.error("Error in subscription usage check:", error);
@@ -57,6 +60,12 @@ const InterpretationsUsage: React.FC<InterpretationsUsageProps> = ({
   
   // Progress percentage
   const progressPercentage = isUnlimited ? 100 : Math.min(100, (usedInterpretations / totalInterpretations) * 100);
+  
+  // Debug logs
+  console.log("Total interpretations:", totalInterpretations);
+  console.log("Used interpretations:", usedInterpretations);
+  console.log("Remaining interpretations:", remainingInterpretations);
+  console.log("Progress percentage:", progressPercentage);
   
   return (
     <div className="space-y-4">
