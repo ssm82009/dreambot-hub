@@ -6,6 +6,16 @@ export const runFcmMigrations = async () => {
   try {
     console.log("Starting FCM database migrations...");
     
+    // First, create the function checker which also fixes timestamp comparisons
+    try {
+      console.log("Creating function checker and fixing timestamp comparisons...");
+      await supabase.functions.invoke('create-function-check');
+      console.log("Function checker created successfully");
+    } catch (checkError) {
+      console.warn("Error creating function checker:", checkError);
+      // Continue execution, don't break the flow
+    }
+    
     // Simplified error handling approach - try each migration independently
     try {
       console.log("Creating FCM count function...");

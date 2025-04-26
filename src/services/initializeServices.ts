@@ -15,7 +15,7 @@ export const initializeServices = async () => {
   try {
     console.log("Starting service initialization sequence");
 
-    // First initialize the database functions
+    // First initialize the database functions and fix timestamp comparison issues
     try {
       console.log("Running database migrations...");
       results.migrations = await runFcmMigrations();
