@@ -1,4 +1,3 @@
-
 import { User } from '@/types/database';
 import { getSubscriptionStatus } from '@/utils/subscriptionStatus';
 import { supabase } from '@/integrations/supabase/client';
@@ -61,24 +60,33 @@ export const getSubscriptionName = async (subscriptionType: string | null, prici
 /**
  * Calculate total interpretations based on subscription type
  */
-export const getTotalInterpretations = (
-  userData: User | null, 
-  pricingSettings: any
-): number => {
-  if (!pricingSettings) return 0;
-  
-  if (!userData?.subscription_type) return pricingSettings.free_plan_interpretations;
-  
-  const normalizedType = normalizePlanType(userData.subscription_type);
-  
-  if (normalizedType === 'premium') {
-    return pricingSettings.premium_plan_interpretations !== -1 ? 
-      pricingSettings.premium_plan_interpretations : 19;
-  } else if (normalizedType === 'pro') {
-    return pricingSettings.pro_plan_interpretations !== -1 ? 
-      pricingSettings.pro_plan_interpretations : 30;
-  } else {
-    return pricingSettings.free_plan_interpretations;
+export const getTotalInterpretations = async (userData: User | null): Promise<number> => {
+  try {
+    // Fetch pricing settings
+    const { data: pricingSettings, error } = await supabase
+      .from('pricing_settings')
+      .select('*')
+      .limit(1)
+      .single();
+    
+    if (error) throw error;
+    
+    if (!userData?.subscription_type) {
+      return pricingSettings.free_plan_interpretations;
+    }
+    
+    const normalizedType = normalizePlanType(userData.subscription_type);
+    
+    if (normalizedType === 'premium') {
+      return pricingSettings.premium_plan_interpretations;
+    } else if (normalizedType === 'pro') {
+      return pricingSettings.pro_plan_interpretations;
+    } else {
+      return pricingSettings.free_plan_interpretations;
+    }
+  } catch (error) {
+    console.error('Error fetching pricing settings:', error);
+    return 3; // Default fallback for free plan
   }
 };
 

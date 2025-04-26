@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Progress } from '@/components/ui/progress';
 import { User } from '@/types/database';
 import { supabase } from '@/integrations/supabase/client';
+import { getTotalInterpretations } from '@/utils/subscription';
 
 interface InterpretationsUsageProps {
   userData: User & {
@@ -16,16 +17,21 @@ const InterpretationsUsage: React.FC<InterpretationsUsageProps> = ({ userData })
     subscription_type: string;
     subscription_expires_at: string;
   } | null>(null);
+  const [totalInterpretations, setTotalInterpretations] = useState<number>(0);
   
   useEffect(() => {
-    const fetchSubscriptionUsage = async () => {
+    const fetchData = async () => {
       if (!userData?.id) {
         console.log("No user ID available");
         return;
       }
       
       try {
-        console.log("Fetching subscription usage for user:", userData.id);
+        // Fetch total available interpretations
+        const total = await getTotalInterpretations(userData);
+        setTotalInterpretations(total);
+        
+        // Fetch subscription usage
         const { data, error } = await supabase
           .rpc('get_current_subscription_usage', {
             user_id: userData.id
@@ -40,7 +46,6 @@ const InterpretationsUsage: React.FC<InterpretationsUsageProps> = ({ userData })
           const usageData = data[0];
           console.log("Raw subscription usage data:", usageData);
           
-          // التحقق من صلاحية الاشتراك مع دعم infinity
           let isValid = true;
           
           if (usageData.subscription_expires_at && usageData.subscription_expires_at !== 'infinity') {
@@ -55,18 +60,15 @@ const InterpretationsUsage: React.FC<InterpretationsUsageProps> = ({ userData })
             console.log("Subscription data is expired, not updating state");
             setSubscriptionUsage(null);
           }
-        } else {
-          console.log("No subscription usage data found");
-          setSubscriptionUsage(null);
         }
       } catch (error) {
         console.error("Error in subscription usage check:", error);
       }
     };
 
-    fetchSubscriptionUsage();
+    fetchData();
     
-    // Set up real-time subscription with proper error handling
+    // Set up real-time subscription
     let channel;
     try {
       channel = supabase
@@ -79,19 +81,11 @@ const InterpretationsUsage: React.FC<InterpretationsUsageProps> = ({ userData })
             table: 'subscription_usage',
             filter: `user_id=eq.${userData.id}`
           },
-          (payload) => {
-            console.log("Received subscription update:", payload);
-            fetchSubscriptionUsage();
+          () => {
+            fetchData();
           }
         )
-        .subscribe((status) => {
-          console.log("Subscription status:", status);
-          if (status === 'SUBSCRIBED') {
-            console.log("Successfully subscribed to subscription_usage changes");
-          } else if (status === 'TIMED_OUT' || status === 'CLOSED' || status === 'CHANNEL_ERROR') {
-            console.error("Error in subscription channel, status:", status);
-          }
-        });
+        .subscribe();
     } catch (error) {
       console.error("Error setting up realtime subscription:", error);
     }
@@ -99,47 +93,16 @@ const InterpretationsUsage: React.FC<InterpretationsUsageProps> = ({ userData })
     return () => {
       if (channel) {
         console.log("Cleaning up subscription channel");
-        supabase.removeChannel(channel).then(
-          () => console.log("Channel removed successfully"),
-          (err) => console.error("Error removing channel:", err)
-        );
+        supabase.removeChannel(channel);
       }
     };
   }, [userData?.id]);
   
-  // تحديد عدد التفسيرات المتاحة بناءً على نوع الاشتراك
-  const getTotalInterpretations = () => {
-    if (!subscriptionUsage?.subscription_type) return 0;
-    
-    const subType = subscriptionUsage.subscription_type.toLowerCase();
-    
-    // لا توجد أي باقة غير محدودة، جميع الباقات محدودة العدد
-    if (subType === 'premium' || subType === 'المميز') {
-      return 19; // الباقة المميزة: 19 تفسير
-    } else if (subType === 'pro' || subType === 'الاحترافي') {
-      return 30; // الباقة الاحترافية: 30 تفسير
-    } else {
-      return 3; // الباقة المجانية: 3 تفسير
-    }
-  };
-  
-  const totalInterpretations = getTotalInterpretations();
   const usedInterpretations = subscriptionUsage?.interpretations_used || 0;
   const remainingInterpretations = Math.max(0, totalInterpretations - usedInterpretations);
   
   // Progress percentage
   const progressPercentage = Math.min(100, (usedInterpretations / totalInterpretations) * 100);
-  
-  // Debug logs
-  console.log("Current subscription state:", {
-    type: subscriptionUsage?.subscription_type,
-    expiryDate: subscriptionUsage?.subscription_expires_at,
-    isInfinity: subscriptionUsage?.subscription_expires_at === 'infinity',
-    total: totalInterpretations,
-    used: usedInterpretations,
-    remaining: remainingInterpretations,
-    progress: progressPercentage
-  });
   
   return (
     <div className="space-y-4">
