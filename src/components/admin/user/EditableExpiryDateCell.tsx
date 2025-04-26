@@ -94,7 +94,7 @@ const EditableExpiryDateCell: React.FC<EditableExpiryDateCellProps> = ({ value, 
           <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
             <PopoverTrigger asChild>
               <Input
-                value={isInfinity ? 'غير محدود' : formattedDate || ''}
+                value={isInfinity ? 'غير محدود المدة' : formattedDate || ''}
                 readOnly
                 className="h-8 w-full cursor-pointer"
                 onClick={() => setIsCalendarOpen(true)}
@@ -109,7 +109,7 @@ const EditableExpiryDateCell: React.FC<EditableExpiryDateCellProps> = ({ value, 
                   className="w-full mb-2" 
                   onClick={handleSetInfinity}
                 >
-                  اشتراك غير محدود
+                  اشتراك غير محدود المدة
                 </Button>
                 <Calendar
                   mode="single"
@@ -154,7 +154,7 @@ const EditableExpiryDateCell: React.FC<EditableExpiryDateCellProps> = ({ value, 
 
 const displayExpiryDate = (dateString: string | null) => {
   if (!dateString) return 'غير محدد';
-  if (dateString === 'infinity') return 'غير محدود';
+  if (dateString === 'infinity') return 'غير محدود المدة';
   
   try {
     const date = new Date(dateString);

@@ -18,7 +18,7 @@ export const getSubscriptionStatus = (user: User) => {
   if (user.subscription_expires_at) {
     // تعامل خاص مع القيمة "infinity"
     if (user.subscription_expires_at === 'infinity') {
-      // الاشتراك غير محدود المدة
+      // الاشتراك غير محدود المدة ولكن ليس غير محدود التفسيرات
       const normalizedType = normalizePlanType(user.subscription_type);
       
       let displayName = 'مميز';

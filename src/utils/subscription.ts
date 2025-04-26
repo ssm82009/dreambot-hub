@@ -72,9 +72,11 @@ export const getTotalInterpretations = (
   const normalizedType = normalizePlanType(userData.subscription_type);
   
   if (normalizedType === 'premium') {
-    return pricingSettings.premium_plan_interpretations;
+    return pricingSettings.premium_plan_interpretations !== -1 ? 
+      pricingSettings.premium_plan_interpretations : 19;
   } else if (normalizedType === 'pro') {
-    return pricingSettings.pro_plan_interpretations;
+    return pricingSettings.pro_plan_interpretations !== -1 ? 
+      pricingSettings.pro_plan_interpretations : 30;
   } else {
     return pricingSettings.free_plan_interpretations;
   }

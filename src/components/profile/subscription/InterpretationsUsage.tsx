@@ -107,36 +107,28 @@ const InterpretationsUsage: React.FC<InterpretationsUsageProps> = ({ userData })
     };
   }, [userData?.id]);
   
-  // Determine if the subscription is unlimited
-  const isUnlimited = subscriptionUsage?.subscription_type === 'pro' || 
-                     subscriptionUsage?.subscription_type === 'المميز' || 
-                     subscriptionUsage?.subscription_type === 'premium' ||
-                     subscriptionUsage?.subscription_type === 'الاحترافي' ||
-                     subscriptionUsage?.subscription_expires_at === 'infinity';
-  
-  // Calculate total available interpretations based on subscription type
+  // تحديد عدد التفسيرات المتاحة بناءً على نوع الاشتراك
   const getTotalInterpretations = () => {
     if (!subscriptionUsage?.subscription_type) return 0;
     
     const subType = subscriptionUsage.subscription_type.toLowerCase();
     
-    if (subType === 'premium' || subType === 'المميز' || 
-        subType === 'pro' || subType === 'الاحترافي' || 
-        subscriptionUsage.subscription_expires_at === 'infinity') {
-      return -1; // Unlimited
-    } else if (subType === 'free' || subType === 'مجاني') {
-      return 3;
+    // لا توجد أي باقة غير محدودة، جميع الباقات محدودة العدد
+    if (subType === 'premium' || subType === 'المميز') {
+      return 19; // الباقة المميزة: 19 تفسير
+    } else if (subType === 'pro' || subType === 'الاحترافي') {
+      return 30; // الباقة الاحترافية: 30 تفسير
     } else {
-      return 19; // Default for other subscription types
+      return 3; // الباقة المجانية: 3 تفسير
     }
   };
   
   const totalInterpretations = getTotalInterpretations();
   const usedInterpretations = subscriptionUsage?.interpretations_used || 0;
-  const remainingInterpretations = isUnlimited ? -1 : Math.max(0, totalInterpretations - usedInterpretations);
+  const remainingInterpretations = Math.max(0, totalInterpretations - usedInterpretations);
   
   // Progress percentage
-  const progressPercentage = isUnlimited ? 100 : Math.min(100, (usedInterpretations / totalInterpretations) * 100);
+  const progressPercentage = Math.min(100, (usedInterpretations / totalInterpretations) * 100);
   
   // Debug logs
   console.log("Current subscription state:", {
@@ -146,7 +138,6 @@ const InterpretationsUsage: React.FC<InterpretationsUsageProps> = ({ userData })
     total: totalInterpretations,
     used: usedInterpretations,
     remaining: remainingInterpretations,
-    isUnlimited,
     progress: progressPercentage
   });
   
@@ -156,9 +147,7 @@ const InterpretationsUsage: React.FC<InterpretationsUsageProps> = ({ userData })
         <div className="flex justify-between mb-2">
           <span className="text-muted-foreground">التفسيرات المستخدمة في الدورة الحالية:</span>
           <span className="font-medium">
-            {isUnlimited ? 
-              `${usedInterpretations} / غير محدود` : 
-              `${usedInterpretations} / ${totalInterpretations}`}
+            {`${usedInterpretations} / ${totalInterpretations}`}
           </span>
         </div>
         
@@ -167,7 +156,7 @@ const InterpretationsUsage: React.FC<InterpretationsUsageProps> = ({ userData })
       
       <div className="flex justify-between">
         <span className="text-muted-foreground">التفسيرات المتبقية:</span>
-        <span className="font-medium">{isUnlimited ? 'غير محدود' : remainingInterpretations}</span>
+        <span className="font-medium">{remainingInterpretations}</span>
       </div>
     </div>
   );

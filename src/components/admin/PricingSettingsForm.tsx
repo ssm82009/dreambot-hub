@@ -80,7 +80,7 @@ const PricingSettingsForm: React.FC<PricingSettingsFormProps> = ({ initialData, 
               type="number" 
               {...form.register("premiumPlanInterpretations", { valueAsNumber: true })}
             />
-            <p className="text-sm text-muted-foreground">استخدم -1 لعدد غير محدود</p>
+            <p className="text-sm text-muted-foreground">القيمة المثبتة في النظام هي 19 تفسير للباقة المميزة</p>
           </div>
           <div className="space-y-2">
             <Label>المميزات</Label>
@@ -116,6 +116,7 @@ const PricingSettingsForm: React.FC<PricingSettingsFormProps> = ({ initialData, 
               type="number" 
               {...form.register("proPlanInterpretations", { valueAsNumber: true })}
             />
+            <p className="text-sm text-muted-foreground">القيمة المثبتة في النظام هي 30 تفسير للباقة الاحترافية</p>
           </div>
           <div className="space-y-2">
             <Label>المميزات</Label>
