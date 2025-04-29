@@ -8,6 +8,11 @@ interface ServiceWorkerState {
   error: string | null;
 }
 
+// متغير عام للتحكم في عرض رسائل التوست
+const toastDisplayed = {
+  updateAvailable: false
+};
+
 export function useServiceWorkerRegistration() {
   const [state, setState] = useState<ServiceWorkerState>({
     isRegistered: false,
@@ -32,30 +37,8 @@ export function useServiceWorkerRegistration() {
           error: null
         });
         
-        // التحقق من وجود تحديث لخدمة العامل
-        registration.addEventListener('updatefound', () => {
-          const newWorker = registration.installing;
-          
-          if (newWorker) {
-            newWorker.addEventListener('statechange', () => {
-              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                // هناك خدمة عامل جديدة جاهزة للاستخدام
-                toast.success(
-                  'تم تحديث التطبيق',
-                  {
-                    description: 'يرجى تحديث الصفحة لرؤية التغييرات الجديدة',
-                    action: {
-                      label: 'تحديث الصفحة',
-                      onClick: () => {
-                        window.location.reload();
-                      }
-                    }
-                  }
-                );
-              }
-            });
-          }
-        });
+        // تحديد خدمة العامل من خلال دالة واحدة لتجنب التكرار
+        setupServiceWorkerUpdates(registration);
       } catch (error) {
         console.error('خطأ في تسجيل خدمة العامل:', error);
         setState({
@@ -67,7 +50,53 @@ export function useServiceWorkerRegistration() {
     };
     
     registerServiceWorker();
+    
+    // تنظيف عند إلغاء تحميل المكون
+    return () => {
+      // إعادة تعيين حالة رسائل التوست عند إلغاء التحميل
+      toastDisplayed.updateAvailable = false;
+    };
   }, []);
+  
+  // دالة منفصلة لإعداد مستمعي الأحداث للتحديثات
+  const setupServiceWorkerUpdates = (registration: ServiceWorkerRegistration) => {
+    // حذف أي مستمعي أحداث سابقة (لمنع التكرار)
+    const newWorker = registration.installing;
+    
+    // إعداد مستمع حدث واحد للتحديثات
+    registration.addEventListener('updatefound', () => {
+      const newWorker = registration.installing;
+      
+      if (newWorker) {
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            // هناك خدمة عامل جديدة جاهزة للاستخدام
+            
+            // التحقق إذا تم عرض رسالة التوست بالفعل
+            if (!toastDisplayed.updateAvailable) {
+              toastDisplayed.updateAvailable = true;
+              
+              toast.success(
+                'تم تحديث التطبيق',
+                {
+                  description: 'يرجى تحديث الصفحة لرؤية التغييرات الجديدة',
+                  action: {
+                    label: 'تحديث الصفحة',
+                    onClick: () => {
+                      window.location.reload();
+                    }
+                  },
+                  // منع عرض التوست أكثر من مرة
+                  id: 'sw-update-toast',
+                  duration: 10000, // مدة عرض طويلة نسبيًا
+                }
+              );
+            }
+          }
+        });
+      }
+    });
+  };
   
   // دالة لإرسال رسالة إلى خدمة العامل
   const sendMessageToServiceWorker = (message: any) => {

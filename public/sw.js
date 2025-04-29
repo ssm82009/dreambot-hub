@@ -1,4 +1,3 @@
-
 const CACHE_NAME = 'taweel-cache-v1';
 const urlsToCache = [
   '/',
@@ -106,7 +105,7 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// معالجة الإشعارات Push
+// معالجة الإشعارات Push والتفاعل مع النقرات على الإشعارات
 self.addEventListener('push', (event) => {
   console.log('Service Worker: تم استلام إشعار Push', event);
   
