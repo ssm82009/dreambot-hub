@@ -31,11 +31,11 @@ const DashboardStats: React.FC = () => {
         />
         
         <StatsCard 
-          title="الاشتراكات النشطة"
-          description={`عدد الاشتراكات النشطة (${subscriptionPercentage}% من المستخدمين)`}
+          title="الاشتراكات المدفوعة"
+          description={`عدد الاشتراكات المدفوعة (${subscriptionPercentage}% من المستخدمين)`}
           value={subscriptions}
           icon={CreditCard}
-          tooltipText="الاشتراكات النشطة هي الاشتراكات المدفوعة (المميز أو الاحترافي) التي لم تنتهِ صلاحيتها بعد."
+          tooltipText="الاشتراكات المدفوعة هي الاشتراكات المدفوعة (المميز أو الاحترافي) التي لم تنتهِ صلاحيتها بعد."
         />
         
         <StatsCard 

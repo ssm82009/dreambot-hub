@@ -32,16 +32,18 @@ export const useFetchDashboardStats = () => {
       console.log("Users data fetched:", usersData?.length, "users found");
       setTotalUsers(usersCount || 0);
 
-      // Fetch active subscriptions
-      let activeCount = 0;
+      // Fetch paid subscriptions
+      let paidSubscriptions = 0;
       if (usersData) {
-        activeCount = usersData.filter(user => {
-          const status = getSubscriptionStatus(user);
-          return status.isActive;
+        paidSubscriptions = usersData.filter(user => {
+          // Only count users with non-free subscription types
+          return user.subscription_type && 
+                 user.subscription_type !== 'free' && 
+                 getSubscriptionStatus(user).isActive;
         }).length;
-        console.log("Active subscriptions calculated:", activeCount);
+        console.log("Paid subscriptions calculated:", paidSubscriptions);
       }
-      setActiveSubscriptions(activeCount);
+      setActiveSubscriptions(paidSubscriptions);
 
       // Fetch total dreams
       const { data: dreamsData, error: dreamsError, count: dreamsCount } = await supabase
