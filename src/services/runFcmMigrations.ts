@@ -40,7 +40,7 @@ export const runFcmMigrations = async () => {
   } catch (error) {
     console.error("Error in FCM migration process:", error);
     // Show toast only in development environment
-    if (process.env.NODE_ENV === 'development') {
+    if (window.location.hostname.includes('localhost') || window.location.hostname.includes('lovable.app')) {
       toast.error('Error setting up FCM functions. App will continue without notification features.');
     }
     return false;
