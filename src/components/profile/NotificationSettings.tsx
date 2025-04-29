@@ -78,7 +78,7 @@ const NotificationSettings: React.FC = () => {
       <CardContent>
         <div className="flex flex-col gap-4">
           {!granted && !subscription && (
-            <Alert variant="amber" className="mb-4">
+            <Alert variant="destructive" className="mb-4">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
                 يرجى تفعيل الإشعارات للحصول على تحديثات مهمة حول حسابك وطلباتك.
