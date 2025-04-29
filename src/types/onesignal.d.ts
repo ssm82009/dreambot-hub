@@ -15,6 +15,7 @@ interface OneSignalNotifications {
 interface OneSignal {
   User: OneSignalUser;
   Notifications: OneSignalNotifications;
+  login(externalId: string): Promise<void>;
   init(options: { 
     appId: string;
     serviceWorkerPath?: string;
