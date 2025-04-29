@@ -19,23 +19,26 @@ export function useNotificationData() {
         setLoading(true);
         setError(null);
 
-        // جلب عدد المشتركين من OneSignal بدلاً من قاعدة البيانات المحلية
+        // جلب عدد المشتركين من OneSignal API مباشرة عبر Edge Function
         try {
-          const oneSignalCount = await fetchOneSignalSubscriberCount();
+          console.log('جاري جلب عدد المشتركين من OneSignal...');
+          const { data: statsData, error: statsError } = await supabase.functions.invoke('get-onesignal-stats', {
+            body: { action: 'getSubscriberCount' }
+          });
+          
+          if (statsError) {
+            console.error('خطأ في جلب إحصائيات OneSignal:', statsError);
+            throw new Error(statsError.message || 'حدث خطأ في جلب إحصائيات OneSignal');
+          }
+          
           if (isMounted) {
-            setSubscribersCount(oneSignalCount || 0);
+            console.log('تم جلب عدد المشتركين بنجاح:', statsData?.count);
+            setSubscribersCount(statsData?.count || 0);
           }
         } catch (oneSignalError) {
-          console.error('Error fetching OneSignal subscribers:', oneSignalError);
-          // جلب عدد المشتركين من قاعدة البيانات كبديل احتياطي
-          const { count: localCount, error: subscribersError } = await supabase
-            .from('push_subscriptions')
-            .select('*', { count: 'exact', head: true });
-
-          if (subscribersError) throw subscribersError;
-          if (isMounted) {
-            setSubscribersCount(localCount || 0);
-          }
+          console.error('خطأ في جلب عدد المشتركين من OneSignal:', oneSignalError);
+          // الاحتفاظ بالخطأ لعرضه للمستخدم
+          throw oneSignalError;
         }
 
         // جلب قائمة المستخدمين لإرسال الإشعارات لهم
@@ -52,33 +55,11 @@ export function useNotificationData() {
           setLoading(false);
         }
       } catch (err: any) {
-        console.error('Error fetching notification data:', err);
+        console.error('خطأ في جلب بيانات الإشعارات:', err);
         if (isMounted) {
           setError(err.message || 'حدث خطأ في جلب بيانات الإشعارات');
           setLoading(false);
         }
-      }
-    };
-
-    const fetchOneSignalSubscriberCount = async (): Promise<number> => {
-      // استخدام API الخاص بـ OneSignal للحصول على العدد الدقيق للمشتركين
-      if (!OneSignalService.isReady) {
-        console.warn('OneSignal غير متاح، لا يمكن جلب عدد المشتركين الحقيقي');
-        throw new Error('OneSignal غير متاح');
-      }
-      
-      try {
-        // استدعاء دالة على الخادم للحصول على عدد المشتركين من OneSignal
-        const { data, error } = await supabase.functions.invoke('get-onesignal-stats', {
-          body: { action: 'getSubscriberCount' }
-        });
-        
-        if (error) throw error;
-        
-        return data?.count || 0;
-      } catch (error) {
-        console.error('خطأ في جلب عدد مشتركي OneSignal:', error);
-        throw error;
       }
     };
 

@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 export interface NotificationPayload {
@@ -28,20 +27,57 @@ export class OneSignalService {
   static async initialize(userId?: string): Promise<boolean> {
     try {
       // التأكد من أن OneSignal موجود وتم تحميله
+      if (!window.OneSignal) {
+        console.warn('OneSignal غير متاح، انتظار التحميل...');
+        // انتظر التحميل المؤجل لـ OneSignal
+        return new Promise((resolve) => {
+          if (!window.OneSignalDeferred) {
+            window.OneSignalDeferred = [];
+          }
+          
+          window.OneSignalDeferred.push(() => {
+            this.initializeWithUserId(userId)
+              .then(resolve)
+              .catch((error) => {
+                console.error('خطأ في تهيئة OneSignal المؤجلة:', error);
+                resolve(false);
+              });
+          });
+          
+          // تحديد مهلة للانتظار
+          setTimeout(() => {
+            console.warn('انتهت مهلة انتظار تحميل OneSignal');
+            resolve(false);
+          }, 5000);
+        });
+      }
+      
+      return this.initializeWithUserId(userId);
+    } catch (error) {
+      console.error('خطأ في تهيئة OneSignal:', error);
+      return false;
+    }
+  }
+  
+  /**
+   * تهيئة OneSignal مع معرف المستخدم (مساعد داخلي)
+   */
+  private static async initializeWithUserId(userId?: string): Promise<boolean> {
+    try {
       if (!this.isReady) {
         console.warn('OneSignal غير متاح أو لم يتم تحميله بعد');
         return false;
       }
-
+      
       // تعيين هوية المستخدم في OneSignal إذا كان متاحاً
       if (userId) {
         await window.OneSignal.login(userId);
         console.log('تم تسجيل دخول المستخدم في OneSignal:', userId);
       }
-
+      
       return true;
     } catch (error) {
-      console.error('خطأ في تهيئة OneSignal:', error);
+      console.error('خطأ في تهيئة OneSignal مع معرف المستخدم:', error);
       return false;
     }
   }
@@ -141,8 +177,21 @@ export class OneSignalService {
         return false;
       }
 
-      const isEnabled = await window.OneSignal.Notifications.permission;
-      return isEnabled === true;
+      try {
+        const isEnabled = await window.OneSignal.Notifications.permission;
+        return isEnabled === true;
+      } catch (error) {
+        console.error('خطأ في جلب حالة إذن الإشعارات:', error);
+        
+        // محاولة بديلة
+        try {
+          const isPushEnabled = await window.OneSignal.Notifications.getPermission();
+          return !!isPushEnabled;
+        } catch (fallbackError) {
+          console.error('خطأ في الطريقة البديلة لجلب حالة إذن الإشعارات:', fallbackError);
+          return false;
+        }
+      }
     } catch (error) {
       console.error('خطأ في جلب حالة اشتراك الإشعارات:', error);
       return false;
