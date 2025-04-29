@@ -1,5 +1,6 @@
 
 interface OneSignalUser {
+  externalId?: string | null;
   login(externalId: string): Promise<void>;
   logout(): Promise<void>;
 }
