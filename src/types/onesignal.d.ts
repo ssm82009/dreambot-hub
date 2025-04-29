@@ -15,7 +15,11 @@ interface OneSignalNotifications {
 interface OneSignal {
   User: OneSignalUser;
   Notifications: OneSignalNotifications;
-  init(options: { appId: string }): Promise<void>;
+  init(options: { 
+    appId: string;
+    serviceWorkerPath?: string;
+    serviceWorkerUpdaterPath?: string;
+  }): Promise<void>;
 }
 
 interface Window {
