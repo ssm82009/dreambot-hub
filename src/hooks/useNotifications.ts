@@ -100,7 +100,8 @@ export function useNotifications() {
         setGranted(isPermissionGranted || false);
         
         // التحقق مما إذا كانت الإشعارات مفعّلة
-        const isEnabled = await window.OneSignal.Notifications.getPermission();
+        // تصحيح الخطأ: استخدام خاصية permission بدلاً من دالة getPermission
+        const isEnabled = await window.OneSignal.Notifications.permission;
         setSubscription(isEnabled || false);
         
         console.log('حالة الإشعارات:', { 

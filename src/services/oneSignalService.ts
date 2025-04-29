@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 
 export interface NotificationPayload {
@@ -185,7 +186,8 @@ export class OneSignalService {
         
         // محاولة بديلة
         try {
-          const isPushEnabled = await window.OneSignal.Notifications.getPermission();
+          // تصحيح الخطأ: استخدام خاصية permission بدلاً من دالة getPermission
+          const isPushEnabled = await window.OneSignal.Notifications.permission;
           return !!isPushEnabled;
         } catch (fallbackError) {
           console.error('خطأ في الطريقة البديلة لجلب حالة إذن الإشعارات:', fallbackError);
