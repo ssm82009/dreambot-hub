@@ -70,7 +70,7 @@ const NotificationStats: React.FC<NotificationStatsProps> = ({
             يجب أن يكون المستخدمون قد فعّلوا الإشعارات من متصفحاتهم لاستلامها.
           </p>
           {subscribersCount === 0 && (
-            <Alert variant="warning" className="mt-2 border-amber-200 bg-amber-50 text-amber-800">
+            <Alert variant="warning" className="mt-2">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
                 لا يوجد مشتركين في الإشعارات حالياً. يجب على المستخدمين تفعيل الإشعارات من متصفحاتهم أولاً.
