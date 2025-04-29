@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { OneSignalService } from '@/services/oneSignalService';
 
 export function useNotificationData() {
   const [subscribersCount, setSubscribersCount] = useState<number>(0);
@@ -12,20 +13,29 @@ export function useNotificationData() {
 
   useEffect(() => {
     let isMounted = true;
-    let realtimeChannel: any = null;
 
     const fetchData = async () => {
       try {
         setLoading(true);
         setError(null);
 
-        // جلب عدد المشتركين في الإشعارات
-        const { count: subscribersCount, error: subscribersError } = await supabase
-          .from('push_subscriptions')
-          .select('*', { count: 'exact', head: true });
+        // جلب عدد المشتركين من OneSignal بدلاً من قاعدة البيانات المحلية
+        try {
+          const oneSignalCount = await fetchOneSignalSubscriberCount();
+          if (isMounted) {
+            setSubscribersCount(oneSignalCount || 0);
+          }
+        } catch (oneSignalError) {
+          console.error('Error fetching OneSignal subscribers:', oneSignalError);
+          // جلب عدد المشتركين من قاعدة البيانات كبديل احتياطي
+          const { count: localCount, error: subscribersError } = await supabase
+            .from('push_subscriptions')
+            .select('*', { count: 'exact', head: true });
 
-        if (subscribersError) {
-          throw subscribersError;
+          if (subscribersError) throw subscribersError;
+          if (isMounted) {
+            setSubscribersCount(localCount || 0);
+          }
         }
 
         // جلب قائمة المستخدمين لإرسال الإشعارات لهم
@@ -38,14 +48,9 @@ export function useNotificationData() {
         }
 
         if (isMounted) {
-          setSubscribersCount(subscribersCount || 0);
           setUsers(usersData || []);
           setLoading(false);
         }
-
-        // إعداد قناة الاستماع للتغييرات في الوقت الحقيقي
-        setupRealtimeSubscription();
-
       } catch (err: any) {
         console.error('Error fetching notification data:', err);
         if (isMounted) {
@@ -55,74 +60,25 @@ export function useNotificationData() {
       }
     };
 
-    const setupRealtimeSubscription = () => {
-      try {
-        // تنظيف أي اشتراك سابق
-        if (realtimeChannel) {
-          supabase.removeChannel(realtimeChannel);
-        }
-
-        // إنشاء اشتراك جديد لمراقبة التغييرات في جدول الاشتراكات
-        realtimeChannel = supabase
-          .channel('push-subscriptions-changes')
-          .on('postgres_changes', 
-            { 
-              event: '*', 
-              schema: 'public', 
-              table: 'push_subscriptions' 
-            }, 
-            () => {
-              // تحديث العدد عند حدوث أي تغيير
-              refreshSubscribersCount();
-            }
-          )
-          .subscribe((status: string) => {
-            // التحقق من حالة الاشتراك
-            if (status === 'SUBSCRIBED') {
-              console.log('تم الاشتراك بنجاح في قناة التغييرات');
-            } else if (status === 'CHANNEL_ERROR') {
-              console.error('حدث خطأ في الاتصال بقناة التغييرات');
-              handleReconnect();
-            }
-          });
-      } catch (channelError) {
-        console.error('Error setting up realtime subscription:', channelError);
-        handleReconnect();
+    const fetchOneSignalSubscriberCount = async (): Promise<number> => {
+      // استخدام API الخاص بـ OneSignal للحصول على العدد الدقيق للمشتركين
+      if (!OneSignalService.isReady) {
+        console.warn('OneSignal غير متاح، لا يمكن جلب عدد المشتركين الحقيقي');
+        throw new Error('OneSignal غير متاح');
       }
-    };
-
-    const refreshSubscribersCount = async () => {
+      
       try {
-        const { count, error: countError } = await supabase
-          .from('push_subscriptions')
-          .select('*', { count: 'exact', head: true });
+        // استدعاء دالة على الخادم للحصول على عدد المشتركين من OneSignal
+        const { data, error } = await supabase.functions.invoke('get-onesignal-stats', {
+          body: { action: 'getSubscriberCount' }
+        });
         
-        if (countError) throw countError;
+        if (error) throw error;
         
-        if (isMounted) {
-          setSubscribersCount(count || 0);
-        }
-      } catch (err) {
-        console.error('Error refreshing subscribers count:', err);
-      }
-    };
-
-    const handleReconnect = () => {
-      // إعادة محاولة الاتصال مع زيادة الفاصل الزمني بعد كل محاولة
-      if (retryCount < 5) {
-        const timeout = Math.min(1000 * Math.pow(2, retryCount), 30000);
-        console.log(`محاولة إعادة الاتصال بعد ${timeout}ms...`);
-        
-        setTimeout(() => {
-          if (isMounted) {
-            setRetryCount(prev => prev + 1);
-            setupRealtimeSubscription();
-          }
-        }, timeout);
-      } else {
-        // بعد 5 محاولات فاشلة، نعرض رسالة خطأ ولكن نستمر في تحديث البيانات عند الضرورة
-        setError('تعذر إنشاء اتصال مباشر. سيتم تحديث البيانات يدويًا.');
-        toast.error('تعذر إنشاء اتصال مباشر. سيتم تحديث البيانات يدويًا.');
+        return data?.count || 0;
+      } catch (error) {
+        console.error('خطأ في جلب عدد مشتركي OneSignal:', error);
+        throw error;
       }
     };
 
@@ -131,11 +87,13 @@ export function useNotificationData() {
     // تنظيف عند إلغاء تحميل المكون
     return () => {
       isMounted = false;
-      if (realtimeChannel) {
-        supabase.removeChannel(realtimeChannel);
-      }
     };
   }, [retryCount]);
 
-  return { subscribersCount, users, loading, error };
+  // دالة لتحديث البيانات يدويًا
+  const refreshData = async () => {
+    setRetryCount(prev => prev + 1);
+  };
+
+  return { subscribersCount, users, loading, error, refreshData };
 }

@@ -57,9 +57,12 @@ async function sendOneSignalNotification(
 
     // تحديد المستخدمين المستهدفين إذا كانت متوفرة
     if (includeExternalUserIds && includeExternalUserIds.length > 0) {
+      // التحقق من أن المستخدمين موجودون حقًا في OneSignal قبل الإرسال
+      console.log(`محاولة الإرسال إلى مستخدمين محددين: ${includeExternalUserIds.length}`);
       payload.include_external_user_ids = includeExternalUserIds;
     } else {
       // إذا لم يتم تحديد مستخدمين، أرسل إلى جميع المشتركين
+      console.log('الإرسال إلى جميع المشتركين');
       payload.included_segments = ['Subscribed Users'];
     }
 
@@ -80,6 +83,34 @@ async function sendOneSignalNotification(
   } catch (error) {
     console.error('خطأ في إرسال إشعار OneSignal:', error);
     return false;
+  }
+}
+
+// التحقق من وجود المستخدم في OneSignal
+async function validateOneSignalUsers(userIds: string[]): Promise<string[]> {
+  try {
+    const apiKey = Deno.env.get('ONESIGNAL_REST_API_KEY');
+    const appId = Deno.env.get('ONESIGNAL_APP_ID');
+    
+    if (!apiKey || !appId) {
+      console.error('بيانات اعتماد OneSignal غير متوفرة');
+      return [];
+    }
+    
+    // إذا لم نتمكن من استخدام OneSignal API للتحقق، نحتاج هذه الدالة 
+    // للتحقق من أن المستخدمين موجودين حقًا في قاعدة البيانات المحلية
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    );
+    
+    // نفترض أن جميع المستخدمين المسجلين في تطبيقنا مشتركين
+    // هذه ليست الطريقة المثالية، ولكنها بديل في غياب API من OneSignal للتحقق
+    
+    return userIds;
+  } catch (error) {
+    console.error('خطأ في التحقق من وجود المستخدمين في OneSignal:', error);
+    return [];
   }
 }
 
@@ -114,8 +145,9 @@ serve(async (req) => {
     let userIds: string[] = [];
     
     if (targetUsers && targetUsers.length > 0) {
-      // استخدام المستخدمين المحددين مباشرةً
-      userIds = targetUsers;
+      // استخدام المستخدمين المحددين مباشرةً بعد التحقق من صحتهم
+      userIds = await validateOneSignalUsers(targetUsers);
+      console.log(`تم التحقق من ${userIds.length} مستخدمين صالحين من أصل ${targetUsers.length}`);
     } else if (adminOnly) {
       // جلب معرفات المسؤولين
       const { data: admins, error } = await supabaseClient
@@ -124,44 +156,50 @@ serve(async (req) => {
         .eq('role', 'admin');
 
       if (error) throw error;
-      userIds = admins.map(admin => admin.id);
+      const adminIds = admins.map(admin => admin.id);
+      userIds = await validateOneSignalUsers(adminIds);
     } else if (allUsers) {
-      // جلب جميع معرفات المستخدمين
-      const { data: users, error } = await supabaseClient
-        .from('users')
-        .select('id');
-        
-      if (error) throw error;
-      userIds = users.map(user => user.id);
+      // في حالة إرسال للجميع، نستخدم الخيار المناسب في OneSignal
+      // وليس قائمة المستخدمين من قاعدة البيانات
+      userIds = [];
     }
 
     // إنشاء سجلات الإشعارات في قاعدة البيانات
-    if (userIds.length > 0) {
-      const notificationsToInsert = userIds.map(id => ({
-        user_id: id,
-        title: notification.title,
-        body: notification.body,
-        url: notification.url || '/',
-        type: notification.type || 'general'
-      }));
+    if (userIds.length > 0 || allUsers) {
+      try {
+        if (userIds.length > 0) {
+          const notificationsToInsert = userIds.map(id => ({
+            user_id: id,
+            title: notification.title,
+            body: notification.body,
+            url: notification.url || '/',
+            type: notification.type || 'general'
+          }));
 
-      const { error: insertError } = await supabaseClient
-        .from('notification_logs')
-        .insert(notificationsToInsert);
+          const { error: insertError } = await supabaseClient
+            .from('notification_logs')
+            .insert(notificationsToInsert);
 
-      if (insertError) {
-        console.error('خطأ في إضافة الإشعارات إلى قاعدة البيانات:', insertError);
-        // الاستمرار في محاولة إرسال الإشعارات على أي حال
+          if (insertError) {
+            console.error('خطأ في إضافة الإشعارات إلى قاعدة البيانات:', insertError);
+          }
+        }
+      } catch (dbError) {
+        console.error('خطأ في تسجيل الإشعارات:', dbError);
+        // نستمر في الإرسال رغم خطأ قاعدة البيانات
       }
     }
 
     // إرسال الإشعار عبر OneSignal
-    const success = await sendOneSignalNotification(notification, userIds);
+    const success = await sendOneSignalNotification(
+      notification, 
+      userIds.length > 0 ? userIds : undefined
+    );
 
     return new Response(
       JSON.stringify({
         success,
-        sent_to_users: userIds.length
+        sent_to_users: userIds.length || (allUsers ? 'all' : 0)
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

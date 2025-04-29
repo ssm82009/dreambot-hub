@@ -7,13 +7,7 @@ import NotificationHeader from '../notifications/NotificationHeader';
 import { useNotificationData } from '@/hooks/notifications/useNotificationData';
 
 const NotificationsSection: React.FC = () => {
-  const { subscribersCount, users, loading, error } = useNotificationData();
-
-  // دالة لإعادة تحميل البيانات يدويًا
-  const refreshData = useCallback(async () => {
-    // استخدام واجهة البرمجة العامة للصفحة لإعادة تحميل البيانات
-    window.location.reload();
-  }, []);
+  const { subscribersCount, users, loading, error, refreshData } = useNotificationData();
 
   return (
     <div className="space-y-6">
@@ -24,6 +18,7 @@ const NotificationsSection: React.FC = () => {
           subscribersCount={subscribersCount} 
           loading={loading}
           error={error}
+          refreshData={refreshData}
         />
 
         <Card className="col-span-1 md:col-span-2">
