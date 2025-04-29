@@ -75,10 +75,6 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ className })
       if (subscription) {
         await unsubscribeFromNotifications();
       } else {
-        if (Notification.permission === 'denied') {
-          alert('تم رفض الإشعارات. يرجى السماح بالإشعارات من إعدادات المتصفح.');
-          return;
-        }
         await subscribeToNotifications();
       }
     } catch (err) {

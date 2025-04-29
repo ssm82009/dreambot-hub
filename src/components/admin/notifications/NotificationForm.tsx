@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
-import { sendNotificationToAdmin } from '@/services/notificationService';
+import { sendNotificationToAdmin } from '@/services/oneSignalService';
 import { Loader2, Send } from 'lucide-react';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -64,21 +64,21 @@ const NotificationForm: React.FC<NotificationFormProps> = ({ users }) => {
       let result;
       let message = '';
 
-      // إرسال الإشعار بناءً على نوع المستهدف
+      // إرسال الإشعار عبر OneSignal باستخدام Edge Function
       if (targetType === 'admin') {
         result = await sendNotificationToAdmin(notification);
         message = 'تم إرسال الإشعار للمشرفين بنجاح';
       } else if (targetType === 'specificUser' && userId) {
         console.log('إرسال إشعار لمستخدم محدد:', userId, notification);
         
-        const { data, error } = await supabase.functions.invoke('send-notification', {
+        const { data, error } = await supabase.functions.invoke('send-onesignal-notification', {
           body: {
-            userId,
-            notification
+            notification,
+            targetUsers: [userId]
           }
         });
         
-        result = data;
+        result = data && data.success;
         
         if (error) {
           throw new Error(error.message || 'حدث خطأ في إرسال الإشعار للمستخدم');
@@ -88,14 +88,14 @@ const NotificationForm: React.FC<NotificationFormProps> = ({ users }) => {
       } else if (targetType === 'all') {
         console.log('إرسال إشعار لجميع المستخدمين', notification);
         
-        const { data, error } = await supabase.functions.invoke('send-notification', {
+        const { data, error } = await supabase.functions.invoke('send-onesignal-notification', {
           body: {
-            allUsers: true,
-            notification
+            notification,
+            allUsers: true
           }
         });
         
-        result = data;
+        result = data && data.success;
         
         if (error) {
           throw new Error(error.message || 'حدث خطأ في إرسال الإشعار لجميع المستخدمين');
@@ -106,8 +106,8 @@ const NotificationForm: React.FC<NotificationFormProps> = ({ users }) => {
 
       console.log('نتيجة إرسال الإشعار:', result);
       
-      if (result?.error) {
-        throw new Error(result.error.message || 'حدث خطأ في إرسال الإشعار');
+      if (!result) {
+        throw new Error('فشل في إرسال الإشعار');
       }
 
       toast.success(message);

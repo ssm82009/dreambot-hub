@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from 'react';
+
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Bell, BellOff, Loader2, AlertCircle } from 'lucide-react';
 import { useNotifications } from '@/hooks/useNotifications';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { supabase } from '@/integrations/supabase/client';
 
 const NotificationSettings: React.FC = () => {
   const { 
@@ -13,71 +13,26 @@ const NotificationSettings: React.FC = () => {
     granted, 
     subscription, 
     subscribing,
-    firebaseReady,
     requestPermission, 
     subscribeToNotifications, 
     unsubscribeFromNotifications 
   } = useNotifications();
 
-  const [fcmTokenCount, setFcmTokenCount] = useState<number>(0);
-  const [userId, setUserId] = useState<string | null>(null);
-
-  // Fetch FCM token count for current user
-  useEffect(() => {
-    const fetchUserData = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) return;
-      
-      setUserId(session.user.id);
-      
-      try {
-        // Use direct query instead of RPC
-        const { data, error } = await supabase
-          .from('fcm_tokens')
-          .select('id')
-          .eq('user_id', session.user.id);
-          
-        if (error) {
-          console.error('Error fetching FCM token data:', error);
-          return;
-        }
-        
-        setFcmTokenCount(data?.length || 0);
-      } catch (error) {
-        console.error('Error fetching FCM token data:', error);
-      }
-    };
-    
-    fetchUserData();
-  }, []);
-
   const handleSubscribe = async () => {
     try {
       console.log("Starting notification subscription process");
       
-      if (Notification.permission === 'denied') {
-        alert('Notifications have been denied by the browser. Please enable notifications in browser settings.');
+      if (!supported) {
+        alert('متصفحك لا يدعم الإشعارات');
         return;
       }
       
-      if (Notification.permission !== 'granted') {
+      if (!granted) {
         const permission = await requestPermission();
         if (!permission) return;
       }
       
       await subscribeToNotifications();
-      
-      // Update FCM token count after subscription
-      if (userId) {
-        const { data, error } = await supabase
-          .from('fcm_tokens')
-          .select('id')
-          .eq('user_id', userId);
-          
-        if (!error) {
-          setFcmTokenCount(data?.length || 0);
-        }
-      }
     } catch (error) {
       console.error("Error during notification subscription:", error);
     }
@@ -87,18 +42,6 @@ const NotificationSettings: React.FC = () => {
     try {
       console.log("Starting notification unsubscription process");
       await unsubscribeFromNotifications();
-      
-      // Update FCM token count after unsubscription
-      if (userId) {
-        const { data, error } = await supabase
-          .from('fcm_tokens')
-          .select('id')
-          .eq('user_id', userId);
-          
-        if (!error) {
-          setFcmTokenCount(data?.length || 0);
-        }
-      }
     } catch (error) {
       console.error("Error during notification unsubscription:", error);
     }
@@ -134,11 +77,11 @@ const NotificationSettings: React.FC = () => {
       </CardHeader>
       <CardContent>
         <div className="flex flex-col gap-4">
-          {Notification.permission === 'denied' && (
-            <Alert variant="destructive" className="mb-4">
+          {!granted && !subscription && (
+            <Alert variant="amber" className="mb-4">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                تم رفض الإشعارات من قبل المتصفح. يرجى السماح بالإشعارات من إعدادات المتصفح ثم المحاولة مرة أخرى.
+                يرجى تفعيل الإشعارات للحصول على تحديثات مهمة حول حسابك وطلباتك.
               </AlertDescription>
             </Alert>
           )}
@@ -160,13 +103,6 @@ const NotificationSettings: React.FC = () => {
               <p className="text-sm text-muted-foreground">
                 استلام إشعارات حول حالة الاشتراك، التذاكر، والمدفوعات
               </p>
-              {firebaseReady && (
-                <p className="text-xs text-emerald-600 mt-1">
-                  <span className="inline-block w-2 h-2 bg-emerald-500 rounded-full mr-1"></span>
-                  دعم Firebase نشط
-                  {fcmTokenCount > 0 && ` (${fcmTokenCount} جهاز)`}
-                </p>
-              )}
             </div>
             {subscription ? (
               <Button
@@ -175,10 +111,10 @@ const NotificationSettings: React.FC = () => {
                 disabled={subscribing}
               >
                 {subscribing ? (
-                  <Loader2 className="h-4 w-4 animate-spin ml-2" />
+                  <Loader2 className="ml-2 h-4 w-4 animate-spin" />
                 ) : (
                   <>
-                    <BellOff className="h-4 w-4 ml-2" />
+                    <BellOff className="ml-2 h-4 w-4" />
                     إيقاف
                   </>
                 )}
@@ -187,13 +123,13 @@ const NotificationSettings: React.FC = () => {
               <Button
                 variant="default"
                 onClick={handleSubscribe}
-                disabled={subscribing || Notification.permission === 'denied'}
+                disabled={subscribing}
               >
                 {subscribing ? (
-                  <Loader2 className="h-4 w-4 animate-spin ml-2" />
+                  <Loader2 className="ml-2 h-4 w-4 animate-spin" />
                 ) : (
                   <>
-                    <Bell className="h-4 w-4 ml-2" />
+                    <Bell className="ml-2 h-4 w-4" />
                     تفعيل
                   </>
                 )}
