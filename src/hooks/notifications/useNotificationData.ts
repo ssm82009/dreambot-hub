@@ -26,19 +26,28 @@ export function useNotificationData() {
             body: { action: 'getSubscriberCount' }
           });
           
+          // مع التعديل الجديد، نحن لا نتوقع أن تكون هناك أخطاء في الاستدعاء نفسه
+          // لكن يمكن أن تكون هناك رسالة خطأ في البيانات المُرجعة
           if (statsError) {
-            console.error('خطأ في جلب إحصائيات OneSignal:', statsError);
-            throw new Error(statsError.message || 'حدث خطأ في جلب إحصائيات OneSignal');
+            console.error('خطأ في استدعاء دالة جلب إحصائيات OneSignal:', statsError);
           }
           
           if (isMounted) {
-            console.log('تم جلب عدد المشتركين بنجاح:', statsData?.count);
-            setSubscribersCount(statsData?.count || 0);
+            // استخدم القيمة المُرجعة حتى لو كانت صفرًا بسبب خطأ
+            const count = typeof statsData?.count === 'number' ? statsData.count : 0;
+            console.log('تم جلب عدد المشتركين:', count, statsData);
+            setSubscribersCount(count);
+            
+            // إذا كان هناك خطأ أو تحذير، يمكننا عرضه للمستخدم كملاحظة
+            if (statsData?.error || statsData?.warning) {
+              setError(statsData.error || statsData.warning);
+            }
           }
         } catch (oneSignalError) {
           console.error('خطأ في جلب عدد المشتركين من OneSignal:', oneSignalError);
-          // الاحتفاظ بالخطأ لعرضه للمستخدم
-          throw oneSignalError;
+          if (isMounted) {
+            setError('تعذر الاتصال بخدمة الإشعارات، يرجى المحاولة لاحقًا');
+          }
         }
 
         // جلب قائمة المستخدمين لإرسال الإشعارات لهم
