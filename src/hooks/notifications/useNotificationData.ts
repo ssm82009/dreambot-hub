@@ -10,6 +10,7 @@ export function useNotificationData() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
+  const [debugInfo, setDebugInfo] = useState<any>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -30,6 +31,9 @@ export function useNotificationData() {
           // لكن يمكن أن تكون هناك رسالة خطأ في البيانات المُرجعة
           if (statsError) {
             console.error('خطأ في استدعاء دالة جلب إحصائيات OneSignal:', statsError);
+            if (isMounted) {
+              setError('خطأ في استدعاء دالة جلب إحصائيات OneSignal');
+            }
           }
           
           if (isMounted) {
@@ -38,9 +42,16 @@ export function useNotificationData() {
             console.log('تم جلب عدد المشتركين:', count, statsData);
             setSubscribersCount(count);
             
+            // حفظ معلومات التصحيح إن وجدت
+            if (statsData?.debug) {
+              setDebugInfo(statsData.debug);
+            }
+            
             // إذا كان هناك خطأ أو تحذير، يمكننا عرضه للمستخدم كملاحظة
-            if (statsData?.error || statsData?.warning) {
-              setError(statsData.error || statsData.warning);
+            if (statsData?.error) {
+              setError(statsData.error);
+            } else if (statsData?.warning) {
+              setError(statsData.warning);
             }
           }
         } catch (oneSignalError) {
@@ -85,5 +96,5 @@ export function useNotificationData() {
     setRetryCount(prev => prev + 1);
   };
 
-  return { subscribersCount, users, loading, error, refreshData };
+  return { subscribersCount, users, loading, error, refreshData, debugInfo };
 }

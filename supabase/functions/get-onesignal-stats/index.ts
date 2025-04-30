@@ -30,16 +30,22 @@ serve(async (req) => {
       
       console.log('OneSignal credentials:', { 
         appIdExists: !!oneSignalAppId, 
-        apiKeyExists: !!oneSignalApiKey 
+        apiKeyLength: oneSignalApiKey ? oneSignalApiKey.length : 0,
+        appIdValue: oneSignalAppId ? oneSignalAppId.substring(0, 5) + '...' : 'undefined'
       });
       
       // إذا كانت المفاتيح غير موجودة، يمكننا إرجاع قيمة افتراضية بدلاً من رمي خطأ
       if (!oneSignalAppId || !oneSignalApiKey) {
-        console.warn('OneSignal credentials are missing, returning default value');
+        console.error('OneSignal credentials are missing, returning default value');
         return new Response(
           JSON.stringify({ 
             count: 0, 
-            warning: 'OneSignal credentials missing, showing default count' 
+            warning: 'OneSignal credentials missing, showing default count',
+            debug: {
+              appIdExists: !!oneSignalAppId,
+              apiKeyExists: !!oneSignalApiKey,
+              envVars: Object.keys(Deno.env.toObject()).filter(key => key.includes('SIGNAL') || key.includes('ONE'))
+            }
           }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
         );
