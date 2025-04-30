@@ -28,6 +28,11 @@ serve(async (req) => {
       const oneSignalAppId = Deno.env.get('ONESIGNAL_APP_ID');
       const oneSignalApiKey = Deno.env.get('ONESIGNAL_REST_API_KEY');
       
+      console.log('OneSignal credentials:', { 
+        appIdExists: !!oneSignalAppId, 
+        apiKeyExists: !!oneSignalApiKey 
+      });
+      
       // إذا كانت المفاتيح غير موجودة، يمكننا إرجاع قيمة افتراضية بدلاً من رمي خطأ
       if (!oneSignalAppId || !oneSignalApiKey) {
         console.warn('OneSignal credentials are missing, returning default value');
@@ -36,12 +41,14 @@ serve(async (req) => {
             count: 0, 
             warning: 'OneSignal credentials missing, showing default count' 
           }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
         );
       }
       
       try {
         // استدعاء API الخاص بـ OneSignal للحصول على إحصائيات المستخدمين
+        console.log(`Fetching OneSignal stats with app_id=${oneSignalAppId?.substring(0, 5)}...`);
+        
         const response = await fetch(`https://onesignal.com/api/v1/players?app_id=${oneSignalAppId}&limit=1`, {
           headers: {
             'Authorization': `Basic ${oneSignalApiKey}`,
@@ -51,7 +58,7 @@ serve(async (req) => {
         
         if (!response.ok) {
           const errorText = await response.text();
-          console.error('OneSignal API error:', errorText);
+          console.error('OneSignal API error:', response.status, errorText);
           
           // إرجاع استجابة مع رمز حالة ناجح ولكن مع رسالة خطأ
           return new Response(
@@ -60,7 +67,7 @@ serve(async (req) => {
               error: `OneSignal API error: ${response.status}`,
               debug: errorText
             }),
-            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
           );
         }
         
@@ -71,7 +78,7 @@ serve(async (req) => {
         
         return new Response(
           JSON.stringify({ count: totalCount }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
         );
       } catch (fetchError) {
         console.error('Error fetching data from OneSignal:', fetchError);
@@ -82,15 +89,15 @@ serve(async (req) => {
             count: 0, 
             error: fetchError.message || 'Error connecting to OneSignal API'
           }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
         );
       }
     }
     
     return new Response(
-      JSON.stringify({ error: 'Invalid action' }),
+      JSON.stringify({ error: 'Invalid action', count: 0 }),
       { 
-        status: 200, // تغيير من 400 إلى 200 مع رسالة خطأ في المحتوى
+        status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       }
     );

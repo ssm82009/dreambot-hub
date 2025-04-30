@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 export interface NotificationPayload {
@@ -231,7 +230,7 @@ export const sendNotification = async (userId: string, payload: NotificationPayl
 };
 
 export const sendNotificationToAdmin = async (payload: NotificationPayload) => {
-  // استرجاع قائمة المسؤولين من قاعدة البيانات
+  // استرجاع قائمة المسؤولين من قاعدة الب��انات
   try {
     const { data: admins, error } = await supabase
       .from('users')
