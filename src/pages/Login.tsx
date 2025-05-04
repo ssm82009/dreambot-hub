@@ -19,12 +19,14 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [emailNotConfirmed, setEmailNotConfirmed] = useState(false);
   const [connectionError, setConnectionError] = useState(false);
+  const [errorDetails, setErrorDetails] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setEmailNotConfirmed(false);
     setConnectionError(false);
+    setErrorDetails('');
     
     try {
       console.log('Attempting to sign in with:', email);
@@ -37,41 +39,12 @@ const Login = () => {
       
       console.log('Sign in result:', result);
       
-      // Handle "Email not confirmed" error specially
-      if (result.error && result.error.message === 'Email not confirmed') {
-        console.log('Email not confirmed, trying to update user...');
-        
-        // Set the emailNotConfirmed state to true to show the alert
-        setEmailNotConfirmed(true);
-        
-        // Try to get magic link or auto-confirm the email
-        const { error: updateError } = await supabase.auth.updateUser({
-          email: email
-        });
-        
-        if (updateError) {
-          console.error('خطأ في تحديث المستخدم:', updateError.message);
-          toast.error("لم يتم تأكيد البريد الإلكتروني، يرجى مراجعة بريدك الإلكتروني للتفعيل");
-          setIsLoading(false);
-          return;
-        }
-        
-        // Try signing in again after update
-        result = await supabase.auth.signInWithPassword({
-          email,
-          password
-        });
-        
-        // If we still have an error after retry, throw it
-        if (result.error) {
-          throw result.error;
-        }
-      } else if (result.error) {
-        // If we have an error from the initial attempt that's not about confirmation, throw it
+      if (result.error) {
+        console.error('Login error:', result.error);
         throw result.error;
       }
       
-      // At this point, result.data contains our successful login data
+      // هنا تم تسجيل الدخول بنجاح
       // التحقق من دور المستخدم في جدول المستخدمين
       const { data: userData, error: userError } = await supabase
         .from('users')
@@ -101,12 +74,15 @@ const Login = () => {
     } catch (error: any) {
       console.error('خطأ في تسجيل الدخول:', error);
       
+      // التعامل مع أخطاء محددة
       if (error.message === 'Email not confirmed') {
         setEmailNotConfirmed(true);
         toast.error("لم يتم تأكيد البريد الإلكتروني، يرجى مراجعة بريدك الإلكتروني للتفعيل");
-      } else if (error.message?.includes('Failed to fetch') || error.message?.includes('NetworkError')) {
+      } else if (error.message?.includes('Failed to fetch') || error.message?.includes('NetworkError') || 
+                 error?.name === 'AuthRetryableFetchError' || error?.status === 0) {
         // Handle connection errors specifically
         setConnectionError(true);
+        setErrorDetails(JSON.stringify(error, null, 2));
         toast.error("حدث خطأ في الاتصال بالخادم، يرجى التحقق من اتصالك بالإنترنت والمحاولة مرة أخرى");
       } else {
         toast.error(error.message === 'Invalid login credentials' 
@@ -145,6 +121,7 @@ const Login = () => {
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
                   حدث خطأ في الاتصال بالخادم. يرجى التحقق من اتصالك بالإنترنت والمحاولة مرة أخرى.
+                  {errorDetails && <pre className="mt-2 text-xs bg-gray-800 p-2 rounded overflow-x-auto">{errorDetails}</pre>}
                 </AlertDescription>
               </Alert>
             )}
