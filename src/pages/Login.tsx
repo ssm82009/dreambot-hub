@@ -12,6 +12,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, RefreshCw } from "lucide-react";
 
+// Import the Supabase URL constant from the client file
+import { SUPABASE_URL } from "@/integrations/supabase/client";
+
 const Login = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
