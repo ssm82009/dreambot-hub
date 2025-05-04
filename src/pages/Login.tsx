@@ -123,7 +123,7 @@ const Login = () => {
           status: error?.status || 'N/A',
           message: error?.message || 'No message',
           url: SUPABASE_URL,
-          server_info: '31.220.87.11:8001',
+          server_info: SUPABASE_URL.replace('http://', ''),
           timestamp: new Date().toISOString(),
           retry_count: retryCount
         }, null, 2));
