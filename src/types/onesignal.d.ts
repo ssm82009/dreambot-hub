@@ -21,6 +21,13 @@ interface OneSignal {
     serviceWorkerPath?: string;
     serviceWorkerUpdaterPath?: string;
   }): Promise<void>;
+  
+  // Legacy methods for backward compatibility
+  isPushNotificationsEnabled?: () => Promise<boolean>;
+  registerForPushNotifications?: () => Promise<void>;
+  setSubscription?: (enabled: boolean) => Promise<void>;
+  setExternalUserId?: (externalUserId: string) => Promise<void>;
+  removeExternalUserId?: () => Promise<void>;
 }
 
 interface Window {

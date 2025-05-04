@@ -17,8 +17,16 @@ export class OneSignalService {
    */
   static get isReady(): boolean {
     return typeof window !== 'undefined' && 
-           window.OneSignal !== undefined && 
-           window.OneSignal.User !== undefined;
+           window.OneSignal !== undefined;
+  }
+
+  /**
+   * التحقق من أن OneSignal يستخدم الواجهة الجديدة
+   */
+  static get isNewAPI(): boolean {
+    return this.isReady && 
+           window.OneSignal?.User !== undefined &&
+           window.OneSignal?.Notifications !== undefined;
   }
 
   /**
@@ -72,13 +80,63 @@ export class OneSignalService {
       
       // تعيين هوية المستخدم في OneSignal إذا كان متاحاً
       if (userId) {
-        await window.OneSignal.login(userId);
-        console.log('تم تسجيل دخول المستخدم في OneSignal:', userId);
+        // استخدام الواجهة الجديدة أو القديمة حسب توفرها
+        if (this.isNewAPI) {
+          await window.OneSignal.login(userId);
+          console.log('تم تسجيل دخول المستخدم في OneSignal (واجهة جديدة):', userId);
+        } else if (window.OneSignal?.setExternalUserId) {
+          await window.OneSignal.setExternalUserId(userId);
+          console.log('تم تعيين معرف المستخدم الخارجي (واجهة قديمة):', userId);
+        }
       }
       
       return true;
     } catch (error) {
       console.error('خطأ في تهيئة OneSignal مع معرف المستخدم:', error);
+      return false;
+    }
+  }
+
+  /**
+   * تعيين معرف المستخدم الخارجي
+   */
+  static async setExternalUserId(userId: string): Promise<boolean> {
+    try {
+      if (!this.isReady) {
+        return false;
+      }
+      
+      if (this.isNewAPI) {
+        await window.OneSignal.login(userId);
+      } else if (window.OneSignal?.setExternalUserId) {
+        await window.OneSignal.setExternalUserId(userId);
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('خطأ في تعيين معرف المستخدم الخارجي:', error);
+      return false;
+    }
+  }
+  
+  /**
+   * إزالة معرف المستخدم الخارجي
+   */
+  static async removeExternalUserId(): Promise<boolean> {
+    try {
+      if (!this.isReady) {
+        return false;
+      }
+      
+      if (this.isNewAPI) {
+        await window.OneSignal.logout();
+      } else if (window.OneSignal?.removeExternalUserId) {
+        await window.OneSignal.removeExternalUserId();
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('خطأ في إزالة معرف المستخدم الخارجي:', error);
       return false;
     }
   }
@@ -93,27 +151,37 @@ export class OneSignalService {
         return false;
       }
 
-      const isPushSupported = await window.OneSignal.Notifications.isPushSupported();
-      if (!isPushSupported) {
-        console.warn('متصفحك لا يدعم الإشعارات');
-        return false;
-      }
+      // استخدام الواجهة الجديدة أو القديمة حسب توفرها
+      if (this.isNewAPI) {
+        const isPushSupported = await window.OneSignal.Notifications.isPushSupported();
+        if (!isPushSupported) {
+          console.warn('متصفحك لا يدعم الإشعارات');
+          return false;
+        }
 
-      // التحقق من حالة الإذن الحالية
-      const permission = await window.OneSignal.Notifications.permission;
+        // التحقق من حالة الإذن الحالية
+        const permission = await window.OneSignal.Notifications.permission;
+        
+        if (permission === true) {
+          console.log('الإشعارات مسموح بها بالفعل');
+          return true;
+        } else if (permission === false) {
+          console.warn('تم رفض الإشعارات من قبل المتصفح');
+          return false;
+        }
+
+        // طلب إذن الإشعارات من المستخدم
+        const result = await window.OneSignal.Notifications.requestPermission();
+        console.log('نتيجة طلب إذن الإشعارات:', result);
+        return result;
+      } else if (window.OneSignal?.registerForPushNotifications) {
+        // استخدام الواجهة القديمة
+        await window.OneSignal.registerForPushNotifications();
+        const result = await this.getSubscriptionStatus();
+        return result;
+      }
       
-      if (permission === true) {
-        console.log('الإشعارات مسموح بها بالفعل');
-        return true;
-      } else if (permission === false) {
-        console.warn('تم رفض الإشعارات من قبل المتصفح');
-        return false;
-      }
-
-      // طلب إذن الإشعارات من المستخدم
-      const result = await window.OneSignal.Notifications.requestPermission();
-      console.log('نتيجة طلب إذن الإشعارات:', result);
-      return result;
+      return false;
     } catch (error) {
       console.error('خطأ في طلب إذن الإشعارات:', error);
       return false;
@@ -136,10 +204,14 @@ export class OneSignalService {
         return false;
       }
 
-      // تفعيل الإشعارات
-      await window.OneSignal.Notifications.setEnabled(true);
-      console.log('تم تفعيل الإشعارات بنجاح');
+      // تفعيل الإشعارات باستخدام الواجهة المناسبة
+      if (this.isNewAPI) {
+        await window.OneSignal.Notifications.setEnabled(true);
+      } else if (window.OneSignal?.setSubscription) {
+        await window.OneSignal.setSubscription(true);
+      }
       
+      console.log('تم تفعيل الإشعارات بنجاح');
       return true;
     } catch (error) {
       console.error('خطأ في الاشتراك في الإشعارات:', error);
@@ -157,10 +229,14 @@ export class OneSignalService {
         return false;
       }
 
-      // تعطيل الإشعارات
-      await window.OneSignal.Notifications.setEnabled(false);
-      console.log('تم إلغاء تفعيل الإشعارات بنجاح');
+      // تعطيل الإشعارات باستخدام الواجهة المناسبة
+      if (this.isNewAPI) {
+        await window.OneSignal.Notifications.setEnabled(false);
+      } else if (window.OneSignal?.setSubscription) {
+        await window.OneSignal.setSubscription(false);
+      }
       
+      console.log('تم إلغاء تفعيل الإشعارات بنجاح');
       return true;
     } catch (error) {
       console.error('خطأ في إلغاء الاشتراك من الإشعارات:', error);
@@ -179,20 +255,16 @@ export class OneSignalService {
       }
 
       try {
-        const isEnabled = await window.OneSignal.Notifications.permission;
-        return isEnabled === true;
+        if (this.isNewAPI) {
+          const isEnabled = await window.OneSignal.Notifications.permission;
+          return isEnabled === true;
+        } else if (window.OneSignal?.isPushNotificationsEnabled) {
+          return await window.OneSignal.isPushNotificationsEnabled();
+        }
+        return false;
       } catch (error) {
         console.error('خطأ في جلب حالة إذن الإشعارات:', error);
-        
-        // محاولة بديلة
-        try {
-          // تصحيح الخطأ: استخدام خاصية permission بدلاً من دالة getPermission
-          const isPushEnabled = await window.OneSignal.Notifications.permission;
-          return !!isPushEnabled;
-        } catch (fallbackError) {
-          console.error('خطأ في الطريقة البديلة لجلب حالة إذن الإشعارات:', fallbackError);
-          return false;
-        }
+        return false;
       }
     } catch (error) {
       console.error('خطأ في جلب حالة اشتراك الإشعارات:', error);
