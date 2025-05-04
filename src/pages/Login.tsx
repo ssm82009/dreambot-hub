@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, RefreshCw } from "lucide-react";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -20,6 +20,28 @@ const Login = () => {
   const [emailNotConfirmed, setEmailNotConfirmed] = useState(false);
   const [connectionError, setConnectionError] = useState(false);
   const [errorDetails, setErrorDetails] = useState('');
+  const [retryCount, setRetryCount] = useState(0);
+
+  // وظيفة للتحقق من حالة الاتصال بالخادم
+  const checkConnection = async () => {
+    try {
+      const startTime = Date.now();
+      const { data, error } = await supabase.from('theme_settings').select('slug').limit(1);
+      const endTime = Date.now();
+      console.log(`Connection check completed in ${endTime - startTime}ms`);
+      
+      if (error) {
+        console.error('Connection check error:', error);
+        return false;
+      }
+      
+      console.log('Connection check success:', data);
+      return true;
+    } catch (err) {
+      console.error('Connection check exception:', err);
+      return false;
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,6 +51,12 @@ const Login = () => {
     setErrorDetails('');
     
     try {
+      // التحقق من الاتصال أولاً
+      const isConnected = await checkConnection();
+      if (!isConnected) {
+        throw new Error('لا يمكن الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت والمحاولة مرة أخرى.');
+      }
+      
       console.log('Attempting to sign in with:', email);
       
       // Initial login attempt
@@ -78,11 +106,25 @@ const Login = () => {
       if (error.message === 'Email not confirmed') {
         setEmailNotConfirmed(true);
         toast.error("لم يتم تأكيد البريد الإلكتروني، يرجى مراجعة بريدك الإلكتروني للتفعيل");
-      } else if (error.message?.includes('Failed to fetch') || error.message?.includes('NetworkError') || 
-                 error?.name === 'AuthRetryableFetchError' || error?.status === 0) {
+      } else if (
+        error.message?.includes('Failed to fetch') || 
+        error.message?.includes('NetworkError') || 
+        error?.name === 'AuthRetryableFetchError' || 
+        error?.status === 0 ||
+        error.message?.includes('لا يمكن الاتصال')
+      ) {
         // Handle connection errors specifically
         setConnectionError(true);
-        setErrorDetails(JSON.stringify(error, null, 2));
+        setErrorDetails(JSON.stringify({
+          error_name: error?.name || 'Unknown',
+          status: error?.status || 'N/A',
+          message: error?.message || 'No message',
+          url: SUPABASE_URL,
+          server_info: '31.220.87.11:8001',
+          timestamp: new Date().toISOString(),
+          retry_count: retryCount
+        }, null, 2));
+        
         toast.error("حدث خطأ في الاتصال بالخادم، يرجى التحقق من اتصالك بالإنترنت والمحاولة مرة أخرى");
       } else {
         toast.error(error.message === 'Invalid login credentials' 
@@ -92,6 +134,27 @@ const Login = () => {
       }
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleRetryConnection = async () => {
+    setRetryCount(prev => prev + 1);
+    setConnectionError(false);
+    setErrorDetails('');
+    toast.info("جاري التحقق من الاتصال...");
+    
+    try {
+      const isConnected = await checkConnection();
+      if (isConnected) {
+        toast.success("تم الاتصال بالخادم بنجاح، يمكنك المحاولة مرة أخرى");
+      } else {
+        setConnectionError(true);
+        toast.error("لا يزال هناك مشكلة في الاتصال بالخادم");
+      }
+    } catch (err) {
+      console.error('Retry connection error:', err);
+      setConnectionError(true);
+      toast.error("فشل الاتصال بالخادم");
     }
   };
 
@@ -120,8 +183,25 @@ const Login = () => {
               <Alert variant="destructive" className="mb-4">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
-                  حدث خطأ في الاتصال بالخادم. يرجى التحقق من اتصالك بالإنترنت والمحاولة مرة أخرى.
-                  {errorDetails && <pre className="mt-2 text-xs bg-gray-800 p-2 rounded overflow-x-auto">{errorDetails}</pre>}
+                  <div className="flex justify-between items-start">
+                    <div>
+                      حدث خطأ في الاتصال بالخادم. يرجى التحقق من اتصالك بالإنترنت والمحاولة مرة أخرى.
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="ml-2" 
+                      onClick={handleRetryConnection}
+                    >
+                      <RefreshCw className="h-4 w-4 mr-1" />
+                      إعادة المحاولة
+                    </Button>
+                  </div>
+                  {errorDetails && (
+                    <pre className="mt-2 text-xs bg-gray-800 p-2 rounded overflow-x-auto text-white">
+                      {errorDetails}
+                    </pre>
+                  )}
                 </AlertDescription>
               </Alert>
             )}

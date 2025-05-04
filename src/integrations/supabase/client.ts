@@ -17,14 +17,31 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
   },
   global: {
     headers: {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
     },
     fetch: (url, options) => {
       console.log('Supabase request to:', url);
+      // إضافة تجاوز الأمان لتقليل مشاكل الاتصال بالخادم
       return fetch(url, {
         ...options,
-        credentials: 'same-origin'
+        // استخدام include بدلاً من same-origin للسماح بمزيد من المرونة في الاتصال
+        credentials: 'include',
+        mode: 'cors',
+        // يسمح بتجاوز قيود معينة إذا كان الخادم لا يستجيب بشكل صحيح للطلبات
+        cache: 'no-cache',
+        // إضافة مهلة أطول للطلبات
+        signal: options.signal || AbortSignal.timeout(30000) // 30 ثانية كمهلة زمنية
+      }).catch(error => {
+        console.error('Supabase fetch error:', error);
+        throw error;
       });
+    }
+  },
+  // إضافة خيارات Realtime لتحسين الاتصال عبر WebSockets
+  realtime: {
+    params: {
+      eventsPerSecond: 10
     }
   }
 });
