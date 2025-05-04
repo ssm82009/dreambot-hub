@@ -45,3 +45,6 @@ port = 54325
 
 [functions.get-onesignal-stats]
 verify_jwt = true
+
+[functions.send-onesignal-notification]
+verify_jwt = true

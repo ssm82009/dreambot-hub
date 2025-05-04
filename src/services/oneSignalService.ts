@@ -1,6 +1,15 @@
 
 // تعديل خدمة OneSignal لتكون المزود الرئيسي للإشعارات
 
+// Define window._env type
+declare global {
+  interface Window {
+    _env?: {
+      ONESIGNAL_APP_ID?: string;
+    };
+  }
+}
+
 export class OneSignalService {
   private static instance: OneSignalService;
   private initialized: boolean = false;
@@ -25,10 +34,6 @@ export class OneSignalService {
       
       await window.OneSignal.init({
         appId: window._env?.ONESIGNAL_APP_ID || '',
-        notifyButton: {
-          enable: false
-        },
-        allowLocalhostAsSecureOrigin: true
       });
       
       console.log('OneSignal service initialized');
@@ -48,16 +53,16 @@ export class OneSignalService {
       
       if (!window.OneSignal) return false;
       
-      const permission = await window.OneSignal.getNotificationPermission();
+      const permission = await window.OneSignal.Notifications.permission;
       
-      if (permission === 'granted') {
+      if (permission) {
         console.log('Notification permission already granted');
         return true;
       }
       
-      const result = await window.OneSignal.showNativePrompt();
-      console.log('OneSignal native prompt result:', result);
-      return result !== 'denied';
+      const result = await window.OneSignal.Notifications.requestPermission();
+      console.log('OneSignal notification permission result:', result);
+      return result;
     } catch (error) {
       console.error('Error requesting notification permission:', error);
       return false;
@@ -72,7 +77,7 @@ export class OneSignalService {
       
       if (!window.OneSignal) return false;
       
-      await window.OneSignal.setExternalUserId(userId);
+      await window.OneSignal.login(userId);
       console.log('Set external user ID:', userId);
       return true;
     } catch (error) {
@@ -89,7 +94,7 @@ export class OneSignalService {
       
       if (!window.OneSignal) return false;
       
-      await window.OneSignal.removeExternalUserId();
+      await window.OneSignal.logout();
       console.log('Removed external user ID');
       return true;
     } catch (error) {
@@ -100,4 +105,30 @@ export class OneSignalService {
 }
 
 // Create and export a default instance
-export default OneSignalService.getInstance();
+const oneSignalService = OneSignalService.getInstance();
+
+// Add a function to send notifications to admin
+export const sendNotificationToAdmin = async (notification: any): Promise<boolean> => {
+  try {
+    const { data, error } = await supabase.functions.invoke('send-onesignal-notification', {
+      body: {
+        notification,
+        adminOnly: true
+      }
+    });
+    
+    if (error) {
+      console.error('Error sending notification to admin:', error);
+      return false;
+    }
+    
+    return data?.success || false;
+  } catch (error) {
+    console.error('Exception sending notification to admin:', error);
+    return false;
+  }
+};
+
+export default oneSignalService;
+
+import { supabase } from '@/integrations/supabase/client';

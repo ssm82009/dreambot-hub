@@ -16,6 +16,7 @@ interface OneSignal {
   User: OneSignalUser;
   Notifications: OneSignalNotifications;
   login(externalId: string): Promise<void>;
+  logout(): Promise<void>;
   init(options: { 
     appId: string;
     serviceWorkerPath?: string;
@@ -26,4 +27,7 @@ interface OneSignal {
 interface Window {
   OneSignal?: OneSignal;
   OneSignalDeferred?: Array<(oneSignal: OneSignal) => void>;
+  _env?: {
+    ONESIGNAL_APP_ID?: string;
+  };
 }
