@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 
 export interface NotificationPayload {
@@ -224,13 +225,16 @@ export class OneSignalService {
   }
 }
 
-// إعادة تصدير الواجهات المستخدمة مسبقاً للتوافق مع الرمز السابق
+// إعادة تصدير الدوال المستخدمة للتوافق مع الرمز السابق
 export const sendNotification = async (userId: string, payload: NotificationPayload) => {
   return await OneSignalService.sendNotification(payload, [userId]);
 };
 
-export const sendNotificationToAdmin = async (payload: NotificationPayload) => {
-  // استرجاع قائمة المسؤولين من قاعدة الب��انات
+/**
+ * إرسال إشعار للمسؤولين
+ */
+export const sendNotificationToAdmin = async (payload: NotificationPayload): Promise<boolean> => {
+  // استرجاع قائمة المسؤولين من قاعدة البيانات
   try {
     const { data: admins, error } = await supabase
       .from('users')
@@ -250,3 +254,6 @@ export const sendNotificationToAdmin = async (payload: NotificationPayload) => {
     return false;
   }
 };
+
+// تصدير الواجهة بشكل افتراضي للتوافق
+export default OneSignalService;

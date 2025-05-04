@@ -1,6 +1,7 @@
 
 import { setupFirebase } from './firebase/firebaseClient';
 import { runFcmMigrations } from './runFcmMigrations';
+import { OneSignalService } from './oneSignalService';
 
 /**
  * Service for initializing app components in a controlled sequence
@@ -10,6 +11,7 @@ export const initializeServices = async () => {
   const results = {
     migrations: false,
     firebase: false,
+    oneSignal: false,
   };
 
   try {
@@ -33,6 +35,16 @@ export const initializeServices = async () => {
     } catch (firebaseError) {
       console.error("Error in Firebase setup:", firebaseError);
       // Continue despite Firebase errors
+    }
+    
+    // Initialize OneSignal
+    try {
+      console.log("Initializing OneSignal...");
+      results.oneSignal = await OneSignalService.initialize();
+      console.log(`OneSignal initialization ${results.oneSignal ? 'completed successfully' : 'had issues'}`);
+    } catch (oneSignalError) {
+      console.error("Error in OneSignal initialization:", oneSignalError);
+      // Continue despite OneSignal errors
     }
 
     return results;
