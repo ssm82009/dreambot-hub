@@ -26,11 +26,8 @@ export const useNotifications = () => {
         // التحقق من وجود اشتراك في OneSignal
         if (window.OneSignal) {
           try {
-            const isPushSupported = await window.OneSignal.Notifications.isPushSupported();
-            if (isPushSupported) {
-              const isEnabled = window.OneSignal.Notifications.permission;
-              setSubscription(isEnabled);
-            }
+            const isSubscribed = await window.OneSignal.isPushNotificationsEnabled();
+            setSubscription(isSubscribed);
           } catch (error) {
             console.error('خطأ في التحقق من حالة اشتراك OneSignal:', error);
           }
@@ -90,10 +87,10 @@ export const useNotifications = () => {
       if (window.OneSignal) {
         try {
           // طلب الاشتراك من خلال واجهة برمجة OneSignal
-          await window.OneSignal.Notifications.setEnabled(true);
+          await window.OneSignal.registerForPushNotifications();
           
           // التحقق من نجاح الاشتراك
-          const isSubscribed = window.OneSignal.Notifications.permission;
+          const isSubscribed = await window.OneSignal.isPushNotificationsEnabled();
           setSubscription(isSubscribed);
           
           if (isSubscribed) {
@@ -140,7 +137,7 @@ export const useNotifications = () => {
           }
           
           // إلغاء الاشتراك من خلال واجهة برمجة OneSignal
-          await window.OneSignal.Notifications.setEnabled(false);
+          await window.OneSignal.setSubscription(false);
           
           setSubscription(false);
           toast.success('تم إيقاف الإشعارات بنجاح');

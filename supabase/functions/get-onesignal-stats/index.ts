@@ -15,13 +15,9 @@ serve(async (req) => {
   }
 
   try {
-    // Updated to use the new Supabase URL and key
-    const supabaseUrl = Deno.env.get('SUPABASE_URL') || 'http://31.220.87.11:8001';
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJhbm9uIiwKICAgICJpc3MiOiAic3VwYWJhc2UtZGVtbyIsCiAgICAiaWF0IjogMTY0MTc2OTIwMCwKICAgICJleHAiOiAxNzk5NTM1NjAwCn0.dc_X5iR_VP_qT0zsiyj_I_OZ2T9FtRU2BBNWN8Bu4GE';
-    
     const supabaseAdmin = createClient(
-      supabaseUrl,
-      supabaseKey,
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
       { auth: { persistSession: false } }
     );
 
@@ -35,9 +31,7 @@ serve(async (req) => {
       console.log('OneSignal credentials:', { 
         appIdExists: !!oneSignalAppId, 
         apiKeyLength: oneSignalApiKey ? oneSignalApiKey.length : 0,
-        appIdValue: oneSignalAppId ? oneSignalAppId.substring(0, 5) + '...' : 'undefined',
-        supabaseUrl,
-        supabaseKey: supabaseKey ? supabaseKey.substring(0, 10) + '...' : 'undefined'
+        appIdValue: oneSignalAppId ? oneSignalAppId.substring(0, 5) + '...' : 'undefined'
       });
       
       // إذا كانت المفاتيح غير موجودة، يمكننا إرجاع قيمة افتراضية بدلاً من رمي خطأ

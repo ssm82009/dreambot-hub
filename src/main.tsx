@@ -1,34 +1,9 @@
 
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import { BrowserRouter } from 'react-router-dom';
-import App from './App';
-import './index.css';
-import { ThemeProvider } from "./components/theme-provider";
-import { Toaster } from "@/components/ui/toaster";
-import { AuthProvider } from './hooks/useAuth';
-import { initializeServices } from './services/initializeServices';
+import { createRoot } from 'react-dom/client'
+import App from './App.tsx'
+import './index.css'
 
-// Initialize services
-initializeServices().catch(console.error);
+// حذفنا تهيئة OneSignal من هنا لأنه يتم استدعاؤه في HTML ويتم التعامل معه في useNotifications
 
-// Create root element
-const rootElement = document.getElementById('root');
-
-if (!rootElement) {
-  throw new Error('Root element not found');
-}
-
-// Render the app
-ReactDOM.createRoot(rootElement).render(
-  <React.StrictMode>
-    <BrowserRouter>
-      <AuthProvider>
-        <ThemeProvider defaultTheme="light" storageKey="ui-theme">
-          <App />
-          <Toaster />
-        </ThemeProvider>
-      </AuthProvider>
-    </BrowserRouter>
-  </React.StrictMode>,
-);
+// تحميل التطبيق
+createRoot(document.getElementById("root")!).render(<App />);
