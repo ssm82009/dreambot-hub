@@ -18,18 +18,24 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [emailNotConfirmed, setEmailNotConfirmed] = useState(false);
+  const [connectionError, setConnectionError] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setEmailNotConfirmed(false);
+    setConnectionError(false);
     
     try {
+      console.log('Attempting to sign in with:', email);
+      
       // Initial login attempt
       let result = await supabase.auth.signInWithPassword({
         email,
         password
       });
+      
+      console.log('Sign in result:', result);
       
       // Handle "Email not confirmed" error specially
       if (result.error && result.error.message === 'Email not confirmed') {
@@ -93,11 +99,15 @@ const Login = () => {
       toast.success("تم تسجيل الدخول بنجاح");
       navigate('/');
     } catch (error: any) {
-      console.error('خطأ في تسجيل الدخول:', error.message);
+      console.error('خطأ في تسجيل الدخول:', error);
       
       if (error.message === 'Email not confirmed') {
         setEmailNotConfirmed(true);
         toast.error("لم يتم تأكيد البريد الإلكتروني، يرجى مراجعة بريدك الإلكتروني للتفعيل");
+      } else if (error.message?.includes('Failed to fetch') || error.message?.includes('NetworkError')) {
+        // Handle connection errors specifically
+        setConnectionError(true);
+        toast.error("حدث خطأ في الاتصال بالخادم، يرجى التحقق من اتصالك بالإنترنت والمحاولة مرة أخرى");
       } else {
         toast.error(error.message === 'Invalid login credentials' 
           ? "بيانات الدخول غير صحيحة" 
@@ -126,6 +136,15 @@ const Login = () => {
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
                   لم يتم تأكيد البريد الإلكتروني بعد. يرجى التحقق من بريدك الإلكتروني والضغط على رابط التفعيل.
+                </AlertDescription>
+              </Alert>
+            )}
+            
+            {connectionError && (
+              <Alert variant="destructive" className="mb-4">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  حدث خطأ في الاتصال بالخادم. يرجى التحقق من اتصالك بالإنترنت والمحاولة مرة أخرى.
                 </AlertDescription>
               </Alert>
             )}
