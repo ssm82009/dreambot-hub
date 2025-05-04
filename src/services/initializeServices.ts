@@ -25,9 +25,15 @@ export const initializeServices = async () => {
       // Continue despite migration errors
     }
     
-    // DISABLE Firebase setup since we're using OneSignal
-    console.log("Firebase setup is disabled - using OneSignal instead");
-    results.firebase = false;
+    // Then setup Firebase regardless of migration status
+    try {
+      console.log("Setting up Firebase...");
+      results.firebase = await setupFirebase();
+      console.log(`Firebase setup ${results.firebase ? 'completed successfully' : 'had issues'}`);
+    } catch (firebaseError) {
+      console.error("Error in Firebase setup:", firebaseError);
+      // Continue despite Firebase errors
+    }
 
     return results;
   } catch (error) {
