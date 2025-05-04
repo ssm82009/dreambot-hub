@@ -48,16 +48,21 @@ export class OneSignalService {
       
       if (!window.OneSignal) return false;
       
-      const permission = await window.OneSignal.getNotificationPermission();
-      
-      if (permission === 'granted') {
-        console.log('Notification permission already granted');
-        return true;
+      if (window.OneSignal.Notifications) {
+        return await window.OneSignal.Notifications.requestPermission();
+      } else {
+        // Fallback to older API for compatibility
+        const permission = await window.OneSignal.getNotificationPermission();
+        
+        if (permission === 'granted') {
+          console.log('Notification permission already granted');
+          return true;
+        }
+        
+        const result = await window.OneSignal.showNativePrompt();
+        console.log('OneSignal native prompt result:', result);
+        return result !== 'denied';
       }
-      
-      const result = await window.OneSignal.showNativePrompt();
-      console.log('OneSignal native prompt result:', result);
-      return result !== 'denied';
     } catch (error) {
       console.error('Error requesting notification permission:', error);
       return false;
@@ -72,7 +77,13 @@ export class OneSignalService {
       
       if (!window.OneSignal) return false;
       
-      await window.OneSignal.setExternalUserId(userId);
+      if (window.OneSignal.User) {
+        // New API
+        await window.OneSignal.login(userId);
+      } else {
+        // Legacy API
+        await window.OneSignal.setExternalUserId(userId);
+      }
       console.log('Set external user ID:', userId);
       return true;
     } catch (error) {
@@ -89,7 +100,14 @@ export class OneSignalService {
       
       if (!window.OneSignal) return false;
       
-      await window.OneSignal.removeExternalUserId();
+      if (window.OneSignal.User) {
+        // New API
+        await window.OneSignal.logout();
+      } else {
+        // Legacy API
+        await window.OneSignal.removeExternalUserId();
+      }
+      
       console.log('Removed external user ID');
       return true;
     } catch (error) {
