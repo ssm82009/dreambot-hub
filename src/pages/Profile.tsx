@@ -50,7 +50,7 @@ const Profile = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <ProfileWelcome userData={userData} />
+              <ProfileWelcome />
             </CardContent>
           </Card>
           
