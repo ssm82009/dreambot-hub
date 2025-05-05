@@ -9,18 +9,17 @@ import SubscriptionDetails from './subscription/SubscriptionDetails';
 import PlanFeatures from './subscription/PlanFeatures';
 import InterpretationsUsage from './subscription/InterpretationsUsage';
 import UpgradeSection from './subscription/UpgradeSection';
-import { Loader2 } from 'lucide-react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface ProfileSubscriptionProps {
-  userData: (User & {
+  userData: User & {
     dreams_count: number;
-  }) | null;
+  };
 }
 
 const ProfileSubscription: React.FC<ProfileSubscriptionProps> = ({ userData }) => {
   const [pricingSettings, setPricingSettings] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const subscriptionStatus = getSubscriptionStatus(userData);
   
   useEffect(() => {
     const fetchPricingSettings = async () => {
@@ -47,37 +46,8 @@ const ProfileSubscription: React.FC<ProfileSubscriptionProps> = ({ userData }) =
   }, [userData?.id]);
   
   if (loading) {
-    return (
-      <Card>
-        <CardContent className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <span className="mr-2">جاري تحميل معلومات الاشتراك...</span>
-        </CardContent>
-      </Card>
-    );
+    return <div className="text-center p-8">جاري تحميل معلومات الاشتراك...</div>;
   }
-
-  if (!userData) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>معلومات الاشتراك</CardTitle>
-          <CardDescription>
-            تفاصيل اشتراكك الحالي وحدود التفسيرات المتاحة
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Alert>
-            <AlertDescription>
-              لم يتم العثور على بيانات المستخدم. يرجى تسجيل الدخول مرة أخرى أو التواصل مع الدعم الفني.
-            </AlertDescription>
-          </Alert>
-        </CardContent>
-      </Card>
-    );
-  }
-  
-  const subscriptionStatus = getSubscriptionStatus(userData);
   
   return (
     <Card>

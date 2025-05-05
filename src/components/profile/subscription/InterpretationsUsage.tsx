@@ -1,120 +1,126 @@
 
 import React, { useState, useEffect } from 'react';
-import { User } from '@/types/database';
 import { Progress } from '@/components/ui/progress';
+import { User } from '@/types/database';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2 } from 'lucide-react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { getTotalInterpretations } from '@/utils/subscription';
 
 interface InterpretationsUsageProps {
-  userData: User & { dreams_count?: number } | null;
+  userData: User & {
+    dreams_count: number;
+  };
 }
 
 const InterpretationsUsage: React.FC<InterpretationsUsageProps> = ({ userData }) => {
-  const [loading, setLoading] = useState(true);
-  const [usageData, setUsageData] = useState<{
-    used: number;
-    total: number | null;
-    isUnlimited: boolean;
-  }>({
-    used: 0,
-    total: null,
-    isUnlimited: false
-  });
+  const [subscriptionUsage, setSubscriptionUsage] = useState<{
+    interpretations_used: number;
+    subscription_type: string;
+    subscription_expires_at: string;
+  } | null>(null);
+  const [totalInterpretations, setTotalInterpretations] = useState<number>(0);
   
   useEffect(() => {
-    const fetchUsageData = async () => {
+    const fetchData = async () => {
       if (!userData?.id) {
-        setLoading(false);
+        console.log("No user ID available");
         return;
       }
       
       try {
-        // Get usage data
-        setLoading(true);
+        // Fetch total available interpretations
+        const total = await getTotalInterpretations(userData);
+        setTotalInterpretations(total);
         
-        // Get total interpretations available based on plan
-        const { data: pricingSettings } = await supabase
-          .from('pricing_settings')
-          .select('*')
-          .limit(1)
-          .single();
-        
-        if (!pricingSettings) {
-          throw new Error('Failed to fetch pricing settings');
-        }
-        
-        // Get current usage from subscription_usage table
-        const { data: usageRecord } = await supabase
-          .rpc('get_current_subscription_usage', { 
-            user_id: userData.id 
+        // Fetch subscription usage
+        const { data, error } = await supabase
+          .rpc('get_current_subscription_usage', {
+            user_id: userData.id
           });
-        
-        // Calculate used and total interpretations
-        const dreamsCount = userData.dreams_count || 0;
-        
-        const totalInterpretations = await getTotalInterpretations(userData, pricingSettings);
-        const isUnlimited = totalInterpretations === -1;
-        
-        setUsageData({
-          used: dreamsCount,
-          total: isUnlimited ? null : totalInterpretations,
-          isUnlimited: isUnlimited
-        });
-        
+
+        if (error) {
+          console.error("Error fetching subscription usage:", error);
+          return;
+        }
+
+        if (data && data[0]) {
+          const usageData = data[0];
+          console.log("Raw subscription usage data:", usageData);
+          
+          let isValid = true;
+          
+          if (usageData.subscription_expires_at && usageData.subscription_expires_at !== 'infinity') {
+            const expiryDate = new Date(usageData.subscription_expires_at);
+            isValid = expiryDate > new Date();
+          }
+          
+          if (isValid) {
+            console.log("Setting valid subscription usage data");
+            setSubscriptionUsage(usageData);
+          } else {
+            console.log("Subscription data is expired, not updating state");
+            setSubscriptionUsage(null);
+          }
+        }
       } catch (error) {
-        console.error('Error fetching usage data:', error);
-      } finally {
-        setLoading(false);
+        console.error("Error in subscription usage check:", error);
       }
     };
-    
-    fetchUsageData();
-  }, [userData?.id, userData?.subscription_type, userData?.dreams_count]);
-  
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center py-4">
-        <Loader2 className="h-5 w-5 animate-spin ml-2" />
-        <span>جاري تحميل البيانات...</span>
-      </div>
-    );
-  }
-  
-  if (!userData) {
-    return (
-      <Alert>
-        <AlertDescription>لم يتم العثور على بيانات المستخدم</AlertDescription>
-      </Alert>
-    );
-  }
 
+    fetchData();
+    
+    // Set up real-time subscription
+    let channel;
+    try {
+      channel = supabase
+        .channel('subscription-updates')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'subscription_usage',
+            filter: `user_id=eq.${userData.id}`
+          },
+          () => {
+            fetchData();
+          }
+        )
+        .subscribe();
+    } catch (error) {
+      console.error("Error setting up realtime subscription:", error);
+    }
+
+    return () => {
+      if (channel) {
+        console.log("Cleaning up subscription channel");
+        supabase.removeChannel(channel);
+      }
+    };
+  }, [userData?.id]);
+  
+  const usedInterpretations = subscriptionUsage?.interpretations_used || 0;
+  const remainingInterpretations = Math.max(0, totalInterpretations - usedInterpretations);
+  
+  // Progress percentage
+  const progressPercentage = Math.min(100, (usedInterpretations / totalInterpretations) * 100);
+  
   return (
-    <div className="space-y-2">
-      {usageData.isUnlimited ? (
-        <div className="flex justify-between mb-1">
-          <span className="text-sm font-medium">التفسيرات المستخدمة:</span>
-          <span className="text-sm font-medium">{usageData.used} / غير محدود</span>
+    <div className="space-y-4">
+      <div>
+        <div className="flex justify-between mb-2">
+          <span className="text-muted-foreground">التفسيرات المستخدمة في الدورة الحالية:</span>
+          <span className="font-medium">
+            {`${usedInterpretations} / ${totalInterpretations}`}
+          </span>
         </div>
-      ) : (
-        <>
-          <div className="flex justify-between mb-1">
-            <span className="text-sm font-medium">التفسيرات المستخدمة:</span>
-            <span className="text-sm font-medium">{usageData.used} / {usageData.total}</span>
-          </div>
-          <Progress 
-            value={usageData.total ? (usageData.used / usageData.total) * 100 : 0} 
-            className="h-2" 
-          />
-          <p className="text-xs text-muted-foreground mt-1">
-            {usageData.total && usageData.used >= usageData.total 
-              ? 'لقد استخدمت كل التفسيرات المتاحة في باقتك الحالية' 
-              : `تبقى لديك ${usageData.total ? usageData.total - usageData.used : 0} تفسيرات`
-            }
-          </p>
-        </>
-      )}
+        
+        <Progress value={progressPercentage} className="h-2" />
+      </div>
+      
+      <div className="flex justify-between">
+        <span className="text-muted-foreground">التفسيرات المتبقية:</span>
+        <span className="font-medium">{remainingInterpretations}</span>
+      </div>
     </div>
   );
 };

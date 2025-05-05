@@ -1,80 +1,122 @@
 
-import { normalizePlanType } from '@/utils/payment/statusNormalizer';
 import { User } from '@/types/database';
+import { getSubscriptionStatus } from '@/utils/subscriptionStatus';
+import { supabase } from '@/integrations/supabase/client';
+import { normalizePlanType } from '@/utils/payment/statusNormalizer';
 
 /**
- * Get a display name for a subscription type
- * @param subscriptionType The subscription type from the database
- * @param pricingSettings The pricing settings from the database
- * @returns The display name for the subscription
+ * Get subscription name in Arabic based on subscription type
+ * If pricing settings are provided, use the custom names from there
  */
-export const getSubscriptionName = async (
-  subscriptionType: string | null | undefined,
-  pricingSettings: any = null
-) => {
+export const getSubscriptionName = async (subscriptionType: string | null, pricingSettings?: any): Promise<string> => {
   if (!subscriptionType) return 'الباقة المجانية';
   
+  // تطبيع نوع الاشتراك للمقارنة
   const normalizedType = normalizePlanType(subscriptionType);
   
-  if (!pricingSettings) {
-    // Fallback if pricing settings not available
-    switch (normalizedType) {
-      case 'premium':
-        return 'الباقة المميزة';
-      case 'pro':
-        return 'الباقة الاحترافية';
-      default:
-        return 'الباقة المجانية';
+  // If pricing settings are provided, use them
+  if (pricingSettings) {
+    if (normalizedType === 'premium') {
+      return pricingSettings.premium_plan_name || 'الباقة المميزة';
+    } else if (normalizedType === 'pro') {
+      return pricingSettings.pro_plan_name || 'الباقة الاحترافية';
+    } else {
+      return pricingSettings.free_plan_name || 'الباقة المجانية';
     }
   }
+
+  // Fallback to fetch pricing settings from the database
+  try {
+    const { data: settings, error } = await supabase
+      .from('pricing_settings')
+      .select('*')
+      .limit(1)
+      .single();
+    
+    if (error) throw error;
+    
+    if (settings) {
+      if (normalizedType === 'premium') {
+        return settings.premium_plan_name || 'الباقة المميزة';
+      } else if (normalizedType === 'pro') {
+        return settings.pro_plan_name || 'الباقة الاحترافية';
+      } else {
+        return settings.free_plan_name || 'الباقة المجانية';
+      }
+    }
+  } catch (error) {
+    console.error('Error fetching pricing settings:', error);
+  }
   
-  switch (normalizedType) {
-    case 'premium':
-      return pricingSettings.premium_plan_name || 'الباقة المميزة';
-    case 'pro':
-      return pricingSettings.pro_plan_name || 'الباقة الاحترافية';
-    default:
-      return pricingSettings.free_plan_name || 'الباقة المجانية';
+  // Default fallback values
+  if (normalizedType === 'premium') {
+    return 'الباقة المميزة';
+  } else if (normalizedType === 'pro') {
+    return 'الباقة الاحترافية';
+  } else {
+    return 'الباقة المجانية';
   }
 };
 
 /**
- * Get the total number of interpretations allowed for a user based on their subscription type
- * @param userData The user data from the database
- * @param pricingSettings The pricing settings from the database (optional)
- * @returns The total number of interpretations allowed (-1 for unlimited)
+ * Calculate total interpretations based on subscription type
+ * Now fetches pricing settings as part of the function instead of expecting it as an argument
  */
-export const getTotalInterpretations = async (
-  userData: User | null,
-  pricingSettings: any = null
-): Promise<number> => {
-  if (!userData) return 0;
-  
-  const subscriptionType = userData.subscription_type || 'free';
-  
-  if (!pricingSettings) {
-    // Default values if pricing settings not available
-    switch (subscriptionType) {
-      case 'pro':
-      case 'الاحترافي':
-        return -1; // Unlimited
-      case 'premium':
-      case 'المميز':
-        return -1; // Unlimited
-      default:
-        return 3; // Free plan default
-    }
-  }
-  
-  // Use values from pricing settings
-  switch (subscriptionType) {
-    case 'pro':
-    case 'الاحترافي':
-      return pricingSettings.pro_plan_interpretations;
-    case 'premium':
-    case 'المميز':
-      return pricingSettings.premium_plan_interpretations;
-    default:
+export const getTotalInterpretations = async (userData: User | null): Promise<number> => {
+  try {
+    // Fetch pricing settings
+    const { data: pricingSettings, error } = await supabase
+      .from('pricing_settings')
+      .select('*')
+      .limit(1)
+      .single();
+    
+    if (error) throw error;
+    
+    if (!userData?.subscription_type) {
       return pricingSettings.free_plan_interpretations;
+    }
+    
+    const normalizedType = normalizePlanType(userData.subscription_type);
+    
+    if (normalizedType === 'premium') {
+      return pricingSettings.premium_plan_interpretations;
+    } else if (normalizedType === 'pro') {
+      return pricingSettings.pro_plan_interpretations;
+    } else {
+      return pricingSettings.free_plan_interpretations;
+    }
+  } catch (error) {
+    console.error('Error fetching pricing settings:', error);
+    return 3; // Default fallback for free plan
+  }
+};
+
+/**
+ * Format plan features from newline-separated text to array
+ */
+export const formatPlanFeatures = (featuresText: string): string[] => {
+  return featuresText.split('\n').filter(line => line.trim() !== '');
+};
+
+/**
+ * Get features for the current subscription plan
+ */
+export const getCurrentPlanFeatures = (
+  userData: User | null, 
+  pricingSettings: any
+): string[] => {
+  if (!pricingSettings) return [];
+  
+  if (!userData?.subscription_type) return formatPlanFeatures(pricingSettings.free_plan_features);
+  
+  const normalizedType = normalizePlanType(userData.subscription_type);
+  
+  if (normalizedType === 'premium') {
+    return formatPlanFeatures(pricingSettings.premium_plan_features);
+  } else if (normalizedType === 'pro') {
+    return formatPlanFeatures(pricingSettings.pro_plan_features);
+  } else {
+    return formatPlanFeatures(pricingSettings.free_plan_features);
   }
 };

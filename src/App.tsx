@@ -24,7 +24,6 @@ import Privacy from './pages/Privacy';
 
 // Context Providers
 import { AdminProvider } from './contexts/admin/AdminProvider';
-import { UserProvider } from './contexts/user';
 import { usePageMeta } from './hooks/usePageMeta';
 import { useScrollToTop } from './hooks/useScrollToTop';
 import { useServiceWorkerRegistration } from './hooks/useServiceWorkerRegistration';
@@ -59,12 +58,10 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <AdminProvider>
-        <UserProvider>
-          <BrowserRouter>
-            <AppContent />
-            <Toaster position="top-center" dir="rtl" />
-          </BrowserRouter>
-        </UserProvider>
+        <BrowserRouter>
+          <AppContent />
+          <Toaster position="top-center" dir="rtl" />
+        </BrowserRouter>
       </AdminProvider>
     </QueryClientProvider>
   );
