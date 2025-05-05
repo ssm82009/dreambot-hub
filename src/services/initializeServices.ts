@@ -1,7 +1,7 @@
 
 import { setupFirebase } from './firebase/firebaseClient';
 import { runFcmMigrations } from './runFcmMigrations';
-import { OneSignalService } from './oneSignalService';
+import OneSignalServiceInstance from './oneSignalService';
 
 /**
  * Service for initializing app components in a controlled sequence
@@ -40,7 +40,9 @@ export const initializeServices = async () => {
     // Initialize OneSignal
     try {
       console.log("Initializing OneSignal...");
-      results.oneSignal = await OneSignalService.initialize();
+      results.oneSignal = await OneSignalServiceInstance.initialize({
+        appId: 'YOUR_ONESIGNAL_APP_ID' // الرجاء استبدالها بمعرف تطبيق OneSignal الخاص بك
+      });
       console.log(`OneSignal initialization ${results.oneSignal ? 'completed successfully' : 'had issues'}`);
     } catch (oneSignalError) {
       console.error("Error in OneSignal initialization:", oneSignalError);

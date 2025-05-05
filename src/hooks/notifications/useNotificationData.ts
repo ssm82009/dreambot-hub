@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { OneSignalService } from '@/services/oneSignalService';
+import OneSignalServiceInstance from '@/services/oneSignalService';
 
 export function useNotificationData() {
   const [subscribersCount, setSubscribersCount] = useState<number>(0);

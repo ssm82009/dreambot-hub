@@ -9,6 +9,13 @@ interface OneSignalInitOptions {
   serviceWorkerPath?: string;
 }
 
+export interface NotificationPayload {
+  title: string;
+  body: string;
+  url?: string;
+  type?: 'general' | 'ticket' | 'payment' | 'subscription';
+}
+
 class OneSignalService {
   private static instance: OneSignalService;
   private _isReady: boolean = false;
@@ -191,6 +198,37 @@ class OneSignalService {
   }
 }
 
+// إرسال إشعار للمشرفين
+export async function sendNotificationToAdmin(payload: NotificationPayload): Promise<any> {
+  try {
+    console.log('محاولة إرسال إشعار للمشرفين:', payload);
+    
+    const { data, error } = await supabase.functions.invoke('send-notification', {
+      body: {
+        adminOnly: true,
+        notification: payload
+      }
+    });
+
+    if (error) {
+      console.error('خطأ في استدعاء وظيفة Edge Function للمشرفين:', error);
+      throw error;
+    }
+    
+    console.log('نتيجة إرسال الإشعار للمشرفين:', data);
+    return data;
+  } catch (error) {
+    console.error('خطأ في إرسال الإشعار للمشرفين:', error);
+    throw error;
+  }
+}
+
+// import supabase client here to avoid circular dependencies
+import { supabase } from '@/integrations/supabase/client';
+
 // تصدير instance واحدة من الخدمة
 const OneSignalServiceInstance = OneSignalService.getInstance();
 export default OneSignalServiceInstance;
+
+// تصدير class OneSignalService للاستخدام في الخدمات الأخرى
+export { OneSignalService };
