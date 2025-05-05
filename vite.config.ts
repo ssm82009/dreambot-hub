@@ -10,8 +10,8 @@ export default defineConfig(({ mode }) => ({
     host: "::",
     port: 8080,
     headers: {
-      // إضافة رؤوس سياسة أمان المحتوى التي تسمح بـ unsafe-eval والمصادر المطلوبة
-      "Content-Security-Policy": "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.gpteng.co https://www.gstatic.com;"
+      // إضافة رؤوس سياسة أمان المحتوى التي تسمح بـ unsafe-eval
+      "Content-Security-Policy": "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.gpteng.co;"
     }
   },
   plugins: [
