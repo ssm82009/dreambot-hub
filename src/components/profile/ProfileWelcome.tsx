@@ -12,7 +12,7 @@ interface ProfileWelcomeProps {
   userData: User & {
     dreams_count: number;
     email: string;
-  };
+  } | null;
 }
 
 const ProfileWelcome: React.FC<ProfileWelcomeProps> = ({ userData }) => {

@@ -13,7 +13,7 @@ import UpgradeSection from './subscription/UpgradeSection';
 interface ProfileSubscriptionProps {
   userData: User & {
     dreams_count: number;
-  };
+  } | null;
 }
 
 const ProfileSubscription: React.FC<ProfileSubscriptionProps> = ({ userData }) => {
@@ -47,6 +47,24 @@ const ProfileSubscription: React.FC<ProfileSubscriptionProps> = ({ userData }) =
   
   if (loading) {
     return <div className="text-center p-8">جاري تحميل معلومات الاشتراك...</div>;
+  }
+  
+  if (!userData) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>معلومات الاشتراك</CardTitle>
+          <CardDescription>
+            لم يتم العثور على بيانات المستخدم. يرجى تسجيل الدخول للوصول إلى معلومات الاشتراك.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center p-4">
+            <p className="text-muted-foreground">يرجى تسجيل الدخول لعرض معلومات الاشتراك</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
   }
   
   return (
