@@ -15,112 +15,79 @@ serve(async (req) => {
   }
 
   try {
-    const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
-      { auth: { persistSession: false } }
-    );
-
     const { action } = await req.json();
-    
+
     if (action === 'getSubscriberCount') {
-      // جلب إحصائيات OneSignal
-      const oneSignalAppId = Deno.env.get('ONESIGNAL_APP_ID');
-      const oneSignalApiKey = Deno.env.get('ONESIGNAL_REST_API_KEY');
-      
-      console.log('OneSignal credentials:', { 
-        appIdExists: !!oneSignalAppId, 
-        apiKeyLength: oneSignalApiKey ? oneSignalApiKey.length : 0,
-        appIdValue: oneSignalAppId ? oneSignalAppId.substring(0, 5) + '...' : 'undefined'
-      });
-      
-      // إذا كانت المفاتيح غير موجودة، يمكننا إرجاع قيمة افتراضية بدلاً من رمي خطأ
-      if (!oneSignalAppId || !oneSignalApiKey) {
-        console.error('OneSignal credentials are missing, returning default value');
-        return new Response(
-          JSON.stringify({ 
-            count: 0, 
-            warning: 'OneSignal credentials missing, showing default count',
-            debug: {
-              appIdExists: !!oneSignalAppId,
-              apiKeyExists: !!oneSignalApiKey,
-              envVars: Object.keys(Deno.env.toObject()).filter(key => key.includes('SIGNAL') || key.includes('ONE'))
-            }
-          }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
-        );
-      }
-      
-      try {
-        // استدعاء API الخاص بـ OneSignal للحصول على إحصائيات المستخدمين
-        console.log(`Fetching OneSignal stats with app_id=${oneSignalAppId?.substring(0, 5)}...`);
-        
-        const response = await fetch(`https://onesignal.com/api/v1/players?app_id=${oneSignalAppId}&limit=1`, {
-          headers: {
-            'Authorization': `Basic ${oneSignalApiKey}`,
-            'Content-Type': 'application/json',
-          },
-        });
-        
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('OneSignal API error:', response.status, errorText);
-          
-          // إرجاع استجابة مع رمز حالة ناجح ولكن مع رسالة خطأ
-          return new Response(
-            JSON.stringify({ 
-              count: 0, 
-              error: `OneSignal API error: ${response.status}`,
-              debug: errorText
-            }),
-            { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
-          );
-        }
-        
-        const data = await response.json();
-        const totalCount = data.total_count || 0;
-        
-        console.log('OneSignal subscribers count:', totalCount);
-        
-        return new Response(
-          JSON.stringify({ count: totalCount }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
-        );
-      } catch (fetchError) {
-        console.error('Error fetching data from OneSignal:', fetchError);
-        
-        // إرجاع استجابة مع رمز حالة ناجح ولكن مع رسالة خطأ
-        return new Response(
-          JSON.stringify({ 
-            count: 0, 
-            error: fetchError.message || 'Error connecting to OneSignal API'
-          }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
-        );
-      }
+      const count = await getSubscriberCount();
+      return new Response(
+        JSON.stringify({ 
+          count,
+          // Include debug info to help troubleshoot
+          debug: {
+            hasEnvVars: {
+              apiKey: !!Deno.env.get('ONESIGNAL_REST_API_KEY'),
+              appId: !!Deno.env.get('ONESIGNAL_APP_ID')
+            },
+            supabaseUrl: Deno.env.get('SUPABASE_URL') || 'https://supa.taweel.app'
+          }
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
-    
+
     return new Response(
-      JSON.stringify({ error: 'Invalid action', count: 0 }),
-      { 
-        status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      }
+      JSON.stringify({ error: 'Invalid action provided' }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
     );
   } catch (error) {
     console.error('Error in get-onesignal-stats:', error);
     
-    // إرجاع استجابة ناجحة (200) مع تفاصيل الخطأ في المحتوى
     return new Response(
       JSON.stringify({ 
         error: error.message,
-        stack: Deno.env.get('DENO_ENV') === 'development' ? error.stack : undefined,
-        count: 0 // إضافة قيمة افتراضية للعدد حتى لا ينكسر واجهة المستخدم
+        count: 0,
+        debug: {
+          errorStack: error.stack,
+          hasEnvVars: {
+            apiKey: !!Deno.env.get('ONESIGNAL_REST_API_KEY'),
+            appId: !!Deno.env.get('ONESIGNAL_APP_ID')
+          }
+        }
       }),
-      { 
-        status: 200, // تغيير من 500 إلى 200
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      }
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     );
   }
 });
+
+async function getSubscriberCount(): Promise<number> {
+  try {
+    const oneSignalAppId = Deno.env.get('ONESIGNAL_APP_ID');
+    const oneSignalApiKey = Deno.env.get('ONESIGNAL_REST_API_KEY');
+
+    if (!oneSignalAppId || !oneSignalApiKey) {
+      console.warn('OneSignal credentials are missing');
+      return 0;
+    }
+
+    // Fetch subscriber count from OneSignal API
+    const response = await fetch(`https://onesignal.com/api/v1/players/count?app_id=${oneSignalAppId}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Basic ${oneSignalApiKey}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Error from OneSignal API:', response.status, errorText);
+      throw new Error(`OneSignal API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.total || 0;
+  } catch (error) {
+    console.error('Error getting subscriber count:', error);
+    return 0;
+  }
+}

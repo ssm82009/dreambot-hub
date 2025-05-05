@@ -16,7 +16,7 @@ export interface NotificationPayload {
   type?: 'general' | 'ticket' | 'payment' | 'subscription';
 }
 
-class OneSignalService {
+export class OneSignalService {
   private static instance: OneSignalService;
   private _isReady: boolean = false;
 
@@ -231,4 +231,4 @@ const OneSignalServiceInstance = OneSignalService.getInstance();
 export default OneSignalServiceInstance;
 
 // تصدير class OneSignalService للاستخدام في الخدمات الأخرى
-export { OneSignalService };
+// Already exported above: export { OneSignalService };
