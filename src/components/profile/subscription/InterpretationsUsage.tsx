@@ -8,7 +8,7 @@ import { getTotalInterpretations } from '@/utils/subscription';
 interface InterpretationsUsageProps {
   userData: User & {
     dreams_count: number;
-  } | null;
+  };
 }
 
 const InterpretationsUsage: React.FC<InterpretationsUsageProps> = ({ userData }) => {
@@ -71,23 +71,21 @@ const InterpretationsUsage: React.FC<InterpretationsUsageProps> = ({ userData })
     // Set up real-time subscription
     let channel;
     try {
-      if (userData?.id) {
-        channel = supabase
-          .channel('subscription-updates')
-          .on(
-            'postgres_changes',
-            {
-              event: '*',
-              schema: 'public',
-              table: 'subscription_usage',
-              filter: `user_id=eq.${userData.id}`
-            },
-            () => {
-              fetchData();
-            }
-          )
-          .subscribe();
-      }
+      channel = supabase
+        .channel('subscription-updates')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'subscription_usage',
+            filter: `user_id=eq.${userData.id}`
+          },
+          () => {
+            fetchData();
+          }
+        )
+        .subscribe();
     } catch (error) {
       console.error("Error setting up realtime subscription:", error);
     }
@@ -99,14 +97,6 @@ const InterpretationsUsage: React.FC<InterpretationsUsageProps> = ({ userData })
       }
     };
   }, [userData?.id]);
-  
-  if (!userData) {
-    return (
-      <div className="text-center p-2">
-        <p className="text-muted-foreground">لم يتم العثور على بيانات المستخدم</p>
-      </div>
-    );
-  }
   
   const usedInterpretations = subscriptionUsage?.interpretations_used || 0;
   const remainingInterpretations = Math.max(0, totalInterpretations - usedInterpretations);

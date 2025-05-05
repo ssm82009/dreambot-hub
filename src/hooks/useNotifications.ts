@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import OneSignalServiceInstance from '@/services/oneSignalService';
+import OneSignalService from '@/services/oneSignalService';
 
 /**
  * هوك إدارة الإشعارات الرئيسي باستخدام OneSignal
@@ -29,8 +29,8 @@ export function useNotifications() {
           setGranted(permission === 'granted');
           
           // التحقق من حالة الاشتراك في OneSignal
-          if (OneSignalServiceInstance.isReady) {
-            const isSubscribed = await OneSignalServiceInstance.getSubscriptionStatus();
+          if (OneSignalService.isReady) {
+            const isSubscribed = await OneSignalService.getSubscriptionStatus();
             setSubscription(isSubscribed);
           }
         }
@@ -45,7 +45,7 @@ export function useNotifications() {
   // ربط المستخدم بمعرف خارجي في OneSignal عند تسجيل الدخول
   useEffect(() => {
     if (user && user.id && subscription) {
-      OneSignalServiceInstance.setExternalUserId(user.id);
+      OneSignalService.setExternalUserId(user.id);
     }
     
     return () => {
@@ -61,7 +61,7 @@ export function useNotifications() {
     }
     
     try {
-      const result = await OneSignalServiceInstance.requestNotificationPermission();
+      const result = await OneSignalService.requestNotificationPermission();
       setGranted(result);
       return result;
     } catch (error) {
@@ -86,7 +86,7 @@ export function useNotifications() {
       }
       
       // تفعيل إشعارات OneSignal
-      const result = await OneSignalServiceInstance.subscribeToNotifications();
+      const result = await OneSignalService.subscribeToNotifications();
       setSubscription(result);
       
       if (result) {
@@ -94,7 +94,7 @@ export function useNotifications() {
         
         // ربط معرف المستخدم إذا كان مسجل الدخول
         if (user && user.id) {
-          await OneSignalServiceInstance.setExternalUserId(user.id);
+          await OneSignalService.setExternalUserId(user.id);
         }
       } else {
         toast.error('فشل الاشتراك في الإشعارات');
@@ -117,11 +117,11 @@ export function useNotifications() {
       
       // إلغاء ربط معرف المستخدم إذا كان مسجل الدخول
       if (user && user.id) {
-        await OneSignalServiceInstance.removeExternalUserId();
+        await OneSignalService.removeExternalUserId();
       }
       
       // إلغاء الاشتراك من OneSignal
-      const result = await OneSignalServiceInstance.unsubscribeFromNotifications();
+      const result = await OneSignalService.unsubscribeFromNotifications();
       setSubscription(false);
       
       toast.success('تم إلغاء الاشتراك من الإشعارات');

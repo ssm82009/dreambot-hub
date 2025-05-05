@@ -8,7 +8,7 @@ import { formatDate } from '@/lib/utils';
 interface SubscriptionDetailsProps {
   userData: User & {
     dreams_count: number;
-  } | null;
+  };
   pricingSettings?: any;
 }
 
@@ -20,12 +20,6 @@ const SubscriptionDetails: React.FC<SubscriptionDetailsProps> = ({ userData, pri
   useEffect(() => {
     const loadSubscriptionName = async () => {
       try {
-        if (!userData) {
-          setSubscriptionName('غير متوفر');
-          setLoading(false);
-          return;
-        }
-        
         const name = await getSubscriptionName(userData?.subscription_type, pricingSettings);
         setSubscriptionName(name);
       } catch (error) {
@@ -37,17 +31,6 @@ const SubscriptionDetails: React.FC<SubscriptionDetailsProps> = ({ userData, pri
     
     loadSubscriptionName();
   }, [userData?.subscription_type, pricingSettings]);
-  
-  if (!userData) {
-    return (
-      <div className="space-y-4">
-        <h3 className="text-lg font-medium">تفاصيل الباقة الحالية</h3>
-        <div className="text-center p-2">
-          <p className="text-muted-foreground">لم يتم العثور على بيانات المستخدم</p>
-        </div>
-      </div>
-    );
-  }
   
   return (
     <div className="space-y-4">

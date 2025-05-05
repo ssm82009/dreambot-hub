@@ -16,11 +16,11 @@ async function handleCors(req: Request) {
 }
 
 serve(async (req) => {
-  try {
-    // معالجة CORS إذا كان الطلب من نوع OPTIONS
-    const corsResponse = await handleCors(req);
-    if (corsResponse) return corsResponse;
+  // معالجة CORS إذا كان الطلب من نوع OPTIONS
+  const corsResponse = await handleCors(req);
+  if (corsResponse) return corsResponse;
 
+  try {
     // استخراج بيانات الحلم من الطلب
     const { dreamText } = await req.json();
     if (!dreamText) {
@@ -334,34 +334,6 @@ serve(async (req) => {
       }
       
       throw new Error(errorMessage);
-    }
-
-    // حفظ سجل الحلم في قاعدة البيانات
-    try {
-      if (userId && dreamText) {
-        // استخراج الكلمات المفتاحية
-        const commonKeywords = ['ماء', 'طيران', 'سقوط', 'موت', 'مطاردة', 'سفر', 'بيت', 'أسنان', 'فقدان', 'قطة', 'كلب', 'ثعبان', 'طفل', 'امتحان', 'تأخر', 'نجاح', 'فشل', 'زواج', 'مطر', 'شمس', 'قمر', 'نجوم'];
-        const tags = commonKeywords.filter(keyword => dreamText.includes(keyword));
-
-        // إضافة سجل الحلم
-        const { error } = await supabase
-          .from('dreams')
-          .insert({
-            dream_text: dreamText,
-            interpretation: aiResponse,
-            user_id: userId,
-            tags: tags
-          });
-
-        if (error) {
-          console.error('خطأ في حفظ الحلم في قاعدة البيانات:', error);
-        } else {
-          console.log('تم حفظ الحلم والتفسير بنجاح في قاعدة البيانات');
-        }
-      }
-    } catch (dbError) {
-      console.error('خطأ في حفظ الحلم:', dbError);
-      // نستمر بالتنفيذ حتى لو فشل الحفظ في قاعدة البيانات
     }
 
     console.log('تم الحصول على تفسير الحلم بنجاح');

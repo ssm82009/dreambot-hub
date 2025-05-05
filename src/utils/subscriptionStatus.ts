@@ -2,16 +2,7 @@
 import { User } from '@/types/database';
 import { normalizePlanType } from '@/utils/payment/statusNormalizer';
 
-export const getSubscriptionStatus = (user: User | null) => {
-  // Check if user is null or undefined
-  if (!user) {
-    return { 
-      name: 'غير متوفر', 
-      color: 'outline' as const,
-      isActive: false
-    };
-  }
-  
+export const getSubscriptionStatus = (user: User) => {
   console.log("Getting subscription status for user:", user);
   
   // التحقق من نوع الاشتراك
