@@ -1,6 +1,5 @@
 
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.4';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -25,8 +24,8 @@ serve(async (req) => {
           // Include debug info to help troubleshoot
           debug: {
             hasEnvVars: {
-              apiKey: !!Deno.env.get('ONESIGNAL_REST_API_KEY'),
-              appId: !!Deno.env.get('ONESIGNAL_APP_ID')
+              apiKey: Boolean(Deno.env.get('ONESIGNAL_REST_API_KEY')),
+              appId: Boolean(Deno.env.get('ONESIGNAL_APP_ID'))
             },
             timestamp: new Date().toISOString(),
             supabaseUrl: Deno.env.get('SUPABASE_URL') || 'https://supa.taweel.app'
@@ -50,8 +49,8 @@ serve(async (req) => {
         debug: {
           errorStack: error.stack,
           hasEnvVars: {
-            apiKey: !!Deno.env.get('ONESIGNAL_REST_API_KEY'),
-            appId: !!Deno.env.get('ONESIGNAL_APP_ID')
+            apiKey: Boolean(Deno.env.get('ONESIGNAL_REST_API_KEY')),
+            appId: Boolean(Deno.env.get('ONESIGNAL_APP_ID'))
           },
           timestamp: new Date().toISOString()
         }

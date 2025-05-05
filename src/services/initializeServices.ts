@@ -42,10 +42,14 @@ export const initializeServices = async () => {
       console.log("Initializing OneSignal...");
       // Replace with your actual OneSignal App ID
       const appId = '40889d72-5084-41cc-8e76-bc9af4ab3f65';
-      results.oneSignal = await OneSignalServiceInstance.initialize({
-        appId
-      });
-      console.log(`OneSignal initialization ${results.oneSignal ? 'completed successfully' : 'had issues'}`);
+      if (typeof window !== 'undefined' && window.OneSignal) {
+        results.oneSignal = await OneSignalServiceInstance.initialize({
+          appId
+        });
+        console.log(`OneSignal initialization ${results.oneSignal ? 'completed successfully' : 'had issues'}`);
+      } else {
+        console.warn("OneSignal is not available in this environment. Skipping initialization.");
+      }
     } catch (oneSignalError) {
       console.error("Error in OneSignal initialization:", oneSignalError);
       // Continue despite OneSignal errors

@@ -1,4 +1,3 @@
-
 /**
  * خدمة OneSignal لإدارة الإشعارات
  */
@@ -36,7 +35,7 @@ export class OneSignalService {
    */
   async initialize(options: OneSignalInitOptions): Promise<boolean> {
     try {
-      if (!window.OneSignal) {
+      if (typeof window === 'undefined' || !window.OneSignal) {
         console.warn('لم يتم العثور على OneSignal. تأكد من تحميل المكتبة.');
         return false;
       }
@@ -203,7 +202,7 @@ export async function sendNotificationToAdmin(payload: NotificationPayload): Pro
   try {
     console.log('محاولة إرسال إشعار للمشرفين:', payload);
     
-    // استيراد supabase في هذا النطاق لتجنب الاعتماديات الدائرية
+    // استيراد supabase بشكل غير مباشر لتجنب الاعتماديات الدائرية
     const { supabase } = await import('@/integrations/supabase/client');
     
     const { data, error } = await supabase.functions.invoke('send-notification', {
