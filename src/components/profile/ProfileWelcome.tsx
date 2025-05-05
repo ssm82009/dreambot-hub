@@ -34,7 +34,7 @@ const ProfileWelcome: React.FC<ProfileWelcomeProps> = ({ userData }) => {
           setSubscriptionName(name);
         } catch (error) {
           console.error('Error getting subscription name:', error);
-          const name = await getSubscriptionName(userData.subscription_type);
+          const name = await getSubscriptionName(userData.subscription_type, null);
           setSubscriptionName(name);
         } finally {
           setLoading(false);

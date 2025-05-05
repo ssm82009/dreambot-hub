@@ -5,6 +5,7 @@ import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { getTotalInterpretations } from '@/utils/subscription';
 
 interface InterpretationsUsageProps {
   userData: User & { dreams_count?: number } | null;
@@ -53,8 +54,8 @@ const InterpretationsUsage: React.FC<InterpretationsUsageProps> = ({ userData })
         // Calculate used and total interpretations
         const dreamsCount = userData.dreams_count || 0;
         
-        let totalInterpretations = getTotalInterpretations(userData, pricingSettings);
-        let isUnlimited = totalInterpretations === -1;
+        const totalInterpretations = await getTotalInterpretations(userData, pricingSettings);
+        const isUnlimited = totalInterpretations === -1;
         
         setUsageData({
           used: dreamsCount,
@@ -116,21 +117,6 @@ const InterpretationsUsage: React.FC<InterpretationsUsageProps> = ({ userData })
       )}
     </div>
   );
-};
-
-// Helper function to get total interpretations based on subscription type
-const getTotalInterpretations = (userData: User | null, pricingSettings: any) => {
-  if (!userData || !pricingSettings) return 0;
-  
-  const subscriptionType = userData.subscription_type || 'free';
-  
-  if (subscriptionType === 'pro' || subscriptionType === 'الاحترافي') {
-    return pricingSettings.pro_plan_interpretations;
-  } else if (subscriptionType === 'premium' || subscriptionType === 'المميز') {
-    return pricingSettings.premium_plan_interpretations;
-  } else {
-    return pricingSettings.free_plan_interpretations;
-  }
 };
 
 export default InterpretationsUsage;
