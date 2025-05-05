@@ -1,101 +1,103 @@
 
 import { useState, useEffect, useCallback } from 'react';
-import { useAuth } from '@/hooks/useAuth';
+import { useNotificationPermission } from './notifications/useNotificationPermission';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import OneSignalService from '@/services/oneSignalService';
+import { OneSignalService } from '@/services/oneSignalService';
 
 /**
  * هوك إدارة الإشعارات الرئيسي باستخدام OneSignal
  */
 export function useNotifications() {
-  const { user } = useAuth();
-  const [supported, setSupported] = useState<boolean>(false);
+  const { supported } = useNotificationPermission();
   const [granted, setGranted] = useState<boolean>(false);
   const [subscription, setSubscription] = useState<boolean>(false);
   const [subscribing, setSubscribing] = useState<boolean>(false);
+  const [userId, setUserId] = useState<string | null>(null);
   
-  // التحقق من دعم المتصفح للإشعارات وحالة الإذن
+  // التحقق من حالة تسجيل الدخول
   useEffect(() => {
-    const checkSupport = async () => {
-      try {
-        // التحقق من دعم الإشعارات بشكل عام
-        const isSupported = 'Notification' in window;
-        setSupported(isSupported);
-        
-        if (isSupported) {
-          // التحقق من حالة الإذن
-          const permission = Notification.permission;
-          setGranted(permission === 'granted');
-          
-          // التحقق من حالة الاشتراك في OneSignal
-          if (OneSignalService.isReady) {
-            const isSubscribed = await OneSignalService.getSubscriptionStatus();
-            setSubscription(isSubscribed);
-          }
-        }
-      } catch (error) {
-        console.error('خطأ في التحقق من دعم الإشعارات:', error);
+    const checkAuth = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (data.session?.user) {
+        setUserId(data.session.user.id);
       }
     };
     
-    checkSupport();
-  }, []);
-  
-  // ربط المستخدم بمعرف خارجي في OneSignal عند تسجيل الدخول
-  useEffect(() => {
-    if (user && user.id && subscription) {
-      OneSignalService.setExternalUserId(user.id);
-    }
+    checkAuth();
+    
+    // الاستماع لتغييرات حالة المصادقة
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session?.user) {
+        setUserId(session.user.id);
+      } else if (event === 'SIGNED_OUT') {
+        setUserId(null);
+      }
+    });
     
     return () => {
-      // لا داعي لإزالة المعرف عند إلغاء تحميل المكون
+      authListener.subscription.unsubscribe();
     };
-  }, [user, subscription]);
+  }, []);
   
-  // طلب إذن للإشعارات
-  const requestPermission = useCallback(async (): Promise<boolean> => {
-    if (!supported) {
-      toast.error('متصفحك لا يدعم الإشعارات');
-      return false;
-    }
+  // تهيئة OneSignal
+  useEffect(() => {
+    const initOneSignal = async () => {
+      try {
+        if (typeof window !== 'undefined' && window.OneSignal) {
+          // انتظار تحميل OneSignal
+          const checkOneSignalReady = async (): Promise<void> => {
+            if (OneSignalService.isReady) {
+              console.log('OneSignal جاهز للاستخدام');
+              
+              // تهيئة OneSignal بمعرف المستخدم إذا كان متاحاً
+              if (userId) {
+                await OneSignalService.initialize(userId);
+              }
+              
+              // التحقق من حالة الإشعارات
+              const isSubscribed = await OneSignalService.getSubscriptionStatus();
+              setSubscription(isSubscribed);
+              setGranted(isSubscribed);
+            } else {
+              // إعادة المحاولة بعد مهلة زمنية
+              setTimeout(checkOneSignalReady, 500);
+            }
+          };
+          
+          checkOneSignalReady();
+        }
+      } catch (error) {
+        console.error('خطأ في تهيئة OneSignal:', error);
+      }
+    };
     
+    initOneSignal();
+  }, [userId]);
+
+  // طلب إذن الإشعارات
+  const requestPermission = useCallback(async (): Promise<boolean> => {
     try {
       const result = await OneSignalService.requestNotificationPermission();
       setGranted(result);
       return result;
     } catch (error) {
-      console.error('خطأ في طلب إذن الإشعارات:', error);
-      toast.error('حدث خطأ أثناء طلب إذن الإشعارات');
+      console.error('خطأ في طلب الإذن:', error);
       return false;
     }
-  }, [supported]);
+  }, []);
   
   // الاشتراك في الإشعارات
   const subscribeToNotifications = useCallback(async (): Promise<boolean> => {
     try {
       setSubscribing(true);
       
-      // طلب الإذن إذا لم يكن لدينا إذن بالفعل
-      if (!granted) {
-        const permissionGranted = await requestPermission();
-        if (!permissionGranted) {
-          setSubscribing(false);
-          return false;
-        }
-      }
-      
-      // تفعيل إشعارات OneSignal
       const result = await OneSignalService.subscribeToNotifications();
-      setSubscription(result);
       
       if (result) {
+        setSubscription(true);
+        setGranted(true);
         toast.success('تم الاشتراك في الإشعارات بنجاح');
-        
-        // ربط معرف المستخدم إذا كان مسجل الدخول
-        if (user && user.id) {
-          await OneSignalService.setExternalUserId(user.id);
-        }
       } else {
         toast.error('فشل الاشتراك في الإشعارات');
       }
@@ -108,24 +110,23 @@ export function useNotifications() {
     } finally {
       setSubscribing(false);
     }
-  }, [supported, granted, requestPermission, user]);
+  }, []);
   
   // إلغاء الاشتراك في الإشعارات
   const unsubscribeFromNotifications = useCallback(async (): Promise<boolean> => {
     try {
       setSubscribing(true);
       
-      // إلغاء ربط معرف المستخدم إذا كان مسجل الدخول
-      if (user && user.id) {
-        await OneSignalService.removeExternalUserId();
+      const result = await OneSignalService.unsubscribeFromNotifications();
+      
+      if (result) {
+        setSubscription(false);
+        toast.success('تم إلغاء الاشتراك من الإشعارات بنجاح');
+      } else {
+        toast.error('فشل إلغاء الاشتراك من الإشعارات');
       }
       
-      // إلغاء الاشتراك من OneSignal
-      const result = await OneSignalService.unsubscribeFromNotifications();
-      setSubscription(false);
-      
-      toast.success('تم إلغاء الاشتراك من الإشعارات');
-      return true;
+      return result;
     } catch (error) {
       console.error('خطأ في إلغاء الاشتراك من الإشعارات:', error);
       toast.error('حدث خطأ أثناء إلغاء الاشتراك من الإشعارات');
@@ -133,7 +134,7 @@ export function useNotifications() {
     } finally {
       setSubscribing(false);
     }
-  }, [user]);
+  }, []);
   
   return {
     supported,

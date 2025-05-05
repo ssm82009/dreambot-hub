@@ -13,7 +13,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { toast } from 'sonner';
 
 interface NotificationBellProps {
   className?: string;
@@ -76,16 +75,10 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ className })
       if (subscription) {
         await unsubscribeFromNotifications();
       } else {
-        const result = await subscribeToNotifications();
-        
-        // عرض رسالة توضيحية إضافية إذا فشلت العملية
-        if (!result) {
-          toast.info('تأكد من السماح بالإشعارات في إعدادات المتصفح');
-        }
+        await subscribeToNotifications();
       }
     } catch (err) {
       console.error("خطأ في تبديل حالة الإشعارات:", err);
-      toast.error("حدث خطأ في تبديل حالة الإشعارات");
     } finally {
       setLoading(false);
     }

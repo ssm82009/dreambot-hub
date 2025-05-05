@@ -10,7 +10,6 @@ export function useNotificationData() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
-  const [debugInfo, setDebugInfo] = useState<any>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -20,44 +19,22 @@ export function useNotificationData() {
         setLoading(true);
         setError(null);
 
-        // جلب عدد المشتركين من OneSignal API مباشرة عبر Edge Function
+        // جلب عدد المشتركين من OneSignal بدلاً من قاعدة البيانات المحلية
         try {
-          console.log('جاري جلب عدد المشتركين من OneSignal...');
-          const { data: statsData, error: statsError } = await supabase.functions.invoke('get-onesignal-stats', {
-            body: { action: 'getSubscriberCount' }
-          });
-          
-          // مع التعديل الجديد، نحن لا نتوقع أن تكون هناك أخطاء في الاستدعاء نفسه
-          // لكن يمكن أن تكون هناك رسالة خطأ في البيانات المُرجعة
-          if (statsError) {
-            console.error('خطأ في استدعاء دالة جلب إحصائيات OneSignal:', statsError);
-            if (isMounted) {
-              setError('خطأ في استدعاء دالة جلب إحصائيات OneSignal');
-            }
-          }
-          
+          const oneSignalCount = await fetchOneSignalSubscriberCount();
           if (isMounted) {
-            // استخدم القيمة المُرجعة حتى لو كانت صفرًا بسبب خطأ
-            const count = typeof statsData?.count === 'number' ? statsData.count : 0;
-            console.log('تم جلب عدد المشتركين:', count, statsData);
-            setSubscribersCount(count);
-            
-            // حفظ معلومات التصحيح إن وجدت
-            if (statsData?.debug) {
-              setDebugInfo(statsData.debug);
-            }
-            
-            // إذا كان هناك خطأ أو تحذير، يمكننا عرضه للمستخدم كملاحظة
-            if (statsData?.error) {
-              setError(statsData.error);
-            } else if (statsData?.warning) {
-              setError(statsData.warning);
-            }
+            setSubscribersCount(oneSignalCount || 0);
           }
         } catch (oneSignalError) {
-          console.error('خطأ في جلب عدد المشتركين من OneSignal:', oneSignalError);
+          console.error('Error fetching OneSignal subscribers:', oneSignalError);
+          // جلب عدد المشتركين من قاعدة البيانات كبديل احتياطي
+          const { count: localCount, error: subscribersError } = await supabase
+            .from('push_subscriptions')
+            .select('*', { count: 'exact', head: true });
+
+          if (subscribersError) throw subscribersError;
           if (isMounted) {
-            setError('تعذر الاتصال بخدمة الإشعارات، يرجى المحاولة لاحقًا');
+            setSubscribersCount(localCount || 0);
           }
         }
 
@@ -75,11 +52,33 @@ export function useNotificationData() {
           setLoading(false);
         }
       } catch (err: any) {
-        console.error('خطأ في جلب بيانات الإشعارات:', err);
+        console.error('Error fetching notification data:', err);
         if (isMounted) {
           setError(err.message || 'حدث خطأ في جلب بيانات الإشعارات');
           setLoading(false);
         }
+      }
+    };
+
+    const fetchOneSignalSubscriberCount = async (): Promise<number> => {
+      // استخدام API الخاص بـ OneSignal للحصول على العدد الدقيق للمشتركين
+      if (!OneSignalService.isReady) {
+        console.warn('OneSignal غير متاح، لا يمكن جلب عدد المشتركين الحقيقي');
+        throw new Error('OneSignal غير متاح');
+      }
+      
+      try {
+        // استدعاء دالة على الخادم للحصول على عدد المشتركين من OneSignal
+        const { data, error } = await supabase.functions.invoke('get-onesignal-stats', {
+          body: { action: 'getSubscriberCount' }
+        });
+        
+        if (error) throw error;
+        
+        return data?.count || 0;
+      } catch (error) {
+        console.error('خطأ في جلب عدد مشتركي OneSignal:', error);
+        throw error;
       }
     };
 
@@ -96,5 +95,5 @@ export function useNotificationData() {
     setRetryCount(prev => prev + 1);
   };
 
-  return { subscribersCount, users, loading, error, refreshData, debugInfo };
+  return { subscribersCount, users, loading, error, refreshData };
 }

@@ -1,34 +1,24 @@
 
 import React from 'react';
-import { Loader2, AlertCircle, RefreshCw, Info } from 'lucide-react';
+import { Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 
 interface NotificationStatsProps {
   subscribersCount: number;
   loading: boolean;
   error: string | null;
   refreshData?: () => void;
-  debugInfo?: any;
 }
 
 const NotificationStats: React.FC<NotificationStatsProps> = ({ 
   subscribersCount, 
   loading, 
   error,
-  refreshData,
-  debugInfo
+  refreshData
 }) => {
   return (
     <Card className="col-span-1">
@@ -80,7 +70,7 @@ const NotificationStats: React.FC<NotificationStatsProps> = ({
             يجب أن يكون المستخدمون قد فعّلوا الإشعارات من متصفحاتهم لاستلامها.
           </p>
           {subscribersCount === 0 && (
-            <Alert variant="warning" className="mt-2">
+            <Alert variant="warning" className="mt-2 border-amber-200 bg-amber-50 text-amber-800">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
                 لا يوجد مشتركين في الإشعارات حالياً. يجب على المستخدمين تفعيل الإشعارات من متصفحاتهم أولاً.
@@ -89,40 +79,6 @@ const NotificationStats: React.FC<NotificationStatsProps> = ({
           )}
         </div>
       </CardContent>
-      
-      {/* إضافة قسم جديد لتشخيص مشكلات المفاتيح */}
-      {debugInfo && (
-        <CardFooter className="border-t pt-4">
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button variant="outline" size="sm" className="w-full">
-                <Info className="h-4 w-4 mr-2" />
-                معلومات تشخيصية
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>معلومات تشخيصية للـ OneSignal</DialogTitle>
-                <DialogDescription>
-                  تفاصيل تقنية حول اتصال OneSignal والمفاتيح المستخدمة
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-2 mt-2">
-                <pre className="bg-muted p-4 rounded-md text-xs overflow-auto max-h-[300px] rtl:text-right">
-                  {JSON.stringify(debugInfo, null, 2)}
-                </pre>
-                <p className="text-sm text-muted-foreground">
-                  إذا لم تظهر مفاتيح OneSignal، تحقق من إعدادات المشروع في Edge Functions.
-                </p>
-                <Button variant="outline" size="sm" className="w-full mt-2" onClick={refreshData}>
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  تحديث معلومات الاتصال
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
-        </CardFooter>
-      )}
     </Card>
   );
 };
