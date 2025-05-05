@@ -23,16 +23,46 @@ export function useNotificationData() {
         // جلب عدد المشتركين من OneSignal API مباشرة عبر Edge Function
         try {
           console.log('جاري جلب عدد المشتركين من OneSignal...');
-          const { data: statsData, error: statsError } = await supabase.functions.invoke('get-onesignal-stats', {
-            body: { action: 'getSubscriberCount' }
-          });
           
-          // مع التعديل الجديد، نحن لا نتوقع أن تكون هناك أخطاء في الاستدعاء نفسه
-          // لكن يمكن أن تكون هناك رسالة خطأ في البيانات المُرجعة
+          // محاولة ثلاث مرات مع فترة انتظار بسيطة بين كل محاولة
+          let statsData: any = null;
+          let statsError: any = null;
+          let attempts = 0;
+          const maxAttempts = 3;
+          
+          while (!statsData && attempts < maxAttempts) {
+            attempts++;
+            try {
+              console.log(`محاولة ${attempts} من ${maxAttempts} لجلب إحصائيات OneSignal`);
+              
+              const response = await supabase.functions.invoke('get-onesignal-stats', {
+                body: { action: 'getSubscriberCount' }
+              });
+              
+              statsData = response.data;
+              statsError = response.error;
+              
+              if (statsError) {
+                console.error(`خطأ في المحاولة ${attempts}:`, statsError);
+                // انتظر قبل المحاولة التالية
+                if (attempts < maxAttempts) {
+                  await new Promise(resolve => setTimeout(resolve, 1000));
+                }
+              }
+            } catch (attemptError) {
+              console.error(`خطأ في المحاولة ${attempts}:`, attemptError);
+              // انتظر قبل المحاولة التالية
+              if (attempts < maxAttempts) {
+                await new Promise(resolve => setTimeout(resolve, 1000));
+              }
+            }
+          }
+          
+          // إذا استمر الخطأ بعد كل المحاولات
           if (statsError) {
-            console.error('خطأ في استدعاء دالة جلب إحصائيات OneSignal:', statsError);
+            console.error('خطأ مستمر في استدعاء دالة جلب إحصائيات OneSignal:', statsError);
             if (isMounted) {
-              setError('خطأ في استدعاء دالة جلب إحصائيات OneSignal');
+              setError('تعذر الاتصال بخدمة الإشعارات، يرجى المحاولة لاحقًا');
             }
           }
           
@@ -62,16 +92,26 @@ export function useNotificationData() {
         }
 
         // جلب قائمة المستخدمين لإرسال الإشعارات لهم
-        const { data: usersData, error: usersError } = await supabase
-          .from('users')
-          .select('id, email, full_name, role');
+        try {
+          const { data: usersData, error: usersError } = await supabase
+            .from('users')
+            .select('id, email, full_name, role');
 
-        if (usersError) {
-          throw usersError;
+          if (usersError) {
+            throw usersError;
+          }
+
+          if (isMounted) {
+            setUsers(usersData || []);
+          }
+        } catch (usersError) {
+          console.error('خطأ في جلب بيانات المستخدمين:', usersError);
+          if (isMounted) {
+            toast.error('تعذر جلب بيانات المستخدمين');
+          }
         }
-
+        
         if (isMounted) {
-          setUsers(usersData || []);
           setLoading(false);
         }
       } catch (err: any) {

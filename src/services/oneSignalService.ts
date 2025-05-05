@@ -203,6 +203,9 @@ export async function sendNotificationToAdmin(payload: NotificationPayload): Pro
   try {
     console.log('محاولة إرسال إشعار للمشرفين:', payload);
     
+    // استيراد supabase في هذا النطاق لتجنب الاعتماديات الدائرية
+    const { supabase } = await import('@/integrations/supabase/client');
+    
     const { data, error } = await supabase.functions.invoke('send-notification', {
       body: {
         adminOnly: true,
@@ -223,12 +226,6 @@ export async function sendNotificationToAdmin(payload: NotificationPayload): Pro
   }
 }
 
-// import supabase client here to avoid circular dependencies
-import { supabase } from '@/integrations/supabase/client';
-
 // تصدير instance واحدة من الخدمة
 const OneSignalServiceInstance = OneSignalService.getInstance();
 export default OneSignalServiceInstance;
-
-// تصدير class OneSignalService للاستخدام في الخدمات الأخرى
-// Already exported above: export { OneSignalService };

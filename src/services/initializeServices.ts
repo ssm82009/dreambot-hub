@@ -40,8 +40,10 @@ export const initializeServices = async () => {
     // Initialize OneSignal
     try {
       console.log("Initializing OneSignal...");
+      // Replace with your actual OneSignal App ID
+      const appId = '40889d72-5084-41cc-8e76-bc9af4ab3f65';
       results.oneSignal = await OneSignalServiceInstance.initialize({
-        appId: 'YOUR_ONESIGNAL_APP_ID' // الرجاء استبدالها بمعرف تطبيق OneSignal الخاص بك
+        appId
       });
       console.log(`OneSignal initialization ${results.oneSignal ? 'completed successfully' : 'had issues'}`);
     } catch (oneSignalError) {

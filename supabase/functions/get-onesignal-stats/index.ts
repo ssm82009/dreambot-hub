@@ -28,6 +28,7 @@ serve(async (req) => {
               apiKey: !!Deno.env.get('ONESIGNAL_REST_API_KEY'),
               appId: !!Deno.env.get('ONESIGNAL_APP_ID')
             },
+            timestamp: new Date().toISOString(),
             supabaseUrl: Deno.env.get('SUPABASE_URL') || 'https://supa.taweel.app'
           }
         }),
@@ -51,7 +52,8 @@ serve(async (req) => {
           hasEnvVars: {
             apiKey: !!Deno.env.get('ONESIGNAL_REST_API_KEY'),
             appId: !!Deno.env.get('ONESIGNAL_APP_ID')
-          }
+          },
+          timestamp: new Date().toISOString()
         }
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
