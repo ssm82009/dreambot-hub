@@ -1,31 +1,31 @@
-
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-
 interface HeroProps {
   title?: string;
   subtitle?: string;
 }
-
 const Hero: React.FC<HeroProps> = ({
   title = "فَسِّرْ حُلْمَكَ الآنَ!",
   subtitle = "~"
 }) => {
   const navigate = useNavigate();
-  
+
   // وظيفة للتمرير إلى قسم "جرب" مباشرة
   const handleStartNow = async () => {
     try {
-      const { data } = await supabase.auth.getSession();
-      
+      const {
+        data
+      } = await supabase.auth.getSession();
       if (data.session?.user) {
         // المستخدم مسجل الدخول، يمكن التمرير إلى قسم "جرب"
         const tryItSectionElement = document.getElementById('try-it');
         if (tryItSectionElement) {
-          tryItSectionElement.scrollIntoView({ behavior: 'smooth' });
+          tryItSectionElement.scrollIntoView({
+            behavior: 'smooth'
+          });
         }
       } else {
         // المستخدم غير مسجل، توجيه إلى صفحة تسجيل الدخول
@@ -37,9 +37,7 @@ const Hero: React.FC<HeroProps> = ({
       navigate('/login');
     }
   };
-
-  return (
-    <div className="relative overflow-hidden pt-24 pb-10 rtl">
+  return <div className="relative overflow-hidden pt-24 pb-10 rtl">
       <div className="absolute inset-0 dream-pattern opacity-50 z-0"></div>
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="flex flex-col items-center text-center">
@@ -81,8 +79,8 @@ const Hero: React.FC<HeroProps> = ({
                   <path d="M17 17h.01" />
                 </svg>
               </div>
-              <h5 className="text-lg font-semibold mb-1">تفسير دقيق</h5>
-              <p className="text-foreground/70">تفسيرات مبنية على أسس علمية وموثوقة من كتب التفسير المعتمدة.</p>
+              <h5 className="text-lg font-semibold mb-1">تفسير تحليلي</h5>
+              <p className="text-foreground/70">تفسيرات نفسية تحليلية مبنية على علم النفس الاسلامي.</p>
             </div>
             
             <div className="bg-background/80 backdrop-blur-sm p-4 rounded-lg shadow-md border border-border">
@@ -96,7 +94,7 @@ const Hero: React.FC<HeroProps> = ({
                 </svg>
               </div>
               <h5 className="text-lg font-semibold mb-1">استجابة فورية</h5>
-              <p className="text-foreground/70">احصل على تفسير حلمك في ثوانٍ معدودة دون انتظار.</p>
+              <p className="text-foreground/70">احصل على تحليل حلمك في ثوانٍ معدودة دون انتظار.</p>
             </div>
             
             <div className="bg-background/80 backdrop-blur-sm p-4 rounded-lg shadow-md border border-border">
@@ -112,8 +110,6 @@ const Hero: React.FC<HeroProps> = ({
           </div>
         </div>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default Hero;
