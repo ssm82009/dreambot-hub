@@ -1,4 +1,5 @@
 const CACHE_NAME = 'taweel-cache-v1';
+const SW_VERSION = '1.0.1'; // زيادة هذا الرقم عند تحديث خدمة العامل
 const urlsToCache = [
   '/',
   '/index.html',
@@ -39,7 +40,10 @@ self.addEventListener('install', (event) => {
         
         return Promise.all(cachePromises);
       })
-      .then(() => self.skipWaiting()) // تخطي انتظار التنشيط
+      .then(() => {
+        // تخزين الإصدار الحالي لخدمة العامل
+        return self.skipWaiting();
+      })
   );
 });
 
@@ -86,7 +90,7 @@ self.addEventListener('fetch', (event) => {
 
 // تحديث الكاش عند تحديث خدمة العامل
 self.addEventListener('activate', (event) => {
-  console.log('Service Worker: تم تنشيط خدمة العامل');
+  console.log('Service Worker: تم تنشيط خدمة العامل', SW_VERSION);
   const cacheWhitelist = [CACHE_NAME];
   event.waitUntil(
     caches.keys().then((cacheNames) => {
@@ -262,6 +266,14 @@ self.addEventListener('notificationclick', (event) => {
 // استقبال الرسائل من صفحات التطبيق
 self.addEventListener('message', (event) => {
   console.log('Service Worker: تم استلام رسالة', event.data);
+  
+  // إضافة معالج لرسائل استعلام الإصدار
+  if (event.data && event.data.type === 'GET_VERSION') {
+    event.ports[0].postMessage({
+      version: SW_VERSION
+    });
+  }
+  
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
   }

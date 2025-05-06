@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -29,7 +30,16 @@ const Hero: React.FC<HeroProps> = ({
         }
       } else {
         // المستخدم غير مسجل، توجيه إلى صفحة تسجيل الدخول
-        toast.info("يرجى تسجيل الدخول أولاً للاستفادة من خدمة تفسير الأحلام");
+        // معرف توست فريد لتجنب التكرار
+        const toastId = 'login-required-toast';
+        
+        // التحقق من وجود التوست قبل عرضه
+        if (!document.querySelector(`[data-sonner-toast-id="${toastId}"]`)) {
+          toast.info("يرجى تسجيل الدخول أولاً للاستفادة من خدمة تفسير الأحلام", {
+            id: toastId
+          });
+        }
+        
         navigate('/login');
       }
     } catch (error) {

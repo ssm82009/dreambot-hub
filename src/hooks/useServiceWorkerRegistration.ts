@@ -8,10 +8,8 @@ interface ServiceWorkerState {
   error: string | null;
 }
 
-// متغير عام للتحكم في عرض رسائل التوست
-const toastDisplayed = {
-  updateAvailable: false
-};
+// استخدام localStorage لتتبع ما إذا تم عرض رسالة التوست بالفعل
+const getToastStateKey = (version) => `toast_displayed_version_${version}`;
 
 export function useServiceWorkerRegistration() {
   const [state, setState] = useState<ServiceWorkerState>({
@@ -50,19 +48,10 @@ export function useServiceWorkerRegistration() {
     };
     
     registerServiceWorker();
-    
-    // تنظيف عند إلغاء تحميل المكون
-    return () => {
-      // إعادة تعيين حالة رسائل التوست عند إلغاء التحميل
-      toastDisplayed.updateAvailable = false;
-    };
   }, []);
   
   // دالة منفصلة لإعداد مستمعي الأحداث للتحديثات
   const setupServiceWorkerUpdates = (registration: ServiceWorkerRegistration) => {
-    // حذف أي مستمعي أحداث سابقة (لمنع التكرار)
-    const newWorker = registration.installing;
-    
     // إعداد مستمع حدث واحد للتحديثات
     registration.addEventListener('updatefound', () => {
       const newWorker = registration.installing;
@@ -72,9 +61,15 @@ export function useServiceWorkerRegistration() {
           if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
             // هناك خدمة عامل جديدة جاهزة للاستخدام
             
-            // التحقق إذا تم عرض رسالة التوست بالفعل
-            if (!toastDisplayed.updateAvailable) {
-              toastDisplayed.updateAvailable = true;
+            // استخدام الإصدار الحالي للتطبيق كجزء من المفتاح - يمكن تعديله
+            // لاستخدام أي قيمة تحدد الإصدار الحالي
+            const version = new Date().toDateString();
+            const toastKey = getToastStateKey(version);
+            
+            // تحقق مما إذا تم عرض التوست بالفعل لهذا الإصدار
+            if (!localStorage.getItem(toastKey)) {
+              // تسجيل أن التوست قد تم عرضه لهذا الإصدار
+              localStorage.setItem(toastKey, 'true');
               
               toast.success(
                 'تم تحديث التطبيق',
@@ -87,7 +82,7 @@ export function useServiceWorkerRegistration() {
                     }
                   },
                   // منع عرض التوست أكثر من مرة
-                  id: 'sw-update-toast',
+                  id: `sw-update-toast-${version}`,
                   duration: 10000, // مدة عرض طويلة نسبيًا
                 }
               );
