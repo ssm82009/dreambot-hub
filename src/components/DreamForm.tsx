@@ -429,9 +429,7 @@ const DreamForm = () => {
         <Card className="shadow-lg border-border/40 bg-white/95 backdrop-blur">
           <CardHeader className="space-y-2 border-b bg-gradient-to-r from-primary/5 to-transparent">
             <CardTitle className="text-2xl font-bold text-primary">فسّر حلمك الآن</CardTitle>
-            <CardDescription className="text-muted-foreground/90">
-              اكتب حلمك بلغة عربية فصيحة وباختصار لكي تحصل على تفسير دقيق
-            </CardDescription>
+            <CardDescription className="text-muted-foreground/90">اكتب حلمك بلغة عربية فصيحة وباختصار لكي تحصل على تفسير تحليلي دقيق</CardDescription>
             {renderAuthenticationStatus()}
             {renderInterpretationLimitStatus()}
           </CardHeader>
