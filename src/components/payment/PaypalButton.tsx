@@ -40,17 +40,17 @@ const PaypalButton: React.FC<PaypalButtonProps> = ({
           paypalRef.current.innerHTML = '';
         }
 
-        // تحميل سكربت PayPal
+        // تحميل سكربت PayPal بالخيارات الصحيحة وفقًا للأنواع
         const paypal = await loadScript({
           clientId,
           currency: "USD",
           intent: "capture",
           dataClientToken: "abc123xyz",
-          'enable-funding': 'paypal',
-          'disable-funding': 'paylater,venmo,card',
-          'data-sdk-integration-source': 'button-factory',
+          enableFunding: 'paypal',
+          disableFunding: 'paylater,venmo,card',
+          dataSdkIntegrationSource: 'button-factory',
           components: "buttons",
-          ...(sandbox ? { 'buyer-country': 'US' } : {})
+          ...(sandbox ? { buyerCountry: 'US' } : {})
         });
 
         if (paypal && paypal.Buttons && paypalRef.current) {
