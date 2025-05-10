@@ -10,6 +10,7 @@ interface PaymentActionsProps {
   isDisabled?: boolean;
   isProcessing?: boolean;
   paymentMethod?: string;
+  showPaypalButton?: boolean;
 }
 
 const PaymentActions = ({ 
@@ -17,13 +18,17 @@ const PaymentActions = ({
   onPayment, 
   isDisabled = false,
   isProcessing = false,
-  paymentMethod = 'paylink'
+  paymentMethod = 'paylink',
+  showPaypalButton = false
 }: PaymentActionsProps) => {
   const navigate = useNavigate();
   
   const paymentButtonText = () => {
     if (amount === 0) return "اشترك مجانًا";
-    return paymentMethod === 'paypal' ? "الدفع عبر PayPal" : "إتمام الدفع";
+    if (paymentMethod === 'paypal') {
+      return showPaypalButton ? "متابعة الدفع عبر PayPal" : "";
+    }
+    return "إتمام الدفع";
   };
   
   return (
@@ -37,20 +42,23 @@ const PaymentActions = ({
         <ArrowLeft className="h-4 w-4" />
         العودة
       </Button>
-      <Button 
-        onClick={onPayment}
-        className="w-full sm:w-auto"
-        disabled={isDisabled || amount === 0 && isProcessing}
-      >
-        {isProcessing ? (
-          <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            جاري المعالجة...
-          </>
-        ) : (
-          paymentButtonText()
-        )}
-      </Button>
+      
+      {(amount === 0 || paymentMethod !== 'paypal' || showPaypalButton) && (
+        <Button 
+          onClick={onPayment}
+          className="w-full sm:w-auto"
+          disabled={isDisabled || (amount === 0 && isProcessing)}
+        >
+          {isProcessing ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              جاري المعالجة...
+            </>
+          ) : (
+            paymentButtonText()
+          )}
+        </Button>
+      )}
     </div>
   );
 };
