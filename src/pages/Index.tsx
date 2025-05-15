@@ -69,7 +69,7 @@ const Index = () => {
       <Navbar />
       <main className="flex-1">
         {isVisible('hero') && <Hero 
-          title={getSectionContent('hero', 'title', 'فَسِّرْ حُلْمَكَ الآنَ!')}
+          title={getSectionContent('hero', 'title', 'حلل حُلْمَكَ الآنَ!')}
           subtitle={getSectionContent('hero', 'subtitle', 'تحليل نفسي فوري للأحلام بالاعتماد على أكبر مدارس علم النفس الحديث  ')}
         />}
         
