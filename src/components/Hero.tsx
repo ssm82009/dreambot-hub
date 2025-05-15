@@ -104,7 +104,7 @@ const Hero: React.FC<HeroProps> = ({
                 </svg>
               </div>
               <h5 className="text-lg font-semibold mb-1">استجابة فورية</h5>
-              <p className="text-foreground/70">احصل على تحليل حلمك في ثوانٍ معدودة دون انتظار.</p>
+              <p className="text-foreground/70">احصل على تحليل نفسي لحلمك في ثوانٍ معدودة دون انتظار.</p>
             </div>
             
             <div className="bg-background/80 backdrop-blur-sm p-4 rounded-lg shadow-md border border-border">
